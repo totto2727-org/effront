@@ -1,10 +1,9 @@
 import { Effect } from "effect";
-import { Application } from "@effront/core";
-import { getWorkersEnv, getWorkersRequestContext } from "./host";
+import { EFFRONT } from "./effront";
+import { GreetingAction } from "./greeting-action";
+import { Host, HostLive } from "./host";
 import { Counter } from "./counter";
 import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";
-
-const EFFRONT = Application.effront();
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -22,15 +21,14 @@ const RootLayout = EFFRONT.Layout.make({
 
 const HomePage = EFFRONT.Page.make({
   render: Effect.fn("HomePage.render")(function* () {
-    const env = yield* getWorkersEnv();
+    const host = yield* Host;
     return (
       <>
-        <h1>{env.APP_LABEL}</h1>
-        <p data-testid="secret-status">
-          {env.SERVER_TOKEN ? "Server secret configured" : "No server secret"}
-        </p>
+        <h1>{host.label}</h1>
+        <p data-testid="kv-greeting">{host.greeting}</p>
         <p>React Server Components on Workers, powered by Effect.</p>
         <Counter />
+        <GreetingAction />
       </>
     );
   }),
@@ -38,13 +36,11 @@ const HomePage = EFFRONT.Page.make({
 
 const AboutPage = EFFRONT.Page.make({
   render: Effect.fn("AboutPage.render")(function* () {
-    const context = yield* getWorkersRequestContext();
-    context.executionContext.waitUntil(Promise.resolve());
-    const env = yield* getWorkersEnv();
+    const host = yield* Host;
     return (
       <>
         <h1>About</h1>
-        <p data-testid="label">{env.APP_LABEL}</p>
+        <p data-testid="label">{host.label}</p>
         <a href="/">Back home</a>
       </>
     );
@@ -100,6 +96,7 @@ const transitionRoutes = EFFRONT.Routes.make({ layout: TransitionLayout })
   .page("/disabled-b", transitionPage("disabled", "b"));
 
 export default EFFRONT.make({
+  layer: HostLive,
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", HomePage)
     .page("/about", AboutPage)

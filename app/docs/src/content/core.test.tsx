@@ -10,14 +10,14 @@ describe("current core learning material", () => {
   it("records the version from the exact architecture baseline commit", () => {
     const manifest = execFileSync(
       "git",
-      ["show", `${architectureBaseline.commit}:packages/effront/package.json`],
+      ["show", `${architectureBaseline.commit}:packages/core/package.json`],
       {
         cwd: new URL("../../../../", import.meta.url),
         encoding: "utf8",
       },
     );
     expect(JSON.parse(manifest)).toMatchObject({
-      name: "effront",
+      name: "@effront/core",
       version: architectureBaseline.version,
     });
     expect(architectureBaseline.commit).toMatch(/^[a-f0-9]{40}$/);
@@ -30,8 +30,7 @@ describe("current core learning material", () => {
       "utf8",
     );
     expect(implementation).toContain(source.code);
-    // The pinned baseline predates the package-directory rename.
-    const baselinePath = source.path.replace("packages/core/", "packages/effront/");
+    const baselinePath = source.path;
     const baselineSource = execFileSync(
       "git",
       ["show", `${architectureBaseline.commit}:${baselinePath}`],

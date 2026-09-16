@@ -18,10 +18,11 @@ For independent local hosting of the built artifact:
 
 ```sh
 vp build
-vp exec wrangler dev --local --no-bundle --config dist/rsc/wrangler.json
+vp run local
 ```
 
-Wrangler executes the generated Worker and nested SSR modules in workerd.
+Alchemy’s Vite preview executes the native Worker and nested SSR modules in workerd.
+See [Alchemy integration](ALCHEMY.md) for the stack, native Effect handler, and CLI authentication boundary.
 Local hosting needs no remote account or deployment.
 
 ## Rendering and authoring

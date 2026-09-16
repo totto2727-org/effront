@@ -5,22 +5,24 @@
   "scripts": {
     "dev": "vp dev",
     "build": "vp build",
-    "local": "wrangler dev --local --no-bundle --config dist/rsc/wrangler.json --port 8787"
+    "local": "vp preview",
+    "alchemy:dev": "vp exec alchemy dev --stage local"
   },
   "dependencies": {
     "@effect/platform-browser": "catalog:",
+    "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
+    "alchemy": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@effront/cloudflare": "workspace:*",
+    "@alchemy.run/cloudflare-runtime": "catalog:",
     "@effront/vite": "workspace:*",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
-    "vite-plus": "catalog:",
-    "wrangler": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

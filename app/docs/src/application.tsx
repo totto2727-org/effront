@@ -1,16 +1,24 @@
-import { Effect } from "effect";
+import { Context, Effect, Layer } from "effect";
 import { Application } from "@effront/core";
-import { getWorkersRequestContext } from "@effront/core/workers";
+import { HttpServerRequest } from "effect/unstable/http";
 import { DocsShell } from "./components/docs-shell";
 import { getPage, navigation } from "./content";
 import { architectureBaseline } from "./content/architecture-baseline";
 
-const EFFRONT = Application.effront();
+class RequestPath extends Context.Service<RequestPath, string>()("app/docs/RequestPath") {}
+const RequestPathLive = Layer.effect(
+  RequestPath,
+  Effect.map(
+    HttpServerRequest.HttpServerRequest,
+    (request) => new URL(request.url, "https://effront.local").pathname,
+  ),
+);
+const EFFRONT = Application.effront<RequestPath>();
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
-    Effect.map(getWorkersRequestContext(), ({ request }) => {
+    Effect.map(RequestPath, (pathname) => {
       // The shared layout keeps its client state while each request refreshes page metadata.
-      const page = getPage(new URL(request.url).pathname);
+      const page = getPage(pathname);
       return (
         <html lang="ja" className="dark">
           <head>
@@ -62,7 +70,7 @@ function documentPage(slug: string) {
                 data-architecture-baseline={architectureBaseline.commit}
               >
                 <p>
-                  解説対象: <code>effront@{architectureBaseline.version}</code>
+                  解説対象: <code>@effront/core@{architectureBaseline.version}</code>
                 </p>
                 <p>
                   基準コミット: <code className="break-all">{architectureBaseline.commit}</code>
@@ -81,6 +89,7 @@ function documentPage(slug: string) {
 
 // Explicit routes preserve Effront's compile-time collision checks and its native 404 handling.
 export default EFFRONT.make({
+  layer: RequestPathLive,
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", documentPage("/"))
     .page("/guide/getting-started", documentPage("/guide/getting-started"))

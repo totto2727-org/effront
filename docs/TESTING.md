@@ -83,3 +83,13 @@ The Gitignore CLI integration tests still invoke individual tool commands intern
 
 Validated the real task interface with a temporary source probe: `check` rejected malformed formatting, `fix` repaired it, `check` then passed, and a separate TypeScript mismatch caused `check` to fail before the restored source passed again.
 `vp run test` passed all 241 tests across 33 files.
+
+## Native Alchemy integration
+
+`tests/e2e-alchemy` is a black-box contract against the committed `examples/workers` consumer.
+Its fixed command builds that example and runs Alchemy's workerd preview, without generating or copying application source.
+It covers construction-provided KV capabilities reaching HTML and Server Functions, native HEAD handling, hydration and navigation.
+Run `vp run w:pack` at the repository root, then `vp run test` from `tests/e2e-alchemy`.
+This package does not deploy or run authenticated infrastructure reconciliation.
+Core's colocated native HTTP tests cover context precedence, absent construction request services, memo-map isolation and stream finalization.
+The Alchemy adapter's colocated tests protect lazy construction, host-service exclusion, Vite graph composition and its version-pinned development runtime projection.

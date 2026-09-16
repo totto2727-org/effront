@@ -1,5 +1,7 @@
 # Effront documentation
 
+- [Alchemy-native integration](ALCHEMY.md): experimental Effect HTTP boundary, provider-specific adapter, migrated applications, local execution, and authentication limits.
+
 - [Roadmap](ROADMAP.md): deferred proposals and their acceptance criteria, including Page View Transitions.
 - [SSR documentation site](DOCS-SITE.md): local Guide and upstream-comparison site, authoring, and browser checks.
 - [Upstream baseline](UPSTREAM.md): original effective-rsc version, immutable commit, current Effront mapping, and future incorporation log.

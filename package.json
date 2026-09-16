@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {},
   "devDependencies": {
-    "@effect/vitest": "4.0.0-rc.113",
+    "@effect/vitest": "4.0.0-rc.112",
     "@effront/gitignore-patterns": "workspace:*",
     "@types/node": "22.20.2",
     "@types/react": "catalog:",

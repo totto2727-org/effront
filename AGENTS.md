@@ -3,11 +3,12 @@
 ## Repository structure
 
 - `packages/core/`: application and Fetch runtime (`@effront/core`).
+- `packages/alchemy/`: experimental provider-specific native Alchemy adapters, currently Cloudflare Workers.
 - `packages/vite/`: portable build integration (`@effront/vite`).
 - `packages/cloudflare/`: Cloudflare Vite integration (`@effront/cloudflare`) and separate runtime accessors (`@effront/cloudflare/workers`).
 - `packages/markdown/`: Vite glob collections and comark React SSR rendering (`@effront/markdown`).
 - `examples/markdown/`: file-relative Markdown routing and asset consumer.
-- `examples/workers/`: consumer using the public package exports, Workers `fetch`, and runtime `env`.
+- `examples/workers/`: native Alchemy Worker consumer with construction-time KV capabilities and request-local application services.
 - `app/docs/`: SSR Guide, API reference, and implementation architecture site, using the framework itself with shadcn/ui and Tailwind Typography.
 - `tests/e2e-build/`: independent Playwright acceptance against its package-local fixture built for standalone Wrangler.
 - `tests/e2e-dev/`: independent Vite/workerd HMR acceptance using its own minimal package-local fixture.
@@ -43,6 +44,9 @@ From the repository root:
 - Run `vp run test` from `tests/e2e-build/` for built-artifact browser acceptance and from `tests/e2e-dev/` for development HMR acceptance.
 - Run `vp run test` from `packages/gitignore-patterns/` for that package's unit and real CLI integration tests.
 
+The `tests/e2e-alchemy/` package builds and serves the committed Workers example as a fixed native Alchemy integration consumer.
+It checks KV-backed HTML, HEAD, hydration, Server Functions and navigation without copying fixture source.
+
 For the documentation site, enter `app/docs/` and use `vp dev`, `vp build`, or `vp run local`; see [site operations](docs/DOCS-SITE.md).
 The site has colocated content and rendering tests; framework browser acceptance uses the independent E2E fixtures rather than starting this site.
 
@@ -55,9 +59,12 @@ The root `vite.config.ts` owns repository formatting, linting, and test configur
 ### Runtime boundary
 
 The user's 2026-09-11 requirements explicitly supersede the upstream Bun-only runtime, Rspack compilation, proprietary development server, Vercel packaging, and Bun verification commands.
-The common boundary is a Web `Request` to `Response` handler. The initial host is Cloudflare Workers.
+The core exposes a host-neutral native Effect HTTP boundary and a compatibility Web `Request` to `Response` wrapper.
+The experimental primary host is a native Alchemy Cloudflare Worker.
 Workers-specific `env` and execution context stay behind the host adapter and in request-local Effect context, never implicitly in Flight or HTML.
-D1, KV, R2, database abstractions, Node/Bun host adapters, and hosted deployments are outside the current scope.
+The 2026-09-16 Alchemy experiment adds native Effect HTTP hosting and an explicit KV example.
+Alchemy-specific code belongs in `packages/alchemy/src/<provider>/`, never core.
+Node/Bun/AWS host adapters and hosted deployments remain outside the implemented scope.
 
 ### Graphs and lifetimes
 
@@ -65,12 +72,14 @@ D1, KV, R2, database abstractions, Node/Bun host adapters, and hosted deployment
 - RSC and SSR execute in workerd through Cloudflare child environments. Do not fall back to Node SSR in development.
 - Scope application services to the request, and preserve their lifetime through response body completion, error, and cancellation.
 - Preserve React's native RSC and Server Function protocols. Do not invent a replacement transport.
-- Use the generated Wrangler config for built-local execution. Do not ask Wrangler to compile unprocessed RSC source.
+- Migrated applications use Alchemy Vite preview for built-local execution. Standalone regression fixtures continue using generated Wrangler configs.
+- Native construction captures capability references only. Acquire application layers per request, and let the host retain streaming scopes.
 
 ## Development tools
 
 - **VitePlus**: unified tooling with the Vite core and Vitest versions pinned in `pnpm-workspace.yaml`.
-- **Cloudflare Vite plugin / Wrangler**: local Workers runtime only.
+- **Alchemy Cloudflare runtime**: native example/application hosting.
+- **Cloudflare Vite plugin / Wrangler**: retained standalone compatibility tests.
 - **Playwright**: browser validation of actual built and development applications.
 - **Effect**: consult the installed version's source and official documentation before changing Effect APIs.
 - Keep all retained source and tests covered by root checks. Do not hide legacy files behind tooling exclusions.
@@ -120,3 +129,9 @@ Run the fixed package-local fixture directly. Keep fixture copying, dynamic run 
 - Before merging the publishing workflow, the package owner must ensure all four npm packages exist and configure each Trusted Publisher for GitHub owner `totto2727-org`, repository `effront`, workflow `publish.yml`, and direct publication. No GitHub environment is configured. Initial publication, if required by npm, must be performed by the owner.
 - The workflow uses GitHub-hosted runners and job-scoped `id-token: write`, without long-lived npm tokens. Protect `main` and require the CI check before merging. Local checks and dry runs do not verify registry trust or package ownership.
 - Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [pnpm publish](https://pnpm.io/cli/publish).
+
+## Experimental release boundary
+
+For this user-requested Alchemy prototype, keep the existing 0.1.1 versions and keep `@effront/alchemy` private.
+Do not publish the prototype or add it to the release filters without a separate release decision.
+See [Alchemy architecture and constraints](docs/ALCHEMY.md).
