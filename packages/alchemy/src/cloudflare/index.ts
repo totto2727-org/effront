@@ -94,6 +94,9 @@ export const applicationHttpEffect = <Services, ApplicationError, Requirements, 
 export const makeApplicationHttpEffect = <Services, ApplicationError, Requirements>(
   load: ApplicationLoader<Services, ApplicationError, Requirements>,
 ) =>
-  Effect.map(Effect.context<Exclude<Requirements, HostServices>>(), (context) =>
-    applicationHttpEffect(load, { context }),
+  Effect.map(
+    Effect.context<
+      Exclude<Effect.Services<HttpApplicationEffect<ApplicationError, Requirements>>, HostServices>
+    >(),
+    (context) => applicationHttpEffect(load, { context }),
   );
