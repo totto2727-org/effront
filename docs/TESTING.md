@@ -91,5 +91,6 @@ Validated the real task interface with a temporary source probe: `check` rejecte
 The test verifies that package resolution remains inside that installed workspace and that TypeScript does not fall back to repository package sources.
 The fixture checks valid API composition and rejected argument/environment types with strict consumer checking.
 Like the root project, it uses `skipLibCheck: true`; this verifies public API use, not the internal consistency of every transitive dependency's declarations.
-The offline installation uses the dependency store populated by the root locked install, and the test owns cleanup of its temporary workspace.
+The isolated installation prefers the dependency store populated by the root locked install; a fresh machine can still need registry metadata for package-manager bootstrap and dependency resolution.
+The test owns cleanup of its temporary workspace.
 The existing built Workers and development HMR suites exercise generated distribution exports, including client boundaries and stylesheet behavior.

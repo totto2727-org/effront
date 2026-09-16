@@ -40,11 +40,15 @@ it("typechecks public API usage from isolated packed archives", () => {
     cpSync(fixture, consumer, { recursive: true });
     writeFileSync(join(consumer, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
     writeFileSync(join(consumer, "pnpm-workspace.yaml"), "packages: []\n");
-    execFileSync("vp", ["install", "--offline", "--ignore-scripts"], {
-      cwd: consumer,
-      stdio: "pipe",
-      timeout: 60_000,
-    });
+    execFileSync(
+      "vp",
+      ["install", "--prefer-offline", "--ignore-scripts", "--no-frozen-lockfile"],
+      {
+        cwd: consumer,
+        stdio: "pipe",
+        timeout: 60_000,
+      },
+    );
 
     for (const name of ["effront", "@effront/vite", "@effront/cloudflare", "@effront/markdown"]) {
       const installed = realpathSync(join(consumer, "node_modules", name, "package.json"));
