@@ -15,10 +15,9 @@ export default defineConfig({
   run: {
     tasks: {
       pack: {
-        command: "vp pack && vp pm pack --out ../../tmp/npm/cloudflare.tgz",
-        dependsOn: ["effront#pack"],
+        command: "vp pack",
         input: [{ auto: true }, "!dist/**"],
-        output: ["dist/**", { pattern: "tmp/npm/cloudflare.tgz", base: "workspace" }],
+        output: ["dist/**"],
       },
     },
   },

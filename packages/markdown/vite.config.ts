@@ -15,9 +15,9 @@ export default defineConfig({
   run: {
     tasks: {
       pack: {
-        command: "vp pack && vp pm pack --out ../../tmp/npm/markdown.tgz",
+        command: "vp pack",
         input: [{ auto: true }, "!dist/**"],
-        output: ["dist/**", { pattern: "tmp/npm/markdown.tgz", base: "workspace" }],
+        output: ["dist/**"],
       },
     },
   },

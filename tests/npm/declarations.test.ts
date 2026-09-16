@@ -6,11 +6,10 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vite-plus/test";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
-const archives = fileURLToPath(new URL("../../tmp/npm/", import.meta.url));
 const fixture = fileURLToPath(new URL("./fixture/", import.meta.url));
 const temporary = fileURLToPath(new URL("../../tmp/", import.meta.url));
 
-const archive = (name: string) => `file:${join(archives, `${name}.tgz`)}`;
+const archive = (name: string) => `file:./${name}.tgz`;
 
 const manifest = {
   name: "effront-archive-declaration-consumer",
@@ -37,6 +36,14 @@ const manifest = {
 it("typechecks public API usage from isolated packed archives", () => {
   const consumer = mkdtempSync(join(temporary, "npm-declarations-"));
   try {
+    // Only the isolated installation test needs archives; production publish packs automatically.
+    for (const name of ["effront", "vite", "cloudflare", "markdown"]) {
+      execFileSync("vp", ["pm", "pack", "--out", join(consumer, `${name}.tgz`)], {
+        cwd: join(repository, "packages", name),
+        stdio: "pipe",
+        timeout: 30_000,
+      });
+    }
     cpSync(fixture, consumer, { recursive: true });
     writeFileSync(join(consumer, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
     writeFileSync(join(consumer, "pnpm-workspace.yaml"), "packages: []\n");

@@ -29,8 +29,8 @@ Playwright explicitly selects the `.e2e.ts` suite, keeping it outside Vitest's s
 
 ## Verification
 
-- `vp run test` builds the public packages through `w:pack`, then uses default Vitest discovery for colocated unit tests and retained integration tests. Run `vp run w:pack` first when invoking `vp test run` directly.
-- `vp run check` builds distribution exports first, then checks all source and retained tests, including the colocated files.
+- `vp run test` uses default Vitest discovery for colocated unit tests and retained integration tests. Run `vp run w:pack` first; the check and test tasks do not build dependencies implicitly.
+- `vp run check` checks all source and retained tests, including the colocated files.
 - `(cd packages/gitignore-patterns && vp run test)` builds the generator and executes real formatter/linter acceptance.
 - `(cd tests/e2e-build && vp run test)` runs browser acceptance against the built fixture hosted by standalone Wrangler.
 - `(cd tests/e2e-dev && vp run test)` runs only development HMR checks against its minimal fixture.
@@ -86,8 +86,9 @@ Validated the real task interface with a temporary source probe: `check` rejecte
 
 ## npm distribution contracts
 
-`tests/npm/package.test.ts` inspects the actual archives produced by `vp run w:pack`, requiring JavaScript and declarations while rejecting source and test modules.
-`tests/npm/declarations.test.ts` installs all four archives into a temporary, independent pnpm workspace with no source aliases and checks the committed consumer fixture.
+`tests/npm/package.test.ts` inspects native `vp pm publish --dry-run --json` output, requiring JavaScript and declarations while rejecting source and test modules.
+`tests/npm/declarations.test.ts` creates test-only archives in its temporary directory, installs them into an independent pnpm workspace with no source aliases, and checks the committed consumer fixture.
+Neither the package build tasks nor the publication workflow creates these test archives.
 The test verifies that package resolution remains inside that installed workspace and that TypeScript does not fall back to repository package sources.
 The fixture checks valid API composition and rejected argument/environment types with strict consumer checking.
 Like the root project, it uses `skipLibCheck: true`; this verifies public API use, not the internal consistency of every transitive dependency's declarations.
