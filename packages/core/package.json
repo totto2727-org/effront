@@ -1,6 +1,6 @@
 {
   "name": "@effront/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Effect-native React Server Components with a portable Web Fetch runtime.",
   "keywords": [
     "cloudflare-workers",
