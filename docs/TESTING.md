@@ -29,12 +29,12 @@ Playwright explicitly selects the `.e2e.ts` suite, keeping it outside Vitest's s
 
 ## Verification
 
-- `vp test run` discovers both colocated unit tests and retained integration tests by default.
-- `vp check` checks all source and retained tests, including the colocated files.
+- `vp run test` builds the public packages through `w:pack`, then uses default Vitest discovery for colocated unit tests and retained integration tests. Run `vp run w:pack` first when invoking `vp test run` directly.
+- `vp run check` builds distribution exports first, then checks all source and retained tests, including the colocated files.
 - `(cd packages/gitignore-patterns && vp run test)` builds the generator and executes real formatter/linter acceptance.
 - `(cd tests/e2e-build && vp run test)` runs browser acceptance against the built fixture hosted by standalone Wrangler.
 - `(cd tests/e2e-dev && vp run test)` runs only development HMR checks against its minimal fixture.
-- Package archives must omit colocated tests; source-package file exclusions and the generator declaration-build exclusions enforce that boundary, not test-discovery exclusions.
+- Package archives must omit colocated tests; the public packages use test-excluding pack entries and dist-only publication, while the generator retains its declaration-build exclusions. Test discovery remains independent of publication.
 
 ## Observed migration results (2026-09-12)
 
@@ -83,3 +83,13 @@ The Gitignore CLI integration tests still invoke individual tool commands intern
 
 Validated the real task interface with a temporary source probe: `check` rejected malformed formatting, `fix` repaired it, `check` then passed, and a separate TypeScript mismatch caused `check` to fail before the restored source passed again.
 `vp run test` passed all 241 tests across 33 files.
+
+## npm distribution contracts
+
+`tests/npm/package.test.ts` inspects the actual archives produced by `vp run w:pack`, requiring JavaScript and declarations while rejecting source and test modules.
+`tests/npm/declarations.test.ts` installs all four archives into a temporary, independent pnpm workspace with no source aliases and checks the committed consumer fixture.
+The test verifies that package resolution remains inside that installed workspace and that TypeScript does not fall back to repository package sources.
+The fixture checks valid API composition and rejected argument/environment types with strict consumer checking.
+Like the root project, it uses `skipLibCheck: true`; this verifies public API use, not the internal consistency of every transitive dependency's declarations.
+The offline installation uses the dependency store populated by the root locked install, and the test owns cleanup of its temporary workspace.
+The existing built Workers and development HMR suites exercise generated distribution exports, including client boundaries and stylesheet behavior.
