@@ -13,7 +13,7 @@ No container, Bun process, cloud deployment, PR, or npm publishing is required.
 
 ```mermaid
 flowchart TD
-  Host[Workers fetch request / env / executionContext] --> Adapter[effront/workers createFetchHandler]
+  Host[Workers fetch request / env / executionContext] --> Adapter[@effront/core/workers createFetchHandler]
   Adapter --> Context[Request-scoped Effect context and application Layer]
   Context --> HTTP[Effect HttpRouter.toWebHandler]
   HTTP --> RSC[RSC graph: application and Flight rendering]
@@ -75,7 +75,7 @@ Worker-first routing remains an explicit application choice for cases such as pr
 Changing Wrangler runtime variables must not require rebuilding the application.
 
 The package exposes TypeScript source exports for Vite bundling.
-The workspace consumer exercises the actual `effront`, `@effront/vite`, `@effront/cloudflare`, and `effront/workers` exports.
+The workspace consumer exercises the actual `@effront/core`, `@effront/vite`, `@effront/cloudflare`, and `@effront/core/workers` exports.
 This is not a claim of standalone unbundled Node compatibility or published-package readiness.
 
 ## Tooling

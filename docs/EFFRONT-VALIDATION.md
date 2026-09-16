@@ -2,7 +2,7 @@
 
 ## Current public surface
 
-The framework package is `effront`, located at `packages/effront`.
+The framework package is `@effront/core`, located at `packages/core`.
 Workspace support packages use the `@effront` scope.
 The source checkout directory remains `effective-rsc-workers`; its location is not a package identifier.
 The application factory is `Application.effront()`.
@@ -71,7 +71,7 @@ Temporary build logs, packed artifacts, and browser screenshots remain ignored i
 
 ## Package boundaries
 
-`effront` contains the application and Fetch runtime, `@effront/vite` owns build integration and the native compiler, and `@effront/cloudflare` owns only the Cloudflare Vite adapter.
+`@effront/core` contains the application and Fetch runtime, `@effront/vite` owns build integration and the native compiler, and `@effront/cloudflare` owns only the Cloudflare Vite adapter.
 The adapter requires Vite integration but does not register it automatically.
 The core still uses `@vitejs/plugin-rsc` runtime exports for Flight and its SSR module-loading protocol; this split is not a claim of bundler-independent React Flight support.
 Core `internal/client-entry` and `internal/ssr-entry` exports let the matching Vite integration resolve shipped entries without relative cross-package source paths.

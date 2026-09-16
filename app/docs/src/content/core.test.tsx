@@ -23,16 +23,18 @@ describe("current core learning material", () => {
     expect(architectureBaseline.commit).toMatch(/^[a-f0-9]{40}$/);
   });
   it.each(coreSources)("keeps the $path excerpt identical to current implementation", (source) => {
-    expect(source.path).toMatch(/^packages\/effront\/src\/[a-z0-9/.-]+\.tsx?$/);
+    expect(source.path).toMatch(/^packages\/core\/src\/[a-z0-9/.-]+\.tsx?$/);
     expect(source.code.length).toBeGreaterThan(60);
     const implementation = readFileSync(
       new URL(`../../../../${source.path}`, import.meta.url),
       "utf8",
     );
     expect(implementation).toContain(source.code);
+    // The pinned baseline predates the package-directory rename.
+    const baselinePath = source.path.replace("packages/core/", "packages/effront/");
     const baselineSource = execFileSync(
       "git",
-      ["show", `${architectureBaseline.commit}:${source.path}`],
+      ["show", `${architectureBaseline.commit}:${baselinePath}`],
       {
         cwd: new URL("../../../../", import.meta.url),
         encoding: "utf8",

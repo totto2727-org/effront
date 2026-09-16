@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import { Application } from "effront";
-import { getWorkersRequestContext } from "effront/workers";
+import { Application } from "@effront/core";
+import { getWorkersRequestContext } from "@effront/core/workers";
 import { DocsShell } from "./components/docs-shell";
 import { getPage, navigation } from "./content";
 import { architectureBaseline } from "./content/architecture-baseline";

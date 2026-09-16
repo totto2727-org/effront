@@ -73,7 +73,7 @@ export const guidePages: readonly DocPage[] = [
           を参照してください。
         </p>
         {code(
-          `vp add effront
+          `vp add @effront/core
 vp add -D @effront/vite @effront/cloudflare @vitejs/plugin-rsc wrangler`,
           "bash",
         )}
@@ -100,7 +100,7 @@ wrangler.jsonc    # Cloudflareの設定`,
         </p>
         {code(
           `import { Effect } from "effect";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 
 const EFFRONT = Application.effront();
 
@@ -132,7 +132,7 @@ export default EFFRONT.make({
           <code>src/entry.workers.ts</code> にFetchハンドラーを定義します。
         </p>
         {code(
-          `import { createFetchHandler } from "effront/workers";
+          `import { createFetchHandler } from "@effront/core/workers";
 import application from "./entry.client";
 
 export default { fetch: createFetchHandler(application) };`,
@@ -417,7 +417,7 @@ export class Greeting extends Context.Service<
         </p>
         {code(
           `import { Effect } from "effect";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 import { Greeting } from "./greeting";
 
 const EFFRONT = Application.effront<Greeting>();

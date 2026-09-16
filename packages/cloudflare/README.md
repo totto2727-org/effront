@@ -1,7 +1,7 @@
 # @effront/cloudflare
 
 Cloudflare Workers integration for Effront, with a Vite plugin and typed request-context accessors.
-Install alongside `@effront/vite`, `effront`, and VitePlus.
+Install alongside `@effront/vite`, `@effront/core`, and VitePlus.
 The Cloudflare Vite plugin is owned as a dependency of this package.
 
 ## Usage
@@ -22,7 +22,7 @@ Explicit SSR output overrides are preserved.
 Other Cloudflare options are forwarded directly, except the invariant `viteEnvironment` wiring.
 Persistence, remote bindings, server ports, and Wrangler configuration discovery keep Cloudflare defaults.
 
-The Fetch handler remains in `effront/workers`; the `@effront/cloudflare/workers` subpath supplies runtime accessors without importing the Vite plugin.
+The Fetch handler remains in `@effront/core/workers`; the `@effront/cloudflare/workers` subpath supplies runtime accessors without importing the Vite plugin.
 
 ## Typed request context
 
@@ -38,7 +38,7 @@ The factory accepts only Env and fixes the execution context to `CloudflareExecu
 The same subpath exports ready-to-use `getWorkersEnv<Env>()` and `getWorkersRequestContext<Env>()`; omitted Env defaults to unknown.
 All accessors read the existing core request Context, so application factories share the same request-scoped Layer and preserve object identity.
 Types describe the host values; use application validation when runtime guarantees are required.
-For both custom Env and ExecutionContext types, use `createWorkersContextAccessors<Env, ExecutionContext>()` from `effront/workers`.
+For both custom Env and ExecutionContext types, use `createWorkersContextAccessors<Env, ExecutionContext>()` from `@effront/core/workers`.
 
 ## Validation
 

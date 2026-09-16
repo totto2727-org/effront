@@ -10,9 +10,9 @@
   "dependencies": {
     "@comark/react": "catalog:",
     "@effect/platform-browser": "catalog:",
+    "@effront/core": "workspace:*",
     "@effront/markdown": "workspace:*",
     "effect": "catalog:",
-    "effront": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

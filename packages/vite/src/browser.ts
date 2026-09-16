@@ -1,1 +1,1 @@
-import "effront/internal/client-entry";
+import "@effront/core/internal/client-entry";

@@ -32,7 +32,7 @@ jobs:
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           vp pm publish -r \
-            --filter effront \
+            --filter @effront/core \
             --filter @effront/vite \
             --filter @effront/cloudflare \
             --filter @effront/markdown \

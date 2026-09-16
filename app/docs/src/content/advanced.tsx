@@ -211,7 +211,7 @@ export const advancedPages: readonly DocPage[] = [
         <CodeBlock
           language="tsx"
           code={`import { Effect, Layer } from "effect";
-import { PageViewTransition } from "effront";
+import { PageViewTransition } from "@effront/core";
 
 // EFFRONT.make の layer に渡す設定
 const transitions = Layer.succeed(PageViewTransition, {
@@ -363,7 +363,7 @@ const QuietPage = EFFRONT.Page.make({
           の環境で実行します。
         </p>
         <CodeBlock
-          code={`import { createFetchHandler } from "effront/workers";
+          code={`import { createFetchHandler } from "@effront/core/workers";
 import application from "./entry.client";
 
 export default { fetch: createFetchHandler(application) };`}

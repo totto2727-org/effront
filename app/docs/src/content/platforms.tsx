@@ -87,7 +87,7 @@ wrangler.jsonc`,
           <code>src/entry.workers.ts</code> から Fetch ハンドラーを公開します。
         </p>
         {code(
-          `import { createFetchHandler } from "effront/workers";
+          `import { createFetchHandler } from "@effront/core/workers";
 import application from "./entry.client";
 
 export default { fetch: createFetchHandler(application) };`,

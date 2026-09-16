@@ -47,11 +47,11 @@ export const apiReferencePages: readonly DocPage[] = [
         </p>
         {table([
           [
-            "effront",
+            "@effront/core",
             "Application、PageViewTransition を公開。実行時は react-server 条件の RSC グラフで使用します。",
           ],
           [
-            "effront/workers",
+            "@effront/core/workers",
             "Fetch ハンドラー、リクエストコンテキストと型付き reader を公開します。",
           ],
           [
@@ -68,7 +68,8 @@ export const apiReferencePages: readonly DocPage[] = [
           ],
         ])}
         <p>
-          <code>effront/internal/client-entry</code> と <code>effront/internal/ssr-entry</code>{" "}
+          <code>@effront/core/internal/client-entry</code> と{" "}
+          <code>@effront/core/internal/ssr-entry</code>{" "}
           はビルド統合が読み込むエントリーです。アプリケーションの組み立てには以下の API
           を使います。ファクトリーの戻り値の型は推論されるため、内部モジュールから型を直接 import
           する必要はありません。
@@ -110,7 +111,7 @@ export const apiReferencePages: readonly DocPage[] = [
     content: () => (
       <>
         <h2 id="identity">Application.effront</h2>
-        {code(`import { Application } from "effront";
+        {code(`import { Application } from "@effront/core";
 
 const EFFRONT = Application.effront();
 // サービスが必要な場合: Application.effront<MyService>()`)}
@@ -160,7 +161,7 @@ const EFFRONT = Application.effront();
         <h2 id="example">最小定義</h2>
         {code(
           `import { Effect } from "effect";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 
 const EFFRONT = Application.effront();
 const RootLayout = EFFRONT.Layout.make({
@@ -245,7 +246,7 @@ const Home = EFFRONT.Page.make({
         </p>
         <h2 id="view-transition">PageViewTransition</h2>
         <p>
-          <code>import {"{ PageViewTransition }"} from "effront"</code> で読み込む Effect
+          <code>import {"{ PageViewTransition }"} from "@effront/core"</code> で読み込む Effect
           の既定値付きコンテキストです。
           <code>Layer.succeed(PageViewTransition, config)</code> をアプリケーションの Layer
           に組み合わせます。 各 Page の <code>viewTransition</code>{" "}
@@ -400,7 +401,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
         </p>
         {code(
           `import { Context, Effect } from "effect";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 
 class RequestLabel extends Context.Service<RequestLabel, {
   readonly value: string;
@@ -536,7 +537,7 @@ const describe = EFFRONT.ServerFn.make({
     content: () => (
       <>
         <h2 id="fetch">createFetchHandler</h2>
-        {code(`import { createFetchHandler } from "effront/workers";
+        {code(`import { createFetchHandler } from "@effront/core/workers";
 import application from "./entry.client";
 
 export default { fetch: createFetchHandler(application) };`)}
@@ -559,7 +560,7 @@ export default { fetch: createFetchHandler(application) };`)}
           がない独自 HTTP ルートの body を、この入口が一律に実測制限するわけではありません。
         </p>
         <h2 id="context">WorkersRequestContext</h2>
-        {code(`import { WorkersRequestContext } from "effront/workers";
+        {code(`import { WorkersRequestContext } from "@effront/core/workers";
 // 同名の型も公開されています。
 // WorkersRequestContext<Env, ExecutionContext>
 //   readonly env: Env
@@ -583,7 +584,7 @@ export default { fetch: createFetchHandler(application) };`)}
             "Effect で現在の env・executionContext・request を返します。",
           ],
         ])}
-        {code(`import { createWorkersContextAccessors } from "effront/workers";
+        {code(`import { createWorkersContextAccessors } from "@effront/core/workers";
 
 type Env = { readonly APP_LABEL: string };
 type HostContext = { waitUntil(promise: Promise<unknown>): void };
@@ -659,7 +660,7 @@ export const readLabel = Effect.gen(function* () {
             "既定値 ./src/entry.client.ts。アプリケーション定義を公開するモジュール。Vite の root を基準に解決されます。",
           ],
           [
-            "effront/application-entry",
+            "@effront/core/application-entry",
             "application オプションから生成される Vite alias。パッケージの独立した公開 subpath ではありません。",
           ],
         ])}

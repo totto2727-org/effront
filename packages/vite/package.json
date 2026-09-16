@@ -32,11 +32,11 @@
     "oxc-transform-react": "^0.145.0"
   },
   "devDependencies": {
-    "effront": "workspace:*",
+    "@effront/core": "workspace:*",
     "vitest": "4.1.11"
   },
   "peerDependencies": {
-    "effront": "workspace:^",
+    "@effront/core": "workspace:^",
     "vite": "*"
   }
 }

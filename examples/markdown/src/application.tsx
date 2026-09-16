@@ -2,7 +2,7 @@ import { MarkdownDocument as ComarkMarkdownDocument } from "@comark/react/compon
 import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 import { manual } from "../content";
 import { Shell } from "./shell";
 

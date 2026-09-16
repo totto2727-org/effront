@@ -181,6 +181,9 @@ importers:
       '@effect/platform-browser':
         specifier: 'catalog:'
         version: 4.0.0-rc.113(effect@4.0.0-rc.113)
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -190,9 +193,6 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.113
-      effront:
-        specifier: workspace:*
-        version: link:../../packages/effront
       lucide-react:
         specifier: ^1.44.0
         version: 1.44.0(react@19.3.0-canary-1d34f91d-20260909)
@@ -263,15 +263,15 @@ importers:
       '@effect/platform-browser':
         specifier: 'catalog:'
         version: 4.0.0-rc.113(effect@4.0.0-rc.113)
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@effront/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.113
-      effront:
-        specifier: workspace:*
-        version: link:../../packages/effront
       react:
         specifier: 19.3.0-canary-1d34f91d-20260909
         version: 19.3.0-canary-1d34f91d-20260909
@@ -306,12 +306,12 @@ importers:
       '@effect/platform-browser':
         specifier: 'catalog:'
         version: 4.0.0-rc.113(effect@4.0.0-rc.113)
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.113
-      effront:
-        specifier: workspace:*
-        version: link:../../packages/effront
       react:
         specifier: 19.3.0-canary-1d34f91d-20260909
         version: 19.3.0-canary-1d34f91d-20260909
@@ -350,20 +350,20 @@ importers:
         specifier: npm:@voidzero-dev/vite-plus-core@0.3.1
         version: '@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)'
     devDependencies:
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../core
       '@effront/vite':
         specifier: workspace:*
         version: link:../vite
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.113
-      effront:
-        specifier: workspace:*
-        version: link:../effront
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@types/node@22.20.2)(@vitest/browser-preview@4.1.11)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2))
 
-  packages/effront:
+  packages/core:
     dependencies:
       '@vitejs/plugin-rsc':
         specifier: 'catalog:'
@@ -459,9 +459,9 @@ importers:
         specifier: npm:@voidzero-dev/vite-plus-core@0.3.1
         version: '@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)'
     devDependencies:
-      effront:
+      '@effront/core':
         specifier: workspace:*
-        version: link:../effront
+        version: link:../core
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@types/node@22.20.2)(@vitest/browser-preview@4.1.11)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2))
@@ -477,6 +477,9 @@ importers:
       '@effront/cloudflare':
         specifier: workspace:*
         version: link:../../packages/cloudflare
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@effront/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
@@ -504,9 +507,6 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.113
-      effront:
-        specifier: workspace:*
-        version: link:../../packages/effront
       react:
         specifier: 19.3.0-canary-1d34f91d-20260909
         version: 19.3.0-canary-1d34f91d-20260909
@@ -534,6 +534,9 @@ importers:
       '@effront/cloudflare':
         specifier: workspace:*
         version: link:../../packages/cloudflare
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@effront/markdown':
         specifier: workspace:*
         version: link:../../packages/markdown
@@ -561,9 +564,6 @@ importers:
       effect:
         specifier: 'catalog:'
         version: 4.0.0-rc.113
-      effront:
-        specifier: workspace:*
-        version: link:../../packages/effront
       react:
         specifier: 19.3.0-canary-1d34f91d-20260909
         version: 19.3.0-canary-1d34f91d-20260909

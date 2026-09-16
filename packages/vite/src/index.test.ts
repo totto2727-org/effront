@@ -14,7 +14,7 @@ describe("Effront entry conventions", () => {
       index: "./src/entry.workers.ts",
     });
     expect(config.resolve.alias).toContainEqual({
-      find: "effront/application-entry",
+      find: "@effront/core/application-entry",
       replacement: resolve(root, "src/entry.client.ts"),
     });
   });
@@ -33,7 +33,7 @@ describe("Effront entry conventions", () => {
       index: "./custom/host.ts",
     });
     expect(config.resolve.alias).toContainEqual({
-      find: "effront/application-entry",
+      find: "@effront/core/application-entry",
       replacement: resolve(root, "custom/app.tsx"),
     });
   });

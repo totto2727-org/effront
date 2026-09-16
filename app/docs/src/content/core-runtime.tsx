@@ -3,7 +3,7 @@ import type { DocPage } from "./types";
 
 export const coreRuntimeSources = {
   requestHandler: {
-    path: "packages/effront/src/workers.ts",
+    path: "packages/core/src/workers.ts",
     language: "typescript",
     code: `    const requestContext: WorkersRequestContext<unknown, unknown> = {
       env,
@@ -29,7 +29,7 @@ export const coreRuntimeSources = {
   };`,
   },
   responseLifetime: {
-    path: "packages/effront/src/workers.ts",
+    path: "packages/core/src/workers.ts",
     language: "typescript",
     code: `  let released = false;
   const releaseOnce = async () => {
@@ -58,7 +58,7 @@ export const coreRuntimeSources = {
         controller.enqueue(result.value);`,
   },
   flightRuntime: {
-    path: "packages/effront/src/server/flight-renderer.tsx",
+    path: "packages/core/src/server/flight-renderer.tsx",
     language: "tsx",
     code: `        const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
@@ -87,7 +87,7 @@ export const coreRuntimeSources = {
         }).pipe(Effect.onError(() => release));`,
   },
   htmlEof: {
-    path: "packages/effront/src/server/flight-html-stream.ts",
+    path: "packages/core/src/server/flight-html-stream.ts",
     language: "typescript",
     code: `  const transform = new TransformStream<Uint8Array, Uint8Array>({
     async flush(controller) {
@@ -110,7 +110,7 @@ export const coreRuntimeSources = {
   });`,
   },
   navigationEligibility: {
-    path: "packages/effront/src/client/navigation-routing.ts",
+    path: "packages/core/src/client/navigation-routing.ts",
     language: "typescript",
     code: `const ReactTransitionNavigationInfo = "react-transition";
 
@@ -126,7 +126,7 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   event.navigationType !== "reload";`,
   },
   navigationPublication: {
-    path: "packages/effront/src/client/client-router.ts",
+    path: "packages/core/src/client/client-router.ts",
     language: "typescript",
     code: `          const rendererNavigation = yield* Effect.sync(() => {
             let navigation!: BrowserRendererNavigation;
@@ -147,7 +147,7 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
           });`,
   },
   serverFnSchema: {
-    path: "packages/effront/src/application/server-fn.ts",
+    path: "packages/core/src/application/server-fn.ts",
     language: "typescript",
     code: `    const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
     const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));
@@ -171,7 +171,7 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
     return attachEFFRONTMember(serverFunction, identity, "ServerFn");`,
   },
   serverFnDecode: {
-    path: "packages/effront/src/server/server-fn-request.ts",
+    path: "packages/core/src/server/server-fn-request.ts",
     language: "typescript",
     code: `  const temporaryReferences = createTemporaryReferenceSet();
   const body = yield* readBody(request);
@@ -215,7 +215,7 @@ export const coreRuntimePages: readonly DocPage[] = [
           <a href="/architecture/implementation/application">アプリケーションの定義</a>と
           <a href="/architecture/implementation/routing">ルートの組み立て</a>
           が済むと、次はその定義を一件のHTTPリクエストに結び付けます。 この章では{" "}
-          <code>packages/effront/src/workers.ts</code> から <code>server/application.ts</code>{" "}
+          <code>packages/core/src/workers.ts</code> から <code>server/application.ts</code>{" "}
           へ進み、サービスを取得する時点と解放する時点を分けて読みます。
         </p>
         <h2 id="fetch-entry">1. Fetchの呼び出しごとにLayerを構築する</h2>
@@ -294,7 +294,7 @@ export const coreRuntimePages: readonly DocPage[] = [
         </p>
         <p>
           パッケージ境界の例として、<code>packages/cloudflare/src/workers.ts</code> は{" "}
-          <code>effront/workers</code> のこのfactoryを呼び出します。 公開runtime subpathの{" "}
+          <code>@effront/core/workers</code> のこのfactoryを呼び出します。 公開runtime subpathの{" "}
           <code>@effront/cloudflare/workers</code> では型引数はEnvのみで、ExecutionContextは{" "}
           <code>waitUntil(Promise&lt;unknown&gt;)</code> を持つ{" "}
           <code>CloudflareExecutionContext</code> に固定した薄いラッパーです。

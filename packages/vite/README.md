@@ -1,7 +1,7 @@
 # @effront/vite
 
 Portable Effront Vite integration for React Server Components, SSR, browser hydration, and the native React Compiler.
-Install alongside `effront` and VitePlus.
+Install alongside `@effront/core` and VitePlus.
 It does not install or register Cloudflare integration.
 
 ## Usage
@@ -26,7 +26,7 @@ Future Node or Bun adapters can use `src/entry.server.ts` either to adapt the Fe
 See [the host adapter roadmap](../../docs/ROADMAP.md#server-runtime-adapters) for that planned integration.
 The application definition stays in the RSC graph, while the plugin supplies the browser and SSR entries.
 Do not register React or Vite RSC plugins a second time.
-The `effront/internal/*` exports are an integration contract with the matching core version, not application APIs.
+The `@effront/core/internal/*` exports are an integration contract with the matching core version, not application APIs.
 
 ## Validation
 

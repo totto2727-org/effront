@@ -25,7 +25,7 @@ it("quadrupling a route chain uses less than six times the type instantiations",
     );
 
     const measure = (count: number) => {
-      const source = resolve(repository, "packages/effront/src/application");
+      const source = resolve(repository, "packages/core/src/application");
       writeFileSync(
         join(workspace, "routes.ts"),
         [

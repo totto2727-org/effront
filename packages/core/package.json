@@ -1,5 +1,5 @@
 {
-  "name": "effront",
+  "name": "@effront/core",
   "version": "0.1.0",
   "description": "Effect-native React Server Components with a portable Web Fetch runtime.",
   "keywords": [
@@ -11,7 +11,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/totto2727-org/effront.git",
-    "directory": "packages/effront"
+    "directory": "packages/core"
   },
   "files": [
     "dist",

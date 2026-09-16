@@ -1,4 +1,4 @@
-import { createWorkersContextAccessors as createAccessors } from "effront/workers";
+import { createWorkersContextAccessors as createAccessors } from "@effront/core/workers";
 
 /** Minimal Cloudflare execution context supported by these accessors. */
 export type CloudflareExecutionContext = {

@@ -22,7 +22,7 @@ Current Markdown SSR uses request-time collection lookup through catch-all routi
 
 ### Serving without a Worker
 
-- The current SSR client requests Flight at the document URL with `Accept: text/x-component` (`packages/effront/src/client/flight-client.ts`).
+- The current SSR client requests Flight at the document URL with `Accept: text/x-component` (`packages/core/src/client/flight-client.ts`).
 - Serving HTML and Flight at the same URL requires host-side content negotiation or header-aware routing. Do not assume that a plain static-file host can select different files from this header; `Vary: Accept` describes cache variation, not a rule for selecting the response file.
 - Prefer investigating distinct static payload URLs plus a generated route-to-payload manifest. For example, `/guide/routes` serves HTML and an internal versioned asset URL serves its Flight payload; these paths are illustrative, not a committed public convention.
 - The client loader would resolve the payload asset while retaining the canonical document URL for history, links, hashes, and redirect semantics. The current loader uses `response.url`, so merely changing the fetch URL would incorrectly treat the asset URL as a navigation destination.
@@ -97,7 +97,7 @@ References: [Astro Content Collections](https://docs.astro.build/en/guides/conte
 Status: implemented after the user's 2026-09-12 request to enable page transitions by default.
 
 - Core wraps each routed Page in a React ViewTransition client boundary; shared Layouts remain outside it.
-- `PageViewTransition` from `effront` is a defaulted Effect reference configurable with `Layer.succeed(PageViewTransition, config)`.
+- `PageViewTransition` from `@effront/core` is a defaulted Effect reference configurable with `Layer.succeed(PageViewTransition, config)`.
 - `Page.make({ viewTransition: config, render })` overrides supplied properties; `viewTransition: false` disables that Page's boundary.
 - Built-in defaults, application Layer settings, and page settings are resolved in that order, with transition-class maps replaced as whole properties.
 - `enabled: true` can re-enable a page under a disabled application default.

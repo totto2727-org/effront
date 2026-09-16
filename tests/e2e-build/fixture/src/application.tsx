@@ -5,7 +5,7 @@ import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { manual } from "../content";
 import { ManualShell } from "./manual-shell";
 import { pages } from "./manual-pages";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 import { getWorkersEnv, getWorkersRequestContext } from "./host";
 import { Counter } from "./counter";
 import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";

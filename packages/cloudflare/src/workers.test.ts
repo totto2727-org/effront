@@ -1,5 +1,5 @@
 import { Effect, Layer } from "effect";
-import { WorkersRequestContext } from "effront/workers";
+import { WorkersRequestContext } from "@effront/core/workers";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
   type CloudflareExecutionContext,

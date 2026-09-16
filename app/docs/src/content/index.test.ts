@@ -38,7 +38,7 @@ describe("documentation catalog", () => {
     const gettingStarted = renderToStaticMarkup(
       getPage("/guide/getting-started").content(),
     ).replace(/<[^>]*>/g, "");
-    expect(gettingStarted).toContain("vp add effront");
+    expect(gettingStarted).toContain("vp add @effront/core");
     expect(gettingStarted).toContain("effrontCloudflare()");
     expect(gettingStarted).toContain("createFetchHandler(application)");
     expect(gettingStarted).toContain("nodejs_compat");

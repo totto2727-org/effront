@@ -6,7 +6,7 @@ Moving the tests preserves their assertions and changes only module-relative imp
 
 ## Retained integration suites
 
-The following suites remain under `packages/effront/tests/` because they exercise interactions across module or tool boundaries:
+The following suites remain under `packages/core/tests/` because they exercise interactions across module or tool boundaries:
 
 | Suite                                  | Integration contract                                                                      |
 | -------------------------------------- | ----------------------------------------------------------------------------------------- |

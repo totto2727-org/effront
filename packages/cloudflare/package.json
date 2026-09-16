@@ -34,15 +34,15 @@
     "@cloudflare/vite-plugin": "1.54.7"
   },
   "devDependencies": {
+    "@effront/core": "workspace:*",
     "@effront/vite": "workspace:*",
     "effect": "catalog:",
-    "effront": "workspace:*",
     "vitest": "4.1.11"
   },
   "peerDependencies": {
+    "@effront/core": "workspace:^",
     "@effront/vite": "workspace:^",
     "effect": "catalog:",
-    "effront": "workspace:^",
     "vite": "*"
   }
 }

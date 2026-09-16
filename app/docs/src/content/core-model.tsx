@@ -3,7 +3,7 @@ import type { DocPage } from "./types";
 
 export const coreModelSources = {
   fetchBoundary: {
-    path: "packages/effront/src/workers.ts",
+    path: "packages/core/src/workers.ts",
     code: `    const requestContext: WorkersRequestContext<unknown, unknown> = {
       env,
       executionContext,
@@ -28,7 +28,7 @@ export const coreModelSources = {
     language: "ts",
   },
   applicationIdentity: {
-    path: "packages/effront/src/application/effront.ts",
+    path: "packages/core/src/application/effront.ts",
     code: `const effront = <Services = never>(): EFFRONT<Services> => {
   const identity = makeEFFRONTIdentity<Services>();
   const make: EFFRONTMake<Services> = (options) => makeApplication(identity, options);
@@ -44,7 +44,7 @@ export const coreModelSources = {
     language: "ts",
   },
   middlewareScope: {
-    path: "packages/effront/src/application/effront.ts",
+    path: "packages/core/src/application/effront.ts",
     code: `  const withMiddleware = <Value extends AnyMiddleware<ApplicationServices>>(
     value: Value & ApplicableMiddleware<AvailableServices, Value>,
   ): EFFRONT<ApplicationServices, AvailableServices | MiddlewareProvidedServices<Value>> => {
@@ -61,7 +61,7 @@ export const coreModelSources = {
     language: "ts",
   },
   compiledDestination: {
-    path: "packages/effront/src/application/route-graph.ts",
+    path: "packages/core/src/application/route-graph.ts",
     code: `export type RouteScope<Services> = {
   readonly id: string;
   readonly layout: LayoutComponent<Services> | null;
@@ -82,7 +82,7 @@ export type CompiledRouteGraph<Services> = readonly [
     language: "ts",
   },
   routeTraversal: {
-    path: "packages/effront/src/application/route-graph.ts",
+    path: "packages/core/src/application/route-graph.ts",
     code: `    for (const route of currentState.pages) {
       const pattern = joinRoutePaths(prefix, route.path);
       validateUnreservedPath(pattern);
@@ -98,7 +98,7 @@ export type CompiledRouteGraph<Services> = readonly [
     language: "ts",
   },
   parameterValidation: {
-    path: "packages/effront/src/server/application.ts",
+    path: "packages/core/src/server/application.ts",
     code: `    if (request.method !== "POST" && destination.page.paramsSchema !== null) {
       return yield* Schema.decodeEffect(destination.page.paramsSchema)(encodedParams).pipe(
         Effect.matchEffect({
@@ -134,7 +134,7 @@ export const coreModelPages: readonly DocPage[] = [
       <>
         <p>
           この章からは、ReactのメタフレームワークであるEffrontの現在の実装を、Web標準とEffectの境界に沿って読みます。
-          読む中心は <code>packages/effront/src</code> です。
+          読む中心は <code>packages/core/src</code> です。
           宣言時に作るルートグラフと、リクエストごとに動くサービスを区別すると、描画や画面遷移のコードの役割が見えてきます。
         </p>
         <h2 id="responsibilities">coreと統合パッケージの責務</h2>
@@ -165,8 +165,8 @@ export const coreModelPages: readonly DocPage[] = [
         <p>
           利用側の <code>src/entry.client.ts</code> はアプリケーション定義をexportする入口です。
           名前にclientが含まれていても、ここをブラウザーの起動処理と読み替えると依存関係を見失います。
-          Vite統合はこのファイルを <code>effront/application-entry</code> の既定の参照先にします。
-          利用側の <code>src/entry.workers.ts</code> はその定義を読み、
+          Vite統合はこのファイルを <code>@effront/core/application-entry</code>{" "}
+          の既定の参照先にします。 利用側の <code>src/entry.workers.ts</code> はその定義を読み、
           <code>createFetchHandler(application)</code> から作ったハンドラーを <code>fetch</code>{" "}
           として公開します。 Viteの既定のRSCエントリはこちらです。
         </p>

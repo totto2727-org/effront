@@ -8,7 +8,7 @@
 - [Current Effront validation](EFFRONT-VALIDATION.md): current rename, plugin-composition, and local verification evidence.
 - [Gitignore-driven exclusions](GITIGNORE-VALIDATION.md): generated formatting/lint exclusions, verification, and native-tool limitations.
 - [Test boundaries](TESTING.md): colocated unit tests, retained integration suites, and standard discovery.
-- [Usage guide](../packages/effront/README.md): setup, public APIs, and example commands.
+- [Usage guide](../packages/core/README.md): setup, public APIs, and example commands.
 
 The site Guide describes the common framework APIs. Platform-specific setup belongs in the Platforms section and the dedicated host architecture document.
 Superseded upstream designs and deleted reference snapshots are available in Git history.

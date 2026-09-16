@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 import { getWorkersEnv, getWorkersRequestContext } from "./host";
 import { Counter } from "./counter";
 import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";

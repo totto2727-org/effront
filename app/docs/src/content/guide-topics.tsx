@@ -36,7 +36,7 @@ export const serverFunctionsGuide: DocPage = {
         を渡してください。
       </p>
       {code(
-        `import { Application } from "effront";
+        `import { Application } from "@effront/core";
 import { Greeting } from "./greeting";
 
 export const EFFRONT = Application.effront<Greeting>();`,
@@ -234,7 +234,7 @@ export const middlewareGuide: DocPage = {
       {code(
         `import { Context, Effect } from "effect";
 import { HttpServerRequest } from "effect/unstable/http";
-import { Application } from "effront";
+import { Application } from "@effront/core";
 
 export class RequestInfo extends Context.Service<
   RequestInfo,

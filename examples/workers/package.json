@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "@effect/platform-browser": "catalog:",
+    "@effront/core": "workspace:*",
     "effect": "catalog:",
-    "effront": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

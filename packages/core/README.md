@@ -11,13 +11,13 @@ Provide required services with the application's Effect Layer.
 The runtime keeps request resources alive until the response body completes, fails, or is cancelled.
 RSC produces Flight, SSR produces initial HTML, and the browser hydrates and navigates the application.
 Routed Pages cross-fade by default while shared Layouts retain their state.
-Import `PageViewTransition` from `effront` and provide `Layer.succeed(PageViewTransition, config)` using Effect for application settings, or use `Page.make({ viewTransition: config, render })` for a page override.
+Import `PageViewTransition` from `@effront/core` and provide `Layer.succeed(PageViewTransition, config)` using Effect for application settings, or use `Page.make({ viewTransition: config, render })` for a page override.
 Set `viewTransition: false` to disable a page's animation.
 Reduced-motion preferences also suppress framework page animations.
 
 ## Package boundaries
 
-- `effront`: application APIs and the Fetch runtime.
+- `@effront/core`: application APIs and the Fetch runtime.
 - `@effront/vite`: RSC/SSR/browser build integration and the native React Compiler.
 - Host adapters add execution-environment integration separately.
 
@@ -29,7 +29,7 @@ The application definition is not a browser-only module despite the client entry
 ## Typed host context
 
 ```ts
-import { createWorkersContextAccessors } from "effront/workers";
+import { createWorkersContextAccessors } from "@effront/core/workers";
 
 type Env = { APP_LABEL: string };
 type HostContext = { requestId: string };
@@ -61,7 +61,7 @@ The `internal/*` exports support matching integration packages and are not appli
 In a VitePlus-managed application, install from the npm registry:
 
 ```sh
-vp add effront
+vp add @effront/core
 vp add -D @effront/vite @vitejs/plugin-rsc
 ```
 

@@ -54,7 +54,7 @@ The former upstream-comparison chapters and `/reading/*` routes have been remove
 Upstream version, commit records, and license provenance remain in [UPSTREAM.md](UPSTREAM.md).
 The site links upstream only through its [official website](https://effective-rsc.nikhilsnayak.dev/).
 
-Architecture excerpts are exact contiguous selections of the current `packages/effront/src` files, embedded as authored strings.
+Architecture excerpts are exact contiguous selections of the current `packages/core/src` files, embedded as authored strings.
 `core.test.tsx` compares every excerpt with the current implementation during testing.
 The colocated rendering tests cover server-highlighted excerpt output.
 Rendering performs no filesystem reads, Git execution, or GitHub requests to obtain code.
