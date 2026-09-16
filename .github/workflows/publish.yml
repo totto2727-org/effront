@@ -36,4 +36,4 @@ jobs:
             --filter @effront/vite \
             --filter @effront/cloudflare \
             --filter @effront/markdown \
-            --no-git-checks --provenance
+            --provenance
