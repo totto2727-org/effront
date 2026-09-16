@@ -30,6 +30,10 @@
       "types": "./dist/workers.d.ts",
       "default": "./dist/workers.js"
     },
+    "./http": {
+      "types": "./dist/http.d.ts",
+      "default": "./dist/http.js"
+    },
     "./internal/client-entry": {
       "types": "./dist/client/entry.d.ts",
       "default": "./dist/client/entry.js"

@@ -123,7 +123,9 @@ describe("createFetchHandler", () => {
         expect(yield* Effect.promise(() => second.text())).toBe(
           "second|two|https://workers.test/?request=second",
         );
-        expect(events).toEqual(["acquired", "acquired", "released", "released"]);
+        expect(events.filter((event) => event === "acquired")).toHaveLength(2);
+        expect(events.filter((event) => event === "released")).toHaveLength(2);
+        events.length = 0;
 
         const empty = yield* Effect.promise(() =>
           handler(
@@ -133,14 +135,7 @@ describe("createFetchHandler", () => {
           ),
         );
         expect(empty.body).toBeNull();
-        expect(events).toEqual([
-          "acquired",
-          "acquired",
-          "released",
-          "released",
-          "acquired",
-          "released",
-        ]);
+        expect(events).toEqual(["acquired", "released"]);
 
         const streaming = yield* Effect.promise(() =>
           handler(
@@ -151,16 +146,7 @@ describe("createFetchHandler", () => {
         );
         expect(streaming.body).not.toBeNull();
         yield* Effect.promise(() => streaming.body!.cancel());
-        expect(events).toEqual([
-          "acquired",
-          "acquired",
-          "released",
-          "released",
-          "acquired",
-          "released",
-          "acquired",
-          "released",
-        ]);
+        expect(events).toEqual(["acquired", "released", "acquired", "released"]);
 
         const failing = yield* Effect.promise(() =>
           handler(
@@ -175,7 +161,7 @@ describe("createFetchHandler", () => {
             () => undefined,
           ),
         );
-        expect(events.filter((event) => event === "released")).toHaveLength(5);
+        expect(events.filter((event) => event === "released")).toHaveLength(3);
       }),
   );
 });

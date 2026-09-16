@@ -5,6 +5,7 @@ import { createFromReadableStream, createTemporaryReferenceSet } from "@vitejs/p
 
 import { FlightMediaType, ServerFnIdHeader, type FlightPayload } from "../rsc/flight";
 import { InitialFlightStream } from "./initial-flight-stream";
+import { getResponseUrl } from "./response-url";
 
 export class FlightLoadError extends Schema.TaggedError<FlightLoadError>()("FlightLoadError", {
   cause: Schema.Defect(),
@@ -123,14 +124,15 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
           });
         }
 
-        if (response.url === "") {
+        const responseUrl = getResponseUrl(response);
+        if (responseUrl === "") {
           return yield* new FlightLoadError({
             cause: new Error("Expected the Flight response to include a resolved URL."),
             reason: "UnexpectedResponse",
           });
         }
         const resolvedUrl = yield* Effect.try({
-          try: () => new URL(response.url),
+          try: () => new URL(responseUrl),
           catch: (cause) =>
             new FlightLoadError({
               cause,

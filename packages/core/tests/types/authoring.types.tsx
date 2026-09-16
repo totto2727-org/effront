@@ -258,8 +258,13 @@ EFFRONT.make({
 ServiceEFFRONT.make({ routes: serviceRoutes });
 ServiceEFFRONT.make({
   routes: serviceRoutes,
-  // @ts-expect-error The application Layer must have no remaining service requirements.
-  layer: incompleteLayer, // intentional invalid Layer fixture
+  // @ts-expect-error Required authoring services must be provided by the application layer.
+  layer: Layer.empty,
+});
+ServiceEFFRONT.make({
+  routes: serviceRoutes,
+  // External inputs remain requirements of the native HTTP effect.
+  layer: incompleteLayer,
 });
 
 const NarrowEFFRONT = Application.effront<PageService>();

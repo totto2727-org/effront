@@ -8,7 +8,8 @@ This describes an integration boundary, not a claim that every host or bundler i
 
 Build an application from one `Application.effront()` identity using Page, Layout, Routes, Component, Middleware, and Server Function.
 Provide required services with the application's Effect Layer.
-The runtime keeps request resources alive until the response body completes, fails, or is cancelled.
+The runtime keeps streaming request resources alive until the response body completes, fails, or is cancelled.
+Buffered responses can release their request scope once response construction finishes.
 RSC produces Flight, SSR produces initial HTML, and the browser hydrates and navigates the application.
 Routed Pages cross-fade by default while shared Layouts retain their state.
 Import `PageViewTransition` from `@effront/core` and provide `Layer.succeed(PageViewTransition, config)` using Effect for application settings, or use `Page.make({ viewTransition: config, render })` for a page override.
@@ -22,11 +23,23 @@ Reduced-motion preferences also suppress framework page animations.
 - Host adapters add execution-environment integration separately.
 
 `src/entry.client.ts` exports the application definition, usually from `application.tsx`.
-`src/entry.workers.ts` exports the Web Fetch handler used directly by the Vite + Cloudflare host.
+`src/entry.workers.ts` exports a native Alchemy Worker in the experimental examples, or a Web Fetch handler when using the standalone Cloudflare adapter.
 The Vite integration provides browser hydration and SSR entry points.
 The application definition is not a browser-only module despite the client entry filename.
 
-## Typed host context
+## Native Effect HTTP
+
+`@effront/core/http` exports `toHttpEffect(application)` for a host-owned Effect HTTP runtime and `makeHttpEffect(application)` for capturing construction capabilities before serving requests.
+Application layers retain their external requirements in `ApplicationDefinition<Services, Error, Requirements>` and are acquired per request.
+Live request services override captured references, and the host owns their scope through streaming completion.
+Core does not depend on Alchemy or any infrastructure provider.
+
+The experimental `@effront/alchemy/cloudflare` adapter uses a lazy loader so deployment-time Worker construction never eagerly imports the RSC application.
+All repository examples and the documentation app use that native Worker path in this branch.
+See [Alchemy integration](../../docs/ALCHEMY.md) for configuration, KV capabilities, version constraints and local commands.
+The adapter is currently a private workspace package.
+
+## Standalone Fetch host context
 
 ```ts
 import { createWorkersContextAccessors } from "@effront/core/workers";
