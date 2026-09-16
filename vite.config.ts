@@ -7,12 +7,21 @@ const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url
 export default defineConfig({
   run: {
     tasks: {
+      "w:pack": {
+        command: "",
+        dependsOn: [
+          "effront#pack",
+          "@effront/vite#pack",
+          "@effront/cloudflare#pack",
+          "@effront/markdown#pack",
+        ],
+      },
       check: { command: "", dependsOn: ["js:check"] },
       fix: { command: "", dependsOn: ["js:fix"] },
       test: { command: "", dependsOn: ["js:test"] },
-      "js:check": { command: "vp check", cache: false },
+      "js:check": { command: "vp check", dependsOn: ["w:pack"], cache: false },
       "js:fix": { command: "vp check --fix", cache: false },
-      "js:test": { command: "vp test run", cache: false },
+      "js:test": { command: "vp test run", dependsOn: ["w:pack"], cache: false },
     },
   },
   fmt: { ignorePatterns },

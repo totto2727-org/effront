@@ -9,16 +9,18 @@
     "directory": "packages/vite"
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
     "LICENSE",
-    "THIRD-PARTY-NOTICES.md",
-    "!src/**/*.test.ts",
-    "!src/**/*.test.tsx"
+    "THIRD-PARTY-NOTICES.md"
   ],
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "publishConfig": {
     "access": "public",

@@ -24,20 +24,27 @@ jobs:
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
         with:
           install-args: --frozen-lockfile
-      - uses: ./.github/actions/pack-npm
+      - name: Build and pack public packages
+        run: |
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          vp run w:pack
+          for package in effront vite cloudflare markdown; do
+            mkdir -p "tmp/npm/$package"
+            tar -xzf "tmp/npm/$package.tgz" -C "tmp/npm/$package"
+          done
       - name: Publish effront
         uses: totto2727-org/monorepo/.github/actions/publish-npm@main
         with:
-          working-directory: tmp/npm/effront
+          working-directory: tmp/npm/effront/package
       - name: Publish @effront/vite
         uses: totto2727-org/monorepo/.github/actions/publish-npm@main
         with:
-          working-directory: tmp/npm/vite
+          working-directory: tmp/npm/vite/package
       - name: Publish @effront/cloudflare
         uses: totto2727-org/monorepo/.github/actions/publish-npm@main
         with:
-          working-directory: tmp/npm/cloudflare
+          working-directory: tmp/npm/cloudflare/package
       - name: Publish @effront/markdown
         uses: totto2727-org/monorepo/.github/actions/publish-npm@main
         with:
-          working-directory: tmp/npm/markdown
+          working-directory: tmp/npm/markdown/package

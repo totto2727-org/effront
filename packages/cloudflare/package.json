@@ -9,17 +9,22 @@
     "directory": "packages/cloudflare"
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
     "LICENSE",
-    "THIRD-PARTY-NOTICES.md",
-    "!src/**/*.test.ts",
-    "!src/**/*.test.tsx"
+    "THIRD-PARTY-NOTICES.md"
   ],
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./workers": "./src/workers.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./workers": {
+      "types": "./dist/workers.d.ts",
+      "default": "./dist/workers.js"
+    }
   },
   "publishConfig": {
     "access": "public",
@@ -36,6 +41,7 @@
   },
   "peerDependencies": {
     "@effront/vite": "workspace:^",
+    "effect": "catalog:",
     "effront": "workspace:^",
     "vite": "*"
   }

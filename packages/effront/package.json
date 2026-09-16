@@ -14,24 +14,31 @@
     "directory": "packages/effront"
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
     "LICENSE",
-    "THIRD-PARTY-NOTICES.md",
-    "!src/**/*.test.ts",
-    "!src/**/*.test.tsx"
+    "THIRD-PARTY-NOTICES.md"
   ],
   "type": "module",
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "react-server": "./src/index.ts",
-      "default": "./src/unsupported.ts"
+      "types": "./dist/index.d.ts",
+      "react-server": "./dist/index.js",
+      "default": "./dist/unsupported.js"
     },
-    "./workers": "./src/workers.ts",
-    "./internal/client-entry": "./src/client/entry.ts",
-    "./internal/ssr-entry": "./src/server/ssr.tsx"
+    "./workers": {
+      "types": "./dist/workers.d.ts",
+      "default": "./dist/workers.js"
+    },
+    "./internal/client-entry": {
+      "types": "./dist/client/entry.d.ts",
+      "default": "./dist/client/entry.js"
+    },
+    "./internal/ssr-entry": {
+      "types": "./dist/server/ssr.d.ts",
+      "default": "./dist/server/ssr.js"
+    }
   },
   "publishConfig": {
     "access": "public",

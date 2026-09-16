@@ -25,7 +25,7 @@ export const acceptanceAudits = (): Plugin[] => [
     generateBundle() {
       for (const id of this.getModuleIds()) {
         if (
-          /\/packages\/cloudflare\/src\/index\.ts|\/node_modules\/(?:@cloudflare\/vite-plugin|vite|wrangler)\//.test(
+          /\/(?:packages\/cloudflare|node_modules\/@effront\/cloudflare)\/(?:src\/index\.ts|dist\/index\.js)|\/node_modules\/(?:@cloudflare\/vite-plugin|vite|wrangler)\//.test(
             id,
           )
         ) {

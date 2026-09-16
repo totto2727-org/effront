@@ -9,15 +9,17 @@
     "directory": "packages/markdown"
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
-    "LICENSE",
-    "!src/**/*.test.ts",
-    "!src/**/*.test.tsx"
+    "LICENSE"
   ],
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "publishConfig": {
     "access": "public",

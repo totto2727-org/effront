@@ -271,7 +271,7 @@ test("keeps the Markdown renderer, parser and highlighters outside the actual br
   );
   expect(
     implementation.filter((id) =>
-      /@comark|comark[+_/]|packages\/markdown\/src|shiki|oniguruma|vscode-textmate|beautiful-mermaid|katex|mathjax|markdown-it|micromark|oxc-transform-react/i.test(
+      /@comark|comark[+_/]|(?:packages\/markdown\/(?:src|dist)|node_modules\/@effront\/markdown\/)|shiki|oniguruma|vscode-textmate|beautiful-mermaid|katex|mathjax|markdown-it|micromark|oxc-transform-react/i.test(
         id,
       ),
     ),

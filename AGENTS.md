@@ -36,7 +36,9 @@ From the repository root:
 - `vp run fix` applies formatting and safe lint fixes through `js:fix` (`vp check --fix`).
 - `vp run check` verifies formatting, default lint rules, and types through `js:check` (`vp check`).
 - `vp run test` runs retained unit/integration tests through `js:test` (`vp test run`).
-- Root task definitions live in `vite.config.ts` `run.tasks`, not duplicated package scripts.
+- Root aggregate tasks live in `vite.config.ts` `run.tasks`, not duplicated package scripts. Each public package owns its `pack` settings and task in its own `vite.config.ts`.
+- `vp run w:pack` generates JavaScript and declarations for all public packages and creates their npm archives under ignored `tmp/npm/`. Root `check` and `test` build these packages first so consumers resolve the same `dist/` exports as npm users.
+- In a public package, `vp pack` generates `dist/`; `vp run pack` additionally runs `vp pm pack` to produce the publishable archive. Build the workspace once before starting examples, the documentation site, or package-local browser E2E tests.
 - Do not add standalone formatter/linter tasks; use the fix/check workflow.
 - Run `vp run test` from `tests/e2e-build/` for built-artifact browser acceptance and from `tests/e2e-dev/` for development HMR acceptance.
 - Run `vp run test` from `packages/gitignore-patterns/` for that package's unit and real CLI integration tests.
@@ -79,7 +81,7 @@ D1, KV, R2, database abstractions, Node/Bun host adapters, and hosted deployment
 - Reserve `tests/` for integration or black-box contracts spanning multiple modules or external tools.
 - Use standard Vitest discovery without a root `test.include` override.
 - Name Playwright browser suites `*.e2e.ts` and select them in the Playwright configuration so Vitest does not collect them.
-- Keep colocated tests in source checks, but exclude them from shipped source packages and declaration builds.
+- Keep colocated tests in source checks, but exclude them from shipped packages and declaration builds.
 - See [test boundaries](docs/TESTING.md) for the retained integration suites.
 
 ## Package-specific rules
@@ -113,7 +115,7 @@ Run the fixed package-local fixture directly. Keep fixture copying, dynamic run 
 - `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the template's shared Nix, TypeScript, and npm actions on `@main`.
 - Publication is serialized and skips versions already on npm. Bump each changed public package's version in its pull request and update workspace peer ranges through `vp install --lockfile-only` when needed. There is no automatic version bump or tag trigger.
 - Public packages are `effront`, `@effront/vite`, `@effront/cloudflare`, and `@effront/markdown`. `@effront/gitignore-patterns` is local development tooling and is not included in this release workflow.
-- The packages ship TypeScript sources for Vite/RSC processing. `.github/actions/pack-npm` uses `vp pm pack` to resolve `workspace:` and `catalog:` protocols, then stages the exact source archives under ignored `tmp/npm/` for the shared Bun publisher. Do not replace this with bundled `vp pack` output without reviewing RSC module directives and public exports.
+- Each public package owns a `vite.config.ts` and runs `vp pack` for JavaScript and `.d.ts`, followed by `vp pm pack` to resolve `workspace:` and `catalog:` protocols into a standalone npm archive. `vp run w:pack` aggregates the package tasks. The publish workflow extracts those archives under ignored `tmp/npm/` for the shared Bun publisher. Preserve the RSC module directives, runtime entry points, raw CSS assets, and conditional exports in the generated output.
 - The public packages start at stable version `0.1.0` and use public access with the `latest` dist-tag through `publishConfig`.
 - Before merging the publishing workflow, the package owner must ensure all four npm packages exist and configure each Trusted Publisher for GitHub owner `totto2727-org`, repository `effront`, workflow `publish.yml`, and direct publication. No GitHub environment is configured. Initial publication, if required by npm, must be performed by the owner.
 - The workflow uses GitHub-hosted runners and job-scoped `id-token: write`, without long-lived npm tokens. Protect `main` and require the CI check before merging. Local checks and dry runs do not verify registry trust or package ownership.
