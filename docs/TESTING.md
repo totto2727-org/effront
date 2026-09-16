@@ -83,15 +83,3 @@ The Gitignore CLI integration tests still invoke individual tool commands intern
 
 Validated the real task interface with a temporary source probe: `check` rejected malformed formatting, `fix` repaired it, `check` then passed, and a separate TypeScript mismatch caused `check` to fail before the restored source passed again.
 `vp run test` passed all 241 tests across 33 files.
-
-## npm distribution contracts
-
-`tests/npm/package.test.ts` inspects native `vp pm publish --dry-run --json` output, requiring JavaScript and declarations while rejecting source and test modules.
-`tests/npm/declarations.test.ts` creates test-only archives in its temporary directory, installs them into an independent pnpm workspace with no source aliases, and checks the committed consumer fixture.
-Neither the package build tasks nor the publication workflow creates these test archives.
-The test verifies that package resolution remains inside that installed workspace and that TypeScript does not fall back to repository package sources.
-The fixture checks valid API composition and rejected argument/environment types with strict consumer checking.
-Like the root project, it uses `skipLibCheck: true`; this verifies public API use, not the internal consistency of every transitive dependency's declarations.
-The isolated installation prefers the dependency store populated by the root locked install; a fresh machine can still need registry metadata for package-manager bootstrap and dependency resolution.
-The test owns cleanup of its temporary workspace.
-The existing built Workers and development HMR suites exercise generated distribution exports, including client boundaries and stylesheet behavior.

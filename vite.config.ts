@@ -7,7 +7,7 @@ const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url
 export default defineConfig({
   run: {
     tasks: {
-      "w:pack": { command: "vp run -r pack", cache: false },
+      "w:pack": { command: "vp run -r pack" },
       check: { command: "", dependsOn: ["js:check"] },
       fix: { command: "", dependsOn: ["js:fix"] },
       test: { command: "", dependsOn: ["js:test"] },
