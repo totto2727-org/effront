@@ -29,12 +29,12 @@ Playwright explicitly selects the `.e2e.ts` suite, keeping it outside Vitest's s
 
 ## Verification
 
-- `vp test run` discovers both colocated unit tests and retained integration tests by default.
-- `vp check` checks all source and retained tests, including the colocated files.
+- `vp run test` uses default Vitest discovery for colocated unit tests and retained integration tests. Run `vp run w:pack` first; the check and test tasks do not build dependencies implicitly.
+- `vp run check` checks all source and retained tests, including the colocated files.
 - `(cd packages/gitignore-patterns && vp run test)` builds the generator and executes real formatter/linter acceptance.
 - `(cd tests/e2e-build && vp run test)` runs browser acceptance against the built fixture hosted by standalone Wrangler.
 - `(cd tests/e2e-dev && vp run test)` runs only development HMR checks against its minimal fixture.
-- Package archives must omit colocated tests; source-package file exclusions and the generator declaration-build exclusions enforce that boundary, not test-discovery exclusions.
+- Package archives must omit colocated tests; the public packages use test-excluding pack entries and dist-only publication, while the generator retains its declaration-build exclusions. Test discovery remains independent of publication.
 
 ## Observed migration results (2026-09-12)
 

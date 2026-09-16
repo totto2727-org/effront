@@ -24,20 +24,16 @@ jobs:
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
         with:
           install-args: --frozen-lockfile
-      - uses: ./.github/actions/pack-npm
-      - name: Publish effront
-        uses: totto2727-org/monorepo/.github/actions/publish-npm@main
-        with:
-          working-directory: tmp/npm/effront
-      - name: Publish @effront/vite
-        uses: totto2727-org/monorepo/.github/actions/publish-npm@main
-        with:
-          working-directory: tmp/npm/vite
-      - name: Publish @effront/cloudflare
-        uses: totto2727-org/monorepo/.github/actions/publish-npm@main
-        with:
-          working-directory: tmp/npm/cloudflare
-      - name: Publish @effront/markdown
-        uses: totto2727-org/monorepo/.github/actions/publish-npm@main
-        with:
-          working-directory: tmp/npm/markdown
+      - name: Build public packages
+        run: |
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          vp run w:pack
+      - name: Publish public packages
+        run: |
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          vp pm publish -r \
+            --filter effront \
+            --filter @effront/vite \
+            --filter @effront/cloudflare \
+            --filter @effront/markdown \
+            --provenance

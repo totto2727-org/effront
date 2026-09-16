@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
 import type { EnvironmentModuleNode, Plugin, PluginOption, UserConfig } from "vite";
 
-const browserEntry = fileURLToPath(new URL("./browser.ts", import.meta.url));
+const browserEntry = fileURLToPath(new URL("./browser.js", import.meta.url));
 
 const rawQuery = /[?&]raw(?:&|$)/;
 

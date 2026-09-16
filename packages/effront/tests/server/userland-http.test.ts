@@ -3,10 +3,10 @@ import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstab
 import { createFetchHandler, createWorkersContextAccessors } from "effront/workers";
 import { describe, expect, it } from "vite-plus/test";
 
-import { Application } from "../../src/index";
+import { Application } from "../../dist/index.js";
 
 // This spans application registration, native Effect HTTP routing and the public Fetch adapter.
-// Import the public Application entry source because ordinary Vitest does not select react-server.
+// Import the built Application entry directly because ordinary Vitest does not select react-server.
 class Greeting extends Context.Service<
   Greeting,
   { readonly message: (name: string) => Effect.Effect<string> }
