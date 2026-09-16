@@ -21,7 +21,7 @@ Workspace discovery uses `app/*`, `packages/*`, `tests/*`, and `examples/*`, wit
 
 ### Execution rules
 
-- Work in this independent repository at `workspace/packages/effront/`, not the parent virtual monorepo.
+- Work in this independent repository at `workspace/package/effront/`, not the parent virtual monorepo.
 - Push and create pull requests only in `totto2727-org/effront`, as authorized by the user. Never target the upstream repository. Do not publish packages or deploy without explicit authorization.
 - Use VitePlus for formatting, linting, checks, package management, and test entry points.
 - Formatting follows the parent workspace's default VitePlus baseline. Lint rules stay at VitePlus defaults. Do not restore the upstream custom Effect/Oxlint rules or add unrelated lint overrides.
