@@ -29,11 +29,11 @@ jobs:
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           vp run w:pack
       - name: Publish public packages
-        run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          vp pm publish -r \
-            --filter @effront/core \
-            --filter @effront/vite \
-            --filter @effront/cloudflare \
-            --filter @effront/markdown \
-            --provenance
+        uses: totto2727-org/monorepo/.github/actions/publish-npm@main
+        with:
+          working-directory: .
+          filters: |
+            @effront/core
+            @effront/vite
+            @effront/cloudflare
+            @effront/markdown

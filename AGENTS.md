@@ -112,7 +112,7 @@ Run the fixed package-local fixture directly. Keep fixture copying, dynamic run 
 ## npm publication
 
 - `.github/workflows/ci.yml` runs checks and tests for pull requests and `main` updates.
-- `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the template's shared Nix and TypeScript setup actions on `@main`, followed by native pnpm publication through `vp pm publish`.
+- `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix, TypeScript setup, and `publish-npm` actions on `@main`. The publisher runs filtered `vp pm publish -r --provenance`.
 - Publication is serialized and skips versions already on npm. Bump each changed public package's version in its pull request and update workspace peer ranges through `vp install --lockfile-only` when needed. There is no automatic version bump or tag trigger.
 - Public packages are `@effront/core`, `@effront/vite`, `@effront/cloudflare`, and `@effront/markdown`. `@effront/gitignore-patterns` is local development tooling and is not included in this release workflow.
 - Each public package owns a `vite.config.ts` and runs only `vp pack` for JavaScript and `.d.ts`. `vp run w:pack` delegates to `vp run -r pack`, which follows workspace dependencies without a hand-maintained list or package-specific `dependsOn`. Publication uses filtered `vp pm publish -r`, which resolves `workspace:` and `catalog:` protocols, creates the tarballs, and skips versions already on npm. No tarball staging or extraction is part of the build or publish workflow. Preserve RSC module directives, runtime entry points, CSS assets, and conditional exports.
