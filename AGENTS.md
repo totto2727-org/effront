@@ -23,13 +23,17 @@
 Run from the repository root:
 
 - `vp install` installs workspace dependencies; `vp install --frozen-lockfile` checks reproducible installation.
-- `vp run w:pack` builds package JavaScript and declarations recursively in workspace dependency order. Run it before checks, tests, or consumers that resolve `dist/` exports.
+- `vp exec --filter "./packages/*" -- vp pack` builds package JavaScript and declarations in workspace dependency order. Run it before checks, tests, or consumers that resolve `dist/` exports.
 - `vp run fix` applies formatting and safe lint fixes through `js:fix`.
 - `vp run check` runs formatting, lint, and types through `js:check`.
 - `vp run test` runs unit/integration tests through `js:test`; browser suites remain package-local.
 - Public packages own their `vite.config.ts` pack settings and `vp pack`/`vp run pack` tasks. These generate `dist/`, not npm tarballs.
 
-Root aggregates live in `vite.config.ts` `run.tasks`, not duplicated package scripts.
+The initial package build must use `vp exec` directly, not `vp run` or a root task wrapping it.
+`vp run` discovers consumer configurations even outside its filter before executing tasks; their static workspace imports cannot resolve until package `dist/` exports exist.
+`vp exec` runs `vp pack` in the selected packages in dependency order without that global task scan.
+Normal unfiltered `vp install` is sufficient; no staged installation or deferred consumer imports are needed.
+Root check/fix/test aggregates live in `vite.config.ts` `run.tasks`, not duplicated package scripts.
 Do not add redundant formatter/linter or root application/E2E runner tasks.
 Choose checks appropriate to the change, using the detailed test boundaries below.
 

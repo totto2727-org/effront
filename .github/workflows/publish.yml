@@ -27,7 +27,9 @@ jobs:
       - name: Build public packages
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          vp run w:pack
+          # vp run scans consumer configs even with --filter, before their dist imports exist.
+          # exec runs each package's pack in dependency order without that global task scan.
+          vp exec --filter "./packages/*" -- vp pack
       - name: Publish public packages
         uses: totto2727-org/monorepo/.github/actions/publish-npm@main
         with:

@@ -6,7 +6,7 @@ The content is Japanese, with source identifiers and commands preserved in Engli
 
 ## Run locally
 
-Install dependencies with `vp install` and build packages with `vp run w:pack` at the repository root, then enter the site application:
+Install dependencies with `vp install` and build packages with `vp exec --filter "./packages/*" -- vp pack` at the repository root, then enter the site application:
 
 ```sh
 cd app/docs

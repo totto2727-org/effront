@@ -25,6 +25,8 @@ jobs:
       - name: Check and test
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          vp run w:pack
+          # vp run scans consumer configs even with --filter, before their dist imports exist.
+          # exec runs each package's pack in dependency order without that global task scan.
+          vp exec --filter "./packages/*" -- vp pack
           vp run check
           vp run test
