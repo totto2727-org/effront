@@ -55,7 +55,8 @@ Alchemy owns the local host and resource bindings; application Vite configs must
 The repository root intentionally provides no example dev, build, or local-hosting script.
 The root `vite.config.ts` owns repository formatting, linting, and test configuration.
 Both examples and the documentation site use Tailwind CSS through `@tailwindcss/vite`.
-Keep sample layout and decoration in utility classes; retain custom CSS only for behavior such as View Transition pseudo-elements/keyframes.
+Keep samples minimal: introductory routes, framework features, and Tailwind utility classes without custom CSS or advanced transition demos.
+Advanced transition behavior remains covered by the independent regression fixtures.
 Client shells import the CSS entry so initial SSR includes the stylesheet.
 Independent CSS-processing regression fixtures remain separate from sample styling.
 
