@@ -19,21 +19,21 @@ See the [Workers example Usage](../../examples/workers/README.md#usage) for the 
 
 - **Application**: An Effront application with a matching `@effront/core` version.
 - **Tooling**: Vite with environment support, such as VitePlus, and its supported Node.js runtime.
-- **Host integration**: A runtime adapter that hosts RSC and SSR environments. Cloudflare Workers is the tested standalone host.
+- **Host integration**: An explicit runtime adapter for RSC and SSR, such as the Cloudflare Workers integration below or the [native Node/Bun server integration](../server/README.md).
 
 ## Setup
 
 Install the integration and its core peer in your Vite application:
 
 ```bash
-npm install @effront/core@0.1.2
-npm install --save-dev @effront/vite@0.1.2 vite
+npm install @effront/core@0.1.3
+npm install --save-dev @effront/vite@0.1.3 vite
 ```
 
 For the standalone Workers configuration below, also install its host integration:
 
 ```bash
-npm install --save-dev @effront/cloudflare@0.1.2
+npm install --save-dev @effront/cloudflare@0.1.3
 ```
 
 ## API
@@ -54,13 +54,14 @@ export default defineConfig({
 ```
 
 The plugin owns the React and Vite RSC plugins, so do not register them a second time.
-It does not install or register a host adapter, and Node and Bun adapters are not implemented.
+It does not install or register a host adapter.
+For native Node or Bun HTTP hosting, register `plugins: [effront(), effrontServer()]` with `effrontServer` from `@effront/server/vite`; see the [server package setup and runtime boundaries](../server/README.md).
 For the experimental native Alchemy integration, register `plugins: [effront(), effrontAlchemy()]` with `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`; see the [Alchemy setup and compatibility limits](../alchemy/README.md).
 Keep application-entry configuration on `effront({ application })`; the Alchemy adapter accepts only `worker` and replaces the RSC input with its native bridge.
 
 ### `EffrontViteOptions`
 
-- `rsc?: string`: The RSC environment's host entry exporting a `{ fetch }` handler. Defaults to `./src/entry.workers.ts`.
+- `rsc?: string`: The RSC environment's host entry, with exports defined by the host adapter. Defaults to the Workers `{ fetch }` entry at `./src/entry.workers.ts`; `effrontServer()` replaces this input with its native HTTP handler entry.
 - `application?: string`: The application definition entry exposed through `@effront/core/application-entry`. Defaults to `./src/entry.effront.tsx` and resolves relative to the Vite root.
 
 ```ts

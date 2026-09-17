@@ -113,16 +113,16 @@ References: [React ViewTransition](https://react.dev/reference/react/ViewTransit
 
 ## Server runtime adapters
 
-Status: planned; Node and Bun server adapters will be designed separately.
+Status: native Node and Bun HTTP hosting, static assets, and the separate Vite host integration are implemented in [`@effront/server`](../packages/server/README.md).
 
-- Keep `src/entry.effront.tsx` as the application definition export.
-- Use `src/entry.workers.ts` as the Web Fetch export and the default Vite RSC entry.
-- Vite + Cloudflare consumes `entry.workers.ts` directly.
-- For future Node/Bun hosts, use `src/entry.server.ts` for host startup and evaluate two integration paths: adapt the Fetch export from `entry.workers.ts`, or host the application directly through Effect HTTP.
-- For direct Effect HTTP hosting, build the application Runtime and reusable Layers once per server lifecycle instead of rebuilding them per request.
-- Keep request-specific values and resources in isolated request scopes, preserving response streaming, cancellation, and finalization semantics.
-- Treat improved throughput and reduced allocation from Runtime reuse as a performance hypothesis, not a measured result; compare both paths under representative concurrent SSR/Flight traffic before selecting the default.
-- Measure startup cost, latency, throughput, memory, and shutdown cleanup, and distinguish Runtime-reuse benefits from Fetch-conversion overhead.
-- Preserve the current Workers Fetch implementation while evaluating these server-only alternatives.
-- Keep server startup and runtime-specific adaptation outside the reusable Fetch entry.
-- Validate streaming, cancellation, request context, static assets, and server startup/shutdown through each real adapter before documenting it as supported.
+- Keep `src/entry.effront.tsx` as the application definition export. Node/Bun applications export a native Effect HTTP `handler` from `src/entry.rsc.ts` and start the host from the separate `src/entry.server.ts`.
+- Production uses Effect's standard `HttpServer.serve` with `NodeHttpServer` or `BunHttpServer`, not the Workers Fetch wrapper or workerd.
+- Register `effront()` and `effrontServer()` separately. The portable compiler retains distinct browser, RSC, and SSR graphs; only RSC resolves `react-server`.
+- Vite development uses `NodeHttpServer.makeHandler` on Vite's existing middleware interface and reloads the RSC entry through its environment runner. Running Vite under Node does not establish Bun-specific development runtime behavior.
+- Acquire host services once per server lifetime, while core application Layers remain request-scoped. The native HTTP host owns streaming, cancellation, and request finalization.
+- Keep the Workers Fetch implementation and its independent acceptance suites. The new server package does not restore the removed upstream Bun/Rspack runtime.
+- The Bun example requires Bun `>=1.4.2`, and the server acceptance package pins Bun `1.4.2` locally rather than changing the global runtime.
+- Successful builds and HTTP 200 responses do not establish browser hydration, Server Function, navigation, or end-to-end HMR correctness. Check those workflows, assets, and resource lifetimes through each real host before claiming their guarantees.
+
+Performance improvements from avoiding Fetch conversion or reusing host services remain unmeasured hypotheses, not documented throughput or allocation guarantees.
+AWS and Vercel hosting remain deferred.

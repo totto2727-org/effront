@@ -94,7 +94,8 @@ Platforms owns host support and configuration.
 Advanced explains application-facing runtime guarantees and operational boundaries.
 API reference describes the current public package APIs and their type contracts.
 Architecture > Implementation explains the framework's current internals, without repeating generic React or Effect tutorials.
-Deferred features and alternative Node/Bun hosting designs remain in [ROADMAP.md](../../../docs/ROADMAP.md).
+Native Node/Bun HTTP hosting is documented in [`@effront/server`](../../../packages/server/README.md); this documentation application still uses Alchemy's Cloudflare host.
+Deferred features and other hosting designs remain in [ROADMAP.md](../../../docs/ROADMAP.md).
 Contributor workflow and framework-level acceptance requirements belong here and in AGENTS.md, not in the consumer testing guide.
 
 ## Validation
@@ -149,7 +150,8 @@ Production startup therefore teaches the replacement build/host boundary rather 
 The old development warning panel is not part of the retained browser runtime, so its UI is not described as an available feature.
 Generic React and Effect concepts are linked to their official documentation, as requested, while Effront-specific Component usage and consumer testing remain useful additional guides.
 Page ViewTransition defaults and overrides are documented in Advanced and API reference.
-Future Node/Bun/Vercel hosting remains in ROADMAP.md.
+At the 2026-09-12 review, Node/Bun/Vercel hosting remained deferred.
+The subsequent native Node/Bun integration is documented in [`@effront/server`](../../../packages/server/README.md), while Vercel remains deferred in [ROADMAP.md](../../../docs/ROADMAP.md).
 
 ## Architecture baseline and hierarchy
 
