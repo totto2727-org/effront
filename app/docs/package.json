@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "alchemy dev"
+    "dev": "alchemy dev",
+    "deploy": "alchemy deploy --stage production --yes"
   },
   "dependencies": {
     "@effect/platform-browser": "catalog:",

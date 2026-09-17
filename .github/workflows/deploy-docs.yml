@@ -1,0 +1,47 @@
+name: Deploy documentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.repository == 'totto2727-org/effront' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: docs-production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          # Documentation tests compare embedded excerpts with historical commits.
+          fetch-depth: 0
+      - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
+      - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
+        with:
+          install-args: --frozen-lockfile
+      - name: Build, check, and test
+        run: |
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          vp run w:pack
+          vp run check
+          vp run test
+      - name: Deploy documentation
+        working-directory: app/docs
+        env:
+          CI: "true"
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          : "${CLOUDFLARE_ACCOUNT_ID:?Set the docs-production environment variable}"
+          : "${CLOUDFLARE_API_TOKEN:?Set the docs-production environment secret}"
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          vp run deploy

@@ -20,6 +20,35 @@ The pinned beta.77 requires a configured Cloudflare profile even when the resour
 If no profile exists, run `vp exec alchemy profile edit --profile default --add Cloudflare` interactively before starting the application.
 See [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for the configuration and verification boundary.
 
+## Production deployment and state
+
+This application uses `Cloudflare.state()` for shared remote state; the examples keep `localState()`.
+The stack remains `effront-docs`, and production deployments always use stage `production` rather than a runner-specific default.
+Local development keeps Alchemy's separate `dev_<user>` stage, but the docs state backend is Cloudflare, so do not assume that starting this application is credential-free or has no remote state-store operations.
+Do not set `ALCHEMY_STAGE=production` when running `alchemy dev`.
+
+The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to `main` and can be dispatched manually from `main` only.
+It builds workspace packages and runs the repository checks and tests before invoking `vp run deploy` from `app/docs`.
+Deployments are serialized without cancelling an in-progress reconciliation and do not run for pull requests or forks.
+Alchemy builds the application as part of deployment; there is no separate Wrangler deployment or local-state artifact to restore.
+
+Before enabling deployment, create the GitHub Environment `docs-production`, restrict it to `main`, and configure any required approval rules.
+Set its variable `CLOUDFLARE_ACCOUNT_ID` and secret `CLOUDFLARE_API_TOKEN` for the intended Cloudflare account.
+Credentials are passed only to the deployment step; Alchemy reads them directly in CI without a saved local profile.
+The command uses `alchemy deploy --stage production --yes`, including automatic creation or upgrade of Alchemy's account-wide `alchemy-state-store` Worker when needed.
+The API token must permit the docs Worker and assets deployment as well as state-store bootstrap/access, including its Durable Objects and Cloudflare Secrets Store resources; a token limited to uploading the docs Worker is not sufficient.
+Review the pinned Alchemy provider's required permissions with the account administrator before the first run.
+An Alchemy upgrade can also update this shared state-store Worker, so coordinate upgrades with other stacks in the same account.
+
+Changing the backend does not migrate an existing local deployment's state.
+If `effront-docs` has already been deployed with local state, preserve that state and complete an explicit migration or adoption review before running this workflow against the same resources.
+Do not delete local state or assume that remote state will discover previously managed resources automatically.
+For a new, never-deployed production stage, the first approved workflow run initializes remote state.
+No cloud deployment or credential/permission validation is implied by local checks.
+
+References: [Alchemy state stores](https://alchemy.run/state-store), [Cloudflare state implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/StateStore/State.ts), and [Cloudflare authentication implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Auth/AuthProvider.ts).
+API and CI behavior were checked against the installed `alchemy@2.0.0-beta.77`; the source URLs track upstream main.
+
 ## Rendering and authoring
 
 Pages are JSX functions in `src/content/guides.tsx`, `guide-topics.tsx`, `platforms.tsx`, `advanced.tsx`, `api-reference.tsx`, `core-model.tsx`, and `core-runtime.tsx`.
