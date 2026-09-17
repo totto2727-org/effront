@@ -9,6 +9,8 @@
 - `packages/cloudflare/`: Cloudflare Vite integration (`@effront/cloudflare`) and separate runtime accessors (`@effront/cloudflare/workers`).
 - `packages/markdown/`: Vite glob collections and comark React SSR rendering (`@effront/markdown`).
 - `examples/markdown/`: file-relative Markdown routing and asset consumer.
+- `examples/workers/`: standalone Cloudflare Worker consumer without Alchemy, using `vp dev`, `vp build`, and `vp preview`.
+- `examples/basic`: relative symlink to `alchemy`, excluded from workspace discovery to avoid registering it twice.
 - `examples/alchemy/`: native Alchemy Worker consumer with construction-time KV capabilities and request-local application services.
 - `app/docs/`: SSR Guide, API reference, and implementation architecture site, using the framework itself with shadcn/ui and Tailwind Typography.
 - `tests/e2e-build/`: independent Playwright acceptance against its package-local fixture built for standalone Wrangler.
@@ -17,7 +19,7 @@
 - `docs/`: current architecture and verification documentation.
 - Removed upstream implementations and references remain available in Git history, not in the working tree.
 
-Workspace discovery uses `app/*`, `packages/*`, `tests/*`, and `examples/*`, without per-project entries.
+Workspace discovery uses `app/*`, `packages/*`, `tests/*`, and `examples/*`, with only the `examples/basic` alias excluded.
 
 ## Development commands
 
@@ -52,10 +54,13 @@ For the documentation site, enter `app/docs/` and use `vp run dev`; see [site op
 The site has colocated content and rendering tests; framework browser acceptance uses the independent E2E fixtures rather than starting this site.
 
 To run an example, enter `examples/alchemy/` or `examples/markdown/` and use `vp run dev` to invoke Alchemy CLI.
-Alchemy owns the local host and resource bindings; application Vite configs must not register a second Cloudflare runtime plugin.
+For `examples/workers/`, after root `vp install` and `vp run w:pack`, use the built-in `vp dev`, `vp build`, and `vp preview` commands; this sample uses standalone Cloudflare hosting without Alchemy.
+For Vite-independent local acceptance, run `vp exec wrangler dev --config dist/rsc/wrangler.json --local --no-bundle` from that example after building.
+`examples/basic -> alchemy` is a relative symlink, not another package; retain its workspace exclusion and verify `vp run dev` from the alias when changing it.
+Alchemy owns the local host and resource bindings for the Alchemy-based applications; application Vite configs must not register a second Cloudflare runtime plugin.
 The repository root intentionally provides no example dev, build, or local-hosting script.
 The root `vite.config.ts` owns repository formatting, linting, and test configuration.
-Both examples and the documentation site use `@effront/tailwind`, which includes `@tailwindcss/vite`.
+All examples and the documentation site use `@effront/tailwind`, which includes `@tailwindcss/vite`.
 The Alchemy sample uses a virtual default stylesheet; Markdown and docs explicitly select their Typography/theme stylesheet.
 Application definitions live in `src/entry.effront.tsx`; `entry.workers.ts` documents the customizable host wiring and required integration boundaries.
 Keep feature-independent React UI under `components/`; colocate greeting services, capabilities, Server Functions, and their UI under `features/greeting/` in the Workers sample.
@@ -114,8 +119,6 @@ Node/Bun/AWS host adapters and hosted deployments remain outside the implemented
 - Use typed failures for input and I/O errors, and plain `TypeError` only for violated wiring invariants.
 - Do not count a build, mock, or copied-source test as proof that the public Workers fetch path works. Test both `vp dev` and the Vite-independent Wrangler artifact.
 
-_This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._
-
 ## Public documentation audience
 
 - Write common Guide pages for npm package consumers, not contributors cloning this repository.
@@ -147,3 +150,5 @@ Run the fixed package-local fixture directly. Keep fixture copying, dynamic run 
 For this user-requested Alchemy prototype, keep the existing 0.1.1 versions and keep `@effront/alchemy` private.
 Do not publish the prototype or add it to the release filters without a separate release decision.
 See [Alchemy architecture and constraints](docs/ALCHEMY.md).
+
+_This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._

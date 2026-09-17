@@ -141,3 +141,8 @@ Both behaviors have maintained regression tests and should be revisited together
 
 References: [Alchemy](https://alchemy.run/), [state stores](https://alchemy.run/state-store), [native Worker bridge](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/WorkerBridge.ts), [Vite source integration](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/Sources/Vite.ts), and [KV binding construction](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/KV/NamespaceBinding.ts).
 The source links track upstream main; the compatibility findings above were checked against the installed beta.77 package.
+
+## Alternative host
+
+`examples/basic` is a relative symlink to `examples/alchemy`, the default native Alchemy sample.
+For Cloudflare Workers without Alchemy, use [`examples/workers`](../examples/workers/README.md), which uses a static application import, `createFetchHandler`, and Wrangler bindings.

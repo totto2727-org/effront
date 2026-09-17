@@ -3,6 +3,7 @@ packages:
   - packages/*
   - tests/*
   - examples/*
+  - "!examples/basic"
 
 catalog:
   alchemy: 2.0.0-beta.77
