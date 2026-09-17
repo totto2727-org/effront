@@ -45,6 +45,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 ## Development tools
 
 - **VitePlus**: pinned in `pnpm-workspace.yaml`; root config owns shared checks and standard Vitest discovery.
+- **Gitignore exclusions**: `vite.config.ts` uses the published [JSR package](https://jsr.io/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
 - **Effect**: consult installed-version source and official documentation before changing APIs.
 - **Playwright/workerd**: browser acceptance exercises actual host behavior; a successful build or mock does not establish runtime correctness.
 

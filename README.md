@@ -12,7 +12,6 @@ Choose the package Usage that matches your goal:
 - [Alchemy](packages/alchemy/README.md#usage): supply native resource capabilities to request rendering and Server Functions.
 - [Markdown](packages/markdown/README.md#usage): render a typed content collection with file-relative routes and assets.
 - [Tailwind](packages/tailwind/README.md#usage): apply utility styles to initial HTML and hydrated components without a hand-written stylesheet.
-- [Gitignore patterns](packages/gitignore-patterns/README.md#usage): derive tool exclusions that follow Git's reachable ignore rules.
 
 The [standalone Workers example](examples/workers/README.md#usage) combines the runtime, tooling, and styling integrations in a small application.
 
@@ -39,7 +38,6 @@ Effront packages are acquired individually; use the setup instructions for the c
 - [Vite integration](packages/vite/README.md#setup) and [standalone Cloudflare hosting](packages/cloudflare/README.md#setup).
 - [Experimental native Alchemy adapter](packages/alchemy/README.md#setup).
 - [Markdown content](packages/markdown/README.md#setup) and [Tailwind styling](packages/tailwind/README.md#setup).
-- [Gitignore pattern generator](packages/gitignore-patterns/README.md#setup).
 
 ## API
 
@@ -50,7 +48,6 @@ Effront packages are acquired individually; use the setup instructions for the c
 - [Alchemy](packages/alchemy/README.md#api): native Worker construction and deferred application loading.
 - [Markdown](packages/markdown/README.md#api): collections, parsing, and typed content errors.
 - [Tailwind](packages/tailwind/README.md#api): generated or explicit automatically loaded stylesheets.
-- [Gitignore patterns](packages/gitignore-patterns/README.md#api): exclusion snapshot generation for tooling consumers.
 
 ## Development
 

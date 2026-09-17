@@ -7,7 +7,7 @@
   "scripts": {},
   "devDependencies": {
     "@effect/vitest": "catalog:",
-    "@effront/gitignore-patterns": "workspace:*",
+    "@totto2727/gitignore-patterns": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

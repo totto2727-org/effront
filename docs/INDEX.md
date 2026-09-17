@@ -16,7 +16,7 @@ For application setup and public APIs, start with the [Effront README](../README
 - [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md): native construction, host context, and local profile boundaries.
 - [Page View Transitions](../packages/core/docs/VIEW-TRANSITIONS.md): core navigation and transition semantics.
 - [Markdown guide](../packages/markdown/docs/GUIDE.md): collections, rendering, assets, and parser contracts.
-- [Gitignore verification](../packages/gitignore-patterns/docs/VALIDATION.md): generator behavior and CLI limitations.
+- [External Gitignore generator](https://jsr.io/@totto2727/gitignore-patterns/doc): the separately maintained dependency used by repository formatting and lint configuration.
 - [Documentation-site authoring](../app/docs/docs/AUTHORING.md): page and implementation-excerpt maintenance.
 
 ## Historical cross-package verification
