@@ -35,7 +35,7 @@ Other explicitly required services remain application dependencies, including na
 
 ## Vite graphs
 
-Configure `effrontAlchemy({ worker: "./src/entry.workers.ts", stack: { name: "example", stage: "local" } })` and declare the native Worker with `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
+Configure `effrontAlchemy()` and declare the native Worker with `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
 The plugin owns the generated RSC bridge, Effront's browser and SSR integration, and the runtime-phase compilation flag.
 SSR output defaults to a child directory inside the RSC Worker artifact so standalone workerd can load it.
 Explicit output directories are preserved and must still be packaged together by the host.
@@ -43,7 +43,7 @@ Alchemy's injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` runtime bindings ove
 
 The plugin does not start a host.
 Alchemy injects its own host during official CLI orchestration.
-From `examples/workers/`, `examples/markdown/`, or `app/docs/`, run `vp run dev`, which invokes `vp exec alchemy dev`.
+From `examples/workers/`, `examples/markdown/`, or `app/docs/`, run `vp run dev`, which invokes `alchemy dev`.
 The native Worker props own their development ports: 1337, 1338, and 1339 respectively.
 Application Vite configs register only the Effront integration and applicable application plugins, never a manual `@alchemy.run/cloudflare-runtime` host or an injection-environment guard.
 The independent `tests/e2e-alchemy/` package owns the separate runtime host used for its standalone local acceptance.
@@ -65,3 +65,6 @@ The test-owned standalone Vite/workerd host does not require cloud resource crea
 The standard Alchemy CLI Cloudflare provider and its local sidecar still install profile/authentication layers, even with `localState()`.
 Standalone local acceptance is not proof that the standard Alchemy CLI is authentication-free.
 No package publication or cloud deployment is included in this experiment.
+
+The default Worker entry is `./src/entry.workers.ts`; use the optional `worker` setting only for a different layout.
+The bridge uses Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` bindings, with no application-side stage default or duplicate stack configuration.

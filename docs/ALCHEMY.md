@@ -72,7 +72,8 @@ The standalone legacy test fixtures keep their Wrangler configuration because th
 Alchemy CLI injects the Cloudflare runtime host and the bindings registered during native construction.
 Applications do not import the runtime plugin or inspect `ALCHEMY_CLOUDFLARE_VITE_INJECTED`.
 The independent browser test owns its local runtime plugin and KV simulator; that setup is not part of the application configuration.
-The native bridge prefers Alchemy's injected stack name and stage over the test-only fallback identity.
+The native bridge uses only Alchemy's injected stack name and stage.
+Independent E2E hosts supply these runtime bindings explicitly; applications use `effrontAlchemy()` without duplicate stack configuration.
 
 ## Local commands
 

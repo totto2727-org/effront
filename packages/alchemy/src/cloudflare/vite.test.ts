@@ -10,12 +10,11 @@ const root = fileURLToPath(new URL("../../../../examples/workers/", import.meta.
 
 describe("Alchemy Vite graph composition", () => {
   it("owns a native RSC bridge and runtime flag without installing a second host", async () => {
-    const stack = { name: "example", stage: "local" };
     const config = await resolveConfig(
       {
         configFile: false,
         root,
-        plugins: effrontAlchemy({ worker: "./src/worker.ts", stack }),
+        plugins: effrontAlchemy(),
       },
       "build",
     );
@@ -43,11 +42,13 @@ describe("Alchemy Vite graph composition", () => {
     const source = Reflect.apply(loadEntry, {}, [id]) as string;
     expect(source).toContain('import { env, WorkerEntrypoint } from "cloudflare:workers"');
     expect(source).toContain('"alchemy/Cloudflare/Workers"');
-    expect(source).toContain(JSON.stringify(normalizePath(resolve(root, "src/worker.ts"))));
-    expect(source).toContain(JSON.stringify(stack));
-    expect(source).toContain("env.ALCHEMY_STACK_NAME ?? configuredStack.name");
-    expect(source).toContain("env.ALCHEMY_STAGE ?? configuredStack.stage");
+    expect(source).toContain(JSON.stringify(normalizePath(resolve(root, "src/entry.workers.ts"))));
+    expect(source).toContain("name: env.ALCHEMY_STACK_NAME");
+    expect(source).toContain("stage: env.ALCHEMY_STAGE");
+    expect(source).not.toContain("configuredStack");
+    expect(source).toContain("Effront requires Alchemy runtime stack bindings");
     expect(source).not.toContain("async fetch");
+    expect(config.environments["rsc"]?.optimizeDeps.entries).toEqual(["./src/entry.workers.ts"]);
   });
 
   it("keeps an explicit client application entry separate from the native worker", async () => {
@@ -57,7 +58,6 @@ describe("Alchemy Vite graph composition", () => {
         root,
         plugins: effrontAlchemy({
           worker: "./src/worker.ts",
-          stack: { name: "example", stage: "test" },
           application: "./client/application.ts",
         }),
       },
@@ -69,10 +69,8 @@ describe("Alchemy Vite graph composition", () => {
     });
   });
 
-  it("rejects incomplete stack identity", () => {
-    expect(() =>
-      effrontAlchemy({ worker: "./worker.ts", stack: { name: "example", stage: "" } }),
-    ).toThrow(TypeError);
+  it("rejects an empty explicit worker entry", () => {
+    expect(() => effrontAlchemy({ worker: "" })).toThrow(TypeError);
   });
 
   it("nests SSR below an explicitly configured RSC output", async () => {
@@ -83,7 +81,6 @@ describe("Alchemy Vite graph composition", () => {
         environments: { rsc: { build: { outDir: "custom/worker" } } },
         plugins: effrontAlchemy({
           worker: "./src/worker.ts",
-          stack: { name: "example", stage: "local" },
         }),
       },
       "build",
@@ -99,7 +96,6 @@ describe("Alchemy Vite graph composition", () => {
         environments: { ssr: { build: { outDir: "custom/server-renderer" } } },
         plugins: effrontAlchemy({
           worker: "./src/worker.ts",
-          stack: { name: "example", stage: "local" },
         }),
       },
       "build",

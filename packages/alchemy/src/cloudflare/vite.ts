@@ -10,10 +10,8 @@ const entryId = "virtual:effront/alchemy/cloudflare/entry";
 const resolvedEntryId = `\0${entryId}`;
 
 export type EffrontAlchemyOptions = {
-  /** Module default-exporting the native Alchemy Worker construct. Relative to the Vite root. */
-  readonly worker: string;
-  /** Standalone local identity. Alchemy's injected runtime stack bindings take precedence. */
-  readonly stack: { readonly name: string; readonly stage: string };
+  /** Module default-exporting the native Alchemy Worker construct. Relative to the Vite root. Defaults to `./src/entry.workers.ts`. */
+  readonly worker?: string;
   /** Browser-safe application definition entry used by Effront's client graph. */
   readonly application?: string;
 };
@@ -26,11 +24,10 @@ export type EffrontAlchemyOptions = {
  * configs must not register another runtime host. Standalone acceptance tests
  * own their separate local workerd host.
  */
-export const effrontAlchemy = (options: EffrontAlchemyOptions): PluginOption[] => {
-  if (!options.worker || !options.stack.name || !options.stack.stage) {
-    throw new TypeError("Effront Alchemy requires a Worker module and a stack name and stage.");
-  }
-  let worker = options.worker;
+export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOption[] => {
+  const workerEntry = options.worker ?? "./src/entry.workers.ts";
+  if (!workerEntry) throw new TypeError("Effront Alchemy requires a nonempty Worker module.");
+  let worker = workerEntry;
   const optimizeDeps = () => ({
     rolldownOptions: {
       transform: { define: { "globalThis.__ALCHEMY_RUNTIME__": "true" } },
@@ -46,7 +43,7 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions): PluginOption[] =
         rsc: {
           optimizeDeps: {
             ...optimizeDeps(),
-            entries: [options.worker],
+            entries: [workerEntry],
             include: [
               "alchemy/Cloudflare",
               "alchemy/Cloudflare/Workers",
@@ -76,7 +73,7 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions): PluginOption[] =
       },
     }),
     configResolved: (config) => {
-      worker = normalizePath(resolve(config.root, options.worker));
+      worker = normalizePath(resolve(config.root, workerEntry));
     },
     resolveId: (id) => (id === entryId ? resolvedEntryId : undefined),
     load: (id) => {
@@ -85,8 +82,8 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions): PluginOption[] =
         'import { env, WorkerEntrypoint } from "cloudflare:workers";',
         'import { makeWorkerBridge } from "alchemy/Cloudflare/Workers";',
         `import entrypoint from ${JSON.stringify(worker)};`,
-        `const configuredStack = ${JSON.stringify(options.stack)};`,
-        "const stack = { name: env.ALCHEMY_STACK_NAME ?? configuredStack.name, stage: env.ALCHEMY_STAGE ?? configuredStack.stage };",
+        "const stack = { name: env.ALCHEMY_STACK_NAME, stage: env.ALCHEMY_STAGE };",
+        'if (typeof stack.name !== "string" || !stack.name || typeof stack.stage !== "string" || !stack.stage) throw new TypeError("Effront requires Alchemy runtime stack bindings. Start the application with alchemy dev.");',
         "export default makeWorkerBridge(WorkerEntrypoint, { entrypoint, stack });",
       ].join("\n");
     },
