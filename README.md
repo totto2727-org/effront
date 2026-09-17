@@ -1,1 +1,1 @@
-packages/effront/README.md
+packages/core/README.md
