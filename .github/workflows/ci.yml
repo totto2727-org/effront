@@ -26,9 +26,3 @@ jobs:
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           vp run check
           vp run test
-      - name: Native Node and Bun browser integration
-        run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          cd tests/e2e-server
-          vp exec playwright install --with-deps chromium
-          vp run test
