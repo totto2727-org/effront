@@ -4,7 +4,7 @@ import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { Application } from "@effront/core";
 import { manual } from "../content";
-import { Shell } from "./shell";
+import { Shell } from "./components/shell";
 
 const EFFRONT = Application.effront();
 const RootLayout = EFFRONT.Layout.make({

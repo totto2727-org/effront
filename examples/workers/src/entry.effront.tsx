@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { EFFRONT } from "./effront";
-import { GreetingAction } from "./greeting-action";
-import { Host, HostLive } from "./host";
-import { Counter } from "./counter";
-import { ExampleShell } from "./example-shell";
+import { GreetingAction } from "./features/greeting/greeting-action";
+import { Host, HostLive } from "./features/greeting/host";
+import { Counter } from "./components/counter";
+import { Shell } from "./components/shell";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -14,7 +14,7 @@ const RootLayout = EFFRONT.Layout.make({
           <title>Effront Workers</title>
         </head>
         <body className="m-8 bg-slate-50 font-sans text-blue-950">
-          <ExampleShell>{children}</ExampleShell>
+          <Shell>{children}</Shell>
         </body>
       </html>,
     ),

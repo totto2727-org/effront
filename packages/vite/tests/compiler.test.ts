@@ -51,8 +51,12 @@ describe("default native React Compiler", () => {
   });
 
   it("memoizes the real example Counter by default, unlike a compiler-disabled control", async () => {
-    const enabled = await compiled.environments["client"]!.transformRequest("/src/counter.tsx");
-    const disabled = await uncompiled.environments["client"]!.transformRequest("/src/counter.tsx");
+    const enabled = await compiled.environments["client"]!.transformRequest(
+      "/src/components/counter.tsx",
+    );
+    const disabled = await uncompiled.environments["client"]!.transformRequest(
+      "/src/components/counter.tsx",
+    );
 
     expect(enabled?.code).toContain("compiler-runtime");
     expect(enabled?.code).toContain(memoSentinel);
@@ -74,9 +78,9 @@ describe("default native React Compiler", () => {
     expect(ssr.config.resolve.conditions).not.toContain("react-server");
     expect(rsc.config.resolve.conditions).toContain("react-server");
 
-    const serverRendered = await ssr.transformRequest("/src/counter.tsx");
-    const serverReference = await rsc.transformRequest("/src/counter.tsx");
-    const serverApplication = await rsc.transformRequest("/src/application.tsx");
+    const serverRendered = await ssr.transformRequest("/src/components/counter.tsx");
+    const serverReference = await rsc.transformRequest("/src/components/counter.tsx");
+    const serverApplication = await rsc.transformRequest("/src/entry.effront.tsx");
     expect(serverRendered?.code).toContain("Count:");
     expect(serverReference?.code).toContain("registerClientReference");
     expect(serverApplication?.code).toContain("React Server Components on Workers");

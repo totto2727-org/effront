@@ -13,7 +13,7 @@ Pass a deferred application import to `makeApplicationHttpEffect` so Node-side i
 Effect.gen(function* () {
   const kv = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
   const fetch = yield* makeApplicationHttpEffect(() =>
-    import("./application").then((module) => module.default),
+    import("./entry.effront").then((module) => module.default),
   ).pipe(Effect.provideService(CacheClient, kv));
   return { fetch: fetch.pipe(Effect.orDie) };
 }).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding));

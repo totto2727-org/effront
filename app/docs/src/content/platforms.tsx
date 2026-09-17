@@ -90,7 +90,7 @@ export default Cloudflare.Worker("App", {
   vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
 }, Effect.gen(function* () {
   const fetch = yield* makeApplicationHttpEffect(
-    () => import("./application").then(module => module.default),
+    () => import("./entry.effront").then(module => module.default),
   );
   return { fetch: fetch.pipe(Effect.orDie) };
 }));`,
@@ -132,7 +132,7 @@ export default Cloudflare.Worker("App", {
           `src/
   entry.workers.ts
   entry.client.ts
-  application.tsx
+  entry.effront.tsx
 vite.config.ts
 wrangler.jsonc`,
           "text",

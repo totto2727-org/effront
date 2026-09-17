@@ -29,7 +29,7 @@ The existing standalone `@effront/cloudflare` and Fetch wrapper remain as compat
 
 Alchemy Worker construction resolves capabilities and records infrastructure bindings.
 It must not import the application eagerly: the application belongs to the RSC graph, while construction runs in the deployment tool and during isolate initialization.
-Use `makeApplicationHttpEffect(() => import("./application").then(module => module.default))` to defer that import until a request.
+Use `makeApplicationHttpEffect(() => import("./entry.effront").then(module => module.default))` to defer that import until a request.
 The construction Effect captures service references, not ownership of their lifetimes.
 The handler merges the live request context over those references and does not restore a construction-time request, runtime context, router or scope.
 

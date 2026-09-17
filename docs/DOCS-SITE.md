@@ -33,7 +33,7 @@ The server supplies the destination's navigation metadata as Layout props, while
 Sidebar search and scroll state belong to that persistent shell, and only the Page article participates in the framework's named page transition.
 Document scrolling and heading anchors remain native navigation behavior rather than a global scroll lock.
 
-To add a page, define its stable heading IDs and register its explicit route in `src/application.tsx`.
+To add a page, define its stable heading IDs and register its explicit route in `src/entry.effront.tsx`.
 Update the catalog count when deliberately changing the number of pages.
 
 ## Architecture implementation chapters

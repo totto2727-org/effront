@@ -1,9 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import "./styles.css";
+import "../styles.css";
 
-export function ExampleShell({ children }: { readonly children: ReactNode }) {
+export function Shell({ children }: { readonly children: ReactNode }) {
   return (
     <>
       <nav className="flex flex-wrap gap-4">

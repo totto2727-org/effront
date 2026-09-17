@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import "./styles.css";
+import "../styles.css";
 
 export function Shell({ children }: { readonly children: ReactNode }) {
   const [count, setCount] = useState(0);

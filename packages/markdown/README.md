@@ -62,7 +62,7 @@ export const renderArticle = (entry: MarkdownEntry) =>
 
 Use `yield* manual` to obtain the collection, then call `collection.get(request.url)` with the original request pathname or relative request URL.
 `get` returns `undefined` for unknown pages, so the application can return a 404 before streaming begins.
-The [complete Effront example](../../examples/markdown/src/application.tsx) uses one catch-all route with request-local entry selection.
+The [complete Effront example](../../examples/markdown/src/entry.effront.tsx) uses one catch-all route with request-local entry selection.
 
 ## API
 
