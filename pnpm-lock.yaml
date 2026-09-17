@@ -602,6 +602,15 @@ importers:
       '@alchemy.run/cloudflare-runtime':
         specifier: 'catalog:'
         version: 2.0.0-beta.77(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
+      '@effront/alchemy':
+        specifier: workspace:*
+        version: link:../../packages/alchemy
+      '@effront/tailwind':
+        specifier: workspace:*
+        version: link:../../packages/tailwind
+      '@effront/vite':
+        specifier: workspace:*
+        version: link:../../packages/vite
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0

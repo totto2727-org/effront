@@ -7,6 +7,9 @@
   },
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
+    "@effront/alchemy": "workspace:*",
+    "@effront/tailwind": "workspace:*",
+    "@effront/vite": "workspace:*",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
     "vite-plus": "catalog:"

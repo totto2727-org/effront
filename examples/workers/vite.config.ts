@@ -1,10 +1,14 @@
-import { effrontCloudflare } from "@effront/cloudflare";
-import { effrontTailwind } from "@effront/tailwind";
-import { effront } from "@effront/vite";
-import { defineConfig } from "vite-plus";
+import { defineConfig, lazyPlugins } from "vite-plus";
 
 export default defineConfig({
-  plugins: [effrontTailwind(), effront(), effrontCloudflare()],
+  // Task discovery must not resolve workspace dist exports before the first pack.
+  plugins:
+    lazyPlugins(async () => {
+      const { effrontCloudflare } = await import(/* @vite-ignore */ "@effront/cloudflare");
+      const { effrontTailwind } = await import(/* @vite-ignore */ "@effront/tailwind");
+      const { effront } = await import(/* @vite-ignore */ "@effront/vite");
+      return [effrontTailwind(), effront(), effrontCloudflare()];
+    }) ?? [],
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
     options: { typeAware: true, typeCheck: true },
