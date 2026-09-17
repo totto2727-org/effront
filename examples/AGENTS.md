@@ -26,6 +26,7 @@ Run root `vp install` and `vp run w:pack` before entering an example.
 - Export the application definition directly from `src/entry.effront.tsx`; do not restore a re-export-only `entry.client.ts`.
 - Native Alchemy construction keeps its fixed deferred `entry.effront` import through `makeApplicationHttpEffect`; static imports would evaluate RSC application code during infrastructure planning.
 - Alchemy CLI owns its Vite host. Do not add a manual runtime plugin, injection-environment guard, application stage fallback, or explicit stage flag to ordinary scripts.
+- Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront` and the native `worker` only on `effrontAlchemy`; keep the existing Tailwind integration separate.
 - Standalone Workers uses its own Fetch entry, `effront()` plus `effrontCloudflare()`, and Wrangler configuration; keep its dependency graph free of Alchemy.
 
 ## Package-specific rules

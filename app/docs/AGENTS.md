@@ -24,6 +24,7 @@
 - Update source excerpts, explanations, and reviewed baseline metadata together when core changes. Tests compare the excerpts to both the current source and the explicit historical baseline.
 - Keep shared DocsShell/sidebar/search/scroll state persistent through route changes; transition only the Page article, not the entire shell.
 - Alchemy owns the host. Use the existing explicit Tailwind stylesheet through the Tailwind integration without a redundant manual CSS import or runtime plugin.
+- Register `effront()` and `effrontAlchemy()` separately; application-entry options belong to `effront`, while the Alchemy adapter accepts only the native Worker entry.
 
 ## Task-specific documentation
 

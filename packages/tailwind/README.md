@@ -46,7 +46,7 @@ Register it once alongside the application's Effront integration; do not also re
 
 ```ts
 export default defineConfig({
-  plugins: [effrontTailwind(), effrontAlchemy()],
+  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
 });
 ```
 

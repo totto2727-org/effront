@@ -74,24 +74,31 @@ This filtering does not remove the application's own capability lifetime obligat
 
 ### `effrontAlchemy(options?)` and `EffrontAlchemyOptions`
 
-Configure the native bridge and Effront's RSC, SSR, and browser graphs:
+Register the native bridge alongside the separate Effront compiler integration:
 
 ```ts
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
+import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
-export default defineConfig({ plugins: [effrontAlchemy()] });
+export default defineConfig({ plugins: [effront(), effrontAlchemy()] });
 ```
 
-| Option                 | Meaning                                                                                                                                                                          |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `worker?: string`      | Native Alchemy Worker module relative to the Vite root, defaulting to `./src/entry.workers.ts`. It must default-export the Worker construct. An empty string throws `TypeError`. |
-| `application?: string` | Application definition entry in the RSC graph, defaulting to `./src/entry.effront.tsx` through the Effront integration.                                                          |
+| Option            | Meaning                                                                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worker?: string` | Native Alchemy Worker module relative to the Vite root, defaulting to `./src/entry.workers.ts`. It must default-export the Worker construct. An empty string throws `TypeError`. |
+
+`worker` is the only Alchemy option.
+`effront()` from `@effront/vite` owns the React, RSC, SSR, and browser compilation graphs and the application-entry alias; `effrontAlchemy()` does not register it implicitly.
+To select a custom application entry, use `plugins: [effront({ application: "./src/application.tsx" }), effrontAlchemy({ worker: "./src/worker.ts" })]`.
+The application entry defaults to `./src/entry.effront.tsx` and resolves relative to the Vite root.
 
 Declare the Worker's Vite environments as `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
 The adapter owns the RSC bridge entry, so do not also set `vite.main`.
-It supplies the runtime-phase compilation flag, generated bridge, and browser/SSR integration.
-SSR output defaults to a child directory of the RSC Worker artifact; explicit directories are preserved and must still be packaged together by the host.
+Its post-order configuration hook replaces the RSC Rollup input with its private generated bridge and supplies the runtime-phase compilation flag.
+This replacement takes precedence over `effront({ rsc })` in either plugin registration order.
+Do not use `effront({ rsc })` to select the native Worker module; use `effrontAlchemy({ worker })` instead.
+A separate pre-order hook defaults SSR output to a child directory of the RSC Worker artifact; explicit directories are preserved and must still be packaged together by the host.
 
 `effrontAlchemy()` configures compilation, not a running host.
 Alchemy CLI injects the Cloudflare host and bindings during official orchestration.

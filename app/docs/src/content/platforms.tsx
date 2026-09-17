@@ -97,12 +97,33 @@ export default Cloudflare.Worker("App", {
           "ts",
         )}
         <p>
-          Vite には <code>effrontAlchemy</code> を登録します。 Alchemy CLI が runtime plugin と
-          binding を用意するため、アプリ側の手動 host
+          Vite には <code>effront()</code> と <code>effrontAlchemy()</code> を別々に登録します。
+          React・RSC・SSR・browser のコンパイルとアプリのエントリ解決は <code>effront</code>{" "}
+          が担い、 Alchemy アダプターは native Worker bridge と runtime
+          のコンパイル設定を追加します。
+          <code>application</code> は <code>effront</code> だけに指定し、
+          <code>effrontAlchemy</code> のオプションは <code>worker</code> のみです。 Alchemy CLI が
+          runtime plugin と binding を用意するため、アプリ側の手動 host
           登録や環境変数による条件分岐は不要です。手書きの <code>wrangler.toml</code>
           も使用しません。各アプリのディレクトリで <code>vp run dev</code>
           を実行すると、公式の <code>alchemy dev</code> が起動します。 beta.77
           ではローカル資源を使う場合も Cloudflare profile の初期設定が必要です。
+        </p>
+        {code(
+          `import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite-plus";
+
+export default defineConfig({
+  plugins: [effront(), effrontAlchemy()],
+});`,
+          "ts",
+        )}
+        <p>
+          固定中の beta.77 では profile 設定後も公式 CLI の開発ホストで HTTP 500 が再現しています。
+          Alchemy の Node 専用 export が workerd に入り、<code>workerd/lib/main.js</code> で
+          <code>resolve is not a function</code> が発生する既知の制限です。 production build /
+          preview の成功は、開発ホストの動作確認とは別です。
         </p>
         <p>
           動的 import は Vite の RSC アプリ定義を構築時に読み込まないための境界です。

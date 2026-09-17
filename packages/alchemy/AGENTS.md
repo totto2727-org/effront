@@ -3,7 +3,7 @@
 ## Repository structure
 
 - `src/cloudflare/index.ts` owns deferred application loading and capability capture.
-- `src/cloudflare/vite.ts` owns the native Worker bridge and compilation graphs, not application hosting.
+- `src/cloudflare/vite.ts` owns the native Worker bridge, runtime-phase compilation settings, and default SSR colocation, not the portable compilation graphs or application hosting.
 - Future providers belong in sibling directories under `src/` with explicit package subpaths, not in core or the Cloudflare entry.
 
 ## Development commands
@@ -40,6 +40,8 @@ An isolated empty-profile CLI check previously failed with `Provider 'Cloudflare
 
 ### Runtime compilation boundary
 
+- Consumers register `effront()` and `effrontAlchemy()` separately. Keep `application` exclusively in `effront({ application })` and Alchemy options limited to `worker`.
+- Keep the RSC Rollup input replacement in the Alchemy plugin's post-order configuration hook. Do not import or invoke `@effront/vite` from the adapter implementation; its peer/development dependency records the explicit composition requirement.
 - Keep Alchemy and Cloudflare runtime at `2.0.0-beta.77` with the coherent Effect `4.0.0-rc.112` family until a deliberate compatibility review. Beta.77 uses `Config.string`, which is incompatible with rc.113's renamed API despite its broad dependency range.
 - Keep Alchemy exports intact and capability selection with the consumer. Do not add a Worker/KV allowlist or adapter-owned dependency optimization.
 - Preserve React/Effect deduplication. The pinned development host limitation is documented in `docs/INTEGRATION.md`; do not infer working development from a successful production build.

@@ -6,20 +6,23 @@ This private experimental adapter connects Effront applications to native Alchem
 
 Use the [native Alchemy example](../../examples/alchemy/src/entry.workers.ts) to serve `Hello from Alchemy KV` from a request-local service backed by an Alchemy KV binding, then invoke its greeting Server Function from the browser.
 Pair that Worker with its [stack](../../examples/alchemy/alchemy.run.ts), [Vite configuration](../../examples/alchemy/vite.config.ts), and [application](../../examples/alchemy/src/entry.effront.tsx) for the complete integration.
+Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@effront/vite` and `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`.
+The compiler owns the React, RSC, SSR, and browser graphs and accepts `application`; the Alchemy adapter accepts only `worker` and adds the native bridge and runtime compilation settings.
 Its `CacheClient` holds an Alchemy-native client, while only the resulting label and greeting reach the rendered page.
 This capability boundary still depends on Alchemy's client type and is not a provider-independent cache abstraction.
 
-The supported CLI path uses `alchemy dev` orchestration, which injects the host and runtime stack bindings.
+The official CLI path uses `alchemy dev` orchestration, which injects the host and runtime stack bindings.
 With the pinned beta, even local CLI planning requires a configured Cloudflare profile.
 If it reports `Provider 'Cloudflare' is not configured in profile 'default'`, configure that profile before retrying rather than supplying fake credentials.
 The separate local test host does not establish that Alchemy CLI planning is authentication-free.
+The pinned development host has a [reproduced runtime failure](docs/INTEGRATION.md#compatibility) after planning; a configured profile does not resolve it, and passing production build/preview checks do not establish working development.
 
 ## Key features
 
 - Defer RSC application imports until a Worker request rather than loading them during infrastructure evaluation.
 - Capture capability references during native Worker construction and acquire application Layers per request.
 - Preserve typed application failures for handling at the HTTP boundary.
-- Compose browser, RSC, and SSR compilation with Alchemy's official native Worker bridge.
+- Add Alchemy's official native Worker bridge to the separately registered Effront compiler integration.
 - Support the pinned Worker and native KV runtime APIs with explicit compatibility limits.
 
 ## Prerequisites

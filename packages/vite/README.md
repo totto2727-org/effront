@@ -55,6 +55,8 @@ export default defineConfig({
 
 The plugin owns the React and Vite RSC plugins, so do not register them a second time.
 It does not install or register a host adapter, and Node and Bun adapters are not implemented.
+For the experimental native Alchemy integration, register `plugins: [effront(), effrontAlchemy()]` with `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`; see the [Alchemy setup and compatibility limits](../alchemy/README.md).
+Keep application-entry configuration on `effront({ application })`; the Alchemy adapter accepts only `worker` and replaces the RSC input with its native bridge.
 
 ### `EffrontViteOptions`
 

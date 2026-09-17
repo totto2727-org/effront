@@ -60,7 +60,12 @@ KV is eventually consistent; the fixed greeting demonstrates binding use, not a 
 
 Each migrated application has an `alchemy.run.ts`, a native Worker module, and a `vite.config.ts`.
 `alchemy.run.ts` defines the stack and providers, the Worker declares infrastructure/runtime requirements, and Vite configures the React compilation graphs.
+Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@effront/vite` and `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`.
+`effront()` owns the React, RSC, SSR, and browser compilation graphs and the application-entry alias; the Alchemy adapter does not register it implicitly.
+Set a custom application entry only through `effront({ application })`; the Alchemy options contain only `worker` for the native Worker module.
 The adapter uses Alchemy's official `makeWorkerBridge`, rather than passing a Promise-based Fetch function to the Worker.
+Its post-order configuration hook replaces the RSC Rollup input with the private bridge and applies runtime-phase compilation, independently of plugin registration order.
+A separate pre-order hook colocates the default SSR output before the portable compiler supplies its generic default, while preserving explicit output directories.
 The native Worker declares `viteEnvironments: { entry: "rsc", children: ["ssr"] }`.
 Do not set a competing `vite.main`: the Effront adapter owns the RSC bridge entry.
 
@@ -73,7 +78,7 @@ Alchemy CLI injects the Cloudflare runtime host and the bindings registered duri
 Applications do not import the runtime plugin or inspect `ALCHEMY_CLOUDFLARE_VITE_INJECTED`.
 The independent browser test owns its local runtime plugin and KV simulator; that setup is not part of the application configuration.
 The native bridge uses only Alchemy's injected stack name and stage.
-Independent E2E hosts supply these runtime bindings explicitly; applications use `effrontAlchemy()` without duplicate stack configuration.
+Independent E2E hosts supply these runtime bindings explicitly; applications compose `effront()` with `effrontAlchemy()` without duplicate stack configuration.
 
 ## Local orchestration
 
