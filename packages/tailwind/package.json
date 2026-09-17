@@ -1,6 +1,6 @@
 {
   "name": "@effront/tailwind",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Automatic Tailwind CSS integration for Effront React client boundaries.",
   "license": "MIT",
   "repository": {

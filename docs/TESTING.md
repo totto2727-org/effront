@@ -12,7 +12,7 @@ Playwright explicitly selects the `.e2e.ts` suite, keeping it outside Vitest's s
 
 ## Verification
 
-- `vp run test` uses default Vitest discovery for colocated unit tests and retained integration tests. Run `vp run w:pack` first; the check and test tasks do not build dependencies implicitly.
+- `vp run test` uses default Vitest discovery for colocated unit tests and retained integration tests. Run `vp exec --filter "./packages/*" -- vp pack` first; the check and test tasks do not build dependencies implicitly.
 - `vp run check` checks all source and retained tests, including the colocated files.
 - `(cd tests/e2e-build && vp run test)` runs browser acceptance against the built fixture hosted by standalone Wrangler.
 - `(cd tests/e2e-dev && vp run test)` runs only development HMR checks against its minimal fixture.
@@ -68,7 +68,7 @@ Its package-owned Vite configuration reuses the application configuration and ad
 The fixed command builds that example and runs Alchemy's workerd preview, without generating or copying application source.
 It covers construction-provided native KV clients reaching HTML and Server Functions, HEAD handling, hydration and navigation.
 A separate browser case checks emitted Tailwind utility styles and narrow-viewport overflow on the same committed example.
-Run `vp run w:pack` at the repository root, then `vp run test` from `tests/e2e-alchemy`.
+Run `vp exec --filter "./packages/*" -- vp pack` at the repository root, then `vp run test` from `tests/e2e-alchemy`.
 This package does not deploy or run authenticated infrastructure reconciliation.
 Application configs leave host injection and infrastructure planning to the official Alchemy CLI.
 Core's colocated native HTTP tests still protect the independent native API's context precedence, memo-map isolation and stream finalization.

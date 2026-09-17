@@ -23,13 +23,18 @@
 Run from the repository root:
 
 - `vp install` installs workspace dependencies; `vp install --frozen-lockfile` checks reproducible installation.
-- `vp run w:pack` builds package JavaScript and declarations recursively in workspace dependency order. Run it before checks, tests, or consumers that resolve `dist/` exports.
+- `vp exec --filter "./packages/*" -- vp pack` builds package JavaScript and declarations in workspace dependency order. Run it before checks, tests, or consumers that resolve `dist/` exports.
 - `vp run fix` applies formatting and safe lint fixes through `js:fix`.
 - `vp run check` runs formatting, lint, and types through `js:check`.
 - `vp run test` runs unit/integration tests through `js:test`; browser suites remain package-local.
 - Public packages own their `vite.config.ts` pack settings and `vp pack`/`vp run pack` tasks. These generate `dist/`, not npm tarballs.
 
-Root aggregates live in `vite.config.ts` `run.tasks`, not duplicated package scripts.
+The initial package build must use `vp exec` directly, not `vp run` or a root task wrapping it.
+`vp run` discovers consumer configurations even outside its filter before executing tasks; their static workspace imports cannot resolve until package `dist/` exports exist.
+`vp exec` runs `vp pack` in the selected packages in dependency order without that global task scan.
+Normal unfiltered `vp install` is sufficient; no staged installation or deferred consumer imports are needed.
+Workflows reuse `.github/actions/build-workspace` after Nix setup and dependency installation; this composite action owns the bootstrap command and its rationale.
+Root check/fix/test aggregates live in `vite.config.ts` `run.tasks`, not duplicated package scripts.
 Do not add redundant formatter/linter or root application/E2E runner tasks.
 Choose checks appropriate to the change, using the detailed test boundaries below.
 
@@ -53,7 +58,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 
 - Manage all external dependency versions in the shared catalog, including single consumers; use `catalog:` in manifests and overrides.
 - Keep internal references as `workspace:`. Public Vite peers stay `"*"` to accept the consumer's Vite, while development uses the catalog-pinned VitePlus alias.
-- Preserve explicit public subpaths, package-owned pack settings, and test-excluding publication entries. Shared release requirements and the experimental `0.1.1` version exception live in the release policy below.
+- Preserve explicit public subpaths, package-owned pack settings, and test-excluding publication entries. Keep every `packages/*` library at the same release version, including Alchemy; shared release requirements live in the release policy below.
 - Use path-qualified Effect service identifiers and implementation-free shared contracts. Use `Effect.fnUntraced` for internals, `Effect.fn` for application/examples/public API authoring, and typed failures for input/I/O; reserve `TypeError` for violated wiring invariants.
 - Colocate unit tests as `<module>.test.ts(x)`; reserve `tests/` for integration or black-box contracts. Keep all retained source/tests checked and standard Vitest discovery; Playwright uses `*.e2e.ts`.
 - Follow `share-artifact` for README/AGENTS: README is consumer-facing, Setup uses normal installation rather than `workspace:`/`catalog:`, and Development links to AGENTS. Package AGENTS supplements, not duplicates, root rules.

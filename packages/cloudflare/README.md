@@ -49,8 +49,8 @@ The Fetch handler comes from `@effront/core/workers`; import request accessors f
 ## Setup
 
 ```sh
-npm install @effront/core@0.1.1 @effront/cloudflare@0.1.1
-npm install --save-dev @effront/vite@0.1.1 @vitejs/plugin-rsc@0.5.34 vite-plus@0.3.1
+npm install @effront/core@0.1.2 @effront/cloudflare@0.1.2
+npm install --save-dev @effront/vite@0.1.2 @vitejs/plugin-rsc@0.5.34 vite-plus@0.3.1
 ```
 
 Install the [core runtime peers](../core/README.md#setup) as well.

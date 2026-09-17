@@ -11,7 +11,7 @@
 
 ### Standard tasks
 
-Run root `vp install` and `vp run w:pack` before entering an example.
+Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before entering an example.
 
 - `vp run dev` in `alchemy/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
 - `vp dev`, `vp build`, and `vp preview` in `workers/` use standalone Cloudflare hosting, without an Alchemy profile or remote resources.

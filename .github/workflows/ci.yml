@@ -15,16 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          persist-credentials: false
           # Documentation tests compare embedded excerpts with historical commits.
           fetch-depth: 0
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
-        with:
-          install-args: --frozen-lockfile
+      - name: Build workspace packages
+        uses: ./.github/actions/build-workspace
       - name: Check and test
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          vp run w:pack
           vp run check
           vp run test

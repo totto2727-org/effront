@@ -61,8 +61,8 @@ Native Effect HTTP hosts can instead use [`toHttpEffect` or `makeHttpEffect`](do
 ## Setup
 
 ```sh
-npm install @effront/core@0.1.1
-npm install --save-dev @effront/vite@0.1.1 @vitejs/plugin-rsc@0.5.34
+npm install @effront/core@0.1.2
+npm install --save-dev @effront/vite@0.1.2 @vitejs/plugin-rsc@0.5.34
 ```
 
 For the current compatibility baseline, install matching runtime peers:

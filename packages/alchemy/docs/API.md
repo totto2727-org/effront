@@ -1,6 +1,6 @@
 # Alchemy adapter API
 
-The private adapter exposes two explicit subpaths.
+The adapter exposes two explicit subpaths.
 Use [the native Worker example](../../../examples/alchemy/src/entry.workers.ts) with its [stack](../../../examples/alchemy/alchemy.run.ts) and [application](../../../examples/alchemy/src/entry.effront.tsx) for complete integration wiring.
 
 ## `@effront/alchemy/cloudflare`
