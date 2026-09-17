@@ -36,8 +36,8 @@ export const platformPages: readonly DocPage[] = [
         <p>
           この実験ブランチでは、examples と本サイトを Alchemy native Worker に移行しています。
           <code>@effront/alchemy/cloudflare</code> が構築時の能力を捕捉し、 core の native Effect
-          HTTP handler へリクエスト単位で接続します。 Alchemy アダプターは評価中の private workspace
-          package です。
+          HTTP handler へリクエスト単位で接続します。 Alchemy アダプターは他の Effront
+          パッケージと同じバージョンで公開する実験的な統合です。
         </p>
         <h2 id="support">対応状況</h2>
         <ul>
