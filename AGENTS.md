@@ -33,6 +33,7 @@ The initial package build must use `vp exec` directly, not `vp run` or a root ta
 `vp run` discovers consumer configurations even outside its filter before executing tasks; their static workspace imports cannot resolve until package `dist/` exports exist.
 `vp exec` runs `vp pack` in the selected packages in dependency order without that global task scan.
 Normal unfiltered `vp install` is sufficient; no staged installation or deferred consumer imports are needed.
+Workflows reuse `.github/actions/build-workspace` after Nix setup and dependency installation; this composite action owns the bootstrap command and its rationale.
 Root check/fix/test aggregates live in `vite.config.ts` `run.tasks`, not duplicated package scripts.
 Do not add redundant formatter/linter or root application/E2E runner tasks.
 Choose checks appropriate to the change, using the detailed test boundaries below.
