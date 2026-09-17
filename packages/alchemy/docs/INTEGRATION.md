@@ -1,7 +1,7 @@
 # Alchemy-native integration
 
 This branch is an experimental Alchemy-first configuration of Effront.
-`@effront/alchemy` is a private workspace package while the integration is evaluated, not an npm installation promise.
+`@effront/alchemy` is included in the synchronized public Effront release; the integration remains experimental and retains the compatibility limits below.
 Existing package versions remain unchanged for this experiment; a release requires a separate version and publication decision.
 
 ## Boundaries

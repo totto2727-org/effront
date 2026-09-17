@@ -10,8 +10,8 @@
 
 ### Execution rules
 
-- Preparing this private package for local linking uses the [repository installation and workspace build commands](../../AGENTS.md#development-commands). The prepared checkout must retain its dependencies and built `dist/` exports while a consumer links it.
-- Keep `@effront/alchemy` private and all prototype package versions at `0.1.1`. Do not add it to release filters, publish it, or deploy the prototype without a separate user decision.
+- Prepare this package with the [repository installation and workspace build commands](../../AGENTS.md#development-commands).
+- Publish with the synchronized Effront package release through the shared workflow. Keep explicit subpaths, dist-only publication, and the pinned compatibility limits; publishing does not authorize cloud deployment.
 - Alchemy CLI owns the migrated application host. Do not register a manual `@alchemy.run/cloudflare-runtime` plugin or an injection-environment guard in application Vite configuration.
 - The fixed browser test owns its own standalone workerd host and local KV configuration. Credential-free acceptance does not prove official CLI planning is authentication-free.
 - The pinned CLI requires a configured Cloudflare profile before planning even locally supported Worker/KV resources. Do not invent credentials or deploy resources to bypass this prerequisite.

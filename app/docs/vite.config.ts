@@ -1,16 +1,10 @@
-import { defineConfig, lazyPlugins } from "vite-plus";
+import { effrontTailwind } from "@effront/tailwind";
+import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  // Task discovery must not resolve workspace dist exports before the first pack.
-  plugins:
-    lazyPlugins(async () => {
-      const { effrontTailwind } = await import(/* @vite-ignore */ "@effront/tailwind");
-      const { effrontAlchemy } = await import(
-        /* @vite-ignore */ "@effront/alchemy/cloudflare/vite"
-      );
-      const { effront } = await import(/* @vite-ignore */ "@effront/vite");
-      return [effrontTailwind({ stylesheet: "./src/styles.css" }), effront(), effrontAlchemy()];
-    }) ?? [],
+  plugins: [effrontTailwind({ stylesheet: "./src/styles.css" }), effront(), effrontAlchemy()],
   // Explicit so the example keeps its lint setup when used outside this workspace.
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],

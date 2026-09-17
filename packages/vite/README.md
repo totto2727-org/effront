@@ -26,14 +26,14 @@ See the [Workers example Usage](../../examples/workers/README.md#usage) for the 
 Install the integration and its core peer in your Vite application:
 
 ```bash
-npm install @effront/core@0.1.1
-npm install --save-dev @effront/vite@0.1.1 vite
+npm install @effront/core@0.1.2
+npm install --save-dev @effront/vite@0.1.2 vite
 ```
 
 For the standalone Workers configuration below, also install its host integration:
 
 ```bash
-npm install --save-dev @effront/cloudflare@0.1.1
+npm install --save-dev @effront/cloudflare@0.1.2
 ```
 
 ## API

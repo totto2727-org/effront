@@ -53,7 +53,7 @@ See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) f
 Install the collection package and Effect in your application:
 
 ```bash
-npm install @effront/markdown@0.1.1 effect@4.0.0-rc.112
+npm install @effront/markdown@0.1.2 effect@4.0.0-rc.112
 ```
 
 For React rendering, also install Comark's renderer:

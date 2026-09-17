@@ -1,32 +1,42 @@
-name: CI
+name: Deploy documentation
 
 on:
   push:
     branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: docs-production
+  cancel-in-progress: false
+
 jobs:
-  check:
+  deploy:
+    if: github.repository == 'totto2727-org/effront' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    environment: docs-production
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          # Documentation tests compare embedded excerpts with historical commits.
-          fetch-depth: 0
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
         with:
           install-args: --frozen-lockfile
-      - name: Check and test
+      - name: Build workspace packages
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           # vp run scans consumer configs even with --filter, before their dist imports exist.
           # exec runs each package's pack in dependency order without that global task scan.
           vp exec --filter "./packages/*" -- vp pack
-          vp run check
-          vp run test
+      - name: Deploy documentation
+        working-directory: app/docs
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          vp exec alchemy deploy --stage production --yes

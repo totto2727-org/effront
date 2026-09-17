@@ -10,7 +10,7 @@
 
 ### Standard tasks
 
-- Run `vp install` and `vp run w:pack` from the repository root before starting this application.
+- Run `vp install` and `vp exec --filter "./packages/*" -- vp pack` from the repository root before starting this application.
 - `vp run dev` from this directory invokes `alchemy dev` and serves the site at `http://localhost:1339` once ready. Do not substitute bare `vp dev`, which bypasses Alchemy orchestration.
 - Root `vp run check` and `vp run test` include the site's colocated content, rendering, highlighting, and implementation-excerpt tests.
 
