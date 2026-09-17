@@ -64,7 +64,7 @@ Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@ef
 `effront()` owns the React, RSC, SSR, and browser compilation graphs and the application-entry alias; the Alchemy adapter does not register it implicitly.
 Set a custom application entry only through `effront({ application })`; the Alchemy options contain only `worker` for the native Worker module.
 The adapter uses Alchemy's official `makeWorkerBridge`, rather than passing a Promise-based Fetch function to the Worker.
-Its post-order configuration hook replaces the RSC Rollup input with the private bridge and applies runtime-phase compilation, independently of plugin registration order.
+Register `effront()` before `effrontAlchemy()` so the adapter replaces the portable RSC input before the Cloudflare host captures its Worker entry.
 A separate pre-order hook colocates the default SSR output before the portable compiler supplies its generic default, while preserving explicit output directories.
 The native Worker declares `viteEnvironments: { entry: "rsc", children: ["ssr"] }`.
 Do not set a competing `vite.main`: the Effront adapter owns the RSC bridge entry.
@@ -98,18 +98,23 @@ This Alchemy version uses `Config.string`, which is incompatible with rc.113's r
 Keep one coherent Effect version across native bridge, core, platform layers and SQL dependencies.
 The local workerd compatibility date is `2026-09-01`, supported by the pinned runtime.
 
-The adapter leaves Alchemy exports and dependency optimization unchanged instead of maintaining a Worker/KV allowlist.
-Applications select their capabilities through Alchemy's public APIs, independently of the capabilities demonstrated by the sample.
+Applications select capabilities through Alchemy's public APIs rather than an Effront-defined feature allowlist.
+The adapter leaves `optimizeDeps` unchanged and does not reject an Alchemy package based on its version number.
 Shared React/Effect deduplication remains in place.
 
-The pinned beta.77 development host has a known limitation: its automatic dependency optimization can retain Node-only deployment exports from Alchemy's Cloudflare barrels and attempt to run workerd's binary resolver inside a Worker.
-Removing the adapter's explicit optimizer configuration does not disable the host's automatic optimization.
-A local check with optimization fully disabled also reached the Node-only workerd loader through ordinary module imports and failed.
-Both the credential-free Vite development host and the official `vp run dev` command in `examples/alchemy` fail without export projection.
-The official CLI completes local planning and starts dependency optimization, but `GET http://127.0.0.1:1337/` returns HTTP 500 with `resolve is not a function` in `workerd/lib/main.js`.
-This is a reproduced runtime failure, not an authentication blocker or an untested development path.
-The production build/preview browser suite passes and is a separate path.
-The adapter deliberately does not reinstate a capability allowlist to hide this host/dependency boundary.
+A temporary server-development plugin removes known deployment-only and local-host export modules from Alchemy's Cloudflare entry points.
+It reads the installed module exports, subtracts infrastructure-provider factories identified by their actual provider-builder calls, and preserves the remaining exports, including non-KV namespaces, HTTP clients, `BrowserLocal`, and `WorkerConfigProvider`.
+The exclusion list is in `src/cloudflare/runtime-projection.ts`; local emulators, artifact builders and stack-state management are not available inside a Worker through these development entry points.
+Using a new Alchemy capability does not require adding it to an allowed-export list.
+
+Each requested entry is compiled once into an in-memory virtual runtime module using Vite's build API and Alchemy's purity transform, with Effect and host built-ins shared with the surrounding graph.
+This is a development compatibility compilation step, not an `optimizeDeps` setting; the host's own dependency discovery remains unchanged.
+Node-side deployment imports, browser modules and production builds are not projected.
+Missing actual modules or unsupported module structure still report errors rather than silently inventing exports.
+Preserving an API export is not proof of every cloud product's binding or remote behavior.
+
+Removing all compatibility handling caused HTTP 500 in official CLI development because Node-only workerd code was evaluated inside a Worker.
+The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions and HMR as removal checks.
 
 Effect rc.112 transfers streaming scopes before discarding HEAD bodies.
 Core normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.

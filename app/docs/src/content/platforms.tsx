@@ -120,10 +120,10 @@ export default defineConfig({
           "ts",
         )}
         <p>
-          固定中の beta.77 では profile 設定後も公式 CLI の開発ホストで HTTP 500 が再現しています。
-          Alchemy の Node 専用 export が workerd に入り、<code>workerd/lib/main.js</code> で
-          <code>resolve is not a function</code> が発生する既知の制限です。 production build /
-          preview の成功は、開発ホストの動作確認とは別です。
+          開発時は、Alchemy のデプロイ・ローカルホスト専用コードを除外する暫定互換処理を使用します。
+          利用できる機能を列挙する方式ではなく、それ以外の公開 export は保持します。
+          <code>optimizeDeps</code> の独自設定や、バージョン番号による起動拒否は行いません。
+          <code>effront()</code>、<code>effrontAlchemy()</code> の順に登録してください。
         </p>
         <p>
           動的 import は Vite の RSC アプリ定義を構築時に読み込まないための境界です。

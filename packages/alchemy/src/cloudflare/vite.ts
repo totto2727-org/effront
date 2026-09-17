@@ -2,6 +2,8 @@ import { join, resolve } from "node:path";
 
 import { normalizePath, type Plugin, type PluginOption } from "vite";
 
+import { alchemyRuntimeProjection } from "./runtime-projection";
+
 const entryId = "virtual:effront/alchemy/cloudflare/entry";
 const resolvedEntryId = `\0${entryId}`;
 
@@ -39,17 +41,21 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
   const bridge: Plugin = {
     name: "effront:alchemy-cloudflare-bridge",
     config: {
-      // Replace the portable default with the native bridge in either plugin order.
-      order: "post",
+      // The host must see the bridge before it captures its Worker entry.
       handler: () => ({
         define: { "globalThis.__ALCHEMY_RUNTIME__": "true" },
         resolve: { dedupe: ["react", "react-dom", "effect"] },
-        environments: {
-          rsc: { build: { rollupOptions: { input: { index: entryId } } } },
-        },
+        environments: { rsc: { build: { rollupOptions: { input: { index: entryId } } } } },
       }),
     },
     configResolved: (config) => {
+      const portableIndex = config.plugins.findIndex((plugin) => plugin.name === "rsc");
+      const bridgeIndex = config.plugins.findIndex((plugin) => plugin.name === bridge.name);
+      if (portableIndex !== -1 && portableIndex > bridgeIndex) {
+        throw new TypeError(
+          "Register effront() before effrontAlchemy() so the host receives the native Worker bridge.",
+        );
+      }
       worker = normalizePath(resolve(config.root, workerEntry));
     },
     resolveId: (id) => (id === entryId ? resolvedEntryId : undefined),
@@ -66,5 +72,5 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
     },
   };
 
-  return [ssrOutput, bridge];
+  return [ssrOutput, bridge, alchemyRuntimeProjection()];
 };

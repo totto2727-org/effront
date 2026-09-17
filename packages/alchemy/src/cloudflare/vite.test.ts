@@ -80,6 +80,20 @@ describe("Alchemy Vite graph composition", () => {
     }
   });
 
+  it("provides the bridge before the real Cloudflare host captures its entry", async () => {
+    const config = await resolveConfig(
+      {
+        configFile: fileURLToPath(
+          new URL("../../../../tests/e2e-alchemy/vite.config.ts", import.meta.url),
+        ),
+      },
+      "serve",
+    );
+    expect(JSON.stringify(config.environments["rsc"]?.build.rollupOptions.input)).toContain(
+      "virtual:effront/alchemy/cloudflare/entry",
+    );
+  });
+
   it("keeps portable application configuration separate from the native worker", async () => {
     const config = await resolveConfig(
       {
@@ -119,11 +133,11 @@ describe("Alchemy Vite graph composition", () => {
   });
 
   it.each(["portable-first", "adapter-first"] as const)(
-    "connects the native bridge after portable entry configuration in %s order",
+    "validates native bridge configuration in %s order",
     async (order) => {
       const portable = effront({ rsc: "./src/custom-fetch.ts" });
       const adapter = effrontAlchemy();
-      const config = await resolveConfig(
+      const configuration = resolveConfig(
         {
           configFile: false,
           root,
@@ -131,6 +145,11 @@ describe("Alchemy Vite graph composition", () => {
         },
         "build",
       );
+      if (order === "adapter-first") {
+        await expect(configuration).rejects.toThrow("Register effront() before effrontAlchemy()");
+        return;
+      }
+      const config = await configuration;
       expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
         index: "virtual:effront/alchemy/cloudflare/entry",
       });

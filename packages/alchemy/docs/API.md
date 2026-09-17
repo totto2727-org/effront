@@ -95,8 +95,8 @@ The application entry defaults to `./src/entry.effront.tsx` and resolves relativ
 
 Declare the Worker's Vite environments as `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
 The adapter owns the RSC bridge entry, so do not also set `vite.main`.
-Its post-order configuration hook replaces the RSC Rollup input with its private generated bridge and supplies the runtime-phase compilation flag.
-This replacement takes precedence over `effront({ rsc })` in either plugin registration order.
+Register `effront()` before `effrontAlchemy()` so the native bridge is configured before the Cloudflare host captures its Worker entry.
+The adapter replaces the portable RSC input and supplies the runtime-phase compilation flag.
 Do not use `effront({ rsc })` to select the native Worker module; use `effrontAlchemy({ worker })` instead.
 A separate pre-order hook defaults SSR output to a child directory of the RSC Worker artifact; explicit directories are preserved and must still be packaged together by the host.
 
@@ -109,8 +109,9 @@ Missing or empty bindings produce a `TypeError` directing the application to sta
 ## Alchemy capabilities
 
 Applications choose their Alchemy resources and capabilities through Alchemy's own APIs.
-The adapter does not replace Alchemy exports, maintain a capability allowlist, or configure dependency optimization.
-Host and consumer Vite settings remain responsible for dependency optimization.
+A temporary development compatibility layer subtracts Node-only deployment/local-host exports and provider factories, preserving the other installed Cloudflare exports rather than enumerating allowed capabilities.
+It does not configure `optimizeDeps` or impose a version-number gate.
+Deployment-time exports and production builds remain intact.
 The KV example exercises capability capture and request-local use; it does not define an allowed feature set or establish that every Alchemy capability has been tested.
 
 See [version compatibility](INTEGRATION.md#compatibility) for the pinned development host limitation.
