@@ -86,7 +86,7 @@ Validated the real task interface with a temporary source probe: `check` rejecte
 
 ## Native Alchemy integration
 
-`tests/e2e-alchemy` is a black-box contract against the committed `examples/workers` consumer.
+`tests/e2e-alchemy` is a black-box contract against the committed `examples/alchemy` consumer.
 Its package-owned Vite configuration reuses the application configuration and adds a test-only workerd host with local KV bindings.
 The fixed command builds that example and runs Alchemy's workerd preview, without generating or copying application source.
 It covers construction-provided native KV clients reaching HTML and Server Functions, HEAD handling, hydration and navigation.

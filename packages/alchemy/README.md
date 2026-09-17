@@ -43,7 +43,7 @@ Alchemy's injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` runtime bindings ove
 
 The plugin does not start a host.
 Alchemy injects its own host during official CLI orchestration.
-From `examples/workers/`, `examples/markdown/`, or `app/docs/`, run `vp run dev`, which invokes `alchemy dev`.
+From `examples/alchemy/`, `examples/markdown/`, or `app/docs/`, run `vp run dev`, which invokes `alchemy dev`.
 The native Worker props own their development ports: 1337, 1338, and 1339 respectively.
 Application Vite configs register only the Effront integration and applicable application plugins, never a manual `@alchemy.run/cloudflare-runtime` host or an injection-environment guard.
 The independent `tests/e2e-alchemy/` package owns the separate runtime host used for its standalone local acceptance.

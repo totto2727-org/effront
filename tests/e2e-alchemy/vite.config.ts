@@ -2,13 +2,13 @@ import { fileURLToPath } from "node:url";
 import * as KvNamespace from "@alchemy.run/cloudflare-runtime/core/bindings/kv-namespace/KvNamespace";
 import cloudflare from "@alchemy.run/cloudflare-runtime/vite";
 import { defineConfig } from "vite-plus";
-import application from "../../examples/workers/vite.config";
+import application from "../../examples/alchemy/vite.config";
 import * as Text from "@alchemy.run/cloudflare-runtime/core/bindings/Text";
 
 // Test-only local host. Applications rely on Alchemy CLI to construct and inject their host.
 export default defineConfig({
   ...application,
-  root: fileURLToPath(new URL("../../examples/workers/", import.meta.url)),
+  root: fileURLToPath(new URL("../../examples/alchemy/", import.meta.url)),
   plugins: [
     application.plugins,
     cloudflare({

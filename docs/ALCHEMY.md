@@ -38,7 +38,7 @@ The native host owns the request scope and retains streaming resources until EOF
 Buffered responses can release request services as soon as response construction finishes.
 Do not acquire request-scoped connections in the Alchemy Worker construction Effect: Alchemy's isolate scope has no normal teardown hook.
 
-`examples/workers/src/entry.workers.ts` demonstrates the full dependency path:
+`examples/alchemy/src/entry.workers.ts` demonstrates the full dependency path:
 
 1. Declare `Cloudflare.KV.Namespace("Cache")` as infrastructure.
 2. Resolve `Cloudflare.KV.ReadWriteNamespace(Cache)` inside the native Worker's construction Effect.
@@ -78,7 +78,7 @@ Independent E2E hosts supply these runtime bindings explicitly; applications use
 ## Local commands
 
 First run `vp install` and `vp run w:pack` from the repository root.
-Then enter `examples/workers`, `examples/markdown`, or `app/docs` and run:
+Then enter `examples/alchemy`, `examples/markdown`, or `app/docs` and run:
 
 ```sh
 vp run dev

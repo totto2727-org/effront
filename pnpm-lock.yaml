@@ -314,7 +314,7 @@ importers:
         specifier: 'catalog:'
         version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
 
-  examples/workers:
+  examples/alchemy:
     dependencies:
       '@effect/platform-browser':
         specifier: 4.0.0-rc.112

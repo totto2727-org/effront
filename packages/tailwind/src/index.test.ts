@@ -6,7 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { effrontTailwind } from "./index";
 
-const root = fileURLToPath(new URL("../../../../examples/workers/", import.meta.url));
+const root = fileURLToPath(new URL("../../../../examples/alchemy/", import.meta.url));
 
 async function integration(stylesheet?: string) {
   const config = await resolveConfig(

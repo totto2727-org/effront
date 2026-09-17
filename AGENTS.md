@@ -9,7 +9,7 @@
 - `packages/cloudflare/`: Cloudflare Vite integration (`@effront/cloudflare`) and separate runtime accessors (`@effront/cloudflare/workers`).
 - `packages/markdown/`: Vite glob collections and comark React SSR rendering (`@effront/markdown`).
 - `examples/markdown/`: file-relative Markdown routing and asset consumer.
-- `examples/workers/`: native Alchemy Worker consumer with construction-time KV capabilities and request-local application services.
+- `examples/alchemy/`: native Alchemy Worker consumer with construction-time KV capabilities and request-local application services.
 - `app/docs/`: SSR Guide, API reference, and implementation architecture site, using the framework itself with shadcn/ui and Tailwind Typography.
 - `tests/e2e-build/`: independent Playwright acceptance against its package-local fixture built for standalone Wrangler.
 - `tests/e2e-dev/`: independent Vite/workerd HMR acceptance using its own minimal package-local fixture.
@@ -51,12 +51,12 @@ It checks KV-backed HTML, HEAD, hydration, Server Functions and navigation witho
 For the documentation site, enter `app/docs/` and use `vp run dev`; see [site operations](docs/DOCS-SITE.md).
 The site has colocated content and rendering tests; framework browser acceptance uses the independent E2E fixtures rather than starting this site.
 
-To run an example, enter `examples/workers/` or `examples/markdown/` and use `vp run dev` to invoke Alchemy CLI.
+To run an example, enter `examples/alchemy/` or `examples/markdown/` and use `vp run dev` to invoke Alchemy CLI.
 Alchemy owns the local host and resource bindings; application Vite configs must not register a second Cloudflare runtime plugin.
 The repository root intentionally provides no example dev, build, or local-hosting script.
 The root `vite.config.ts` owns repository formatting, linting, and test configuration.
 Both examples and the documentation site use `@effront/tailwind`, which includes `@tailwindcss/vite`.
-The Workers sample uses a virtual default stylesheet; Markdown and docs explicitly select their Typography/theme stylesheet.
+The Alchemy sample uses a virtual default stylesheet; Markdown and docs explicitly select their Typography/theme stylesheet.
 Application definitions live in `src/entry.effront.tsx`; `entry.workers.ts` documents the customizable host wiring and required integration boundaries.
 Keep feature-independent React UI under `components/`; colocate greeting services, capabilities, Server Functions, and their UI under `features/greeting/` in the Workers sample.
 Use `server.ts` for Server Functions, `client.tsx` for feature UI, and `services.ts` for the small shared capability/service definitions.

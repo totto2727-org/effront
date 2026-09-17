@@ -6,7 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { effrontAlchemy } from "./vite";
 
-const root = fileURLToPath(new URL("../../../../examples/workers/", import.meta.url));
+const root = fileURLToPath(new URL("../../../../examples/alchemy/", import.meta.url));
 
 describe("Alchemy Vite graph composition", () => {
   it("owns a native RSC bridge and runtime flag without installing a second host", async () => {
