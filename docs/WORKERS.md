@@ -55,7 +55,7 @@ Cloudflare options, when needed, are passed directly to `effrontCloudflare(...)`
 Do not register React or Vite RSC plugins a second time.
 Omitting the Cloudflare adapter leaves the core available for a future Node or Bun host adapter, but neither adapter is implemented in this milestone.
 The default RSC entry is the application's `src/entry.workers.ts`, which exports the Workers Fetch object.
-The application-definition entry defaults to `src/entry.client.ts`; it may re-export JSX definitions from `src/entry.effront.tsx`.
+The application-definition entry defaults to `src/entry.effront.tsx` and directly exports the application definition.
 Despite its name, this definition module stays in the RSC graph rather than becoming the browser hydration entry.
 The framework provides the SSR and browser entries.
 The Cloudflare wrapper owns the required `viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] }`.

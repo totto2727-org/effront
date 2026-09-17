@@ -19,7 +19,7 @@ export default defineConfig({
 For another host, omit `effrontCloudflare()` and provide its host integration separately.
 Node and Bun adapters are not implemented yet.
 
-The default entries are `src/entry.workers.ts` for the Fetch host and `src/entry.client.ts` for the application definition export.
+The default entries are `src/entry.workers.ts` for the Fetch host and `src/entry.effront.tsx` for the application definition export.
 Override them with `effront({ rsc, application })`.
 The Vite + Cloudflare configuration uses these two entries directly.
 Future Node or Bun adapters can use `src/entry.server.ts` either to adapt the Fetch export from `src/entry.workers.ts` or to host the application directly through Effect HTTP with a reusable Runtime.

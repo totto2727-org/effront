@@ -148,7 +148,7 @@ export const coreModelPages: readonly DocPage[] = [
         </p>
         <h2 id="entries">定義と起動の入口を分ける</h2>
         <p>
-          利用側の <code>src/entry.client.ts</code> はアプリケーション定義をexportする入口です。
+          利用側の <code>src/entry.effront.tsx</code> はアプリケーション定義をexportする入口です。
           名前にclientが含まれていても、ここをブラウザーの起動処理と読み替えると依存関係を見失います。
           Vite統合はこのファイルを <code>@effront/core/application-entry</code>{" "}
           の既定の参照先にします。 ホスト側の入口はこの定義を読み、

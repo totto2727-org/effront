@@ -61,7 +61,7 @@ const rawAssetUpdates = (): Plugin => {
 export type EffrontViteOptions = {
   /** RSC environment entry exporting the runtime's `{ fetch }` handler; defaults to `src/entry.workers.ts`. */
   readonly rsc?: string;
-  /** Application definition export available as `@effront/core/application-entry`; defaults to `src/entry.client.ts`. */
+  /** Application definition export available as `@effront/core/application-entry`; defaults to `src/entry.effront.tsx`. */
   readonly application?: string;
 };
 
@@ -73,7 +73,7 @@ export type EffrontViteOptions = {
  */
 export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   const rscEntry = options.rsc ?? "./src/entry.workers.ts";
-  const application = options.application ?? "./src/entry.client.ts";
+  const application = options.application ?? "./src/entry.effront.tsx";
   const applicationAlias: Plugin = {
     name: "effront:application-entry",
     config: (config): UserConfig => ({

@@ -22,10 +22,10 @@ Reduced-motion preferences also suppress framework page animations.
 - `@effront/vite`: RSC/SSR/browser build integration and the native React Compiler.
 - Host adapters add execution-environment integration separately.
 
-`src/entry.client.ts` exports the application definition, usually from `entry.effront.tsx`.
+`src/entry.effront.tsx` directly exports the application definition.
 `src/entry.workers.ts` exports a native Alchemy Worker in the experimental examples, or a Web Fetch handler when using the standalone Cloudflare adapter.
 The Vite integration provides browser hydration and SSR entry points.
-The application definition is not a browser-only module despite the client entry filename.
+The Vite integration transforms the shared application definition for each execution environment.
 
 ## Native Effect HTTP
 

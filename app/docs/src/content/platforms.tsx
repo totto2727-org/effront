@@ -26,7 +26,7 @@ export const platformPages: readonly DocPage[] = [
           <code>effront()</code> と組み合わせて登録します。
         </p>
         <p>
-          公開済みの standalone 構成は、アプリケーション定義の <code>entry.client.ts</code> と Fetch
+          standalone 構成は、アプリケーション定義の <code>entry.effront.tsx</code> と Fetch
           を公開する
           <code>entry.workers.ts</code> を使います。Vite
           とホスト用プラグインは後者を直接読み込みます。将来の Node / Bun 向けには、
@@ -131,7 +131,6 @@ export default Cloudflare.Worker("App", {
         {code(
           `src/
   entry.workers.ts
-  entry.client.ts
   entry.effront.tsx
 vite.config.ts
 wrangler.jsonc`,
@@ -142,7 +141,7 @@ wrangler.jsonc`,
         </p>
         {code(
           `import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.client";
+import application from "./entry.effront";
 
 export default { fetch: createFetchHandler(application) };`,
           "ts",
@@ -183,7 +182,7 @@ export default defineConfig({
           option は不要です。<code>cloudflare</code> で入れ子にせず、React plugin と Vite RSC plugin
           はアダプターと共通プラグインが登録します。デフォルトでは RSC entry は
           <code>src/entry.workers.ts</code>、アプリケーションの alias は{" "}
-          <code>src/entry.client.ts</code> です。
+          <code>src/entry.effront.tsx</code> です。
         </p>
         <h2 id="local">ローカル実行と検証</h2>
         {code(
