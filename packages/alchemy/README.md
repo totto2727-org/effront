@@ -1,6 +1,6 @@
 # @effront/alchemy
 
-This private experimental adapter connects Effront applications to native Alchemy Cloudflare Workers so construction-time capabilities can provide request-local services for streamed pages and Server Functions.
+This experimental adapter connects Effront applications to native Alchemy Cloudflare Workers so construction-time capabilities can provide request-local services for streamed pages and Server Functions.
 
 ## Usage
 
@@ -27,22 +27,15 @@ The pinned development host has a [reproduced runtime failure](docs/INTEGRATION.
 
 ## Prerequisites
 
-- **Local adapter**: a prepared Effront checkout with installed dependencies and built package exports; this private prototype is not available from npm.
 - **Compatibility**: Alchemy and its Cloudflare runtime `2.0.0-beta.77`, with a coherent Effect `4.0.0-rc.112` family across the application and host.
 - **Toolchain**: VitePlus, matching core React peers, and a native Alchemy Worker configured for the `rsc` entry and `ssr` child environment.
 
 ## Setup
 
-Install the matching host dependencies and public Effront integrations:
+After version `0.1.2` is published, install the adapter and matching host dependencies:
 
 ```sh
-vp add alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.1 @effront/vite@0.1.1
-```
-
-Link the prepared adapter into that VitePlus consumer application using its absolute local path:
-
-```sh
-vp link /absolute/path/to/effront/packages/alchemy
+vp add @effront/alchemy@0.1.2 alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.2 @effront/vite@0.1.2
 ```
 
 Use the [core runtime peer requirements](../core/README.md#setup) for React and `@effect/platform-browser`.
@@ -58,6 +51,6 @@ See [AGENTS.md](AGENTS.md).
 
 ## License
 
-[MIT](../../LICENSE).
+[MIT](LICENSE).
 
 _This README was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._

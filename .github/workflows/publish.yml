@@ -32,9 +32,4 @@ jobs:
         uses: totto2727-org/monorepo/.github/actions/publish-npm@main
         with:
           working-directory: .
-          filters: |
-            @effront/core
-            @effront/vite
-            @effront/cloudflare
-            @effront/markdown
-            @effront/tailwind
+          filters: "./packages/*"
