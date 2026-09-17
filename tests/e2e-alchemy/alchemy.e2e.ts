@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("Alchemy Website Worker serves KV-backed RSC, hydration, Server Functions and navigation", async ({
+test("native Alchemy Worker serves KV-backed RSC, hydration, Server Functions and navigation", async ({
   page,
   request,
 }) => {
@@ -25,4 +25,23 @@ test("Alchemy Website Worker serves KV-backed RSC, hydration, Server Functions a
   await expect(page).toHaveURL(/\/about$/);
   await expect(page.getByTestId("label")).toHaveText("Effront + Alchemy");
   expect(errors).toEqual([]);
+});
+
+test("Tailwind utilities style the native application and fit a narrow viewport", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByRole("main")).toHaveCSS("max-width", "768px");
+  await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toHaveCSS(
+    "padding-left",
+    "16px",
+  );
+  await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toHaveCSS(
+    "padding-top",
+    "8px",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(390);
 });

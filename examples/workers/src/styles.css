@@ -1,33 +1,4 @@
-body {
-  font-family: system-ui, sans-serif;
-  margin: 2rem;
-  color: #172554;
-  background: #f8fafc;
-}
-nav {
-  display: flex;
-  gap: 1rem;
-}
-main {
-  max-width: 48rem;
-}
-button {
-  padding: 0.5rem 1rem;
-}
-
-.transition-card {
-  margin-top: 2rem;
-  padding: 2rem;
-  border-radius: 1rem;
-}
-
-.transition-card-a {
-  background: #dbeafe;
-}
-
-.transition-card-b {
-  background: #e0e7ff;
-}
+@import "tailwindcss";
 
 ::view-transition-old(.demo-slide) {
   animation: demo-slide-out 350ms ease-in both;

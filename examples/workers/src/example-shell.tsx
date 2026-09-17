@@ -7,9 +7,14 @@ import "./styles.css";
 export function PageNote() {
   const [note, setNote] = useState("");
   return (
-    <p>
+    <p className="my-4">
       <label>
-        Page note <input value={note} onChange={(event) => setNote(event.target.value)} />
+        Page note{" "}
+        <input
+          className="rounded border border-slate-400 bg-white px-2 py-1"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
       </label>
     </p>
   );
@@ -18,11 +23,18 @@ export function PageNote() {
 export function ExampleShell({ children }: { readonly children: ReactNode }) {
   return (
     <>
-      <nav>
-        <a href="/">Home</a> <a href="/about">About</a>
-        <a href="/transitions/default-a">Page transitions</a>
+      <nav className="flex flex-wrap gap-4">
+        <a className="text-blue-700 underline" href="/">
+          Home
+        </a>{" "}
+        <a className="text-blue-700 underline" href="/about">
+          About
+        </a>
+        <a className="text-blue-700 underline" href="/transitions/default-a">
+          Page transitions
+        </a>
       </nav>
-      <main>{children}</main>
+      <main className="max-w-3xl">{children}</main>
     </>
   );
 }
@@ -31,14 +43,24 @@ export function TransitionExampleLayout({ children }: { readonly children: React
   return (
     <>
       <aside aria-label="Persistent transition layout">
-        <h2>Page transitions</h2>
-        <p>This counter belongs to the layout and stays mounted while the page changes.</p>
+        <h2 className="my-5 text-2xl font-bold">Page transitions</h2>
+        <p className="my-4">
+          This counter belongs to the layout and stays mounted while the page changes.
+        </p>
         <Counter />
-        <nav aria-label="Transition examples">
-          <a href="/transitions/default-a">Default transition</a>
-          <a href="/transitions/custom-a">Custom transition</a>
-          <a href="/transitions/typed-a">Link-selected transition</a>
-          <a href="/transitions/disabled-a">Disabled transition</a>
+        <nav className="flex flex-wrap gap-4" aria-label="Transition examples">
+          <a className="text-blue-700 underline" href="/transitions/default-a">
+            Default transition
+          </a>
+          <a className="text-blue-700 underline" href="/transitions/custom-a">
+            Custom transition
+          </a>
+          <a className="text-blue-700 underline" href="/transitions/typed-a">
+            Link-selected transition
+          </a>
+          <a className="text-blue-700 underline" href="/transitions/disabled-a">
+            Disabled transition
+          </a>
         </nav>
       </aside>
       {children}

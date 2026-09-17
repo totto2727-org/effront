@@ -10,7 +10,7 @@ const EFFRONT = Application.effront();
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.succeed(
-      <html lang="en">
+      <html lang="en" className="bg-gray-900 font-sans text-slate-200 scheme-dark">
         <head>
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -49,7 +49,10 @@ const ManualPage = Manual.Page.make({
       const entry = yield* CurrentEntry;
       const document = yield* parseMarkdown(entry);
       return (
-        <article className="comark" data-markdown-page={entry.url}>
+        <article
+          className="comark prose prose-slate prose-invert max-w-none prose-a:text-blue-300 prose-blockquote:border-blue-400 prose-pre:bg-slate-800 prose-td:border prose-td:border-slate-600 prose-td:px-4 prose-td:py-1.5 prose-th:border prose-th:border-slate-600 prose-th:px-4 prose-th:py-1.5"
+          data-markdown-page={entry.url}
+        >
           <ComarkMarkdownDocument value={document} />
         </article>
       );

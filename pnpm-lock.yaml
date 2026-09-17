@@ -110,6 +110,9 @@ catalogs:
     '@comark/react':
       specifier: 0.6.2
       version: 0.6.2
+    '@tailwindcss/typography':
+      specifier: ^0.5.20
+      version: 0.5.20
     '@tailwindcss/vite':
       specifier: ^4.3.3
       version: 4.3.3
@@ -128,6 +131,9 @@ catalogs:
     shiki:
       specifier: 4.4.3
       version: 4.4.3
+    tailwindcss:
+      specifier: ^4.3.3
+      version: 4.3.3
     vite-plus:
       specifier: 0.3.1
       version: 0.3.1
@@ -223,7 +229,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/vite
       '@tailwindcss/typography':
-        specifier: ^0.5.20
+        specifier: 'catalog:'
         version: 0.5.20(tailwindcss@4.3.3)
       '@tailwindcss/vite':
         specifier: 'catalog:'
@@ -244,7 +250,7 @@ importers:
         specifier: 'catalog:'
         version: 0.5.34(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(react-dom@19.3.0-canary-1d34f91d-20260909(react@19.3.0-canary-1d34f91d-20260909))(react@19.3.0-canary-1d34f91d-20260909)
       tailwindcss:
-        specifier: ^4.3.3
+        specifier: 'catalog:'
         version: 4.3.3
       tw-animate-css:
         specifier: ^1.4.0
@@ -289,6 +295,12 @@ importers:
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
+      '@tailwindcss/typography':
+        specifier: 'catalog:'
+        version: 0.5.20(tailwindcss@4.3.3)
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.3.3(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -298,6 +310,9 @@ importers:
       '@vitejs/plugin-rsc':
         specifier: 'catalog:'
         version: 0.5.34(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(react-dom@19.3.0-canary-1d34f91d-20260909(react@19.3.0-canary-1d34f91d-20260909))(react@19.3.0-canary-1d34f91d-20260909)
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.3
       vite-plus:
         specifier: 'catalog:'
         version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
@@ -329,6 +344,9 @@ importers:
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.3.3(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -338,6 +356,9 @@ importers:
       '@vitejs/plugin-rsc':
         specifier: 'catalog:'
         version: 0.5.34(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(react-dom@19.3.0-canary-1d34f91d-20260909(react@19.3.0-canary-1d34f91d-20260909))(react@19.3.0-canary-1d34f91d-20260909)
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.3
       vite-plus:
         specifier: 'catalog:'
         version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
@@ -348,12 +369,21 @@ importers:
         specifier: npm:@voidzero-dev/vite-plus-core@0.3.1
         version: '@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)'
     devDependencies:
+      '@effect/platform-node':
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112(effect@4.0.0-rc.112)(redis@6.2.1)
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../core
       '@effront/vite':
         specifier: workspace:*
         version: link:../vite
       alchemy:
         specifier: 'catalog:'
         version: 2.0.0-beta.77(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@types/react@19.3.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(typescript@7.0.2)(vitest@4.1.11)(ws@8.21.3)
+      effect:
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112
 
   packages/cloudflare:
     dependencies:
@@ -5152,7 +5182,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-    optional: true
 
   '@effect/sql-d1@4.0.0-rc.112(effect@4.0.0-rc.112)':
     dependencies:
@@ -6596,27 +6625,22 @@ snapshots:
   '@redis/bloom@6.2.1(@redis/client@6.2.1)':
     dependencies:
       '@redis/client': 6.2.1
-    optional: true
 
   '@redis/client@6.2.1':
     dependencies:
       cluster-key-slot: 1.1.2
-    optional: true
 
   '@redis/json@6.2.1(@redis/client@6.2.1)':
     dependencies:
       '@redis/client': 6.2.1
-    optional: true
 
   '@redis/search@6.2.1(@redis/client@6.2.1)':
     dependencies:
       '@redis/client': 6.2.1
-    optional: true
 
   '@redis/time-series@6.2.1(@redis/client@6.2.1)':
     dependencies:
       '@redis/client': 6.2.1
-    optional: true
 
   '@rolldown/binding-android-arm-eabi@1.2.5':
     optional: true
@@ -7313,8 +7337,7 @@ snapshots:
 
   clsx@2.1.1: {}
 
-  cluster-key-slot@1.1.2:
-    optional: true
+  cluster-key-slot@1.1.2: {}
 
   comark@0.6.2(beautiful-mermaid@1.1.3)(katex@0.17.0)(shiki@4.4.3):
     dependencies:
@@ -7775,8 +7798,7 @@ snapshots:
       braces: 3.0.3
       picomatch: 2.3.2
 
-  mime@4.1.0:
-    optional: true
+  mime@4.1.0: {}
 
   miniflare@5.20260910.0-alpha(@types/node@22.20.2):
     dependencies:
@@ -8095,7 +8117,6 @@ snapshots:
     transitivePeerDependencies:
       - '@node-rs/xxhash'
       - '@opentelemetry/api'
-    optional: true
 
   regex-recursion@6.0.2:
     dependencies:
@@ -8337,8 +8358,7 @@ snapshots:
 
   undici@7.29.0: {}
 
-  undici@8.10.2:
-    optional: true
+  undici@8.10.2: {}
 
   unenv@2.0.0-rc.24:
     dependencies:

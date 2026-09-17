@@ -84,14 +84,15 @@ The Gitignore CLI integration tests still invoke individual tool commands intern
 Validated the real task interface with a temporary source probe: `check` rejected malformed formatting, `fix` repaired it, `check` then passed, and a separate TypeScript mismatch caused `check` to fail before the restored source passed again.
 `vp run test` passed all 241 tests across 33 files.
 
-## Alchemy Website integration
+## Native Alchemy integration
 
 `tests/e2e-alchemy` is a black-box contract against the committed `examples/workers` consumer.
 Its package-owned Vite configuration reuses the application configuration and adds a test-only workerd host with local KV bindings.
 The fixed command builds that example and runs Alchemy's workerd preview, without generating or copying application source.
-It covers typed KV bindings reaching HTML and Server Functions, HEAD handling, hydration and navigation.
+It covers construction-provided native KV clients reaching HTML and Server Functions, HEAD handling, hydration and navigation.
+A separate browser case checks emitted Tailwind utility styles and narrow-viewport overflow on the same committed example.
 Run `vp run w:pack` at the repository root, then `vp run test` from `tests/e2e-alchemy`.
 This package does not deploy or run authenticated infrastructure reconciliation.
 Application configs leave host injection and infrastructure planning to the official Alchemy CLI.
 Core's colocated native HTTP tests still protect the independent native API's context precedence, memo-map isolation and stream finalization.
-The Alchemy adapter's colocated tests protect Vite graph composition and SSR output layout without registering another host.
+The Alchemy adapter's colocated tests protect lazy construction, host-service exclusion, Vite graph composition, and the version-pinned development runtime projection without registering another host.

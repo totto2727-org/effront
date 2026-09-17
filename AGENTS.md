@@ -3,12 +3,12 @@
 ## Repository structure
 
 - `packages/core/`: application and Fetch runtime (`@effront/core`).
-- `packages/alchemy/`: experimental provider-specific Alchemy adapters, currently Cloudflare Workers.
+- `packages/alchemy/`: experimental provider-specific native Alchemy adapters, currently Cloudflare Workers.
 - `packages/vite/`: portable build integration (`@effront/vite`).
 - `packages/cloudflare/`: Cloudflare Vite integration (`@effront/cloudflare`) and separate runtime accessors (`@effront/cloudflare/workers`).
 - `packages/markdown/`: Vite glob collections and comark React SSR rendering (`@effront/markdown`).
 - `examples/markdown/`: file-relative Markdown routing and asset consumer.
-- `examples/workers/`: Alchemy Website consumer with typed KV bindings and request-local application services.
+- `examples/workers/`: native Alchemy Worker consumer with construction-time KV capabilities and request-local application services.
 - `app/docs/`: SSR Guide, API reference, and implementation architecture site, using the framework itself with shadcn/ui and Tailwind Typography.
 - `tests/e2e-build/`: independent Playwright acceptance against its package-local fixture built for standalone Wrangler.
 - `tests/e2e-dev/`: independent Vite/workerd HMR acceptance using its own minimal package-local fixture.
@@ -44,7 +44,7 @@ From the repository root:
 - Run `vp run test` from `tests/e2e-build/` for built-artifact browser acceptance and from `tests/e2e-dev/` for development HMR acceptance.
 - Run `vp run test` from `packages/gitignore-patterns/` for that package's unit and real CLI integration tests.
 
-The `tests/e2e-alchemy/` package builds and serves the committed Workers example as a fixed Alchemy Website integration consumer.
+The `tests/e2e-alchemy/` package builds and serves the committed Workers example as a fixed native Alchemy integration consumer.
 It checks KV-backed HTML, HEAD, hydration, Server Functions and navigation without copying fixture source.
 
 For the documentation site, enter `app/docs/` and use `vp run dev`; see [site operations](docs/DOCS-SITE.md).
@@ -54,6 +54,10 @@ To run an example, enter `examples/workers/` or `examples/markdown/` and use `vp
 Alchemy owns the local host and resource bindings; application Vite configs must not register a second Cloudflare runtime plugin.
 The repository root intentionally provides no example dev, build, or local-hosting script.
 The root `vite.config.ts` owns repository formatting, linting, and test configuration.
+Both examples and the documentation site use Tailwind CSS through `@tailwindcss/vite`.
+Keep sample layout and decoration in utility classes; retain custom CSS only for behavior such as View Transition pseudo-elements/keyframes.
+Client shells import the CSS entry so initial SSR includes the stylesheet.
+Independent CSS-processing regression fixtures remain separate from sample styling.
 
 ## Architecture
 
@@ -61,7 +65,7 @@ The root `vite.config.ts` owns repository formatting, linting, and test configur
 
 The user's 2026-09-11 requirements explicitly supersede the upstream Bun-only runtime, Rspack compilation, proprietary development server, Vercel packaging, and Bun verification commands.
 The core exposes a host-neutral native Effect HTTP boundary and a compatibility Web `Request` to `Response` wrapper.
-The experimental primary host is an Alchemy Cloudflare Website with a standard Worker Fetch entry.
+The experimental primary host is a native Alchemy Cloudflare Worker.
 Workers-specific `env` and execution context stay behind the host adapter and in request-local Effect context, never implicitly in Flight or HTML.
 The 2026-09-16 Alchemy experiment adds native Effect HTTP hosting and an explicit KV example.
 Alchemy-specific code belongs in `packages/alchemy/src/<provider>/`, never core.
@@ -74,7 +78,7 @@ Node/Bun/AWS host adapters and hosted deployments remain outside the implemented
 - Scope application services to the request, and preserve their lifetime through response body completion, error, and cancellation.
 - Preserve React's native RSC and Server Function protocols. Do not invent a replacement transport.
 - Migrated applications use Alchemy CLI for local development. The Alchemy browser test owns its independent local runtime configuration; standalone regression fixtures continue using generated Wrangler configs.
-- Infrastructure does not import application runtime code. Acquire application layers per request and retain streaming scopes through the existing Fetch runtime.
+- Native Worker construction defers RSC application imports. Capture capability references, not request lifetimes; acquire application layers per request and let the native host retain streaming scopes.
 
 ## Development tools
 

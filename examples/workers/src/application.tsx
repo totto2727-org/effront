@@ -10,9 +10,10 @@ const RootLayout = EFFRONT.Layout.make({
     Effect.succeed(
       <html lang="en">
         <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
           <title>Effront Workers</title>
         </head>
-        <body>
+        <body className="m-8 bg-slate-50 font-sans text-blue-950">
           <ExampleShell>{children}</ExampleShell>
         </body>
       </html>,
@@ -24,9 +25,11 @@ const HomePage = EFFRONT.Page.make({
     const host = yield* Host;
     return (
       <>
-        <h1>{host.label}</h1>
-        <p data-testid="kv-greeting">{host.greeting}</p>
-        <p>React Server Components on Workers, powered by Effect.</p>
+        <h1 className="my-5 text-3xl font-bold">{host.label}</h1>
+        <p className="my-4" data-testid="kv-greeting">
+          {host.greeting}
+        </p>
+        <p className="my-4">React Server Components on Workers, powered by Effect.</p>
         <Counter />
         <GreetingAction />
       </>
@@ -39,9 +42,13 @@ const AboutPage = EFFRONT.Page.make({
     const host = yield* Host;
     return (
       <>
-        <h1>About</h1>
-        <p data-testid="label">{host.label}</p>
-        <a href="/">Back home</a>
+        <h1 className="my-5 text-3xl font-bold">About</h1>
+        <p className="my-4" data-testid="label">
+          {host.label}
+        </p>
+        <a className="text-blue-700 underline" href="/">
+          Back home
+        </a>
       </>
     );
   }),
@@ -63,9 +70,13 @@ const transitionPage = (mode: "default" | "custom" | "typed" | "disabled", step:
           : {}),
     render: () =>
       Effect.succeed(
-        <section className={`transition-card transition-card-${step}`}>
-          <h1>{`${mode} page ${step.toUpperCase()}`}</h1>
-          <p>
+        <section
+          className={
+            step === "a" ? "mt-8 rounded-2xl bg-blue-100 p-8" : "mt-8 rounded-2xl bg-indigo-100 p-8"
+          }
+        >
+          <h1 className="my-5 text-3xl font-bold">{`${mode} page ${step.toUpperCase()}`}</h1>
+          <p className="my-4">
             {mode === "default"
               ? "Effront animates this page with its built-in transition, without configuration."
               : mode === "custom"
@@ -76,6 +87,7 @@ const transitionPage = (mode: "default" | "custom" | "typed" | "disabled", step:
           </p>
           <PageNote />
           <a
+            className="text-blue-700 underline"
             href={`/transitions/${mode}-${step === "a" ? "b" : "a"}`}
             data-effront-transition-types={mode === "typed" ? "demo-navigation" : undefined}
           >
