@@ -33,23 +33,16 @@ An ignored parent directory cannot be reopened by a rule inside that directory.
 ## Prerequisites
 
 Node.js 22 or later and read access to the chosen filesystem tree.
-The output is intended for Gitignore-style `ignorePatterns` rooted at the same directory, such as VitePlus fmt and lint.
-It is not a general-purpose minimatch or arbitrary glob configuration.
+Local acquisition also requires VitePlus and a prepared local copy of this package with its dependencies and built exports available.
 
 ## Setup
 
 This package is local to this workspace and has not been published to a registry.
-Workspace consumers declare:
+Link an already prepared local copy into your project:
 
-```json
-{
-  "devDependencies": {
-    "@effront/gitignore-patterns": "workspace:*"
-  }
-}
+```bash
+vp link /absolute/path/to/effront/packages/gitignore-patterns
 ```
-
-Workspace installation builds the package's JavaScript and declarations automatically.
 
 ## API
 
@@ -58,7 +51,7 @@ Workspace installation builds the package's JavaScript and declarations automati
 ```ts
 function generateIgnorePatterns(
   root: string | URL,
-  options?: { readonly ignoreCase?: boolean },
+  options?: GenerateIgnorePatternsOptions,
 ): Promise<string[]>;
 ```
 
@@ -67,6 +60,7 @@ Relative paths are resolved against the process working directory.
 `ignoreCase` defaults to `false` and does not read Git's `core.ignorecase` setting.
 The returned array is a deterministic snapshot of currently ignored entries, using file patterns such as `/nested/file.log` and directory patterns such as `/dist/`.
 There are no negative patterns in the generated output.
+The output is intended for Gitignore-style `ignorePatterns` rooted at the same directory, such as VitePlus fmt and lint, rather than arbitrary glob or minimatch configuration.
 
 Only `.gitignore` files at or below the supplied root participate.
 Ancestor ignore files outside that root, global excludes, `.git/info/exclude`, and tracked-file status are not consulted.
@@ -80,6 +74,21 @@ A missing root therefore retains `ENOENT`; a non-directory or symbolic-link root
 Non-file URLs reject through Node's URL conversion.
 The tree should remain stable while scanning, because this is not an atomic filesystem snapshot or a sandbox against concurrent symlink replacement.
 
+### `GenerateIgnorePatternsOptions`
+
+The exported options type contains `readonly ignoreCase?: boolean`.
+For a consumer that deliberately uses case-insensitive matching:
+
+```ts
+import {
+  generateIgnorePatterns,
+  type GenerateIgnorePatternsOptions,
+} from "@effront/gitignore-patterns";
+
+const options: GenerateIgnorePatternsOptions = { ignoreCase: true };
+const patterns = await generateIgnorePatterns("./project", options);
+```
+
 ### Snapshot and consumer boundaries
 
 Call the function again when files or Gitignore rules change.
@@ -91,15 +100,15 @@ VitePlus independently reads Gitignore files, so its native exclusions are addit
 The generated output does not guarantee exact final CLI selection for every valid Git pattern: native formatter/linter matching and symlink behavior can differ from Git.
 For example, native VitePlus loaders may expand braces in `a{b,c}.js`, whereas Git treats them literally.
 This package escapes the literal correctly but cannot undo exclusions already imposed by the consumer.
-See the [verified tool boundaries](../../docs/GITIGNORE-VALIDATION.md) for concrete findings.
+See the [verified tool boundaries](docs/VALIDATION.md#native-tool-limitations) for concrete findings.
 The parser's own documented Unicode matching limitations also apply.
 
 ## Development
 
-See the repository's [AGENTS.md](../../AGENTS.md) and [verification guide](../../docs/GITIGNORE-VALIDATION.md).
+See [AGENTS.md](AGENTS.md).
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
 
-_This README follows the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._
+_This README was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._

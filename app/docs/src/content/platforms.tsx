@@ -112,8 +112,8 @@ export default Cloudflare.Worker("App", {
         </p>
         <p>
           完全な構成、KV の利用例、依存バージョンの制約はリポジトリの
-          <code>docs/ALCHEMY.md</code> と <code>examples/alchemy</code> にあります。
-          以下は引き続き利用できる公開済み standalone adapter の設定です。
+          <code>packages/alchemy/docs/INTEGRATION.md</code> と <code>examples/alchemy</code>{" "}
+          にあります。 以下は引き続き利用できる公開済み standalone adapter の設定です。
         </p>
         <h2 id="setup">公開版の standalone セットアップ</h2>
         <p>

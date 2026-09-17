@@ -22,7 +22,10 @@ The About link navigates to `/about`, which displays the configured application 
 
 ## Setup
 
-The example's [package manifest](package.json) declares its Effront, Effect, React, and Cloudflare dependencies.
+Use the [example source](src/) as the starting point for your own application.
+Follow [core Setup](../../packages/core/README.md#setup), [Vite Setup](../../packages/vite/README.md#setup), and [Cloudflare Setup](../../packages/cloudflare/README.md#setup) for the runtime and tooling dependencies.
+Acquire the styling integration through [Tailwind Setup](../../packages/tailwind/README.md#setup).
+
 Its Fetch entry connects the supplied application definition to the Worker:
 
 ```ts
@@ -59,7 +62,7 @@ Set these nonsecret Worker variables in `wrangler.jsonc` to change the About lab
 
 ## Development
 
-See [development instructions](../../AGENTS.md#development-commands).
+See [development instructions](../AGENTS.md#development-commands).
 
 ## License
 

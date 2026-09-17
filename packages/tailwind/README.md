@@ -20,16 +20,18 @@ These styles apply before hydration, including when JavaScript is disabled.
 
 - **Integration**: An Effront application using its Vite RSC integration and rendered React client boundaries.
 - **CSS plugins**: Install any plugin referenced by a custom stylesheet, such as `@tailwindcss/typography`.
+- **Local acquisition**: VitePlus and access to a prepared local copy of this package with dependencies and built exports available.
 
 ## Setup
 
-After the initial npm release, install the integration as a development dependency in your application:
+The initial npm release is not available yet.
+Link an already prepared local copy into your application:
 
 ```bash
-vp add -D @effront/tailwind
+vp link /absolute/path/to/effront/packages/tailwind
 ```
 
-Import the integration in its Vite configuration:
+Import its integration in the Vite configuration:
 
 ```ts
 import { effrontTailwind } from "@effront/tailwind";
@@ -74,7 +76,7 @@ Tailwind syntax and supported directives are documented in the [official Vite in
 
 ## Development
 
-See [development instructions](../../AGENTS.md#development-commands).
+See [AGENTS.md](AGENTS.md).
 
 ## License
 

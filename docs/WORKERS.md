@@ -59,7 +59,7 @@ The application-definition entry defaults to `src/entry.effront.tsx` and directl
 Despite its name, this definition module stays in the RSC graph rather than becoming the browser hydration entry.
 The framework provides the SSR and browser entries.
 The Cloudflare wrapper owns the required `viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] }`.
-Other Cloudflare options can be supplied through its `cloudflare` option and are forwarded without disabling state persistence or remote bindings.
+Other Cloudflare options are passed directly to `effrontCloudflare(options)` and forwarded without disabling state persistence or remote bindings.
 The wrapper does not set server host, port, strict-port mode, project root, or a Wrangler config path.
 Vite runs from the application directory and uses normal configuration discovery.
 
@@ -74,7 +74,7 @@ The generated Wrangler configuration supplies the built client asset directory.
 Worker-first routing remains an explicit application choice for cases such as protecting asset requests or overriding a conflicting static URL.
 Changing Wrangler runtime variables must not require rebuilding the application.
 
-The package exposes TypeScript source exports for Vite bundling.
+Packages expose built JavaScript and declaration files through explicit package exports; Vite bundles those entries into the application.
 The workspace consumer exercises the actual `@effront/core`, `@effront/vite`, `@effront/cloudflare`, and `@effront/core/workers` exports.
 This is not a claim of standalone unbundled Node compatibility or published-package readiness.
 

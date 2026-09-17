@@ -6,22 +6,6 @@ Moving the tests preserves their assertions and changes only module-relative imp
 
 ## Retained integration suites
 
-The following suites remain under `packages/core/tests/` because they exercise interactions across module or tool boundaries:
-
-| Suite                                  | Integration contract                                                                      |
-| -------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `application/definition.test.tsx`      | Application definitions, route compilation, RSC rendering, and client route outlets.      |
-| `application/duplicate-module.test.ts` | Identity and interoperability across separately loaded framework module instances.        |
-| `client/client-router.test.ts`         | Navigation, Flight loading, React commit ordering, and response lifetimes.                |
-| `client/call-server.test.ts`           | Server Function invocation, Flight results, route refresh, and browser rendering.         |
-| `client/route-loader.test.ts`          | Route loading and cache ownership across FlightClient and navigation.                     |
-| `client/route-refresh.test.ts`         | Refresh/navigation coordination and streamed-response ownership through render commits.   |
-| `server/flight-html-stream.test.ts`    | HTML injection and client-side reconstruction of embedded Flight streams.                 |
-| `server/middleware.test.ts`            | Application middleware acquisition/release through the real Effect HTTP web handler.      |
-| `server/workers.test.tsx`              | Application layers, request-scoped bindings, and public Workers Fetch response lifetimes. |
-| `types/route-scaling.test.ts`          | Type instantiation scaling through an independently invoked TypeScript compiler.          |
-| `vite/cloudflare.test.ts`              | Real Vite configuration resolution integrating Effront and Cloudflare plugins.            |
-
 The package-owned `packages/gitignore-patterns/tests/cli.test.ts` validates the public generator under Vitest through actual Git and VitePlus CLI processes.
 The build E2E package validates its dedicated fixture application through the generated Wrangler artifact.
 The separate dev E2E package runs only HMR checks against Vite/workerd with its own minimal fixture.

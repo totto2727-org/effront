@@ -12,7 +12,7 @@ Ignored directories are emitted as directory exclusions and pruned, so their des
 The generated patterns are escaped, root-anchored positive literals, not a concatenation of Gitignore rules.
 Run the generator again after filesystem or ignore-rule changes.
 The normal VitePlus command startup does this automatically.
-See the [package documentation](../packages/gitignore-patterns/README.md) for the complete scope, API, and symlink policy.
+See the [package documentation](../README.md) for the complete scope, API, and symlink policy.
 
 ## Why patterns are evaluated before export
 
@@ -34,12 +34,12 @@ No external tracker issue is created by this local-only implementation, and no u
 
 ## Reproducing acceptance checks
 
+Run the commands below from the repository root unless a working directory is shown.
+
 - `vp test run` exercises the package's rule traversal and compares effective exclusions with real Git.
 - `(cd packages/gitignore-patterns && vp run test)` exercises generated exclusions through the generator API and actual VitePlus formatter and linter commands.
 - The CLI fixtures have independent Git and pnpm workspace roots and remove native Gitignore inputs after generation, so native ignores cannot mask generator failures.
 - `vp run check` checks the real workspace using the generated root configuration; `vp run fix` applies formatting and safe lint fixes.
-- `(cd tests/e2e-build && vp run test)` checks the standalone Wrangler workflow through a dedicated fixture.
-- `(cd tests/e2e-dev && vp run test)` checks development HMR through a separate minimal fixture.
 
 Temporary probes belong under ignored `tmp/` and are not package contents.
 

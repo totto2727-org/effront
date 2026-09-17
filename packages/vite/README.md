@@ -1,35 +1,85 @@
 # @effront/vite
 
-Portable Effront Vite integration for React Server Components, SSR, browser hydration, and the native React Compiler.
-Install alongside `@effront/core` and VitePlus.
-It does not install or register Cloudflare integration.
+Build Effront applications with React Server Components, server-rendered HTML, browser hydration, and the native React Compiler through a portable Vite integration.
 
 ## Usage
 
+Serve a server-rendered home page with an interactive counter, then navigate to an About page without replacing the application shell.
+The [Workers application's concrete routes](../../examples/workers/src/entry.effront.tsx) and [Vite configuration](../../examples/workers/vite.config.ts) demonstrate this integration: requesting `/` renders `Hello, world!`, and its client counter becomes interactive after hydration.
+See the [Workers example Usage](../../examples/workers/README.md#usage) for the complete consumer flow.
+
+## Key features
+
+- Configures the browser, React Server Component, and SSR environments together.
+- Enables the native React Compiler and supplies Effront's browser and SSR entrypoints.
+- Supports custom host and application entry paths.
+- Refreshes RSC raw-content imports during development, including document deletion.
+
+## Prerequisites
+
+- **Application**: An Effront application with a matching `@effront/core` version.
+- **Tooling**: Vite with environment support, such as VitePlus, and its supported Node.js runtime.
+- **Host integration**: A runtime adapter that hosts RSC and SSR environments. Cloudflare Workers is the tested standalone host.
+
+## Setup
+
+Install the integration and its core peer in your Vite application:
+
+```bash
+npm install @effront/core@0.1.1
+npm install --save-dev @effront/vite@0.1.1 vite
+```
+
+For the standalone Workers configuration below, also install its host integration:
+
+```bash
+npm install --save-dev @effront/cloudflare@0.1.1
+```
+
+## API
+
+### `effront(options?: EffrontViteOptions)`
+
+Returns a Vite `PluginOption[]` configuring Effront's React and RSC integrations.
+Register it once alongside your host integration:
+
 ```ts
-import { defineConfig } from "vite-plus";
-import { effront } from "@effront/vite";
 import { effrontCloudflare } from "@effront/cloudflare";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [effront(), effrontCloudflare()],
 });
 ```
 
-For another host, omit `effrontCloudflare()` and provide its host integration separately.
-Node and Bun adapters are not implemented yet.
+The plugin owns the React and Vite RSC plugins, so do not register them a second time.
+It does not install or register a host adapter, and Node and Bun adapters are not implemented.
 
-The default entries are `src/entry.workers.ts` for the Fetch host and `src/entry.effront.tsx` for the application definition export.
-Override them with `effront({ rsc, application })`.
-The Vite + Cloudflare configuration uses these two entries directly.
-Future Node or Bun adapters can use `src/entry.server.ts` either to adapt the Fetch export from `src/entry.workers.ts` or to host the application directly through Effect HTTP with a reusable Runtime.
-See [the host adapter roadmap](../../docs/ROADMAP.md#server-runtime-adapters) for that planned integration.
-The application definition stays in the RSC graph, while the plugin supplies the browser and SSR entries.
-Do not register React or Vite RSC plugins a second time.
-The `@effront/core/internal/*` exports are an integration contract with the matching core version, not application APIs.
+### `EffrontViteOptions`
 
-## Validation
+- `rsc?: string`: The RSC environment's host entry exporting a `{ fetch }` handler. Defaults to `./src/entry.workers.ts`.
+- `application?: string`: The application definition entry exposed through `@effront/core/application-entry`. Defaults to `./src/entry.effront.tsx` and resolves relative to the Vite root.
 
-Run `vp check` and `vp test run` in this package.
-Built-Worker browser acceptance lives in `tests/e2e-build`, while Vite development HMR acceptance lives in `tests/e2e-dev`.
-Run `vp run test` from each package independently.
+```ts
+import { effront, type EffrontViteOptions } from "@effront/vite";
+
+const entries: EffrontViteOptions = {
+  rsc: "./src/host.ts",
+  application: "./src/application.tsx",
+};
+
+effront(entries);
+```
+
+The application definition remains in the RSC graph; the integration supplies the browser and SSR entries.
+
+## Development
+
+See [AGENTS.md](AGENTS.md).
+
+## License
+
+[MIT License](LICENSE).
+
+_This README was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._
