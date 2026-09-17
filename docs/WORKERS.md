@@ -53,7 +53,7 @@ The browser graph uses the plugin's browser Flight client and hydration entry.
 Workers applications register both explicitly: `plugins: [effront(), effrontCloudflare()]`.
 Cloudflare options, when needed, are passed directly to `effrontCloudflare(...)` rather than nested beneath a `cloudflare` property; the ordinary configuration uses `effrontCloudflare()` with no options.
 Do not register React or Vite RSC plugins a second time.
-Omitting the Cloudflare adapter leaves the core available for a future Node or Bun host adapter, but neither adapter is implemented in this milestone.
+For native Node or Bun hosting instead of Cloudflare, use the separate [`@effront/server` integration](../packages/server/README.md); the Workers wiring described here remains unchanged.
 The default RSC entry is the application's `src/entry.workers.ts`, which exports the Workers Fetch object.
 The application-definition entry defaults to `src/entry.effront.tsx` and directly exports the application definition.
 Despite its name, this definition module stays in the RSC graph rather than becoming the browser hydration entry.
@@ -100,7 +100,8 @@ The workspace contains the framework and its Workers example.
 
 The upstream CLI, Bun server/filesystem hosting, Rspack build machinery, development panel/RPC, Vercel adapter, obsolete examples, and vendored research snapshots have been removed.
 Their history is preserved by Git.
-Node and Bun can eventually host the same Fetch interface through host adapters, but no adapter or compatibility guarantee is delivered in this milestone.
+The original Workers milestone did not deliver Node/Bun adapters or establish their compatibility.
+The subsequent `@effront/server` package hosts the native Effect HTTP handler separately; the Workers validation evidence above does not establish its runtime guarantees.
 D1, KV, R2, authentication integrations, and production deployment remain outside the user's requested scope.
 
 ## Official references

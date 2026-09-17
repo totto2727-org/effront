@@ -10,6 +10,7 @@ catalog:
   "@cloudflare/vite-plugin": 1.54.7
   "@comark/react": 0.6.2
   "@effect/platform-browser": 4.0.0-rc.112
+  "@effect/platform-bun": 4.0.0-rc.112
   "@effect/platform-node": 4.0.0-rc.112
   "@effect/platform-node-shared": 4.0.0-rc.112
   "@effect/sql-d1": 4.0.0-rc.112
@@ -20,12 +21,14 @@ catalog:
   "@tailwindcss/vite": ^4.3.3
   "@totto2727/gitignore-patterns": jsr:0.1.0
   "@tsconfig/strictest": 2.0.8
+  "@types/bun": 1.4.2
   "@types/node": 22.20.2
   "@types/react": 19.3.0
   "@types/react-dom": 19.3.0
   "@vitejs/plugin-react": 6.1.1
   "@vitejs/plugin-rsc": 0.5.34
   alchemy: 2.0.0-beta.77
+  bun: 1.4.2
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
   comark: 0.6.2
@@ -57,6 +60,7 @@ overrides:
   "@effect/platform-node": "catalog:"
   "@effect/platform-node-shared": "catalog:"
   "@effect/platform-browser": "catalog:"
+  "@effect/platform-bun": "catalog:"
   "@effect/vitest": "catalog:"
   "@effect/sql-d1": "catalog:"
   "@effect/sql-sqlite-do": "catalog:"
@@ -66,6 +70,7 @@ overrides:
   react-dom: "catalog:"
 
 allowBuilds:
+  bun: true
   msgpackr-extract: false
   esbuild: true
   workerd: true

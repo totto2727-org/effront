@@ -22,7 +22,8 @@ Neither API runs an independent Effect runtime.
 
 The Alchemy adapter lives under `packages/alchemy/src/cloudflare/`.
 A future AWS integration can add a sibling provider directory and explicit package subpaths without introducing AWS dependencies into core or the Cloudflare entry.
-Node/Bun can host the native HTTP effect or a Fetch boundary later, but this change does not claim those adapters exist.
+Native Node/Bun HTTP hosting is provided separately by [`@effront/server`](../../server/README.md), without Alchemy or the Workers Fetch boundary.
+The Alchemy verification described here does not establish Node/Bun runtime guarantees.
 The existing standalone `@effront/cloudflare` and Fetch wrapper remain as compatibility paths with their independent regression fixtures.
 
 ## Construction versus requests

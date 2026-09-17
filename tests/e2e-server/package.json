@@ -1,0 +1,14 @@
+{
+  "name": "@effront/e2e-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
+    "bun": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

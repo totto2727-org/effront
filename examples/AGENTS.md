@@ -5,6 +5,7 @@
 - `alchemy/`: native Alchemy Worker with construction-provided KV capability and request-local services.
 - `markdown/`: native Alchemy consumer of file-relative Markdown routing and assets.
 - `workers/`: standalone Cloudflare consumer without Alchemy.
+- `node/` and `bun/`: native Effect HTTP consumers with shared Vite tooling and separate production runtimes.
 - `basic -> alchemy`: relative symlink, not a separate workspace package; preserve its exclusion in `pnpm-workspace.yaml`.
 
 ## Development commands
@@ -16,6 +17,7 @@ Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before en
 - `vp run dev` in `alchemy/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
 - `vp dev`, `vp build`, and `vp preview` in `workers/` use standalone Cloudflare hosting, without an Alchemy profile or remote resources.
 - `vp exec wrangler dev --config dist/rsc/wrangler.json --local --no-bundle` in `workers/` serves the built artifact independently of Vite after `vp build`.
+- `vp dev`, `vp build`, `vp preview`, and `vp run start` in `node/` or `bun/` exercise Vite tooling and the separate built native listener. `PORT` and `HOST` configure production listening.
 - `vp run dev` from `basic/` must resolve to the native Alchemy example when changing the alias.
 - `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host; official CLI acceptance is separate.
 
@@ -27,6 +29,7 @@ Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before en
 - Native Alchemy construction keeps its fixed deferred `entry.effront` import through `makeApplicationHttpEffect`; static imports would evaluate RSC application code during infrastructure planning.
 - Alchemy CLI owns its Vite host. Do not add a manual runtime plugin, injection-environment guard, application stage fallback, or explicit stage flag to ordinary scripts.
 - Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront` and the native `worker` only on `effrontAlchemy`; keep the existing Tailwind integration separate.
+- Node/Bun use `entry.rsc.ts` for the native handler and `entry.server.ts` for production listening; never start the production server during Vite development.
 - Standalone Workers uses its own Fetch entry, `effront()` plus `effrontCloudflare()`, and Wrangler configuration; keep its dependency graph free of Alchemy.
 
 ## Package-specific rules
