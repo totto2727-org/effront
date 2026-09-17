@@ -61,7 +61,7 @@ Acquire the [portable Vite integration and its peers](../vite/README.md#setup) s
 ## API
 
 - `@effront/server/node` and `/bun`: `serve(handler, options)` returns a scoped Layer. `options.assets` is required, `port` defaults to `3000`, and `hostname` defaults to `127.0.0.1`. Use `0.0.0.0` explicitly when exposing the listener outside the local machine.
-- `@effront/server/assets`: `withAssets(handler, options)` constructs a native Effect HTTP handler using the caller's FileSystem, Path, HttpPlatform and ETag services. Configure a dedicated `client` root/prefix and an optional public root. Filesystem roots must exist at startup.
+- `@effront/server/assets`: `withAssets(handler, options)` constructs a native Effect HTTP handler using the caller's FileSystem and Path services plus Effect's standard `HttpStaticServer.make` and lazy-stream `HttpPlatform.layer`. Configure a dedicated `client` root/prefix and an optional public root. Filesystem roots must exist at startup.
 - `@effront/server/vite`: `effrontServer({ rsc?, server? })` is registered after `effront()`. Defaults are `src/entry.rsc.ts` (named `handler` Effect export) and `src/entry.server.ts` (production startup). Keep the application definition in `src/entry.effront.tsx`.
 
 ```ts
@@ -73,7 +73,13 @@ Use the production Bun entry to exercise Bun-only APIs.
 Default sample paths assume `dist/rsc/server.js`, `dist/client/assets`, and URL prefix `/assets/`; adjust the explicit mounts if you customize Vite output or base URLs.
 Public files are exact matches only, without directory indexes or SPA fallback.
 Missing files under the client prefix return 404 rather than entering application routes.
-HEAD and 304 do not open file streams; unsupported or multiple ranges are ignored, while an unsatisfiable valid single range returns 416.
+Static MIME types, cache headers, weak ETags, ranges and conditional responses follow Effect `4.0.0-rc.112`, not a separate Effront HTTP implementation.
+HEAD and 304 do not acquire file streams because assets use Effect's portable lazy filesystem streams on both hosts, rather than native Node streams or `Bun.file` responses.
+The host still owns stream completion and cancellation; custom caller `HttpPlatform` or ETag services do not change asset responses.
+Unsupported, multipart and unsafe-integer ranges are ignored, while an unsatisfiable valid single range returns 416.
+In this Effect version, `If-Range` is ignored and Range is evaluated even for HEAD, which can return 206 or 416 without a body.
+The standard 416 response includes `Content-Range` but no asset cache or validator headers.
+Symlinks within the root are served using the canonical target's filename and MIME type; escaping symlinks are never served.
 Serve trusted, immutable deployment directories; pathname containment does not protect against a privileged process replacing files concurrently.
 
 ## Development

@@ -1,19 +1,12 @@
 import { mkdir, mkdtemp, rm, symlink, truncate, writeFile } from "node:fs/promises";
 import { createServer, request as nodeRequest } from "node:http";
 import { join } from "node:path";
-import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
-import { Context, Effect, FileSystem, Result } from "effect";
+import { Context, Effect, Exit, FileSystem, Result, Stream } from "effect";
 import { systemError } from "effect/PlatformError";
-import {
-  Etag,
-  HttpPlatform,
-  HttpServer,
-  HttpServerRequest,
-  HttpServerResponse,
-} from "effect/unstable/http";
+import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { type AssetOptions, withAssets } from "./assets";
@@ -40,7 +33,7 @@ beforeEach(async () => {
   await writeFile(join(root, "secret.txt"), "outside secret");
   await symlink(join(root, "secret.txt"), join(root, "public", "escape.txt"));
   await symlink(join(root, "secret.txt"), join(root, "client", "escape.txt"));
-  await symlink(join(root, "public", "robots.txt"), join(root, "public", "inside.txt"));
+  await symlink(join(root, "public", "robots.txt"), join(root, "public", "inside.bin"));
   await symlink(join(root, "public"), join(root, "client", "outside-directory"));
   options = {
     client: {
@@ -61,31 +54,38 @@ const app = Effect.succeed(HttpServerResponse.text("application", { status: 202 
 const withServer = (
   run: (origin: string, opened: string[]) => Promise<void>,
   settings: {
-    readonly strongEtags?: boolean;
     readonly deniedPath?: string;
-    readonly onFileResponse?: (response: HttpServerResponse.HttpServerResponse) => void;
+    readonly deniedStatPath?: string;
+    readonly onStreamExit?: (completed: boolean) => void;
   } = {},
 ) =>
   Effect.runPromise(
     Effect.scoped(
       Effect.gen(function* () {
-        const platform = yield* HttpPlatform.HttpPlatform;
         const fs = yield* FileSystem.FileSystem;
         const opened: string[] = [];
-        let construction = withAssets(app, options).pipe(
-          Effect.provideService(HttpPlatform.HttpPlatform, {
-            ...platform,
-            fileResponse: (file, fileOptions) => {
-              opened.push(file);
-              return platform
-                .fileResponse(file, fileOptions)
-                .pipe(
-                  Effect.tap((response) => Effect.sync(() => settings.onFileResponse?.(response))),
-                );
-            },
-          }),
+        const handler = yield* withAssets(app, options).pipe(
           Effect.provideService(FileSystem.FileSystem, {
             ...fs,
+            stream: (file, streamOptions) =>
+              Stream.unwrap(
+                Effect.sync(() => {
+                  opened.push(file);
+                  return fs
+                    .stream(file, streamOptions)
+                    .pipe(
+                      Stream.onExit((exit) =>
+                        Effect.sync(() => settings.onStreamExit?.(Exit.isSuccess(exit))),
+                      ),
+                    );
+                }),
+              ),
+            stat: (file) =>
+              file === settings.deniedStatPath
+                ? Effect.fail(
+                    systemError({ _tag: "PermissionDenied", module: "FileSystem", method: "stat" }),
+                  )
+                : fs.stat(file),
             realPath: (file) =>
               file === settings.deniedPath
                 ? Effect.fail(
@@ -98,8 +98,6 @@ const withServer = (
                 : fs.realPath(file),
           }),
         );
-        if (settings.strongEtags) construction = construction.pipe(Effect.provide(Etag.layer));
-        const handler = yield* construction;
         yield* HttpServer.serveEffect(handler);
         const origin = yield* HttpServer.addressFormattedWith(Effect.succeed);
         yield* Effect.promise(() => run(origin, opened));
@@ -141,10 +139,10 @@ describe("native static assets", () => {
       expect(await unknown.text()).toBe("unknown");
     }));
 
-  it("uses metadata only for HEAD and conditional responses, with stable validators", () =>
+  it("does not acquire streams for HEAD or conditional 304 responses", () =>
     withServer(async (origin, opened) => {
       const url = `${origin}/assets/app-a1b2.js`;
-      const head = await fetch(url, { method: "HEAD", headers: { range: "bytes=2-3" } });
+      const head = await fetch(url, { method: "HEAD" });
       expect(head.status).toBe(200);
       expect(head.headers.get("content-length")).toBe("10");
       expect(head.headers.get("content-range")).toBeNull();
@@ -181,7 +179,7 @@ describe("native static assets", () => {
     ["bytes=2-4", "234", "bytes 2-4/10"],
     ["bytes=8-", "89", "bytes 8-9/10"],
     ["bytes=-3", "789", "bytes 7-9/10"],
-    ["bytes=8-999999999999999999999", "89", "bytes 8-9/10"],
+    ["bytes=8-999", "89", "bytes 8-9/10"],
     ["bytes=-999", "0123456789", "bytes 0-9/10"],
   ])("serves a single range %s", (range, body, contentRange) =>
     withServer(async (origin, opened) => {
@@ -194,26 +192,33 @@ describe("native static assets", () => {
     }),
   );
 
-  it.each(["bytes=10-", "bytes=9-2", "bytes=-0", "bytes=999999999999999999999-"])(
+  it.each(["bytes=10-", "bytes=9-2", "bytes=-0"])(
     "rejects unsatisfiable %s without opening a body",
     (range) =>
       withServer(async (origin, opened) => {
         const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
         expect(response.status).toBe(416);
         expect(response.headers.get("content-range")).toBe("bytes */10");
+        expect(response.headers.get("cache-control")).toBeNull();
+        expect(response.headers.get("etag")).toBeNull();
         expect(await response.text()).toBe("");
         expect(opened).toHaveLength(0);
       }),
   );
 
-  it.each(["bytes=0-1,4-5", "items=0-1", "bytes=wat", "bytes=-"])(
-    "ignores unsupported or malformed %s",
-    (range) =>
-      withServer(async (origin) => {
-        const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
-        expect(response.status).toBe(200);
-        expect(await response.text()).toBe("0123456789");
-      }),
+  it.each([
+    "bytes=0-1,4-5",
+    "items=0-1",
+    "bytes=wat",
+    "bytes=-",
+    "bytes=999999999999999999999-",
+    "bytes=8-999999999999999999999",
+  ])("ignores unsupported or malformed %s", (range) =>
+    withServer(async (origin) => {
+      const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("0123456789");
+    }),
   );
 
   it("handles empty files and their unsatisfiable ranges", () =>
@@ -229,44 +234,28 @@ describe("native static assets", () => {
       expect(opened).toHaveLength(1);
     }));
 
-  it("ignores ranges for stale, invalid or weak If-Range validators", () =>
-    withServer(async (origin) => {
+  it("delegates HEAD ranges and ignored If-Range to Effect rc.112", () =>
+    withServer(async (origin, opened) => {
       const url = `${origin}/assets/app-a1b2.js`;
-      const head = await fetch(url, { method: "HEAD" });
-      for (const validator of [
-        head.headers.get("etag") ?? "",
-        '"different"',
-        "invalid",
-        "Wed, 01 Jan 2020 00:00:00 GMT",
-        "Wed, 01 Jan 2100 00:00:00 GMT",
-      ]) {
-        const response = await fetch(url, {
-          headers: { range: "bytes=1-2", "if-range": validator },
-        });
-        expect(response.status).toBe(200);
-        expect(await response.text()).toBe("0123456789");
-      }
+      const head = await fetch(url, { method: "HEAD", headers: { range: "bytes=2-3" } });
+      expect(head.status).toBe(206);
+      expect(head.headers.get("content-length")).toBe("2");
+      expect(head.headers.get("content-range")).toBe("bytes 2-3/10");
+      expect(await head.text()).toBe("");
+      const invalidHead = await fetch(url, { method: "HEAD", headers: { range: "bytes=10-" } });
+      expect(invalidHead.status).toBe(416);
+      expect(invalidHead.headers.get("content-range")).toBe("bytes */10");
+      expect(await invalidHead.text()).toBe("");
+      expect(opened).toHaveLength(0);
       const response = await fetch(url, {
-        headers: { range: "bytes=1-2", "if-range": head.headers.get("last-modified") ?? "" },
+        headers: { range: "bytes=1-2", "if-range": '"stale"', "if-none-match": '"stale"' },
       });
       expect(response.status).toBe(206);
       expect(await response.text()).toBe("12");
+      // StaticServer constructs a full response for the conditional check, but only
+      // the chosen range stream is consumed. No eager full-body stream is abandoned.
+      expect(opened).toHaveLength(1);
     }));
-
-  it("honors a matching strong If-Range without constructing a discarded full body", () =>
-    withServer(
-      async (origin, opened) => {
-        const url = `${origin}/assets/app-a1b2.js`;
-        const head = await fetch(url, { method: "HEAD" });
-        const response = await fetch(url, {
-          headers: { range: "bytes=1-2", "if-range": head.headers.get("etag") ?? "" },
-        });
-        expect(response.status).toBe(206);
-        expect(await response.text()).toBe("12");
-        expect(opened).toHaveLength(1);
-      },
-      { strongEtags: true },
-    ));
 
   it("does not install SPA/directory fallback, steal protocol requests, or handle POST", () =>
     withServer(async (origin) => {
@@ -318,7 +307,8 @@ describe("native static assets", () => {
 
   it("allows in-root symlinks but never serves escaping file/directory symlinks", () =>
     withServer(async (origin, opened) => {
-      const inside = await fetch(`${origin}/inside.txt`);
+      const inside = await fetch(`${origin}/inside.bin`);
+      expect(inside.headers.get("content-type")).toBe("text/plain; charset=utf-8");
       expect(await inside.text()).toBe("public content");
       expect(opened).toEqual([join(root, "public", "robots.txt")]);
       for (const path of ["/assets/escape.txt", "/assets/outside-directory/robots.txt"]) {
@@ -343,6 +333,33 @@ describe("native static assets", () => {
       { deniedPath: join(root, "public", "robots.txt") },
     ));
 
+  it("preserves errors raised by the standard static handler rather than falling through", () =>
+    withServer(
+      async (origin, opened) => {
+        const response = await fetch(`${origin}/robots.txt`);
+        expect(response.status).toBe(500);
+        expect(await response.text()).toBe("");
+        expect(opened).toHaveLength(0);
+      },
+      { deniedStatPath: join(root, "public", "robots.txt") },
+    ));
+
+  it("rewrites nested prefixes and encoded filenames exactly once", async () => {
+    options = { ...options, client: { ...options.client, prefix: "/nested/assets/" } };
+    const filename = "literal%2e%2e?# 日本語.txt";
+    await writeFile(join(root, "client", filename), "encoded filename");
+    await withServer(async (origin) => {
+      const response = await fetch(
+        `${origin}/nested/assets/${encodeURIComponent(filename)}?version=1`,
+      );
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("encoded filename");
+      const missing = await fetch(`${origin}/nested/assets/missing`);
+      expect(missing.status).toBe(404);
+      expect(await missing.text()).toBe("");
+    });
+  });
+
   it("fails construction for invalid prefixes and non-directory or missing roots", async () => {
     for (const client of [
       { ...options.client, prefix: "/" },
@@ -361,14 +378,13 @@ describe("native static assets", () => {
     }
   });
 
-  it("destroys the native file stream when the client cancels an asset download", async () => {
+  it("finalizes the standard filesystem stream when the client cancels a download", async () => {
     const file = join(root, "client", "large.bin");
     await writeFile(file, "");
     await truncate(file, 64 * 1024 * 1024);
-    const closed = Promise.withResolvers<void>();
-    let ended = false;
+    const closed = Promise.withResolvers<boolean>();
     await withServer(
-      async (origin) => {
+      async (origin, opened) => {
         await new Promise<void>((resolve, reject) => {
           const request = nodeRequest(
             `${origin}/assets/large.bin`,
@@ -382,21 +398,10 @@ describe("native static assets", () => {
           request.once("error", reject);
           request.end();
         });
-        await closed.promise;
-        expect(ended).toBe(false);
+        expect(await closed.promise).toBe(false);
+        expect(opened).toEqual([file]);
       },
-      {
-        onFileResponse(response) {
-          if (response.body._tag !== "Raw" || !(response.body.body instanceof Readable)) {
-            throw new Error("Expected the native Node file stream");
-          }
-          const stream = response.body.body;
-          stream.once("close", () => {
-            ended = stream.readableEnded;
-            closed.resolve();
-          });
-        },
-      },
+      { onStreamExit: closed.resolve },
     );
   });
 
