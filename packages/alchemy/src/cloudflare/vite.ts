@@ -1,10 +1,7 @@
 import { join, resolve } from "node:path";
 
 import { effront } from "@effront/vite";
-import { purePlugin } from "alchemy/Bundle/PurePlugin";
 import { normalizePath, type Plugin, type PluginOption } from "vite";
-
-import { alchemyRuntimeProjection } from "./runtime-projection";
 
 const entryId = "virtual:effront/alchemy/cloudflare/entry";
 const resolvedEntryId = `\0${entryId}`;
@@ -28,37 +25,14 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
   const workerEntry = options.worker ?? "./src/entry.workers.ts";
   if (!workerEntry) throw new TypeError("Effront Alchemy requires a nonempty Worker module.");
   let worker = workerEntry;
-  const optimizeDeps = () => ({
-    rolldownOptions: {
-      transform: { define: { "globalThis.__ALCHEMY_RUNTIME__": "true" } },
-      plugins: [alchemyRuntimeProjection(), purePlugin()],
-    },
-  });
   const bridge: Plugin = {
     name: "effront:alchemy-cloudflare-bridge",
     config: (config) => ({
       define: { "globalThis.__ALCHEMY_RUNTIME__": "true" },
       resolve: { dedupe: ["react", "react-dom", "effect"] },
       environments: {
-        rsc: {
-          optimizeDeps: {
-            ...optimizeDeps(),
-            entries: [workerEntry],
-            include: [
-              "alchemy/Cloudflare",
-              "alchemy/Cloudflare/Workers",
-              "alchemy/Cloudflare/KV",
-              "alchemy/RuntimeContext",
-              "alchemy/Self",
-              "effect",
-              "effect/unstable/http",
-              "alchemy > @effect/platform-node > @effect/platform-node-shared/NodePath",
-            ],
-          },
-        },
-        ssr: {
-          optimizeDeps: optimizeDeps(),
-          ...(config.environments?.["ssr"]?.build?.outDir === undefined
+        ssr:
+          config.environments?.["ssr"]?.build?.outDir === undefined
             ? {
                 build: {
                   outDir: join(
@@ -68,8 +42,7 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
                   ),
                 },
               }
-            : {}),
-        },
+            : {},
       },
     }),
     configResolved: (config) => {

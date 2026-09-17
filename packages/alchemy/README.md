@@ -47,7 +47,7 @@ The adapter imports are `@effront/alchemy/cloudflare` and `@effront/alchemy/clou
 
 ## API
 
-The [Alchemy API guide](docs/API.md) covers `ApplicationLoader`, `applicationHttpEffect`, `makeApplicationHttpEffect`, `effrontAlchemy`, their options, construction-capability capture, and the supported runtime projection.
+The [Alchemy API guide](docs/API.md) covers `ApplicationLoader`, `applicationHttpEffect`, `makeApplicationHttpEffect`, `effrontAlchemy`, their options, construction-capability capture, and consumer-selected Alchemy capabilities.
 
 ## Development
 

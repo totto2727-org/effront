@@ -4,7 +4,6 @@
 
 - `src/cloudflare/index.ts` owns deferred application loading and capability capture.
 - `src/cloudflare/vite.ts` owns the native Worker bridge and compilation graphs, not application hosting.
-- `src/cloudflare/runtime-projection.ts` owns the version-pinned development runtime export projection.
 - Future providers belong in sibling directories under `src/` with explicit package subpaths, not in core or the Cloudflare entry.
 
 ## Development commands
@@ -19,7 +18,7 @@
 
 ### Standard tasks
 
-- From the repository root after shared package preparation, `vp test run packages/alchemy` checks lazy construction, context filtering, Vite composition, and the pinned runtime projection.
+- From the repository root after shared package preparation, `vp test run packages/alchemy` checks lazy construction, context filtering, Vite composition, and consumer-owned dependency optimization.
 - From `tests/e2e-alchemy/`, `vp run test` builds and serves the committed KV example and checks native HTML, HEAD, hydration, Server Functions, navigation, Tailwind styling, and narrow-screen layout. See the [test package instructions](../../docs/TESTING.md#native-alchemy-integration).
 - For official CLI consumers, follow the [example commands and ports](../../examples/AGENTS.md#development-commands) or [documentation-site commands](../../app/docs/AGENTS.md#development-commands). Bare `vp dev` bypasses the Alchemy orchestration those consumers require.
 - When the user chooses to configure the required profile, `vp exec alchemy profile edit --profile default --add Cloudflare` is the interactive CLI command. Profile authentication is user-controlled and distinct from cloud deployment.
@@ -39,17 +38,16 @@ An isolated empty-profile CLI check previously failed with `Provider 'Cloudflare
 - Preserve typed application failures until the Worker's HTTP boundary maps them to the host's narrower error contract.
 - Use Alchemy's official `makeWorkerBridge`, the `rsc` entry with `ssr` child, and injected stack/stage bindings. Do not compete with the adapter's entry by setting `vite.main`.
 
-### Pinned runtime projection
+### Runtime compilation boundary
 
 - Keep Alchemy and Cloudflare runtime at `2.0.0-beta.77` with the coherent Effect `4.0.0-rc.112` family until a deliberate compatibility review. Beta.77 uses `Config.string`, which is incompatible with rc.113's renamed API despite its broad dependency range.
-- Projection is optimizer-only and forwards to installed runtime modules with Alchemy's official purity transform. Never copy Alchemy implementations or change deployment-time construction imports.
-- Fail on unsupported Alchemy versions or missing internal modules. Expanding the Worker/KV surface requires reviewing both runtime-projection implementation and tests.
-- Preserve explicit optimizer entries and React/Effect deduplication to prevent mixed cold-start module identities.
+- Keep Alchemy exports intact and capability selection with the consumer. Do not add a Worker/KV allowlist or adapter-owned dependency optimization.
+- Preserve React/Effect deduplication. The pinned development host limitation is documented in `docs/INTEGRATION.md`; do not infer working development from a successful production build.
 - Keep default SSR output inside the RSC artifact while preserving explicit output directories. The host must package explicitly relocated modules together.
 
 ## Task-specific documentation
 
-- When changing public helpers or supported runtime capabilities: [adapter API](docs/API.md).
+- When changing public helpers or runtime integration: [adapter API](docs/API.md).
 - When changing version compatibility, scope transfer, or native KV integration: [integration architecture and evidence](docs/INTEGRATION.md).
 - When changing standalone compatibility rather than native hosting: [Workers architecture](../../docs/WORKERS.md).
 

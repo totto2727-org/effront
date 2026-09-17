@@ -99,13 +99,12 @@ Do not register a second Cloudflare runtime plugin in application Vite configura
 The bridge requires Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE`; application options contain no standalone stack identity or stage default.
 Missing or empty bindings produce a `TypeError` directing the application to start with `alchemy dev`.
 
-## Supported runtime surface
+## Alchemy capabilities
 
-The pinned beta.77 adapter supports Worker/request services and native KV bindings during Vite dependency optimization.
-The projected Cloudflare surface contains `Worker`, Worker environment and execution-context services, raw `Request`, `makeWorkerBridge`, `CloudflareEnvironment`, and the KV namespace plus read, write, and read-write native binding services.
-The Workers barrel additionally exposes `fromExecutionContext` and `deferredExecutionContext`.
-Deployment providers, HTTP-backed KV services, and other Cloudflare products are outside this experimental development projection.
-An unsupported Alchemy version or missing required internal module fails explicitly instead of silently widening the projection.
+Applications choose their Alchemy resources and capabilities through Alchemy's own APIs.
+The adapter does not replace Alchemy exports, maintain a capability allowlist, or configure dependency optimization.
+Host and consumer Vite settings remain responsible for dependency optimization.
+The KV example exercises capability capture and request-local use; it does not define an allowed feature set or establish that every Alchemy capability has been tested.
 
-These constraints concern the pinned runtime integration, not additional exports from `@effront/alchemy` itself.
+See [version compatibility](INTEGRATION.md#compatibility) for the pinned development host limitation.
 The adapter has no package-root export and is not a promise of registry availability or cloud-deployment verification.

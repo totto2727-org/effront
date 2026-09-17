@@ -48,7 +48,35 @@ describe("Alchemy Vite graph composition", () => {
     expect(source).not.toContain("configuredStack");
     expect(source).toContain("Effront requires Alchemy runtime stack bindings");
     expect(source).not.toContain("async fetch");
-    expect(config.environments["rsc"]?.optimizeDeps.entries).toEqual(["./src/entry.workers.ts"]);
+  });
+
+  it("leaves dependency optimization to the host and consumer", async () => {
+    const config = await resolveConfig(
+      {
+        configFile: false,
+        root,
+        environments: {
+          rsc: { optimizeDeps: { noDiscovery: true, include: ["consumer-dependency"] } },
+          ssr: { optimizeDeps: { exclude: ["consumer-exclusion"] } },
+        },
+        plugins: effrontAlchemy(),
+      },
+      "serve",
+    );
+    expect(config.environments["rsc"]?.optimizeDeps.noDiscovery).toBe(true);
+    expect(config.environments["rsc"]?.optimizeDeps.include).toContain("consumer-dependency");
+    expect(config.environments["ssr"]?.optimizeDeps.exclude).toContain("consumer-exclusion");
+    const bridge = config.plugins.find(
+      (plugin) => plugin.name === "effront:alchemy-cloudflare-bridge",
+    )!;
+    const hook = bridge.config!;
+    const configure = typeof hook === "function" ? hook : hook.handler;
+    const contribution = Reflect.apply(configure, {}, [{}]) as {
+      environments: Record<string, object>;
+    };
+    for (const environment of Object.values(contribution.environments)) {
+      expect(environment).not.toHaveProperty("optimizeDeps");
+    }
   });
 
   it("keeps an explicit client application entry separate from the native worker", async () => {

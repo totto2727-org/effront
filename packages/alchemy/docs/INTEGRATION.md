@@ -93,13 +93,15 @@ This Alchemy version uses `Config.string`, which is incompatible with rc.113's r
 Keep one coherent Effect version across native bridge, core, platform layers and SQL dependencies.
 The local workerd compatibility date is `2026-09-01`, supported by the pinned runtime.
 
-In beta.77, the public Cloudflare barrels export both runtime APIs and Node-only deployment providers.
-Vite dependency optimization otherwise retains the deployment exports and tries to load workerd's Node binary resolver inside workerd itself.
-The adapter applies a version-checked, optimizer-only projection of the installed Worker/KV runtime exports and Alchemy's official pure-call plugin.
-It forwards to the real installed library modules, without copying Alchemy implementations or changing deployment-time construction imports.
-This experimental projection supports the Worker/request services and KV APIs used here, not every Cloudflare product.
-Upgrading Alchemy or adding another Cloudflare capability requires reviewing the projection and its tests.
-Explicit optimizer entries and shared React/Effect deduplication prevent mixed cold-start module identities.
+The adapter leaves Alchemy exports and dependency optimization unchanged instead of maintaining a Worker/KV allowlist.
+Applications select their capabilities through Alchemy's public APIs, independently of the capabilities demonstrated by the sample.
+Shared React/Effect deduplication remains in place.
+
+The pinned beta.77 development host has a known limitation: its automatic dependency optimization can retain Node-only deployment exports from Alchemy's Cloudflare barrels and attempt to run workerd's binary resolver inside a Worker.
+Removing the adapter's explicit optimizer configuration does not disable the host's automatic optimization.
+A local check with optimization fully disabled also reached the Node-only workerd loader through ordinary module imports and failed.
+The credential-free Vite development path currently fails without export projection; the production build/preview browser suite passes and is a separate path.
+The adapter deliberately does not reinstate a capability allowlist to hide this host/dependency boundary.
 
 Effect rc.112 transfers streaming scopes before discarding HEAD bodies.
 Core normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.

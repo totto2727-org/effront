@@ -79,4 +79,4 @@ Run `vp run w:pack` at the repository root, then `vp run test` from `tests/e2e-a
 This package does not deploy or run authenticated infrastructure reconciliation.
 Application configs leave host injection and infrastructure planning to the official Alchemy CLI.
 Core's colocated native HTTP tests still protect the independent native API's context precedence, memo-map isolation and stream finalization.
-The Alchemy adapter's colocated tests protect lazy construction, host-service exclusion, Vite graph composition, and the version-pinned development runtime projection without registering another host.
+The Alchemy adapter's colocated tests protect lazy construction, host-service exclusion, Vite graph composition, and consumer-owned dependency optimization without registering another host.
