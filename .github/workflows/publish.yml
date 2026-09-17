@@ -37,3 +37,4 @@ jobs:
             @effront/vite
             @effront/cloudflare
             @effront/markdown
+            @effront/tailwind

@@ -15,12 +15,11 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
-    "@tailwindcss/vite": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
-    "tailwindcss": "catalog:",
     "vite-plus": "catalog:"
   }
 }

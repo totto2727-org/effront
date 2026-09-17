@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import "../styles.css";
 
 export function Shell({ children }: { readonly children: ReactNode }) {
   return (

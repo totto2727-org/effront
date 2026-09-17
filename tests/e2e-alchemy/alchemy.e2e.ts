@@ -45,3 +45,26 @@ test("Tailwind utilities style the native application and fit a narrow viewport"
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(390);
 });
+
+test("generated Tailwind stylesheet styles initial HTML without JavaScript", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  try {
+    const page = await context.newPage();
+    await page.goto(baseURL!);
+    await expect(page.getByRole("main")).toHaveCSS("max-width", "768px");
+    await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toHaveCSS(
+      "padding-left",
+      "16px",
+    );
+    const hrefs = await page
+      .locator('link[rel="stylesheet"]')
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+    expect(hrefs.length).toBeGreaterThan(0);
+    expect(new Set(hrefs).size).toBe(hrefs.length);
+  } finally {
+    await context.close();
+  }
+});

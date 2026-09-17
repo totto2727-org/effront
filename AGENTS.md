@@ -4,6 +4,7 @@
 
 - `packages/core/`: application and Fetch runtime (`@effront/core`).
 - `packages/alchemy/`: experimental provider-specific native Alchemy adapters, currently Cloudflare Workers.
+- `packages/tailwind/`: optional Tailwind Vite integration with generated or explicit automatically loaded CSS (`@effront/tailwind`).
 - `packages/vite/`: portable build integration (`@effront/vite`).
 - `packages/cloudflare/`: Cloudflare Vite integration (`@effront/cloudflare`) and separate runtime accessors (`@effront/cloudflare/workers`).
 - `packages/markdown/`: Vite glob collections and comark React SSR rendering (`@effront/markdown`).
@@ -54,14 +55,15 @@ To run an example, enter `examples/workers/` or `examples/markdown/` and use `vp
 Alchemy owns the local host and resource bindings; application Vite configs must not register a second Cloudflare runtime plugin.
 The repository root intentionally provides no example dev, build, or local-hosting script.
 The root `vite.config.ts` owns repository formatting, linting, and test configuration.
-Both examples and the documentation site use Tailwind CSS through `@tailwindcss/vite`.
+Both examples and the documentation site use `@effront/tailwind`, which includes `@tailwindcss/vite`.
+The Workers sample uses a virtual default stylesheet; Markdown and docs explicitly select their Typography/theme stylesheet.
 Application definitions live in `src/entry.effront.tsx`; `entry.workers.ts` documents the customizable host wiring and required integration boundaries.
 Keep feature-independent React UI under `components/`; colocate greeting services, capabilities, Server Functions, and their UI under `features/greeting/` in the Workers sample.
 Use `server.ts` for Server Functions, `client.tsx` for feature UI, and `services.ts` for the small shared capability/service definitions.
 Preserve separate client/server modules instead of mixing directives or introducing re-export barrels.
 Keep samples minimal: introductory routes, framework features, and Tailwind utility classes without custom CSS or advanced transition demos.
 Advanced transition behavior remains covered by the independent regression fixtures.
-Client shells import the CSS entry so initial SSR includes the stylesheet.
+The Tailwind integration loads CSS through client boundaries so initial SSR includes the stylesheet without hand-written imports.
 Independent CSS-processing regression fixtures remain separate from sample styling.
 
 ## Architecture
@@ -133,10 +135,10 @@ Run the fixed package-local fixture directly. Keep fixture copying, dynamic run 
 - `.github/workflows/ci.yml` runs checks and tests for pull requests and `main` updates.
 - `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix, TypeScript setup, and `publish-npm` actions on `@main`. The publisher runs filtered `vp pm publish -r --provenance`.
 - Publication is serialized and skips versions already on npm. Bump each changed public package's version in its pull request and update workspace peer ranges through `vp install --lockfile-only` when needed. There is no automatic version bump or tag trigger.
-- Public packages are `@effront/core`, `@effront/vite`, `@effront/cloudflare`, and `@effront/markdown`. `@effront/gitignore-patterns` is local development tooling and is not included in this release workflow.
+- Public packages are `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@effront/markdown`, and `@effront/tailwind`. `@effront/gitignore-patterns` is local development tooling and is not included in this release workflow.
 - Each public package owns a `vite.config.ts` and runs only `vp pack` for JavaScript and `.d.ts`. `vp run w:pack` delegates to `vp run -r pack`, which follows workspace dependencies without a hand-maintained list or package-specific `dependsOn`. Publication uses filtered `vp pm publish -r`, which resolves `workspace:` and `catalog:` protocols, creates the tarballs, and skips versions already on npm. No tarball staging or extraction is part of the build or publish workflow. Preserve RSC module directives, runtime entry points, CSS assets, and conditional exports.
 - The public packages use stable version `0.1.1` and use public access with the `latest` dist-tag through `publishConfig`.
-- Before merging the publishing workflow, the package owner must ensure all four npm packages exist and configure each Trusted Publisher for GitHub owner `totto2727-org`, repository `effront`, workflow `publish.yml`, and direct publication. No GitHub environment is configured. Initial publication, if required by npm, must be performed by the owner.
+- Before merging the publishing workflow, the package owner must ensure all five npm packages exist and configure each Trusted Publisher for GitHub owner `totto2727-org`, repository `effront`, workflow `publish.yml`, and direct publication. No GitHub environment is configured. Initial publication, if required by npm, must be performed by the owner.
 - The workflow uses GitHub-hosted runners and job-scoped `id-token: write`, without long-lived npm tokens. Protect `main` and require the CI check before merging. Local checks and dry runs do not verify registry trust or package ownership.
 - Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [pnpm publish](https://pnpm.io/cli/publish).
 

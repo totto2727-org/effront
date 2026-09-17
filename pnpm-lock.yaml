@@ -113,9 +113,6 @@ catalogs:
     '@tailwindcss/typography':
       specifier: ^0.5.20
       version: 0.5.20
-    '@tailwindcss/vite':
-      specifier: ^4.3.3
-      version: 4.3.3
     '@types/react':
       specifier: 19.3.0
       version: 19.3.0
@@ -225,15 +222,15 @@ importers:
         specifier: ^3.6.0
         version: 3.6.0
     devDependencies:
+      '@effront/tailwind':
+        specifier: workspace:*
+        version: link:../../packages/tailwind
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
       '@tailwindcss/typography':
         specifier: 'catalog:'
         version: 0.5.20(tailwindcss@4.3.3)
-      '@tailwindcss/vite':
-        specifier: 'catalog:'
-        version: 4.3.3(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))
       '@tsconfig/strictest':
         specifier: 2.0.8
         version: 2.0.8
@@ -292,15 +289,15 @@ importers:
         specifier: 19.3.0-canary-1d34f91d-20260909
         version: 19.3.0-canary-1d34f91d-20260909(react@19.3.0-canary-1d34f91d-20260909)
     devDependencies:
+      '@effront/tailwind':
+        specifier: workspace:*
+        version: link:../../packages/tailwind
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
       '@tailwindcss/typography':
         specifier: 'catalog:'
         version: 0.5.20(tailwindcss@4.3.3)
-      '@tailwindcss/vite':
-        specifier: 'catalog:'
-        version: 4.3.3(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -341,12 +338,12 @@ importers:
         specifier: 19.3.0-canary-1d34f91d-20260909
         version: 19.3.0-canary-1d34f91d-20260909(react@19.3.0-canary-1d34f91d-20260909)
     devDependencies:
+      '@effront/tailwind':
+        specifier: workspace:*
+        version: link:../../packages/tailwind
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
-      '@tailwindcss/vite':
-        specifier: 'catalog:'
-        version: 4.3.3(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -356,9 +353,6 @@ importers:
       '@vitejs/plugin-rsc':
         specifier: 'catalog:'
         version: 0.5.34(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(react-dom@19.3.0-canary-1d34f91d-20260909(react@19.3.0-canary-1d34f91d-20260909))(react@19.3.0-canary-1d34f91d-20260909)
-      tailwindcss:
-        specifier: 'catalog:'
-        version: 4.3.3
       vite-plus:
         specifier: 'catalog:'
         version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
@@ -487,6 +481,18 @@ importers:
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@types/node@22.20.2)(@vitest/browser-preview@4.1.11)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))
+
+  packages/tailwind:
+    dependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.3.3
+        version: 4.3.3(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.3
+      vite:
+        specifier: npm:@voidzero-dev/vite-plus-core@0.3.1
+        version: '@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)'
 
   packages/vite:
     dependencies:

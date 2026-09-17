@@ -21,9 +21,9 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
     "@tailwindcss/typography": "catalog:",
-    "@tailwindcss/vite": "catalog:",
     "@tsconfig/strictest": "2.0.8",
     "@types/node": "22.20.2",
     "@types/react": "catalog:",
