@@ -3,7 +3,7 @@
 ## Repository structure
 
 - `src/node.ts` and `src/bun.ts` compose the matching native HTTP Layer; keep their import graphs isolated.
-- `src/assets.ts` owns Effront routing and canonical containment around Effect `HttpStaticServer.make`; Effect owns generic static HTTP policy.
+- `src/assets.ts` owns minimal Effront routing around Effect `HttpStaticServer.make`; Effect owns path resolution and generic static HTTP policy.
 - `src/vite.ts` owns Node-compatible dev/preview middleware and production RSC entry configuration.
 
 ## Development commands
@@ -19,14 +19,14 @@ Run `vp pack` in this package after changing public declarations.
 - Vite already owns a listener. Use `NodeHttpServer.makeHandler`, never `NodeHttpServer.layerServer` with Vite's HTTP server.
 - Resolve the RSC entry on each dev request so Vite owns invalidation. Close the runtime on server shutdown and middleware-mode plugin disposal.
 - Keep React server conditions inside the RSC graph, never process-wide.
-- Resolve asset roots at construction and real paths before serving. Use `index: undefined` and `spa: false`, rewrite the mount-relative request URL, and fall through only on `RouteNotFound`. Keep the standard lazy-stream `HttpPlatform.layer` so HEAD/304 and discarded conditional bodies do not acquire file streams. Application requests preserve their external Effect service requirements.
+- Delegate path decoding, normalization and filesystem lookup to `HttpStaticServer` without custom validation or canonicalization. Use `index: undefined` and `spa: false`, strip the client prefix from the request URL, and fall through only on `RouteNotFound`. Keep the standard lazy-stream `HttpPlatform.layer` so HEAD/304 and discarded conditional bodies do not acquire file streams. Application requests preserve their external Effect service requirements.
 - Bun disables the default short idle timeout to preserve long-lived RSC streams. Keep the 10 MiB host limit consistent with core's request policy.
 
 ## Package-specific rules
 
 - There is no root export that eagerly imports both runtime adapters.
 - Runtime platform peers are optional because consumers choose one host. `/vite` always needs the Node platform, including Bun applications.
-- Use only trusted build/public roots. Do not add directory indexes or an HTML fallback under a static asset prefix.
+- Use only trusted build/public roots; their contents and symlinks are the consumer's responsibility. Do not add symlink-specific support or custom path validation. Do not add directory indexes or an HTML fallback under a static asset prefix.
 
 ## Task-specific documentation
 

@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, symlink, truncate, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, truncate, writeFile } from "node:fs/promises";
 import { createServer, request as nodeRequest } from "node:http";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -31,10 +31,6 @@ beforeEach(async () => {
   await writeFile(join(root, "public", "docs", "index.html"), "not a directory index");
   await writeFile(join(root, "public", "_effront", "protocol"), "not a protocol response");
   await writeFile(join(root, "secret.txt"), "outside secret");
-  await symlink(join(root, "secret.txt"), join(root, "public", "escape.txt"));
-  await symlink(join(root, "secret.txt"), join(root, "client", "escape.txt"));
-  await symlink(join(root, "public", "robots.txt"), join(root, "public", "inside.bin"));
-  await symlink(join(root, "public"), join(root, "client", "outside-directory"));
   options = {
     client: {
       root: join(root, "client"),
@@ -54,7 +50,6 @@ const app = Effect.succeed(HttpServerResponse.text("application", { status: 202 
 const withServer = (
   run: (origin: string, opened: string[]) => Promise<void>,
   settings: {
-    readonly deniedPath?: string;
     readonly deniedStatPath?: string;
     readonly onStreamExit?: (completed: boolean) => void;
   } = {},
@@ -86,16 +81,6 @@ const withServer = (
                     systemError({ _tag: "PermissionDenied", module: "FileSystem", method: "stat" }),
                   )
                 : fs.stat(file),
-            realPath: (file) =>
-              file === settings.deniedPath
-                ? Effect.fail(
-                    systemError({
-                      _tag: "PermissionDenied",
-                      module: "FileSystem",
-                      method: "realPath",
-                    }),
-                  )
-                : fs.realPath(file),
           }),
         );
         yield* HttpServer.serveEffect(handler);
@@ -287,7 +272,7 @@ describe("native static assets", () => {
       }
     }));
 
-  it("rejects raw/encoded traversal, malformed encoding, NUL and backslash", () =>
+  it("delegates raw/encoded traversal and invalid URL rejection to the standard server", () =>
     withServer(async (origin, opened) => {
       for (const path of [
         "/assets/../secret.txt",
@@ -295,8 +280,6 @@ describe("native static assets", () => {
         "/assets/%2e%2e%2fsecret.txt",
         "/assets/%00.txt",
         "/assets/%zz",
-        "/assets/%5c..%5csecret.txt",
-        "/assets/./app-a1b2.js",
       ]) {
         const response = await rawGet(origin, path);
         expect(response.status, path).toBe(404);
@@ -305,33 +288,14 @@ describe("native static assets", () => {
       expect(opened).toHaveLength(0);
     }));
 
-  it("allows in-root symlinks but never serves escaping file/directory symlinks", () =>
-    withServer(async (origin, opened) => {
-      const inside = await fetch(`${origin}/inside.bin`);
-      expect(inside.headers.get("content-type")).toBe("text/plain; charset=utf-8");
-      expect(await inside.text()).toBe("public content");
-      expect(opened).toEqual([join(root, "public", "robots.txt")]);
-      for (const path of ["/assets/escape.txt", "/assets/outside-directory/robots.txt"]) {
-        const response = await fetch(`${origin}${path}`);
-        expect(response.status).toBe(404);
-        expect(await response.text()).toBe("");
+  it("delegates in-root dot-segment normalization to the standard server", () =>
+    withServer(async (origin) => {
+      for (const pathname of ["/assets/./app-a1b2.js", "/assets/sub/../app-a1b2.js"]) {
+        const response = await rawGet(origin, pathname);
+        expect(response.status).toBe(200);
+        expect(response.body).toBe("0123456789");
       }
-      const publicEscape = await fetch(`${origin}/escape.txt`);
-      expect(publicEscape.status).toBe(202);
-      expect(await publicEscape.text()).toBe("application");
-      expect(opened).toHaveLength(1);
     }));
-
-  it("does not disguise filesystem permission failures as application fallthrough", () =>
-    withServer(
-      async (origin, opened) => {
-        const response = await fetch(`${origin}/robots.txt`);
-        expect(response.status).toBe(500);
-        expect(await response.text()).toBe("");
-        expect(opened).toHaveLength(0);
-      },
-      { deniedPath: join(root, "public", "robots.txt") },
-    ));
 
   it("preserves errors raised by the standard static handler rather than falling through", () =>
     withServer(
@@ -360,22 +324,20 @@ describe("native static assets", () => {
     });
   });
 
-  it("fails construction for invalid prefixes and non-directory or missing roots", async () => {
-    for (const client of [
-      { ...options.client, prefix: "/" },
-      { ...options.client, prefix: "assets" },
-      { ...options.client, prefix: "/assets/../other" },
-      { ...options.client, root: join(root, "missing") },
-      { ...options.client, root: join(root, "secret.txt") },
-    ]) {
-      const result = await Effect.runPromise(
-        withAssets(app, { client }).pipe(
-          Effect.result,
-          Effect.provide(NodeHttpServer.layerHttpServices),
-        ),
-      );
-      expect(Result.isFailure(result)).toBe(true);
-    }
+  it("defers missing root handling to standard request-time lookup", async () => {
+    options = {
+      client: { ...options.client, root: join(root, "missing-client") },
+      public: { root: join(root, "missing-public") },
+    };
+    await withServer(async (origin, opened) => {
+      const client = await fetch(`${origin}/assets/missing.txt`);
+      expect(client.status).toBe(404);
+      expect(await client.text()).toBe("");
+      const publicFile = await fetch(`${origin}/missing.txt`);
+      expect(publicFile.status).toBe(202);
+      expect(await publicFile.text()).toBe("application");
+      expect(opened).toHaveLength(0);
+    });
   });
 
   it("finalizes the standard filesystem stream when the client cancels a download", async () => {

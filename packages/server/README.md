@@ -34,7 +34,7 @@ The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](..
 
 - Native `NodeHttpServer` and `BunHttpServer` Layers, owned by standard Effect lifetime management.
 - RSC, SSR and browser compilation without process-wide React server conditions.
-- Real-path-contained asset lookup, ETags, HEAD, conditional requests and single byte ranges.
+- Standard Effect static asset lookup, ETags, HEAD, conditional requests and single byte ranges.
 - Vite dev and preview middleware without a second listener or Cloudflare dependency.
 
 ## Prerequisites
@@ -61,7 +61,7 @@ Acquire the [portable Vite integration and its peers](../vite/README.md#setup) s
 ## API
 
 - `@effront/server/node` and `/bun`: `serve(handler, options)` returns a scoped Layer. `options.assets` is required, `port` defaults to `3000`, and `hostname` defaults to `127.0.0.1`. Use `0.0.0.0` explicitly when exposing the listener outside the local machine.
-- `@effront/server/assets`: `withAssets(handler, options)` constructs a native Effect HTTP handler using the caller's FileSystem and Path services plus Effect's standard `HttpStaticServer.make` and lazy-stream `HttpPlatform.layer`. Configure a dedicated `client` root/prefix and an optional public root. Filesystem roots must exist at startup.
+- `@effront/server/assets`: `withAssets(handler, options)` constructs a native Effect HTTP handler using the caller's FileSystem and Path services plus Effect's standard `HttpStaticServer.make` and lazy-stream `HttpPlatform.layer`. Configure a dedicated `client` root with a non-root absolute URL prefix and an optional public root. Filesystem lookup happens when requests arrive, without startup directory validation.
 - `@effront/server/vite`: `effrontServer({ rsc?, server? })` is registered after `effront()`. Defaults are `src/entry.rsc.ts` (named `handler` Effect export) and `src/entry.server.ts` (production startup). Keep the application definition in `src/entry.effront.tsx`.
 
 ```ts
@@ -79,8 +79,8 @@ The host still owns stream completion and cancellation; custom caller `HttpPlatf
 Unsupported, multipart and unsafe-integer ranges are ignored, while an unsatisfiable valid single range returns 416.
 In this Effect version, `If-Range` is ignored and Range is evaluated even for HEAD, which can return 206 or 416 without a body.
 The standard 416 response includes `Content-Range` but no asset cache or validator headers.
-Symlinks within the root are served using the canonical target's filename and MIME type; escaping symlinks are never served.
-Serve trusted, immutable deployment directories; pathname containment does not protect against a privileged process replacing files concurrently.
+Path decoding, normalization and traversal handling are delegated to `HttpStaticServer`.
+Serve trusted deployment/public directories; their contents and symlinks are the consumer's responsibility, outside Effront's support guarantees.
 
 ## Development
 
