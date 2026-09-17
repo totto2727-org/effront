@@ -33,8 +33,3 @@ The `@effront/core/internal/*` exports are an integration contract with the matc
 Run `vp check` and `vp test run` in this package.
 Built-Worker browser acceptance lives in `tests/e2e-build`, while Vite development HMR acceptance lives in `tests/e2e-dev`.
 Run `vp run test` from each package independently.
-
-## Optional Tailwind integration
-
-Add [`@effront/tailwind`](../tailwind/README.md) alongside `effront()` to include the official Tailwind Vite plugin and automatically load a generated or custom stylesheet.
-It is a separate opt-in package; `@effront/vite` does not depend on Tailwind.

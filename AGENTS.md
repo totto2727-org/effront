@@ -112,7 +112,9 @@ Node/Bun/AWS host adapters and hosted deployments remain outside the implemented
 
 ## Package-specific rules
 
-- Keep dependency versions in the shared catalog only when at least two active manifests reference them.
+- Manage external dependency versions in the shared catalog, including dependencies used by only one package; use `catalog:` in manifests and overrides.
+- Keep internal package references as `workspace:`. The public Vite peer remains `"*"` because it accepts the consumer’s Vite installation, while development uses the catalog-pinned VitePlus alias.
+- Consumer-facing Setup instructions use normal package installation commands, never workspace-only `workspace:` or `catalog:` specifications.
 - Preserve explicit public package subpaths rather than exporting internal modules indiscriminately.
 - Use path-qualified Effect service identifiers. Keep shared runtime contracts implementation-free.
 - Use `Effect.fnUntraced` for framework internals to avoid tracing overhead. Use `Effect.fn` for application code, examples, consumer-facing documentation, and public authoring API tests so applications retain tracing. Keep `Effect.fn.Return` where a generator return type is needed; it is type-only.

@@ -26,11 +26,11 @@
     "tag": "latest"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "catalog:",
     "tailwindcss": "catalog:"
   },
   "devDependencies": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.1"
+    "vite": "catalog:"
   },
   "peerDependencies": {
     "vite": "*"

@@ -31,13 +31,13 @@
     "tag": "latest"
   },
   "dependencies": {
-    "@cloudflare/vite-plugin": "1.54.7"
+    "@cloudflare/vite-plugin": "catalog:"
   },
   "devDependencies": {
     "@effront/core": "workspace:*",
     "@effront/vite": "workspace:*",
     "effect": "catalog:",
-    "vitest": "4.1.11"
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@effront/core": "workspace:^",

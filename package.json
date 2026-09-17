@@ -6,13 +6,13 @@
   "type": "module",
   "scripts": {},
   "devDependencies": {
-    "@effect/vitest": "4.0.0-rc.112",
+    "@effect/vitest": "catalog:",
     "@effront/gitignore-patterns": "workspace:*",
-    "@types/node": "22.20.2",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "effect": "catalog:",
-    "typescript": "7.0.2",
+    "typescript": "catalog:",
     "vite-plus": "catalog:"
   },
   "packageManager": "pnpm@12.3.4"

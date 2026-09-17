@@ -22,11 +22,11 @@
     "test": "tsc -p tsconfig.build.json && vp test run"
   },
   "dependencies": {
-    "ignore": "7.0.9"
+    "ignore": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "22.20.2",
-    "typescript": "7.0.2",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
     "vite-plus": "catalog:"
   }
 }

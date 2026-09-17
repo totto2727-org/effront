@@ -27,9 +27,9 @@
   },
   "dependencies": {
     "@effect/platform-node-shared": "catalog:",
-    "comark": "0.6.2",
+    "comark": "catalog:",
     "effect": "catalog:",
-    "katex": "^0.17.0",
+    "katex": "catalog:",
     "shiki": "catalog:"
   },
   "devDependencies": {
@@ -38,6 +38,6 @@
     "@types/react-dom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "vitest": "4.1.11"
+    "vitest": "catalog:"
   }
 }

@@ -23,15 +23,10 @@ These styles apply before hydration, including when JavaScript is disabled.
 
 ## Setup
 
-This new package is available in the Effront workspace; registry publication is separate from this change.
-A workspace application declares:
+After the initial npm release, install the integration as a development dependency in your application:
 
-```json
-{
-  "devDependencies": {
-    "@effront/tailwind": "workspace:*"
-  }
-}
+```bash
+vp add -D @effront/tailwind
 ```
 
 Import the integration in its Vite configuration:
