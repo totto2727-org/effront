@@ -6,24 +6,19 @@ The content is Japanese, with source identifiers and commands preserved in Engli
 
 ## Run locally
 
-Install dependencies with `vp install` at the repository root, then enter the site application:
+Install dependencies with `vp install` and build packages with `vp run w:pack` at the repository root, then enter the site application:
 
 ```sh
 cd app/docs
-vp dev
+vp run dev
 ```
 
-Open the URL printed by Vite.
-For independent local hosting of the built artifact:
-
-```sh
-vp build
-vp run local
-```
-
-Alchemy’s Vite preview executes the native Worker and nested SSR modules in workerd.
-See [Alchemy integration](ALCHEMY.md) for the stack, native Effect handler, and CLI authentication boundary.
-Local hosting needs no remote account or deployment.
+Open `http://localhost:1339` after Alchemy reports that the local Worker is ready.
+The script invokes `alchemy dev --stage local`; bare `vp dev` invokes Vite directly and bypasses Alchemy orchestration.
+Alchemy configures workerd, bindings, and the Vite host without an application-level runtime plugin or Wrangler configuration.
+The pinned beta.77 requires a configured Cloudflare profile even when the resources run locally.
+If no profile exists, run `vp exec alchemy profile edit --profile default --add Cloudflare` interactively before starting the application.
+See [Alchemy integration](ALCHEMY.md) for the configuration and verification boundary.
 
 ## Rendering and authoring
 
@@ -79,7 +74,7 @@ Run `vp run test` from `tests/e2e-build` for framework browser acceptance using 
 Run `vp run test` from `tests/e2e-dev` for HMR-only acceptance using its separate minimal fixture.
 These packages do not start or modify the documentation site.
 Each owns one Vite configuration, one Playwright configuration, one fixed webServer command, a fixed fixture and test port, and standard Playwright failure traces.
-Build the documentation application with `vp build` from `app/docs` when changing site integration; this is a separate application build, not an alternate E2E configuration.
+Verify the documentation application through `vp run dev` from `app/docs` when changing site integration; this is separate from the fixed framework E2E configurations.
 
 The stream injector preserves HTML chunk boundaries and emits embedded Flight payloads after HTML EOF, before the closing document trailer.
 Cancellation during a pending Flight flush is covered by the core stream tests.

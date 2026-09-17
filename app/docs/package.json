@@ -3,10 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp build",
-    "local": "vp preview",
-    "alchemy:dev": "vp exec alchemy dev --stage local"
+    "dev": "vp exec alchemy dev --stage local"
   },
   "dependencies": {
     "@effect/platform-browser": "catalog:",
@@ -24,7 +21,6 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@alchemy.run/cloudflare-runtime": "catalog:",
     "@effront/vite": "workspace:*",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "catalog:",

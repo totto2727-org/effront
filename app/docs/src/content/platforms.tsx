@@ -34,9 +34,9 @@ export const platformPages: readonly DocPage[] = [
           で直接ホストする方式を検討しています。
         </p>
         <p>
-          この実験ブランチでは、examples と本サイトを Alchemy native Worker に移行しています。
-          <code>@effront/alchemy/cloudflare</code> が構築時の能力を捕捉し、 core の native Effect
-          HTTP handler へリクエスト単位で接続します。 Alchemy アダプターは評価中の private workspace
+          この実験ブランチでは、examples と本サイトを Alchemy の Website.Vite に移行しています。
+          インフラ定義と Vite の実行エントリーを分け、既存の Worker Fetch 境界で リクエスト単位の
+          Effect アプリケーションを実行します。 Alchemy アダプターは評価中の private workspace
           package です。
         </p>
         <h2 id="support">対応状況</h2>
@@ -61,7 +61,7 @@ export const platformPages: readonly DocPage[] = [
       "Workers の env と execution context を安全に読む方法、および Vite と Wrangler の役割を説明します。",
     section: "Platforms",
     headings: [
-      { id: "alchemy", title: "Alchemy native Worker（実験版）" },
+      { id: "alchemy", title: "Alchemy Website（実験版）" },
       { id: "setup", title: "公開版の standalone セットアップ" },
       { id: "vite", title: "Vite 設定" },
       { id: "local", title: "ローカル実行と検証" },
@@ -70,39 +70,45 @@ export const platformPages: readonly DocPage[] = [
     ],
     content: () => (
       <>
-        <h2 id="alchemy">Alchemy native Worker（実験版）</h2>
+        <h2 id="alchemy">Alchemy Website（実験版）</h2>
         <p>
-          現在の examples と本サイトは <code>alchemy.run.ts</code> でインフラを定義し、
-          <code>entry.workers.ts</code> から Alchemy の native Worker を公開します。
-          <code>makeApplicationHttpEffect</code> へ遅延 import を渡すため、構築時に RSC
-          アプリを読み込みません。 KV の Binding は Worker の構築 Effect
-          で登録し、そのクライアントをアプリのサービスとして提供します。 リクエスト用 Layer
-          とストリームの Scope はリクエストごとに管理されます。
+          現在の examples と本サイトは <code>alchemy.run.ts</code> で
+          <code>Cloudflare.Website.Vite</code> と binding を定義します。 Vite が{" "}
+          <code>entry.workers.ts</code> を読み込み、そのエントリーはアプリを静的 import して既存の
+          Fetch handler を公開します。インフラ側からアプリを読み込まないため、 利用側で遅延 import
+          や境界専用の Service を追加する必要はありません。
         </p>
         {code(
-          `import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+          `// alchemy.run.ts: resource declaration (yield Website from the Stack)
 import * as Cloudflare from "alchemy/Cloudflare";
-import { Effect } from "effect";
 
-export default Cloudflare.Worker("App", {
-  main: import.meta.url,
-  compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-  vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
-}, Effect.gen(function* () {
-  const fetch = yield* makeApplicationHttpEffect(
-    () => import("./application").then(module => module.default),
-  );
-  return { fetch: fetch.pipe(Effect.orDie) };
-}));`,
+export const Cache = Cloudflare.KV.Namespace("Cache");
+export const Website = Cloudflare.Website.Vite("App", {
+  env: { Cache },
+  viteEnvironments: { entry: "rsc", children: ["ssr"] },
+});
+export type WebsiteEnv = Cloudflare.InferEnv<typeof Website>;
+
+// src/entry.workers.ts: compiled by Vite, not imported by the Stack
+import { createFetchHandler } from "@effront/core/workers";
+import application from "./application";
+
+export default { fetch: createFetchHandler(application) };`,
           "ts",
         )}
         <p>
-          Vite では <code>effrontAlchemy</code> と Alchemy 公式 runtime plugin を使用します。
-          Alchemy CLI が runtime plugin を注入する場合、同じ plugin を重複登録しません。
-          この構成に手書きの <code>wrangler.toml</code> は不要です。
-          <code>vp build</code> の後は <code>vp preview</code> でビルド済み Worker
-          をローカル実行します。 CLI の <code>alchemy dev</code> は beta.77 の profile
-          初期化に認証設定が必要なため、 認証不要の直接 Vite 実行とは区別してください。
+          KV は型付きの Worker env から既存のリクエストコンテキストを通して取得し、 Effect
+          の中で操作します。beta.77 の <code>Website.Vite</code> は構築 Effect
+          を受け取らないため、この方式では <code>KV.ReadWriteNamespace</code> による native binding
+          構築は使用しません。アプリの Layer とストリームの Scope は
+          引き続きリクエスト単位で管理されます。
+        </p>
+        <p>
+          Vite には <code>effrontAlchemy()</code> を登録し、Cloudflare runtime plugin の注入と
+          binding の準備は Alchemy CLI に任せます。手書きの
+          <code>wrangler.toml</code> やアプリ側の追加 host plugin は不要です。
+          アプリのディレクトリで <code>vp run dev</code> を実行してください。 beta.77
+          ではローカル資源を使う場合も Cloudflare profile の初期設定が必要です。
         </p>
         <p>
           完全な構成、KV の利用例、依存バージョンの制約はリポジトリの

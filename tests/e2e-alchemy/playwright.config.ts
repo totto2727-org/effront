@@ -7,8 +7,9 @@ export default defineConfig({
   use: { baseURL: "http://127.0.0.1:4393" },
   webServer: {
     // Exercise the committed public integration example, without copying or generating application source.
-    command: "vp build && vp preview --host 127.0.0.1 --port 4393 --strictPort",
-    cwd: fileURLToPath(new URL("../../examples/workers", import.meta.url)),
+    command:
+      "vp build --config vite.config.ts && vp preview --config vite.config.ts --host 127.0.0.1 --port 4393 --strictPort",
+    cwd: fileURLToPath(new URL(".", import.meta.url)),
     url: "http://127.0.0.1:4393",
     timeout: 120_000,
     reuseExistingServer: false,

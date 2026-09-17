@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("native Alchemy Worker serves KV-backed RSC, hydration, Server Functions and navigation", async ({
+test("Alchemy Website Worker serves KV-backed RSC, hydration, Server Functions and navigation", async ({
   page,
   request,
 }) => {
