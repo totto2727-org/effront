@@ -16,9 +16,9 @@ export default defineConfig({
       compatibilityFlags: ["nodejs_compat"],
       viteEnvironments: { entry: "rsc", children: ["ssr"] },
       worker: {
-        name: "effront-workers-example",
+        name: "effront-alchemy-example",
         bindings: [
-          Text.local("ALCHEMY_STACK_NAME", "effront-workers-example"),
+          Text.local("ALCHEMY_STACK_NAME", "effront-alchemy-example"),
           Text.local("ALCHEMY_STAGE", "test"),
           KvNamespace.local({ binding: "Cache", id: "effront-example-cache" }),
         ],

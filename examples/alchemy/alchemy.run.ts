@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import Worker from "./src/entry.workers";
 
 export default Stack(
-  "effront-workers-example",
+  "effront-alchemy-example",
   { state: localState(), providers: Cloudflare.providers() },
   Effect.gen(function* () {
     const site = yield* Worker;
