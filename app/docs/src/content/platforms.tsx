@@ -20,16 +20,24 @@ export const platformPages: readonly DocPage[] = [
       <>
         <h2 id="architecture">ホスト統合の役割</h2>
         <p>
-          Effront のコアは Web 標準の Request と Response を入口にします。 共通のビルド統合は{" "}
-          <code>@effront/vite</code>、実行環境との接続はホスト用プラグインが担当します。
-          利用するホスト用プラグインを <code>effront()</code> と組み合わせて登録します。
+          Effront のコアは native Effect HTTP と Web 標準の Fetch 境界を提供します。
+          共通のビルド統合は <code>@effront/vite</code>
+          、実行環境との接続はホスト用プラグインが担当します。 利用するホスト用プラグインを{" "}
+          <code>effront()</code> と組み合わせて登録します。
         </p>
         <p>
-          現在の構成は、アプリケーション定義の <code>entry.client.ts</code> と Fetch を公開する
+          standalone 構成は、アプリケーション定義の <code>entry.effront.tsx</code> と Fetch
+          を公開する
           <code>entry.workers.ts</code> を使います。Vite
           とホスト用プラグインは後者を直接読み込みます。将来の Node / Bun 向けには、
           <code>entry.server.ts</code> から Fetch を接続する方式と、Runtime を再利用して Effect HTTP
           で直接ホストする方式を検討しています。
+        </p>
+        <p>
+          この実験ブランチでは、examples と本サイトを Alchemy native Worker に移行しています。
+          <code>@effront/alchemy/cloudflare</code> が構築時の能力を捕捉し、 core の native Effect
+          HTTP handler へリクエスト単位で接続します。 Alchemy アダプターは評価中の private workspace
+          package です。
         </p>
         <h2 id="support">対応状況</h2>
         <ul>
@@ -53,7 +61,8 @@ export const platformPages: readonly DocPage[] = [
       "Workers の env と execution context を安全に読む方法、および Vite と Wrangler の役割を説明します。",
     section: "Platforms",
     headings: [
-      { id: "setup", title: "セットアップ" },
+      { id: "alchemy", title: "Alchemy native Worker（実験版）" },
+      { id: "setup", title: "公開版の standalone セットアップ" },
       { id: "vite", title: "Vite 設定" },
       { id: "local", title: "ローカル実行と検証" },
       { id: "context", title: "リクエストコンテキスト" },
@@ -61,7 +70,52 @@ export const platformPages: readonly DocPage[] = [
     ],
     content: () => (
       <>
-        <h2 id="setup">セットアップ</h2>
+        <h2 id="alchemy">Alchemy native Worker（実験版）</h2>
+        <p>
+          現在の examples と本サイトは <code>alchemy.run.ts</code> でインフラを定義し、
+          <code>entry.workers.ts</code> から Alchemy の native Worker を公開します。
+          <code>makeApplicationHttpEffect</code> へ遅延 import を渡すため、構築時に RSC
+          アプリを読み込みません。 KV の Binding は Worker の構築 Effect
+          で登録し、そのクライアントをアプリのサービスとして提供します。 リクエスト用 Layer
+          とストリームの Scope はリクエストごとに管理されます。
+        </p>
+        {code(
+          `import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import * as Cloudflare from "alchemy/Cloudflare";
+import { Effect } from "effect";
+
+export default Cloudflare.Worker("App", {
+  main: import.meta.url,
+  compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
+  vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+}, Effect.gen(function* () {
+  const fetch = yield* makeApplicationHttpEffect(
+    () => import("./entry.effront").then(module => module.default),
+  );
+  return { fetch: fetch.pipe(Effect.orDie) };
+}));`,
+          "ts",
+        )}
+        <p>
+          Vite には <code>effrontAlchemy</code> を登録します。 Alchemy CLI が runtime plugin と
+          binding を用意するため、アプリ側の手動 host
+          登録や環境変数による条件分岐は不要です。手書きの <code>wrangler.toml</code>
+          も使用しません。各アプリのディレクトリで <code>vp run dev</code>
+          を実行すると、公式の <code>alchemy dev</code> が起動します。 beta.77
+          ではローカル資源を使う場合も Cloudflare profile の初期設定が必要です。
+        </p>
+        <p>
+          動的 import は Vite の RSC アプリ定義を構築時に読み込まないための境界です。
+          値の受け渡し自体は Effect Context のサービス参照で行い、シリアライズや RPC
+          を必要としません。サンプルの <code>CacheClient</code> は Alchemy のクライアント型を
+          使用するため、Alchemy 非依存の契約とは区別してください。
+        </p>
+        <p>
+          完全な構成、KV の利用例、依存バージョンの制約はリポジトリの
+          <code>docs/ALCHEMY.md</code> と <code>examples/alchemy</code> にあります。
+          以下は引き続き利用できる公開済み standalone adapter の設定です。
+        </p>
+        <h2 id="setup">公開版の standalone セットアップ</h2>
         <p>
           アプリケーションにホストアダプターとWranglerを追加します。 Cloudflare Vite
           pluginはアダプターの依存関係に含まれます。
@@ -77,8 +131,7 @@ export const platformPages: readonly DocPage[] = [
         {code(
           `src/
   entry.workers.ts
-  entry.client.ts
-  application.tsx
+  entry.effront.tsx
 vite.config.ts
 wrangler.jsonc`,
           "text",
@@ -88,7 +141,7 @@ wrangler.jsonc`,
         </p>
         {code(
           `import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.client";
+import application from "./entry.effront";
 
 export default { fetch: createFetchHandler(application) };`,
           "ts",
@@ -129,7 +182,7 @@ export default defineConfig({
           option は不要です。<code>cloudflare</code> で入れ子にせず、React plugin と Vite RSC plugin
           はアダプターと共通プラグインが登録します。デフォルトでは RSC entry は
           <code>src/entry.workers.ts</code>、アプリケーションの alias は{" "}
-          <code>src/entry.client.ts</code> です。
+          <code>src/entry.effront.tsx</code> です。
         </p>
         <h2 id="local">ローカル実行と検証</h2>
         {code(

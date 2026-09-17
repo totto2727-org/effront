@@ -1,0 +1,14 @@
+{
+  "name": "@effront/e2e-alchemy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@alchemy.run/cloudflare-runtime": "2.0.0-beta.77",
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.2",
+    "vite-plus": "catalog:"
+  }
+}

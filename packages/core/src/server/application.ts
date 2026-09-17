@@ -80,15 +80,15 @@ type HttpApplicationRequirements =
   | HttpRouter.HttpRouter
   | HttpRouter.Request.From<"Error", HtmlRenderError | ServerFnRequestFailure>;
 
-export type HttpApplicationLayer<ApplicationError> = Layer.Layer<
+export type HttpApplicationLayer<ApplicationError, Requirements = never> = Layer.Layer<
   never,
   ApplicationError | PlatformError,
-  HttpApplicationRequirements
+  HttpApplicationRequirements | Requirements
 >;
 
-const httpLayer = <Services, ApplicationError>(
-  application: ApplicationDefinition<Services, ApplicationError>,
-): HttpApplicationLayer<ApplicationError> => {
+const httpLayer = <Services, ApplicationError, Requirements>(
+  application: ApplicationDefinition<Services, ApplicationError, Requirements>,
+): HttpApplicationLayer<ApplicationError, Requirements> => {
   const applicationState = getApplicationState(application);
   const identity = getEFFRONTIdentity(application);
   const render = Effect.fnUntraced(function* ({

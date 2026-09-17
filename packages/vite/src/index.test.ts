@@ -4,10 +4,10 @@ import { resolveConfig } from "vite";
 import { describe, expect, it } from "vitest";
 import { effront } from "./index";
 
-const root = fileURLToPath(new URL("../../../examples/workers/", import.meta.url));
+const root = fileURLToPath(new URL("../../../examples/alchemy/", import.meta.url));
 
 describe("Effront entry conventions", () => {
-  it("uses entry.workers.ts and entry.client.ts without consumer configuration", async () => {
+  it("uses entry.workers.ts and entry.effront.tsx without consumer configuration", async () => {
     const config = await resolveConfig({ configFile: false, root, plugins: effront() }, "build");
 
     expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
@@ -15,7 +15,7 @@ describe("Effront entry conventions", () => {
     });
     expect(config.resolve.alias).toContainEqual({
       find: "@effront/core/application-entry",
-      replacement: resolve(root, "src/entry.client.ts"),
+      replacement: resolve(root, "src/entry.effront.tsx"),
     });
   });
 

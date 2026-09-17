@@ -3,59 +3,56 @@ import type { DocPage } from "./types";
 
 export const coreRuntimeSources = {
   requestHandler: {
-    path: "packages/core/src/workers.ts",
+    path: "packages/core/src/http.ts",
     language: "typescript",
-    code: `    const requestContext: WorkersRequestContext<unknown, unknown> = {
-      env,
-      executionContext,
-      request,
-    };
-    const { dispose, handler } = HttpRouter.toWebHandler(
-      ServerApplication.httpLayer(application).pipe(
-        Layer.provide(Layer.succeed(WorkersRequestContext, requestContext)),
-      ),
-      { disableLogger: true },
-    );
-
-    try {
-      return await releaseResponseBody(
-        await handler(request, Context.make(WorkersRequestContext, requestContext)),
-        dispose,
-      );
-    } catch (cause) {
-      await dispose();
-      throw cause;
+    code: `export const toHttpEffect = <Services, ApplicationError, Requirements>(
+  application: ApplicationDefinition<Services, ApplicationError, Requirements>,
+): HttpApplicationEffect<ApplicationError, Requirements> =>
+  Effect.gen(function* () {
+    const request = yield* HttpServerRequest.HttpServerRequest;
+    const length = request.headers["content-length"];
+    if (length !== undefined) {
+      const size = Number(length);
+      if (!Number.isSafeInteger(size) || size < 0 || size > maxRequestBodySize) {
+        return HttpServerResponse.text("Request body exceeds the 10 MiB limit.", { status: 413 });
+      }
     }
-  };`,
+    // Request layers must not reuse instances from a host's construction memo map.
+    const memoMap = yield* Layer.makeMemoMap;
+    const handler = yield* HttpRouter.toHttpEffect(ServerApplication.httpLayer(application)).pipe(
+      Effect.provideService(Layer.CurrentMemoMap, memoMap),
+    );
+    const response = yield* handler;`,
   },
   responseLifetime: {
-    path: "packages/core/src/workers.ts",
+    path: "packages/core/src/http.ts",
     language: "typescript",
-    code: `  let released = false;
-  const releaseOnce = async () => {
-    if (!released) {
-      released = true;
-      await release();
-    }
-  };
-  const reader = response.body.getReader();
-  const body = new ReadableStream<Uint8Array>({
-    async cancel(reason) {
-      try {
-        await reader.cancel(reason);
-      } finally {
-        await releaseOnce();
-      }
-    },
-    async pull(controller) {
-      try {
-        const result = await reader.read();
-        if (result.done) {
-          controller.close();
-          await releaseOnce();
-          return;
-        }
-        controller.enqueue(result.value);`,
+    code: `    // Effect rc.112 transfers every streaming response scope before discarding
+    // HEAD bodies. Preserve GET metadata but prevent transfer to an unread body.
+    return request.method === "HEAD"
+      ? HttpServerResponse.setBody(response, HttpBody.empty).pipe(
+          HttpServerResponse.setHeaders(response.headers),
+        )
+      : response;
+  });`,
+  },
+  externalContext: {
+    path: "packages/core/src/http.ts",
+    language: "typescript",
+    code: `  const handler = toHttpEffect(application);
+  return Effect.map(Effect.context<CapturedRequirements<Requirements>>(), (context) => {
+    const captured: Context.Context<CapturedRequirements<Requirements>> =
+      captureExternalContext<HttpRequirements<Requirements>>(context);
+    return Effect.contextWith(
+      (requestContext: Context.Context<RemainingRequirements<Requirements>>) => {
+        const provided: Context.Context<CapturedRequirements<Requirements>> = Context.merge(
+          captured,
+          requestContext,
+        );
+        return Effect.provideContext(handler, provided);
+      },
+    );
+  });`,
   },
   flightRuntime: {
     path: "packages/core/src/server/flight-renderer.tsx",
@@ -204,7 +201,7 @@ export const coreRuntimePages: readonly DocPage[] = [
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
-      { id: "fetch-entry", title: "1. Fetchの呼び出しごとにLayerを構築する" },
+      { id: "fetch-entry", title: "1. HTTP Effectの実行ごとにLayerを構築する" },
       { id: "request-services", title: "2. HTTPのContextとアプリケーションサービスを接続する" },
       { id: "response-lifetime", title: "3. Responseではなく本文の終了まで所有する" },
       { id: "host-boundary", title: "4. ホストの値を型付きで読む境界" },
@@ -215,27 +212,30 @@ export const coreRuntimePages: readonly DocPage[] = [
           <a href="/architecture/implementation/application">アプリケーションの定義</a>と
           <a href="/architecture/implementation/routing">ルートの組み立て</a>
           が済むと、次はその定義を一件のHTTPリクエストに結び付けます。 この章では{" "}
-          <code>packages/core/src/workers.ts</code> から <code>server/application.ts</code>{" "}
+          <code>packages/core/src/http.ts</code> から <code>server/application.ts</code>{" "}
           へ進み、サービスを取得する時点と解放する時点を分けて読みます。
         </p>
-        <h2 id="fetch-entry">1. Fetchの呼び出しごとにLayerを構築する</h2>
+        <h2 id="fetch-entry">1. HTTP Effectの実行ごとにLayerを構築する</h2>
         <p>
-          <code>createFetchHandler(application)</code> が返す関数は、Webの <code>Request</code>
-          、ホストの <code>env</code>、<code>executionContext</code> を受け取り、
-          <code>Promise&lt;Response&gt;</code> を返します。 最初に <code>bodyTooLarge</code> が
-          Content-Length を確認し、安全な非負整数でない値や10 MiB超を413にします。
+          <code>@effront/core/http</code> の <code>toHttpEffect(application)</code>
+          は、現在の <code>HttpServerRequest</code>、<code>Scope</code>、外部サービスを使って
+          <code>HttpServerResponse</code> を返すEffectです。
+          実行時にContent-Lengthを確認し、安全な非負整数でない値や10 MiB超を413にします。
           この入口の検査はヘッダーがない本文の実測ではありません。Server Functionの本文には
           <a href="/architecture/implementation/server-functions">別の読み取り上限</a>があります。
         </p>
         <SourceExcerpt source={coreRuntimeSources.requestHandler} />
         <p>
-          抜粋の <code>HttpRouter.toWebHandler</code> は返されたFetch関数の内側にあります。
-          したがって <code>ServerApplication.httpLayer(application)</code>{" "}
-          と、その構築・破棄を管理するハンドラーはリクエストごとに用意されます。
-          <code>Layer.succeed(WorkersRequestContext, requestContext)</code>{" "}
-          はLayerの取得時にホスト値を渡し、<code>Context.make</code>{" "}
-          はHTTP処理の実行時にも同じ値を渡します。
-          前者によってアプリケーションLayerの取得中も現在の環境を参照でき、後者によってHTTPの処理中も同じリクエスト値を読めます。
+          抜粋の <code>HttpRouter.toHttpEffect</code> はEffectの実行中に
+          <code>ServerApplication.httpLayer(application)</code>{" "}
+          を構築し、生成したルーターをそのまま実行します。
+          同じEffect値を再利用しても、Layerとルーターの獲得はリクエストごとです。 毎回新しい{" "}
+          <code>Layer.CurrentMemoMap</code>{" "}
+          を使うため、ホストの構築時にメモ化されたLayerのインスタンスも再利用しません。
+          ホストが提供したContextを引き継ぐため、Layerの獲得中から現在の外部サービスとHTTPリクエストを参照できます。
+          Workers互換の <code>createFetchHandler</code> はこのEffectを
+          <code>HttpEffect.toWebHandler</code> へ渡し、呼び出しごとに{" "}
+          <code>WorkersRequestContext</code> を提供します。
         </p>
         <h2 id="request-services">2. HTTPのContextとアプリケーションサービスを接続する</h2>
         <p>
@@ -246,7 +246,9 @@ export const coreRuntimePages: readonly DocPage[] = [
           としてルート登録時に保持されます。 各ルートの <code>RequestContextMiddleware</code>{" "}
           は、実行中のHTTP Contextにそのサービス群を <code>Context.merge</code>{" "}
           して処理を実行します。 型の <code>Services</code>{" "}
-          はアプリケーションの依存関係を表し、HTTPのリクエストサービスやレンダラーとは供給元が異なります。
+          はアプリケーションLayerの出力を表し、HTTPのリクエストサービスやレンダラーとは供給元が異なります。
+          Layerの入力である <code>Requirements</code> はHTTP
+          Effectの要求として残るため、外部サービスの未提供を型で検出できます。
         </p>
         <p>
           GETではページに至るMiddlewareの列をEffect HTTPのdescriptorとして合成します。
@@ -259,28 +261,46 @@ export const coreRuntimePages: readonly DocPage[] = [
         </p>
         <h2 id="response-lifetime">3. Responseではなく本文の終了まで所有する</h2>
         <p>
-          <code>handler(request)</code>{" "}
-          がResponseを返しても、遅延して描画されるコンポーネントはまだサービスを必要とします。
-          <code>releaseResponseBody</code> は本文のreaderを所有する新しいReadableStreamを作り、
-          <code>dispose</code> を実行する責任を本文の終端へ移します。
-          本文がないResponseだけはその場で解放します。
+          HTTP
+          Effectが応答を返しても、遅延して描画されるコンポーネントはまだサービスを必要とします。
+          Effect HTTPの <code>toHandled</code> がリクエストScopeを所有し、Web変換の
+          <code>scopeTransferToStream</code> がストリームの終了へ解放責任を移します。
+          EOF・エラー・キャンセルで本文のEffect Streamが終了するとScopeが閉じます。
+          生成済みのJSONやtextなどの非ストリーム応答は、本文を後で読む場合もリクエスト処理の完了で解放されます。
         </p>
         <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
         <p>
-          EOFではclose後に解放し、cancelでは元readerのcancelを試みた後、finallyで解放します。
-          抜粋に続くcatchも読み取りエラーをcontrollerへ渡してから解放します。
-          <code>releaseOnce</code>{" "}
-          のフラグはこれらの競合による重複解放を防ぎ、本文を得る前の例外は入口のcatchが{" "}
-          <code>dispose</code> して再throwします。 Flightの子Scopeにも独自のreleaseがあり、
+          固定しているEffect rc.112はHEADの本文を破棄する前にもScopeをストリームへ移します。
+          coreはHEADを空の本文へ正規化し、GETのヘッダーを保ったまま、消費されないストリームへのScope移譲を防ぎます。
+          応答生成だけを <code>Effect.scoped</code>{" "}
+          で包むと、ストリームの途中でサービスを解放してしまうため、この所有権をホストのHTTP処理へ接続します。
+          Flightの子Scopeにも独自のreleaseがあり、
           <a href="/architecture/implementation/rendering">次章</a>でHTTPの寿命との接続を追います。
         </p>
         <p>
-          ここはEffrontがFetchレスポンスの所有権をつなぐ実装であり、Cloudflareの転送処理そのものではありません。
-          ホストは返された本文を消費またはcancelする側です。 現在の <code>createFetchHandler</code>{" "}
-          はリクエスト単位でLayerを構築するため、サーバー全体でRuntimeを再利用する別のEffect
-          HTTPホスト方式が既に実装されているとは読めません。
+          Effect HTTPへ直接接続するホストも、ストリームの寿命に合わせてScopeを所有します。
+          coreはホスト固有の転送処理やインフラサービスを持たず、HTTPのEffectと型付きContextを接続境界にします。
+          独自の遅延本文がリクエストサービスを読む場合は、その本文を作る時点で必要なContextを束縛します。
+          応答を作るEffectへサービスを提供することと、後から実行される本文へContextを提供することは別です。
         </p>
         <h2 id="host-boundary">4. ホストの値を型付きで読む境界</h2>
+        <p>
+          <code>makeHttpEffect(application)</code> は構築時の外部サービスへの参照を保持します。
+          返されたEffectの実行時には現在のContextを優先して合流させるため、同じハンドラーを並行リクエストで使えます。
+          <code>captureExternalContext</code>{" "}
+          は構築時のScope、HTTPリクエスト、検索パラメーター、RouteContext、HttpRouter、Layer.CurrentMemoMapを除外します。
+          <code>Effect.context&lt;R&gt;()</code>{" "}
+          の型指定だけでは実行時のキーは絞られないため、この除外が必要です。
+        </p>
+        <SourceExcerpt source={coreRuntimeSources.externalContext} />
+        <p>
+          Contextに参照を保持してもサービスの所有権は移りません。
+          ホストが構築した共有サービスはホストのScopeに属し、リクエストLayerは今回のHTTP
+          Scopeに属します。
+          外部サービスの所有者は、それを使うすべての応答本文が終了するまで自身のScopeを保ちます。
+          アプリケーションのLayerを構築する処理は、参照を保持するこのfactoryではなく、返されたHTTP
+          Effectの内側に残ります。
+        </p>
         <p>
           <code>workers.ts</code> の <code>WorkersRequestContext&lt;Env, ExecutionContext&gt;</code>{" "}
           は三つの値をreadonlyで持ちます。 対応する <code>Context.Reference</code>{" "}

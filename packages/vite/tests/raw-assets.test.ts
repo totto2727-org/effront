@@ -6,7 +6,7 @@ import { effront } from "@effront/vite";
 import { createServer, type ViteDevServer } from "vite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const exampleRoot = fileURLToPath(new URL("../../../examples/workers/", import.meta.url));
+const exampleRoot = fileURLToPath(new URL("../../../examples/alchemy/", import.meta.url));
 const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
 
 // These are real listening Vite servers, filesystem watch events, module transforms,

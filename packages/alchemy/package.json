@@ -1,0 +1,31 @@
+{
+  "name": "@effront/alchemy",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./cloudflare": {
+      "types": "./dist/cloudflare/index.d.ts",
+      "default": "./dist/cloudflare/index.js"
+    },
+    "./cloudflare/vite": {
+      "types": "./dist/cloudflare/vite.d.ts",
+      "default": "./dist/cloudflare/vite.js"
+    }
+  },
+  "devDependencies": {
+    "@effect/platform-node": "4.0.0-rc.112",
+    "@effront/core": "workspace:*",
+    "@effront/vite": "workspace:*",
+    "alchemy": "catalog:",
+    "effect": "catalog:",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.1"
+  },
+  "peerDependencies": {
+    "@effront/core": "workspace:^",
+    "@effront/vite": "workspace:^",
+    "alchemy": "catalog:",
+    "effect": "catalog:",
+    "vite": "*"
+  }
+}

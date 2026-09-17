@@ -4,27 +4,9 @@ import type { DocPage } from "./types";
 export const coreModelSources = {
   fetchBoundary: {
     path: "packages/core/src/workers.ts",
-    code: `    const requestContext: WorkersRequestContext<unknown, unknown> = {
-      env,
-      executionContext,
-      request,
-    };
-    const { dispose, handler } = HttpRouter.toWebHandler(
-      ServerApplication.httpLayer(application).pipe(
-        Layer.provide(Layer.succeed(WorkersRequestContext, requestContext)),
-      ),
-      { disableLogger: true },
-    );
-
-    try {
-      return await releaseResponseBody(
-        await handler(request, Context.make(WorkersRequestContext, requestContext)),
-        dispose,
-      );
-    } catch (cause) {
-      await dispose();
-      throw cause;
-    }`,
+    code: `  const handler = HttpEffect.toWebHandler(toHttpEffect(application));
+  return (request, env, executionContext) =>
+    handler(request, Context.make(WorkersRequestContext, { env, executionContext, request }));`,
     language: "ts",
   },
   applicationIdentity: {
@@ -156,19 +138,26 @@ export const coreModelPages: readonly DocPage[] = [
           ビルド時のモジュールグラフを組み立てる仕事と、Requestを処理する仕事を分けて読んでください。
         </p>
         <p>
-          WebのRequest／Responseはホストへの接続境界です。ただし境界が共通であることと、すべてのホストに対応済みであることは別です。
-          現在の検証対象はCloudflare Workersであり、Node／BunのアダプターやEffect
-          HTTPを直接ホストする経路は計画段階です。
-          サーバー起動時にRuntimeを再利用する将来案を、現在のリクエスト単位の実装と混同しないようにします。
+          WebのRequest／Responseはホストへの接続境界で、その内側には
+          <code>@effront/core/http</code> のEffect HTTP入口があります。
+          <code>toHttpEffect</code> は現在のContextでリクエストを処理し、
+          <code>makeHttpEffect</code> は外部サービスへの参照を構築時に保持します。
+          どちらもアプリケーションLayerはリクエストごとに構築します。
+          この共通契約と検証済みのホスト対応は区別し、現在のCloudflare
+          Workers経路と将来のNode／Bunアダプターを混同しないようにします。
         </p>
         <h2 id="entries">定義と起動の入口を分ける</h2>
         <p>
-          利用側の <code>src/entry.client.ts</code> はアプリケーション定義をexportする入口です。
+          利用側の <code>src/entry.effront.tsx</code> はアプリケーション定義をexportする入口です。
           名前にclientが含まれていても、ここをブラウザーの起動処理と読み替えると依存関係を見失います。
           Vite統合はこのファイルを <code>@effront/core/application-entry</code>{" "}
-          の既定の参照先にします。 利用側の <code>src/entry.workers.ts</code> はその定義を読み、
-          <code>createFetchHandler(application)</code> から作ったハンドラーを <code>fetch</code>{" "}
-          として公開します。 Viteの既定のRSCエントリはこちらです。
+          の既定の参照先にします。 ホスト側の入口はこの定義を読み、
+          <code>toHttpEffect(application)</code> または <code>makeHttpEffect(application)</code>
+          をHTTP処理へ接続します。 Workers互換の <code>
+            createFetchHandler
+          </code> は同じ処理をWebの{" "}
+          <code>fetch</code> へ変換する薄い入口です。 Viteの既定のRSCエントリは{" "}
+          <code>src/entry.workers.ts</code> です。
         </p>
         <p>
           ブラウザーの実際の起動処理はcoreの <code>client/entry.ts</code> にあり、
@@ -181,16 +170,16 @@ export const coreModelPages: readonly DocPage[] = [
         </p>
         <h2 id="request-flow">1つのRequestを応答まで追う</h2>
         <p>
-          最初に <code>workers.ts</code> の <code>createFetchHandler</code> を読みます。
-          次の抜粋では、ホストから受け取った値をまとめ、<code>ServerApplication.httpLayer</code>{" "}
-          をWebハンドラーへ変換しています。
-          この処理は返された関数の内側にあるため、アプリケーションのLayerはリクエストごとに構築されます。
+          最初に <code>workers.ts</code> の互換入口 <code>createFetchHandler</code> を読みます。
+          次の抜粋は <code>http.ts</code> の <code>toHttpEffect</code>{" "}
+          をWebハンドラーへ変換し、ホストの値を呼び出しごとに提供します。
+          ハンドラー自体は再利用されますが、Layerの構築は返されたEffectの実行中にあるため、リクエストごとに行われます。
         </p>
         <SourceExcerpt source={coreModelSources.fetchBoundary} />
         <p>
           <code>WorkersRequestContext</code> の契約は <code>env</code>、
           <code>executionContext</code>、<code>request</code> です。
-          Layerへの提供とハンドラー呼び出し時のContextへの提供によって、サービスの獲得中もHTTP処理中も同じリクエストの値を参照できます。
+          このContext内でLayerの構築とHTTP処理の両方を実行するため、サービスの獲得中も同じリクエストの値を参照できます。
           coreはこれらを暗黙にFlightやHTMLへ追加しません。
           <code>@effront/cloudflare/workers</code>{" "}
           のアクセサーも、この既存ContextにCloudflareの型を与える薄い入口です。
@@ -215,10 +204,10 @@ export const coreModelPages: readonly DocPage[] = [
           <li>ブラウザーが初期応答をhydrateし、その後の遷移や再取得を担当します。</li>
         </ol>
         <p>
-          Responseを返した時点では、ストリームの描画が終わっているとは限りません。
-          <code>releaseResponseBody</code> は本文の終端・エラー・キャンセルで <code>dispose</code>{" "}
-          を呼び、本文がない応答はすぐ解放します。
-          この境界があることで、本文を作る間に必要なリクエスト用サービスの寿命を保てます。 詳細は{" "}
+          Responseを返した時点では、ストリームの描画が終わっているとは限りません。 Effect
+          HTTPのWeb変換はストリーム応答のScopeを本文へ移し、終端・エラー・キャンセルで閉じます。
+          HEADや生成済みの非ストリーム応答はリクエスト処理の完了で解放します。
+          外部サービスの所有者は、それを利用する本文が終わるまで自身のScopeを保ちます。 詳細は{" "}
           <a href="/architecture/implementation/request">04. リクエスト処理</a> へ進みます。
         </p>
         <h2 id="reading-order">依存関係に沿って読み進める</h2>
@@ -293,15 +282,20 @@ export const coreModelPages: readonly DocPage[] = [
         </p>
         <p>
           <code>application/definition.tsx</code> の{" "}
-          <code>ApplicationDefinition&lt;Services, ApplicationError&gt;</code>{" "}
-          は、Applicationという種別と構築時のエラー型を保ちます。 内部の{" "}
+          <code>ApplicationDefinition&lt;Services, ApplicationError, Requirements&gt;</code>{" "}
+          は、Applicationという種別、構築時のエラー型、外部から必要なサービスを保ちます。 内部の{" "}
           <code>ApplicationImplementationState</code> はコンパイル済みroutesと{" "}
-          <code>Layer.Layer&lt;Services, ApplicationError, HttpRouter.HttpRouter&gt;</code>{" "}
+          <code>
+            Layer.Layer&lt;Services, ApplicationError, HttpRouter.HttpRouter | Requirements&gt;
+          </code>{" "}
           を持ちます。
           <code>ApplicationLayerOptions</code>{" "}
           によって、Servicesがneverならlayerは省略可能で、それ以外なら必須です。 省略時は{" "}
           <code>resolveApplicationLayer</code> が <code>Layer.empty</code> を使います。
           サービスの型を宣言するだけでインスタンスが生まれるわけではなく、実際の提供元はこのLayerです。
+          RequirementsはLayerを構築するための入力であり、Pageなどが利用できるServicesとは別です。
+          外部のServiceを直接公開する場合は <code>Layer.effect(Service, Service)</code>{" "}
+          のように既存のインスタンスを明示的に提供します。
         </p>
         <p>
           <code>EFFRONT.make</code>{" "}

@@ -1,0 +1,38 @@
+{
+  "name": "@effront/tailwind",
+  "version": "0.1.1",
+  "description": "Automatic Tailwind CSS integration for Effront React client boundaries.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/totto2727-org/effront.git",
+    "directory": "packages/tailwind"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "catalog:"
+  },
+  "devDependencies": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.1"
+  },
+  "peerDependencies": {
+    "vite": "*"
+  }
+}

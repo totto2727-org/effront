@@ -86,8 +86,7 @@ vp add -D @effront/vite @effront/cloudflare @vitejs/plugin-rsc wrangler`,
         {code(
           `src/
   entry.workers.ts # Fetch ハンドラーを公開するエントリ
-  entry.client.ts  # アプリケーション定義のexport
-  application.tsx  # JSXを含むルートグラフ
+  entry.effront.tsx  # JSXを含むルートグラフ
 vite.config.ts    # ビルドとホスト統合
 wrangler.jsonc    # Cloudflareの設定`,
           "text",
@@ -95,7 +94,7 @@ wrangler.jsonc    # Cloudflareの設定`,
         <h2 id="application">アプリケーションを書く</h2>
         <p>
           同じ <code>EFFRONT</code> 値から Layout、Page、Routes を作り、<code>EFFRONT.make</code>{" "}
-          で閉じます。 次の <code>src/application.tsx</code> はサービスを要求しないため{" "}
+          で閉じます。 次の <code>src/entry.effront.tsx</code> はサービスを要求しないため{" "}
           <code>layer</code> は不要です。
         </p>
         {code(
@@ -123,17 +122,16 @@ export default EFFRONT.make({
           "tsx",
         )}
         <p>
-          <code>src/entry.client.ts</code> はアプリケーション定義を公開します。ブラウザーのhydration
-          entryはEffrontが提供します。
+          <code>src/entry.effront.tsx</code>{" "}
+          はアプリケーション定義を公開します。ブラウザーのhydration entryはEffrontが提供します。
         </p>
-        {code(`export { default } from "./application";`, "ts")}
         <h2 id="run">ビルド統合と実行</h2>
         <p>
           <code>src/entry.workers.ts</code> にFetchハンドラーを定義します。
         </p>
         {code(
           `import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.client";
+import application from "./entry.effront";
 
 export default { fetch: createFetchHandler(application) };`,
           "ts",
@@ -413,7 +411,7 @@ export class Greeting extends Context.Service<
           "ts",
         )}
         <p>
-          <code>src/application.tsx</code> で要求を宣言し、同じ境界で Layer を提供します。
+          <code>src/entry.effront.tsx</code> で要求を宣言し、同じ境界で Layer を提供します。
         </p>
         {code(
           `import { Effect } from "effect";

@@ -55,7 +55,7 @@ Cloudflare options, when needed, are passed directly to `effrontCloudflare(...)`
 Do not register React or Vite RSC plugins a second time.
 Omitting the Cloudflare adapter leaves the core available for a future Node or Bun host adapter, but neither adapter is implemented in this milestone.
 The default RSC entry is the application's `src/entry.workers.ts`, which exports the Workers Fetch object.
-The application-definition entry defaults to `src/entry.client.ts`; it may re-export JSX definitions from `src/application.tsx`.
+The application-definition entry defaults to `src/entry.effront.tsx` and directly exports the application definition.
 Despite its name, this definition module stays in the RSC graph rather than becoming the browser hydration entry.
 The framework provides the SSR and browser entries.
 The Cloudflare wrapper owns the required `viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] }`.
@@ -64,7 +64,7 @@ The wrapper does not set server host, port, strict-port mode, project root, or a
 Vite runs from the application directory and uses normal configuration discovery.
 
 VitePlus drives Vite and builds the graph-specific outputs.
-Wrangler runs the generated `examples/workers/dist/rsc/wrangler.json` using `--local --no-bundle`.
+Wrangler runs the generated `examples/alchemy/dist/rsc/wrangler.json` using `--local --no-bundle`.
 The wrapper places SSR output inside the Worker upload root (by default `dist/rsc/ssr`) so dynamically loaded SSR modules are attached by Wrangler.
 Emitting SSR as a sibling `dist/ssr` builds successfully but fails in Wrangler at runtime because that module is not attached to the Worker.
 Workers assets are host-owned, not Bun filesystem middleware.

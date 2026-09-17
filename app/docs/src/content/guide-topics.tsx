@@ -155,7 +155,7 @@ export function GreetingForm() {
       )}
       <h2 id="application">Page とアプリケーションへ組み込む</h2>
       <p>
-        <code>src/application.tsx</code> で二つのフォームを表示し、Greeting の実装を提供します。
+        <code>src/entry.effront.tsx</code> で二つのフォームを表示し、Greeting の実装を提供します。
       </p>
       {code(
         `import { Effect } from "effect";
@@ -260,7 +260,7 @@ export const RequestEFFRONT = EFFRONT.withMiddleware(WithRequestInfo);`,
         派生した定義から作った Routes が Middleware を有効にします。 Page、Layout、Component
         は、その有効なスコープの内側で render されるときに提供サービスを消費します。 Page
         だけを派生した定義から作り、ベースの Routes に置いてもスコープは有効になりません。 次の{" "}
-        <code>src/application.tsx</code> はリクエストの URL を表示します。
+        <code>src/entry.effront.tsx</code> はリクエストの URL を表示します。
       </p>
       {code(
         `import { Effect } from "effect";
@@ -400,7 +400,7 @@ export const GreetingApi = HttpRouter.use(
       <p>
         HTTP 登録処理が要求するサービスを <code>Layer.provideMerge</code> で提供します。 単に
         provide するのではなく merge して出力にも残すことで、Page、Layout、Component、Server
-        Function にも同じサービスを提供できます。 サービスの章の application.tsx で、
+        Function にも同じサービスを提供できます。 サービスの章の entry.effront.tsx で、
         <code>layer: Greeting.layer</code> の代わりに次の ApplicationLayer を渡します。
       </p>
       {code(

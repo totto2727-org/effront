@@ -538,7 +538,7 @@ const describe = EFFRONT.ServerFn.make({
       <>
         <h2 id="fetch">createFetchHandler</h2>
         {code(`import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.client";
+import application from "./entry.effront";
 
 export default { fetch: createFetchHandler(application) };`)}
         <p>
@@ -657,7 +657,7 @@ export const readLabel = Effect.gen(function* () {
           ["rsc", "既定値 ./src/entry.workers.ts。{ fetch } を公開する RSC 環境のエントリー。"],
           [
             "application",
-            "既定値 ./src/entry.client.ts。アプリケーション定義を公開するモジュール。Vite の root を基準に解決されます。",
+            "既定値 ./src/entry.effront.tsx。アプリケーション定義を公開するモジュール。Vite の root を基準に解決されます。",
           ],
           [
             "@effront/core/application-entry",
@@ -666,8 +666,8 @@ export const readLabel = Effect.gen(function* () {
         ])}
         <p>
           React plugin と RSC plugin はこの統合が登録します。同じ構成へ重複登録しないでください。
-          <code>application</code> の既定ファイル名が entry.client.ts
-          でも、内容はブラウザーの起動コードではなくアプリケーション定義です。
+          <code>application</code> は <code>src/entry.effront.tsx</code>
+          のアプリケーション定義を参照します。ブラウザーの起動コードはEffrontが提供します。
         </p>
         <h2 id="cloudflare">@effront/cloudflare</h2>
         <p>
@@ -709,7 +709,7 @@ export default defineConfig({
   plugins: [
     effront({
       rsc: "./src/entry.workers.ts",
-      application: "./src/entry.client.ts",
+      application: "./src/entry.effront.tsx",
     }),
     effrontCloudflare(),
   ],

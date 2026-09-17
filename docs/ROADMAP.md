@@ -115,7 +115,7 @@ References: [React ViewTransition](https://react.dev/reference/react/ViewTransit
 
 Status: planned; Node and Bun server adapters will be designed separately.
 
-- Keep `src/entry.client.ts` as the application definition export.
+- Keep `src/entry.effront.tsx` as the application definition export.
 - Use `src/entry.workers.ts` as the Web Fetch export and the default Vite RSC entry.
 - Vite + Cloudflare consumes `entry.workers.ts` directly.
 - For future Node/Bun hosts, use `src/entry.server.ts` for host startup and evaluate two integration paths: adapt the Fetch export from `entry.workers.ts`, or host the application directly through Effect HTTP.

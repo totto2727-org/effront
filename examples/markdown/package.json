@@ -3,26 +3,27 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp build",
-    "local": "wrangler dev --local --no-bundle --config dist/rsc/wrangler.json --port 8787"
+    "dev": "alchemy dev"
   },
   "dependencies": {
     "@comark/react": "catalog:",
     "@effect/platform-browser": "catalog:",
+    "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
     "@effront/markdown": "workspace:*",
+    "alchemy": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@effront/cloudflare": "workspace:*",
+    "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
+    "@tailwindcss/typography": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
-    "vite-plus": "catalog:",
-    "wrangler": "catalog:"
+    "tailwindcss": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

@@ -356,7 +356,7 @@ const QuietPage = EFFRONT.Page.make({
           アダプターを組み合わせます。
         </p>
         <p>
-          <code>src/entry.client.ts</code> はアプリケーション定義を export し、
+          <code>src/entry.effront.tsx</code> はアプリケーション定義を export し、
           <code>src/entry.workers.ts</code> はそれを読み込んで Fetch を export します。 ファイル名に
           client とあっても、アプリケーションの全実装をブラウザーに公開する意味ではありません。
           React の server condition は RSC graph のみで解決し、RSC と SSR は workerd
@@ -364,7 +364,7 @@ const QuietPage = EFFRONT.Page.make({
         </p>
         <CodeBlock
           code={`import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.client";
+import application from "./entry.effront";
 
 export default { fetch: createFetchHandler(application) };`}
           language="ts"

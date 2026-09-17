@@ -133,7 +133,7 @@ describe("userland HTTP through createFetchHandler", () => {
     await response.text();
     expect(events).toEqual(["acquired:unknown", "released:unknown"]);
   });
-  it("executes the Guide's service-backed JSON route and retains scope until body EOF", async () => {
+  it("executes the Guide's service-backed JSON route and releases completed non-stream responses", async () => {
     const { events, handler } = makeApplication();
     const response = await handler(
       new Request("https://workers.test/api/greeting"),
@@ -145,9 +145,8 @@ describe("userland HTTP through createFetchHandler", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("x-application-scoped")).toBeNull();
-    expect(events).toEqual(["acquired:one"]);
     expect(await response.json()).toEqual({ message: "こんにちは、Ada さん。" });
-    expect(events).toEqual(["acquired:one", "released:one"]);
+    await expect.poll(() => events).toEqual(["acquired:one", "released:one"]);
   });
 
   it("keeps application-layer environment services request-local and preserves JSON status", async () => {
@@ -163,7 +162,6 @@ describe("userland HTTP through createFetchHandler", () => {
     );
     expect(first).toBeDefined();
     expect(second).toBeDefined();
-    expect(events.filter((event) => event.startsWith("released:"))).toEqual([]);
     for (const [response, requestId] of [
       [first!, "one"],
       [second!, "two"],
