@@ -83,7 +83,8 @@ Then enter `examples/workers`, `examples/markdown`, or `app/docs` and run:
 vp run dev
 ```
 
-This invokes `alchemy dev --stage local`, which plans local resources and injects the Vite host.
+This invokes `alchemy dev`, which plans local resources and injects the Vite host.
+Stage selection follows Alchemy defaults: `ALCHEMY_STAGE` when configured, otherwise `dev_${USER}`; the application script does not force a shared stage.
 The applications listen on ports 1337, 1338, and 1339 respectively.
 Bare `vp dev` invokes Vite directly and bypasses this orchestration.
 Local state is generated under ignored `.alchemy/` directories using `localState()`.

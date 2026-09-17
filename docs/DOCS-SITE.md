@@ -14,7 +14,7 @@ vp run dev
 ```
 
 Open `http://localhost:1339` after Alchemy reports that the local Worker is ready.
-The script invokes `alchemy dev --stage local`; bare `vp dev` invokes Vite directly and bypasses Alchemy orchestration.
+The script invokes `alchemy dev`; bare `vp dev` invokes Vite directly and bypasses Alchemy orchestration.
 Alchemy configures workerd, bindings, and the Vite host without an application-level runtime plugin or Wrangler configuration.
 The pinned beta.77 requires a configured Cloudflare profile even when the resources run locally.
 If no profile exists, run `vp exec alchemy profile edit --profile default --add Cloudflare` interactively before starting the application.

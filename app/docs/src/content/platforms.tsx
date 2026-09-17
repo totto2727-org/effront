@@ -101,7 +101,7 @@ export default Cloudflare.Worker("App", {
           binding を用意するため、アプリ側の手動 host
           登録や環境変数による条件分岐は不要です。手書きの <code>wrangler.toml</code>
           も使用しません。各アプリのディレクトリで <code>vp run dev</code>
-          を実行すると、公式の <code>alchemy dev --stage local</code> が起動します。 beta.77
+          を実行すると、公式の <code>alchemy dev</code> が起動します。 beta.77
           ではローカル資源を使う場合も Cloudflare profile の初期設定が必要です。
         </p>
         <p>

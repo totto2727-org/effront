@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp exec alchemy dev --stage local"
+    "dev": "vp exec alchemy dev"
   },
   "dependencies": {
     "@effect/platform-browser": "catalog:",
