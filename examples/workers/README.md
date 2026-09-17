@@ -27,7 +27,7 @@ Its Fetch entry connects the supplied application definition to the Worker:
 
 ```ts
 import { createFetchHandler } from "@effront/core/workers";
-import application from "./src/entry.effront";
+import application from "./entry.effront";
 
 export default { fetch: createFetchHandler(application) };
 ```
