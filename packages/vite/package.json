@@ -27,13 +27,13 @@
     "tag": "latest"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "6.1.1",
+    "@vitejs/plugin-react": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
-    "oxc-transform-react": "^0.145.0"
+    "oxc-transform-react": "catalog:"
   },
   "devDependencies": {
     "@effront/core": "workspace:*",
-    "vitest": "4.1.11"
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@effront/core": "workspace:^",

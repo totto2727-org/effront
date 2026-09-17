@@ -1,70 +1,63 @@
-# Effront Alchemy adapter
+# @effront/alchemy
 
-This private experimental package connects Effront's native Effect HTTP application to `alchemy@2.0.0-beta.77` Cloudflare Workers.
-Its public entry points are `@effront/alchemy/cloudflare` and `@effront/alchemy/cloudflare/vite`.
+This private experimental adapter connects Effront applications to native Alchemy Cloudflare Workers so construction-time capabilities can provide request-local services for streamed pages and Server Functions.
 
-## Native construction
+## Usage
 
-Declare `Cloudflare.Worker` directly and bind resources in its construction Effect.
-Provide `Cloudflare.KV.ReadWriteNamespaceBinding` around construction when using `Cloudflare.KV.ReadWriteNamespace`.
-Pass a deferred application import to `makeApplicationHttpEffect` so Node-side infrastructure evaluation does not load the RSC application.
+Use the [native Alchemy example](../../examples/alchemy/src/entry.workers.ts) to serve `Hello from Alchemy KV` from a request-local service backed by an Alchemy KV binding, then invoke its greeting Server Function from the browser.
+Pair that Worker with its [stack](../../examples/alchemy/alchemy.run.ts), [Vite configuration](../../examples/alchemy/vite.config.ts), and [application](../../examples/alchemy/src/entry.effront.tsx) for the complete integration.
+Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@effront/vite` and `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`.
+The compiler owns the React, RSC, SSR, and browser graphs and accepts `application`; the Alchemy adapter accepts only `worker` and adds the native bridge and runtime compilation settings.
+Its `CacheClient` holds an Alchemy-native client, while only the resulting label and greeting reach the rendered page.
+This capability boundary still depends on Alchemy's client type and is not a provider-independent cache abstraction.
 
-```ts
-Effect.gen(function* () {
-  const kv = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
-  const fetch = yield* makeApplicationHttpEffect(() =>
-    import("./entry.effront").then((module) => module.default),
-  ).pipe(Effect.provideService(CacheClient, kv));
-  return { fetch: fetch.pipe(Effect.orDie) };
-}).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding));
+The official CLI path uses `alchemy dev` orchestration, which injects the host and runtime stack bindings.
+With the pinned beta, even local CLI planning requires a configured Cloudflare profile.
+If it reports `Provider 'Cloudflare' is not configured in profile 'default'`, configure that profile before retrying rather than supplying fake credentials.
+The separate local test host does not establish that Alchemy CLI planning is authentication-free.
+The pinned development host has a [reproduced runtime failure](docs/INTEGRATION.md#compatibility) after planning; a configured profile does not resolve it, and passing production build/preview checks do not establish working development.
+
+## Key features
+
+- Defer RSC application imports until a Worker request rather than loading them during infrastructure evaluation.
+- Capture capability references during native Worker construction and acquire application Layers per request.
+- Preserve typed application failures for handling at the HTTP boundary.
+- Add Alchemy's official native Worker bridge to the separately registered Effront compiler integration.
+- Support the pinned Worker and native KV runtime APIs with explicit compatibility limits.
+
+## Prerequisites
+
+- **Local adapter**: a prepared Effront checkout with installed dependencies and built package exports; this private prototype is not available from npm.
+- **Compatibility**: Alchemy and its Cloudflare runtime `2.0.0-beta.77`, with a coherent Effect `4.0.0-rc.112` family across the application and host.
+- **Toolchain**: VitePlus, matching core React peers, and a native Alchemy Worker configured for the `rsc` entry and `ssr` child environment.
+
+## Setup
+
+Install the matching host dependencies and public Effront integrations:
+
+```sh
+vp add alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.1 @effront/vite@0.1.1
 ```
 
-`applicationHttpEffect(loader, { context })` is the equivalent direct handler API when the constructed capability context is already available.
-Both helpers preserve typed application failures so the application can handle them at its HTTP boundary.
-Alchemy's native HTTP handler type accepts a narrower error union, so map remaining application failures before returning the handler from Worker construction.
+Link the prepared adapter into that VitePlus consumer application using its absolute local path:
 
-The Workers example exposes the native `ReadWriteNamespaceClient` through its `CacheClient` Effect service and performs KV operations in the request-owned `HostLive` layer.
-This service is a meaningful capability boundary, but its client type and effects still depend on Alchemy.
-Only the resulting `Host` label and greeting are provider-independent data; this example is not a purely host-neutral application.
+```sh
+vp link /absolute/path/to/effront/packages/alchemy
+```
 
-The helper captures references, not service lifetimes.
-Application layers are acquired per request, while Alchemy's official bridge owns request scope transfer to the response stream.
-Construction-time HTTP services, scope, layer memo map, Alchemy RuntimeContext, Worker self, generic Self, Cloudflare environment, raw Request, Worker environment, and execution context are omitted from captured context.
-Live request context overrides captured application capabilities.
-Other explicitly required services remain application dependencies, including named container application capabilities.
+Use the [core runtime peer requirements](../core/README.md#setup) for React and `@effect/platform-browser`.
+The adapter imports are `@effront/alchemy/cloudflare` and `@effront/alchemy/cloudflare/vite`.
 
-## Vite graphs
+## API
 
-Configure `effrontAlchemy()` and declare the native Worker with `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
-The plugin owns the generated RSC bridge, Effront's browser and SSR integration, and the runtime-phase compilation flag.
-SSR output defaults to a child directory inside the RSC Worker artifact so standalone workerd can load it.
-Explicit output directories are preserved and must still be packaged together by the host.
-Alchemy's injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` runtime bindings override the configured standalone identity.
+The [Alchemy API guide](docs/API.md) covers `ApplicationLoader`, `applicationHttpEffect`, `makeApplicationHttpEffect`, `effrontAlchemy`, their options, construction-capability capture, and consumer-selected Alchemy capabilities.
 
-The plugin does not start a host.
-Alchemy injects its own host during official CLI orchestration.
-From `examples/alchemy/`, `examples/markdown/`, or `app/docs/`, run `vp run dev`, which invokes `alchemy dev`.
-The native Worker props own their development ports: 1337, 1338, and 1339 respectively.
-Application Vite configs register only the Effront integration and applicable application plugins, never a manual `@alchemy.run/cloudflare-runtime` host or an injection-environment guard.
-The independent `tests/e2e-alchemy/` package owns the separate runtime host used for its standalone local acceptance.
+## Development
 
-### Pinned development projection
+See [AGENTS.md](AGENTS.md).
 
-The beta.77 Cloudflare barrels also export Node-only deployment providers, which cannot execute inside workerd's Vite module runner.
-During dependency optimization only, the adapter projects a narrow runtime export surface from the real installed Alchemy modules and applies Alchemy's official purity transform.
-It does not copy Alchemy implementations or change Node-side construction imports.
-The projection fails on an unsupported Alchemy version or missing internal module.
+## License
 
-Supported projected exports are `Worker`, Worker environment and execution context services, raw `Request`, `makeWorkerBridge`, `CloudflareEnvironment`, and the KV namespace plus read, write, and read-write native binding services.
-The Workers barrel additionally exposes `fromExecutionContext` and `deferredExecutionContext`.
-Deployment providers, HTTP-backed KV services, and other Cloudflare resources are outside this experimental development adapter's supported projection.
+[MIT](../../LICENSE).
 
-## Local verification boundary
-
-The test-owned standalone Vite/workerd host does not require cloud resource creation.
-The standard Alchemy CLI Cloudflare provider and its local sidecar still install profile/authentication layers, even with `localState()`.
-Standalone local acceptance is not proof that the standard Alchemy CLI is authentication-free.
-No package publication or cloud deployment is included in this experiment.
-
-The default Worker entry is `./src/entry.workers.ts`; use the optional `worker` setting only for a different layout.
-The bridge uses Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` bindings, with no application-side stage default or duplicate stack configuration.
+_This README was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._

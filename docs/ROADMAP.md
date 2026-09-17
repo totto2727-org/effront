@@ -107,7 +107,7 @@ Status: implemented after the user's 2026-09-12 request to enable page transitio
 - The outgoing and incoming pages retain their own policy; disabling the destination does not retroactively disable an enabled outgoing page's exit animation.
 
 See the consumer documentation at `/advanced/client-navigation#transition-scope` and `/api-reference/components#view-transition`.
-See [ViewTransition validation](VIEW-TRANSITIONS.md) for the observed acceptance results and limits.
+See [ViewTransition validation](../packages/core/docs/VIEW-TRANSITIONS.md) for the observed acceptance results and limits.
 
 References: [React ViewTransition](https://react.dev/reference/react/ViewTransition), [React addTransitionType](https://react.dev/reference/react/addTransitionType).
 

@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { effront } from "@effront/vite";
 import { normalizePath, resolveConfig } from "vite";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -14,7 +15,7 @@ describe("Alchemy Vite graph composition", () => {
       {
         configFile: false,
         root,
-        plugins: effrontAlchemy(),
+        plugins: [effront(), effrontAlchemy()],
       },
       "build",
     );
@@ -48,18 +49,60 @@ describe("Alchemy Vite graph composition", () => {
     expect(source).not.toContain("configuredStack");
     expect(source).toContain("Effront requires Alchemy runtime stack bindings");
     expect(source).not.toContain("async fetch");
-    expect(config.environments["rsc"]?.optimizeDeps.entries).toEqual(["./src/entry.workers.ts"]);
   });
 
-  it("keeps an explicit client application entry separate from the native worker", async () => {
+  it("leaves dependency optimization to the host and consumer", async () => {
     const config = await resolveConfig(
       {
         configFile: false,
         root,
-        plugins: effrontAlchemy({
-          worker: "./src/worker.ts",
-          application: "./client/application.ts",
-        }),
+        environments: {
+          rsc: { optimizeDeps: { noDiscovery: true, include: ["consumer-dependency"] } },
+          ssr: { optimizeDeps: { exclude: ["consumer-exclusion"] } },
+        },
+        plugins: [effront(), effrontAlchemy()],
+      },
+      "serve",
+    );
+    expect(config.environments["rsc"]?.optimizeDeps.noDiscovery).toBe(true);
+    expect(config.environments["rsc"]?.optimizeDeps.include).toContain("consumer-dependency");
+    expect(config.environments["ssr"]?.optimizeDeps.exclude).toContain("consumer-exclusion");
+    const bridge = config.plugins.find(
+      (plugin) => plugin.name === "effront:alchemy-cloudflare-bridge",
+    )!;
+    const hook = bridge.config!;
+    const configure = typeof hook === "function" ? hook : hook.handler;
+    const contribution = Reflect.apply(configure, {}, [{}]) as {
+      environments: Record<string, object>;
+    };
+    for (const environment of Object.values(contribution.environments)) {
+      expect(environment).not.toHaveProperty("optimizeDeps");
+    }
+  });
+
+  it("provides the bridge before the real Cloudflare host captures its entry", async () => {
+    const config = await resolveConfig(
+      {
+        configFile: fileURLToPath(
+          new URL("../../../../tests/e2e-alchemy/vite.config.ts", import.meta.url),
+        ),
+      },
+      "serve",
+    );
+    expect(JSON.stringify(config.environments["rsc"]?.build.rollupOptions.input)).toContain(
+      "virtual:effront/alchemy/cloudflare/entry",
+    );
+  });
+
+  it("keeps portable application configuration separate from the native worker", async () => {
+    const config = await resolveConfig(
+      {
+        configFile: false,
+        root,
+        plugins: [
+          effront({ application: "./client/application.ts" }),
+          effrontAlchemy({ worker: "./src/worker.ts" }),
+        ],
       },
       "build",
     );
@@ -67,7 +110,56 @@ describe("Alchemy Vite graph composition", () => {
       find: "@effront/core/application-entry",
       replacement: resolve(root, "client/application.ts"),
     });
+    const bridge = config.plugins.find(
+      (plugin) => plugin.name === "effront:alchemy-cloudflare-bridge",
+    )!;
+    const hook = bridge.load!;
+    const load = typeof hook === "function" ? hook : hook.handler;
+    expect(Reflect.apply(load, {}, ["\0virtual:effront/alchemy/cloudflare/entry"])).toContain(
+      JSON.stringify(normalizePath(resolve(root, "src/worker.ts"))),
+    );
   });
+
+  it("does not register the portable React or RSC integrations by itself", async () => {
+    const config = await resolveConfig(
+      { configFile: false, root, plugins: effrontAlchemy() },
+      "build",
+    );
+    expect(config.plugins.map((plugin) => plugin.name)).not.toContain("effront:application-entry");
+    expect(config.environments["rsc"]?.resolve.conditions).not.toContain("react-server");
+    expect(config.resolve.alias).not.toContainEqual(
+      expect.objectContaining({ find: "@effront/core/application-entry" }),
+    );
+  });
+
+  it.each(["portable-first", "adapter-first"] as const)(
+    "validates native bridge configuration in %s order",
+    async (order) => {
+      const portable = effront({ rsc: "./src/custom-fetch.ts" });
+      const adapter = effrontAlchemy();
+      const configuration = resolveConfig(
+        {
+          configFile: false,
+          root,
+          plugins: order === "portable-first" ? [portable, adapter] : [adapter, portable],
+        },
+        "build",
+      );
+      if (order === "adapter-first") {
+        await expect(configuration).rejects.toThrow("Register effront() before effrontAlchemy()");
+        return;
+      }
+      const config = await configuration;
+      expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+        index: "virtual:effront/alchemy/cloudflare/entry",
+      });
+      expect(
+        config.plugins.filter((plugin) => plugin.name === "effront:application-entry"),
+      ).toHaveLength(1);
+      expect(config.environments["rsc"]?.resolve.conditions).toContain("react-server");
+      expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "dist/rsc/ssr"));
+    },
+  );
 
   it("rejects an empty explicit worker entry", () => {
     expect(() => effrontAlchemy({ worker: "" })).toThrow(TypeError);
@@ -79,9 +171,7 @@ describe("Alchemy Vite graph composition", () => {
         configFile: false,
         root,
         environments: { rsc: { build: { outDir: "custom/worker" } } },
-        plugins: effrontAlchemy({
-          worker: "./src/worker.ts",
-        }),
+        plugins: [effront(), effrontAlchemy({ worker: "./src/worker.ts" })],
       },
       "build",
     );
@@ -94,9 +184,7 @@ describe("Alchemy Vite graph composition", () => {
         configFile: false,
         root,
         environments: { ssr: { build: { outDir: "custom/server-renderer" } } },
-        plugins: effrontAlchemy({
-          worker: "./src/worker.ts",
-        }),
+        plugins: [effront(), effrontAlchemy({ worker: "./src/worker.ts" })],
       },
       "build",
     );
