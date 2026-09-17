@@ -100,7 +100,10 @@ Shared React/Effect deduplication remains in place.
 The pinned beta.77 development host has a known limitation: its automatic dependency optimization can retain Node-only deployment exports from Alchemy's Cloudflare barrels and attempt to run workerd's binary resolver inside a Worker.
 Removing the adapter's explicit optimizer configuration does not disable the host's automatic optimization.
 A local check with optimization fully disabled also reached the Node-only workerd loader through ordinary module imports and failed.
-The credential-free Vite development path currently fails without export projection; the production build/preview browser suite passes and is a separate path.
+Both the credential-free Vite development host and the official `vp run dev` command in `examples/alchemy` fail without export projection.
+The official CLI completes local planning and starts dependency optimization, but `GET http://127.0.0.1:1337/` returns HTTP 500 with `resolve is not a function` in `workerd/lib/main.js`.
+This is a reproduced runtime failure, not an authentication blocker or an untested development path.
+The production build/preview browser suite passes and is a separate path.
 The adapter deliberately does not reinstate a capability allowlist to hide this host/dependency boundary.
 
 Effect rc.112 transfers streaming scopes before discarding HEAD bodies.
