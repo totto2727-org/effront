@@ -9,7 +9,13 @@ Each supplied property overrides its predecessor; transition-type maps are repla
 A page can disable its boundary with `viewTransition: false`, or re-enable an application-level opt-out with `enabled: true`.
 The outgoing and incoming pages keep their own settings.
 
-## Observed checks
+## Historical validation
+
+The following observations record the original transition implementation, before browser acceptance was separated into the current independent fixtures.
+They are not fresh test results or current sample-maintenance instructions.
+Use the [core testing guidance](../AGENTS.md#development-commands) for current validation.
+
+### Observed checks
 
 - Root `vp run check` passes formatting, lint, and types.
 - Root `vp run test` passes 308 tests in 41 files, including configuration defaults, partial overrides, per-request isolation, static and parameterized pages, SSR output, and reduced-motion selection.

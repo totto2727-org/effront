@@ -1,43 +1,85 @@
 # @effront/tailwind
 
-Optional Tailwind CSS integration for Effront, distributed separately from `@effront/vite`.
-It includes `@tailwindcss/vite` and Tailwind CSS 4.
+An optional Effront integration that generates and automatically loads Tailwind CSS, including initial server-rendered HTML, without requiring a stylesheet file or manual CSS imports.
 
-## Default stylesheet
+## Usage
+
+Style the [Alchemy example's navigation and content](../../examples/alchemy/src/components/shell.tsx) with Tailwind utilities through its [Vite configuration](../../examples/alchemy/vite.config.ts).
+With `effrontTailwind()`, `className="max-w-3xl"` renders a 768px maximum content width, and `px-4 py-2` renders 16px horizontal and 8px vertical padding.
+These styles apply before hydration, including when JavaScript is disabled.
+
+## Key features
+
+- Includes the official `@tailwindcss/vite` plugin and Tailwind CSS 4.
+- Generates a virtual stylesheet without creating `style.css` on disk.
+- Automatically loads either the generated stylesheet or an explicitly selected CSS file.
+- Supports Tailwind class updates and custom stylesheet HMR.
+- Works with native Alchemy hosting and the standalone Cloudflare adapter.
+
+## Prerequisites
+
+- **Integration**: An Effront application using its Vite RSC integration and rendered React client boundaries.
+- **CSS plugins**: Install any plugin referenced by a custom stylesheet, such as `@tailwindcss/typography`.
+- **Local acquisition**: VitePlus and access to a prepared local copy of this package with dependencies and built exports available.
+
+## Setup
+
+The initial npm release is not available yet.
+Link an already prepared local copy into your application:
+
+```bash
+vp link /absolute/path/to/effront/packages/tailwind
+```
+
+Import its integration in the Vite configuration:
 
 ```ts
 import { effrontTailwind } from "@effront/tailwind";
-import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
-import { defineConfig } from "vite-plus";
+```
 
+## API
+
+### `effrontTailwind(options?: EffrontTailwindOptions)`
+
+Returns Vite plugins that compile Tailwind and automatically load a shared stylesheet through rendered React client boundaries.
+Register it once alongside the application's Effront integration; do not also register `@tailwindcss/vite`.
+
+```ts
 export default defineConfig({
-  plugins: [effrontTailwind(), effrontAlchemy()],
+  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
 });
 ```
 
-No CSS file, CSS import in a component, or separate `@tailwindcss/vite` registration is required.
-The plugin provides a virtual stylesheet containing Tailwind's standard import; it never writes `style.css` to disk.
-Tailwind scans the Vite application root for utility classes.
-The same plugin works alongside `effront()` and the standalone Cloudflare adapter.
+The default virtual stylesheet imports Tailwind, which scans the Vite application root for utility classes.
+No stylesheet file or component CSS import is needed.
+This integration does not inject styles into unrelated HTML pages without rendered client boundaries.
 
-## Custom stylesheet
+### `EffrontTailwindOptions.stylesheet`
+
+An optional CSS path, resolved relative to the Vite root, replaces the generated stylesheet.
+An empty path is rejected.
+The selected stylesheet is loaded automatically; do not import it manually.
 
 ```ts
 effrontTailwind({ stylesheet: "./src/styles.css" });
 ```
 
-Paths resolve from the Vite root.
-The supplied stylesheet replaces the generated stylesheet and is loaded automatically; do not import it manually.
-Keep `@import "tailwindcss";` in this custom stylesheet, followed by any `@theme`, `@plugin`, or other CSS configuration.
-Install plugins referenced by `@plugin` in the application, for example `@tailwindcss/typography`.
-The Markdown example uses a custom stylesheet for Typography and the docs application retains its theme definitions.
+Keep Tailwind's import in the selected file, followed by custom theme or plugin configuration:
 
-## Loading and rendering
+```css
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+```
 
-The integration adds a shared CSS import to modules with a leading `"use client"` directive, preserving the directive prologue and original source lines.
-Effront's React client boundaries allow the RSC plugin to include the stylesheet in initial server-rendered HTML, not only after hydration.
-Repeated imports resolve to the same CSS module, with links deduplicated by the RSC/React CSS pipeline.
-Server-only modules and raw asset requests are left unchanged.
-Use this plugin with Effront's RSC integration; it does not inject styles into unrelated HTML pages without rendered client boundaries.
+The [Markdown stylesheet](../../examples/markdown/src/styles.css) demonstrates Typography configuration, while the [documentation stylesheet](../../app/docs/src/styles.css) adds theme definitions.
+Tailwind syntax and supported directives are documented in the [official Vite integration guide](https://tailwindcss.com/docs/installation/using-vite).
 
-Tailwind compilation, source scanning, and CSS updates are handled by the official [Tailwind Vite plugin](https://tailwindcss.com/docs/installation/using-vite).
+## Development
+
+See [AGENTS.md](AGENTS.md).
+
+## License
+
+[MIT License](LICENSE).
+
+_This README was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._

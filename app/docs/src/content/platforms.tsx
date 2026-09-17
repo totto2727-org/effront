@@ -97,12 +97,33 @@ export default Cloudflare.Worker("App", {
           "ts",
         )}
         <p>
-          Vite には <code>effrontAlchemy</code> を登録します。 Alchemy CLI が runtime plugin と
-          binding を用意するため、アプリ側の手動 host
+          Vite には <code>effront()</code> と <code>effrontAlchemy()</code> を別々に登録します。
+          React・RSC・SSR・browser のコンパイルとアプリのエントリ解決は <code>effront</code>{" "}
+          が担い、 Alchemy アダプターは native Worker bridge と runtime
+          のコンパイル設定を追加します。
+          <code>application</code> は <code>effront</code> だけに指定し、
+          <code>effrontAlchemy</code> のオプションは <code>worker</code> のみです。 Alchemy CLI が
+          runtime plugin と binding を用意するため、アプリ側の手動 host
           登録や環境変数による条件分岐は不要です。手書きの <code>wrangler.toml</code>
           も使用しません。各アプリのディレクトリで <code>vp run dev</code>
           を実行すると、公式の <code>alchemy dev</code> が起動します。 beta.77
           ではローカル資源を使う場合も Cloudflare profile の初期設定が必要です。
+        </p>
+        {code(
+          `import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite-plus";
+
+export default defineConfig({
+  plugins: [effront(), effrontAlchemy()],
+});`,
+          "ts",
+        )}
+        <p>
+          開発時は、Alchemy のデプロイ・ローカルホスト専用コードを除外する暫定互換処理を使用します。
+          利用できる機能を列挙する方式ではなく、それ以外の公開 export は保持します。
+          <code>optimizeDeps</code> の独自設定や、バージョン番号による起動拒否は行いません。
+          <code>effront()</code>、<code>effrontAlchemy()</code> の順に登録してください。
         </p>
         <p>
           動的 import は Vite の RSC アプリ定義を構築時に読み込まないための境界です。
@@ -112,8 +133,8 @@ export default Cloudflare.Worker("App", {
         </p>
         <p>
           完全な構成、KV の利用例、依存バージョンの制約はリポジトリの
-          <code>docs/ALCHEMY.md</code> と <code>examples/alchemy</code> にあります。
-          以下は引き続き利用できる公開済み standalone adapter の設定です。
+          <code>packages/alchemy/docs/INTEGRATION.md</code> と <code>examples/alchemy</code>{" "}
+          にあります。 以下は引き続き利用できる公開済み standalone adapter の設定です。
         </p>
         <h2 id="setup">公開版の standalone セットアップ</h2>
         <p>

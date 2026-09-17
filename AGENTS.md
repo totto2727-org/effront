@@ -2,148 +2,72 @@
 
 ## Repository structure
 
-- `packages/core/`: application and Fetch runtime (`@effront/core`).
-- `packages/alchemy/`: experimental provider-specific native Alchemy adapters, currently Cloudflare Workers.
-- `packages/tailwind/`: optional Tailwind Vite integration with generated or explicit automatically loaded CSS (`@effront/tailwind`).
-- `packages/vite/`: portable build integration (`@effront/vite`).
-- `packages/cloudflare/`: Cloudflare Vite integration (`@effront/cloudflare`) and separate runtime accessors (`@effront/cloudflare/workers`).
-- `packages/markdown/`: Vite glob collections and comark React SSR rendering (`@effront/markdown`).
-- `examples/markdown/`: file-relative Markdown routing and asset consumer.
-- `examples/alchemy/`: native Alchemy Worker consumer with construction-time KV capabilities and request-local application services.
-- `app/docs/`: SSR Guide, API reference, and implementation architecture site, using the framework itself with shadcn/ui and Tailwind Typography.
-- `tests/e2e-build/`: independent Playwright acceptance against its package-local fixture built for standalone Wrangler.
-- `tests/e2e-dev/`: independent Vite/workerd HMR acceptance using its own minimal package-local fixture.
-- `packages/gitignore-patterns/`: Gitignore generator and its colocated unit / package-owned Vitest CLI integration tests.
-- `docs/`: current architecture and verification documentation.
-- Removed upstream implementations and references remain available in Git history, not in the working tree.
-
-Workspace discovery uses `app/*`, `packages/*`, `tests/*`, and `examples/*`, without per-project entries.
+- `packages/`: core runtime, provider adapters, build integrations, Markdown support, and development tooling; consult a package's local `AGENTS.md` for its unique constraints.
+- `examples/`: native Alchemy and standalone Workers consumers; `basic -> alchemy` is an alias excluded from workspace discovery.
+- `app/docs/`: the framework's own SSR documentation application.
+- `tests/`: independent browser integration packages, distinct from package-owned unit and integration tests.
+- [Documentation index](docs/INDEX.md): cross-package architecture, testing, release policy, roadmap, and upstream provenance only; single-owner guides belong under that package's `docs/`.
 
 ## Development commands
 
 ### Execution rules
 
 - Work in this independent repository at `workspace/package/effront/`, not the parent virtual monorepo.
-- Push and create pull requests only in `totto2727-org/effront`, as authorized by the user. Never target the upstream repository. Do not publish packages or deploy without explicit authorization.
-- Use VitePlus for formatting, linting, checks, package management, and test entry points.
-- Formatting follows the parent workspace's default VitePlus baseline. Lint rules stay at VitePlus defaults. Do not restore the upstream custom Effect/Oxlint rules or add unrelated lint overrides.
-- Keep temporary evidence under this repository's ignored `tmp/` directory. Never commit `.dev.vars` or real secrets.
-- Local acceptance must not require Cloudflare authentication or remote services.
+- Push and open pull requests only in `totto2727-org/effront`, never upstream. Do not publish packages or deploy without explicit authorization.
+- Use VitePlus for package management, formatting, linting, checks, and test entry points; retain its default formatting and lint rules.
+- Keep temporary evidence under the owning repository or package's ignored `tmp/`; never commit credentials, `.dev.vars`, generated output, or temporary reports.
+- Automated local acceptance must not require Cloudflare authentication or remote services. Official Alchemy CLI development has a separate profile prerequisite documented by its adapter; do not force verification through an authentication boundary.
 
 ### Standard tasks
 
-From the repository root:
+Run from the repository root:
 
-- `vp install` installs the pinned pnpm workspace dependencies.
-- `vp run fix` applies formatting and safe lint fixes through `js:fix` (`vp check --fix`).
-- `vp run check` verifies formatting, default lint rules, and types through `js:check` (`vp check`).
-- `vp run test` runs retained unit/integration tests through `js:test` (`vp test run`).
-- Root aggregate tasks live in `vite.config.ts` `run.tasks`, not duplicated package scripts. Each public package owns its `pack` settings and task in its own `vite.config.ts`.
-- `vp run w:pack` runs package-local `pack` tasks recursively in workspace dependency order and generates JavaScript and declarations. Run it before checks and tests so consumers resolve the same `dist/` exports as npm users; CI declares that order explicitly.
-- In a public package, both `vp pack` and `vp run pack` generate `dist/`; they do not create npm tarballs. Build the workspace once before starting examples, the documentation site, or package-local browser E2E tests.
-- Do not add standalone formatter/linter tasks; use the fix/check workflow.
-- Run `vp run test` from `tests/e2e-build/` for built-artifact browser acceptance and from `tests/e2e-dev/` for development HMR acceptance.
-- Run `vp run test` from `packages/gitignore-patterns/` for that package's unit and real CLI integration tests.
+- `vp install` installs workspace dependencies; `vp install --frozen-lockfile` checks reproducible installation.
+- `vp run w:pack` builds package JavaScript and declarations recursively in workspace dependency order. Run it before checks, tests, or consumers that resolve `dist/` exports.
+- `vp run fix` applies formatting and safe lint fixes through `js:fix`.
+- `vp run check` runs formatting, lint, and types through `js:check`.
+- `vp run test` runs unit/integration tests through `js:test`; browser suites remain package-local.
+- Public packages own their `vite.config.ts` pack settings and `vp pack`/`vp run pack` tasks. These generate `dist/`, not npm tarballs.
 
-The `tests/e2e-alchemy/` package builds and serves the committed Workers example as a fixed native Alchemy integration consumer.
-It checks KV-backed HTML, HEAD, hydration, Server Functions and navigation without copying fixture source.
-
-For the documentation site, enter `app/docs/` and use `vp run dev`; see [site operations](docs/DOCS-SITE.md).
-The site has colocated content and rendering tests; framework browser acceptance uses the independent E2E fixtures rather than starting this site.
-
-To run an example, enter `examples/alchemy/` or `examples/markdown/` and use `vp run dev` to invoke Alchemy CLI.
-Alchemy owns the local host and resource bindings; application Vite configs must not register a second Cloudflare runtime plugin.
-The repository root intentionally provides no example dev, build, or local-hosting script.
-The root `vite.config.ts` owns repository formatting, linting, and test configuration.
-Both examples and the documentation site use `@effront/tailwind`, which includes `@tailwindcss/vite`.
-The Alchemy sample uses a virtual default stylesheet; Markdown and docs explicitly select their Typography/theme stylesheet.
-Application definitions live in `src/entry.effront.tsx`; `entry.workers.ts` documents the customizable host wiring and required integration boundaries.
-Keep feature-independent React UI under `components/`; colocate greeting services, capabilities, Server Functions, and their UI under `features/greeting/` in the Workers sample.
-Use `server.ts` for Server Functions, `client.tsx` for feature UI, and `services.ts` for the small shared capability/service definitions.
-Preserve separate client/server modules instead of mixing directives or introducing re-export barrels.
-Keep samples minimal: introductory routes, framework features, and Tailwind utility classes without custom CSS or advanced transition demos.
-Advanced transition behavior remains covered by the independent regression fixtures.
-The Tailwind integration loads CSS through client boundaries so initial SSR includes the stylesheet without hand-written imports.
-Independent CSS-processing regression fixtures remain separate from sample styling.
+Root aggregates live in `vite.config.ts` `run.tasks`, not duplicated package scripts.
+Do not add redundant formatter/linter or root application/E2E runner tasks.
+Choose checks appropriate to the change, using the detailed test boundaries below.
 
 ## Architecture
 
-### Runtime boundary
+### Runtime and build boundaries
 
-The user's 2026-09-11 requirements explicitly supersede the upstream Bun-only runtime, Rspack compilation, proprietary development server, Vercel packaging, and Bun verification commands.
-The core exposes a host-neutral native Effect HTTP boundary and a compatibility Web `Request` to `Response` wrapper.
-The experimental primary host is a native Alchemy Cloudflare Worker.
-Workers-specific `env` and execution context stay behind the host adapter and in request-local Effect context, never implicitly in Flight or HTML.
-The 2026-09-16 Alchemy experiment adds native Effect HTTP hosting and an explicit KV example.
-Alchemy-specific code belongs in `packages/alchemy/src/<provider>/`, never core.
-Node/Bun/AWS host adapters and hosted deployments remain outside the implemented scope.
-
-### Graphs and lifetimes
-
-- Keep browser, RSC, SSR, and tooling graphs explicit. Only the RSC graph resolves React's `react-server` condition.
-- RSC and SSR execute in workerd through Cloudflare child environments. Do not fall back to Node SSR in development.
-- Scope application services to the request, and preserve their lifetime through response body completion, error, and cancellation.
-- Preserve React's native RSC and Server Function protocols. Do not invent a replacement transport.
-- Migrated applications use Alchemy CLI for local development. The Alchemy browser test owns its independent local runtime configuration; standalone regression fixtures continue using generated Wrangler configs.
-- Native Worker construction defers RSC application imports. Capture capability references, not request lifetimes; acquire application layers per request and let the native host retain streaming scopes.
+- Core exposes host-neutral native Effect HTTP and a compatibility Web Fetch boundary. Provider-specific code belongs in adapters, never core.
+- Keep browser, RSC, SSR, and tooling graphs explicit. Only RSC resolves `react-server`; RSC and SSR execute in workerd for the current Cloudflare hosts, not Node fallback.
+- Scope application services to a request and retain their lifetimes through response completion, error, or cancellation. Never implicitly serialize host bindings or execution context into Flight/HTML.
+- Preserve native React RSC and Server Function protocols. Node/Bun/AWS/Vercel hosting remains deferred; do not restore the removed Bun/Rspack runtime or imply unverified support.
 
 ## Development tools
 
-- **VitePlus**: unified tooling with the Vite core and Vitest versions pinned in `pnpm-workspace.yaml`.
-- **Alchemy Cloudflare runtime**: native example/application hosting.
-- **Cloudflare Vite plugin / Wrangler**: retained standalone compatibility tests.
-- **Playwright**: browser validation of actual built and development applications.
-- **Effect**: consult the installed version's source and official documentation before changing Effect APIs.
-- Keep all retained source and tests covered by root checks. Do not hide legacy files behind tooling exclusions.
-
-## Test placement
-
-- Place unit tests next to their implementation as `<module>.test.ts` or `<module>.test.tsx`.
-- Reserve `tests/` for integration or black-box contracts spanning multiple modules or external tools.
-- Use standard Vitest discovery without a root `test.include` override.
-- Name Playwright browser suites `*.e2e.ts` and select them in the Playwright configuration so Vitest does not collect them.
-- Keep colocated tests in source checks, but exclude them from shipped packages and declaration builds.
-- See [test boundaries](docs/TESTING.md) for the retained integration suites.
+- **VitePlus**: pinned in `pnpm-workspace.yaml`; root config owns shared checks and standard Vitest discovery.
+- **Gitignore exclusions**: `vite.config.ts` uses the published [JSR package](https://jsr.io/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
+- **Effect**: consult installed-version source and official documentation before changing APIs.
+- **Playwright/workerd**: browser acceptance exercises actual host behavior; a successful build or mock does not establish runtime correctness.
 
 ## Package-specific rules
 
-- Keep dependency versions in the shared catalog only when at least two active manifests reference them.
-- Preserve explicit public package subpaths rather than exporting internal modules indiscriminately.
-- Use path-qualified Effect service identifiers. Keep shared runtime contracts implementation-free.
-- Use `Effect.fnUntraced` for framework internals to avoid tracing overhead. Use `Effect.fn` for application code, examples, consumer-facing documentation, and public authoring API tests so applications retain tracing. Keep `Effect.fn.Return` where a generator return type is needed; it is type-only.
-- Use typed failures for input and I/O errors, and plain `TypeError` only for violated wiring invariants.
-- Do not count a build, mock, or copied-source test as proof that the public Workers fetch path works. Test both `vp dev` and the Vite-independent Wrangler artifact.
+- Manage all external dependency versions in the shared catalog, including single consumers; use `catalog:` in manifests and overrides.
+- Keep internal references as `workspace:`. Public Vite peers stay `"*"` to accept the consumer's Vite, while development uses the catalog-pinned VitePlus alias.
+- Preserve explicit public subpaths, package-owned pack settings, and test-excluding publication entries. Shared release requirements and the experimental `0.1.1` version exception live in the release policy below.
+- Use path-qualified Effect service identifiers and implementation-free shared contracts. Use `Effect.fnUntraced` for internals, `Effect.fn` for application/examples/public API authoring, and typed failures for input/I/O; reserve `TypeError` for violated wiring invariants.
+- Colocate unit tests as `<module>.test.ts(x)`; reserve `tests/` for integration or black-box contracts. Keep all retained source/tests checked and standard Vitest discovery; Playwright uses `*.e2e.ts`.
+- Follow `share-artifact` for README/AGENTS: README is consumer-facing, Setup uses normal installation rather than `workspace:`/`catalog:`, and Development links to AGENTS. Package AGENTS supplements, not duplicates, root rules.
+- Keep user-facing guides host-neutral unless describing a specific platform. Describe only implemented guarantees; put deferred designs in the roadmap.
+
+## Task-specific documentation
+
+- When changing a package: its local `AGENTS.md` and `docs/` own package-specific implementation and verification details.
+- When changing samples: [example rules and commands](examples/AGENTS.md).
+- When authoring or operating the documentation application: [site rules](app/docs/AGENTS.md).
+- When choosing unit, integration, browser, or HMR checks: [test boundaries](docs/TESTING.md).
+- When changing package publication or versions: [release policy](docs/PUBLISHING.md).
+- When changing core/Vite/Cloudflare boundaries together: [Workers architecture](docs/WORKERS.md).
+- When proposing deferred hosts or features: [roadmap](docs/ROADMAP.md).
+- When incorporating upstream changes or license material: [upstream provenance](docs/UPSTREAM.md).
 
 _This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._
-
-## Public documentation audience
-
-- Write common Guide pages for npm package consumers, not contributors cloning this repository.
-- Describe Effront as a React meta-framework built on Web standards and Effect; distinguish extensible Fetch boundaries from tested adapter support.
-- Keep conceptual guides host-neutral. Getting started may choose a concrete host and must include a complete runnable configuration; put deeper host-specific details in Platforms.
-- Prefer affirmative instructions and working examples over statements of what something is not. Reserve negative warnings for necessary correctness, compatibility, or safety constraints.
-- Architecture > Implementation chapters explain the current packages/core implementation. Display the reviewed package version and commit, and keep embedded source excerpts synchronized with both that baseline and current files; validate them locally; retain upstream provenance separately in docs/UPSTREAM.md.
-- Deferred features belong in docs/ROADMAP.md and must not be presented as implemented APIs.
-
-Each of `tests/e2e-build/` and `tests/e2e-dev/` owns its fixture, Playwright configuration, Vite configuration, and `vp run test` entry point.
-Keep one fixed `webServer` command per package: build then standalone Wrangler for `e2e-build`, and Vite development for `e2e-dev`.
-The dev package covers HMR only. Do not introduce shared build/dev mode branches or start both hosts from either package.
-Run the fixed package-local fixture directly. Keep fixture copying, dynamic run directories, and concurrent-run isolation out of Playwright configuration; HMR tests restore their own file changes in `finally`.
-
-## npm publication
-
-- `.github/workflows/ci.yml` runs checks and tests for pull requests and `main` updates.
-- `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix, TypeScript setup, and `publish-npm` actions on `@main`. The publisher runs filtered `vp pm publish -r --provenance`.
-- Publication is serialized and skips versions already on npm. Bump each changed public package's version in its pull request and update workspace peer ranges through `vp install --lockfile-only` when needed. There is no automatic version bump or tag trigger.
-- Public packages are `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@effront/markdown`, and `@effront/tailwind`. `@effront/gitignore-patterns` is local development tooling and is not included in this release workflow.
-- Each public package owns a `vite.config.ts` and runs only `vp pack` for JavaScript and `.d.ts`. `vp run w:pack` delegates to `vp run -r pack`, which follows workspace dependencies without a hand-maintained list or package-specific `dependsOn`. Publication uses filtered `vp pm publish -r`, which resolves `workspace:` and `catalog:` protocols, creates the tarballs, and skips versions already on npm. No tarball staging or extraction is part of the build or publish workflow. Preserve RSC module directives, runtime entry points, CSS assets, and conditional exports.
-- The public packages use stable version `0.1.1` and use public access with the `latest` dist-tag through `publishConfig`.
-- Before merging the publishing workflow, the package owner must ensure all five npm packages exist and configure each Trusted Publisher for GitHub owner `totto2727-org`, repository `effront`, workflow `publish.yml`, and direct publication. No GitHub environment is configured. Initial publication, if required by npm, must be performed by the owner.
-- The workflow uses GitHub-hosted runners and job-scoped `id-token: write`, without long-lived npm tokens. Protect `main` and require the CI check before merging. Local checks and dry runs do not verify registry trust or package ownership.
-- Reference: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [pnpm publish](https://pnpm.io/cli/publish).
-
-## Experimental release boundary
-
-For this user-requested Alchemy prototype, keep the existing 0.1.1 versions and keep `@effront/alchemy` private.
-Do not publish the prototype or add it to the release filters without a separate release decision.
-See [Alchemy architecture and constraints](docs/ALCHEMY.md).

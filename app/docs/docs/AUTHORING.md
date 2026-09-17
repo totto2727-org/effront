@@ -18,7 +18,7 @@ The script invokes `alchemy dev`; bare `vp dev` invokes Vite directly and bypass
 Alchemy configures workerd, bindings, and the Vite host without an application-level runtime plugin or Wrangler configuration.
 The pinned beta.77 requires a configured Cloudflare profile even when the resources run locally.
 If no profile exists, run `vp exec alchemy profile edit --profile default --add Cloudflare` interactively before starting the application.
-See [Alchemy integration](ALCHEMY.md) for the configuration and verification boundary.
+See [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for the configuration and verification boundary.
 
 ## Rendering and authoring
 
@@ -47,7 +47,7 @@ Update the catalog count when deliberately changing the number of pages.
 - `/architecture/implementation/server-functions`: server-side action execution and UI refresh.
 
 The former upstream-comparison chapters and `/reading/*` routes have been removed.
-Upstream version, commit records, and license provenance remain in [UPSTREAM.md](UPSTREAM.md).
+Upstream version, commit records, and license provenance remain in [UPSTREAM.md](../../../docs/UPSTREAM.md).
 The site links upstream only through its [official website](https://effective-rsc.nikhilsnayak.dev/).
 
 Architecture excerpts are exact contiguous selections of the current `packages/core/src` files, embedded as authored strings.
@@ -63,7 +63,7 @@ Platforms owns host support and configuration.
 Advanced explains application-facing runtime guarantees and operational boundaries.
 API reference describes the current public package APIs and their type contracts.
 Architecture > Implementation explains the framework's current internals, without repeating generic React or Effect tutorials.
-Deferred features and alternative Node/Bun hosting designs remain in [ROADMAP.md](ROADMAP.md).
+Deferred features and alternative Node/Bun hosting designs remain in [ROADMAP.md](../../../docs/ROADMAP.md).
 Contributor workflow and framework-level acceptance requirements belong here and in AGENTS.md, not in the consumer testing guide.
 
 ## Validation
@@ -78,7 +78,7 @@ Verify the documentation application through `vp run dev` from `app/docs` when c
 
 The stream injector preserves HTML chunk boundaries and emits embedded Flight payloads after HTML EOF, before the closing document trailer.
 Cancellation during a pending Flight flush is covered by the core stream tests.
-The stylesheet is imported by the exported Client DocsShell so initial SSR includes its CSS dependency.
+The explicit Tailwind stylesheet is loaded by `@effront/tailwind` through the Client DocsShell boundary so initial SSR includes its CSS dependency.
 
 ## Sources and licenses
 
@@ -86,7 +86,7 @@ The stylesheet is imported by the exported Client DocsShell so initial SSR inclu
 - [Shiki](https://shiki.style/) and its [JavaScript regex engine](https://shiki.style/guide/regex-engines).
 - [Tailwind CSS Typography](https://github.com/tailwindlabs/tailwindcss-typography).
 - [VitePlus integrated checks](https://viteplus.dev/guide/check).
-- [Third-party notices](../app/docs/THIRD-PARTY-NOTICES.md).
+- [Third-party notices](../THIRD-PARTY-NOTICES.md).
 
 ## Core chapter replacement validation
 

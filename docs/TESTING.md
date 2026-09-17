@@ -6,23 +6,6 @@ Moving the tests preserves their assertions and changes only module-relative imp
 
 ## Retained integration suites
 
-The following suites remain under `packages/core/tests/` because they exercise interactions across module or tool boundaries:
-
-| Suite                                  | Integration contract                                                                      |
-| -------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `application/definition.test.tsx`      | Application definitions, route compilation, RSC rendering, and client route outlets.      |
-| `application/duplicate-module.test.ts` | Identity and interoperability across separately loaded framework module instances.        |
-| `client/client-router.test.ts`         | Navigation, Flight loading, React commit ordering, and response lifetimes.                |
-| `client/call-server.test.ts`           | Server Function invocation, Flight results, route refresh, and browser rendering.         |
-| `client/route-loader.test.ts`          | Route loading and cache ownership across FlightClient and navigation.                     |
-| `client/route-refresh.test.ts`         | Refresh/navigation coordination and streamed-response ownership through render commits.   |
-| `server/flight-html-stream.test.ts`    | HTML injection and client-side reconstruction of embedded Flight streams.                 |
-| `server/middleware.test.ts`            | Application middleware acquisition/release through the real Effect HTTP web handler.      |
-| `server/workers.test.tsx`              | Application layers, request-scoped bindings, and public Workers Fetch response lifetimes. |
-| `types/route-scaling.test.ts`          | Type instantiation scaling through an independently invoked TypeScript compiler.          |
-| `vite/cloudflare.test.ts`              | Real Vite configuration resolution integrating Effront and Cloudflare plugins.            |
-
-The package-owned `packages/gitignore-patterns/tests/cli.test.ts` validates the public generator under Vitest through actual Git and VitePlus CLI processes.
 The build E2E package validates its dedicated fixture application through the generated Wrangler artifact.
 The separate dev E2E package runs only HMR checks against Vite/workerd with its own minimal fixture.
 Playwright explicitly selects the `.e2e.ts` suite, keeping it outside Vitest's standard `.test`/`.spec` discovery without a Vitest include override.
@@ -31,10 +14,9 @@ Playwright explicitly selects the `.e2e.ts` suite, keeping it outside Vitest's s
 
 - `vp run test` uses default Vitest discovery for colocated unit tests and retained integration tests. Run `vp run w:pack` first; the check and test tasks do not build dependencies implicitly.
 - `vp run check` checks all source and retained tests, including the colocated files.
-- `(cd packages/gitignore-patterns && vp run test)` builds the generator and executes real formatter/linter acceptance.
 - `(cd tests/e2e-build && vp run test)` runs browser acceptance against the built fixture hosted by standalone Wrangler.
 - `(cd tests/e2e-dev && vp run test)` runs only development HMR checks against its minimal fixture.
-- Package archives must omit colocated tests; the public packages use test-excluding pack entries and dist-only publication, while the generator retains its declaration-build exclusions. Test discovery remains independent of publication.
+- Package archives must omit colocated tests; the public packages use test-excluding pack entries and dist-only publication. Test discovery remains independent of publication.
 
 ## Observed migration results (2026-09-12)
 
@@ -52,13 +34,9 @@ The dev fixture contains only what its HMR checks need.
 From either package, `vp run test` runs that package's browser suite; `vp check` checks configuration, fixture, and test source.
 The root package has no E2E runner script or Playwright dependency.
 
-`packages/gitignore-patterns` owns both `src/index.test.ts` and `tests/cli.test.ts`.
-The latter uses Vitest's parameterized tests, lifecycle hooks, and assertions while running real Git and VitePlus subprocesses.
-Both suites test the current source, avoiding stale compiled-code results, and all temporary fixtures are created and removed inside the owning package's ignored `tmp/`.
-Standard root Vitest discovery also includes these package tests, but never the `.e2e.ts` browser suites.
-
-After separation, root Vitest discovery passed 29 files and 176 tests, the generator package alone passed 2 files and 16 tests, and the independent E2E project passed all nine browser cases.
-Package-local test fixtures were removed by their lifecycle cleanup.
+The Gitignore pattern generator is an external JSR dependency rather than an Effront workspace package.
+Its implementation and CLI tests belong to the [upstream package](https://jsr.io/@totto2727/gitignore-patterns).
+Root `vp run check` exercises its integration with the real VitePlus configuration; do not copy the upstream suite into this repository.
 
 ## Standard E2E server lifecycle
 
@@ -79,7 +57,6 @@ Use `vp run fix`, `vp run check`, and `vp run test`, delegating to `js:fix`, `js
 The implementation commands are `vp check --fix`, `vp check`, and `vp test run`; format/lint configuration and rules are unchanged.
 These tasks disable caching so checks, fixes, and tests always examine the current filesystem, including newly created files.
 App-local dev/build and the independently owned E2E tasks remain package-local.
-The Gitignore CLI integration tests still invoke individual tool commands internally to prove each tool's exclusion behavior; those are test subjects, not user-facing workflow tasks.
 
 Validated the real task interface with a temporary source probe: `check` rejected malformed formatting, `fix` repaired it, `check` then passed, and a separate TypeScript mismatch caused `check` to fail before the restored source passed again.
 `vp run test` passed all 241 tests across 33 files.
@@ -95,4 +72,4 @@ Run `vp run w:pack` at the repository root, then `vp run test` from `tests/e2e-a
 This package does not deploy or run authenticated infrastructure reconciliation.
 Application configs leave host injection and infrastructure planning to the official Alchemy CLI.
 Core's colocated native HTTP tests still protect the independent native API's context precedence, memo-map isolation and stream finalization.
-The Alchemy adapter's colocated tests protect lazy construction, host-service exclusion, Vite graph composition, and the version-pinned development runtime projection without registering another host.
+The Alchemy adapter's colocated tests protect lazy construction, host-service exclusion, Vite graph composition, and temporary runtime projection and consumer optimizer setting preservation without registering another host.

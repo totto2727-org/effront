@@ -1,10 +1,10 @@
-# Markdown integration
+# Markdown implementation
 
 ## Purpose
 
 This document describes the repository's Markdown integration and its verification boundaries.
-For application setup and the public API, see [the package README](../packages/markdown/README.md).
-The runnable example is `examples/markdown`.
+For application setup, see [the package README](../README.md); for the public API, see [the guide](GUIDE.md).
+The runnable example is [`examples/markdown`](../../../examples/markdown).
 
 ## Responsibilities
 
@@ -30,7 +30,7 @@ Collection lookup preserves segment boundaries and decodes each URL segment once
 
 ## collection.ts の処理フロー
 
-対象: [`packages/markdown/src/collection.ts`](../packages/markdown/src/collection.ts)。
+対象: [`packages/markdown/src/collection.ts`](../src/collection.ts)。
 このファイルはViteが読み込んだ文字列・アセットURLを索引化します。
 Markdownの構文解析とReact描画は別の処理です。
 
@@ -130,14 +130,12 @@ The package provides no React renderer factory, forced component mappings, or cu
 
 Content and plugins are trusted authored inputs.
 This integration is not a sanitizer for untrusted submissions.
-Standard Comark document rendering does not automatically register its separate Math/Mermaid components; rich no-JavaScript rendering is tracked in [the roadmap](ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
+Standard Comark document rendering does not automatically register its separate Math/Mermaid components; rich no-JavaScript rendering is tracked in [the roadmap](../../../docs/ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
 
 ## Verification
 
-- Repository root: `vp run check` and `vp run test` validate formatting, lint, types, collection errors, URL mapping, parsing, and core contracts.
-- `tests/e2e-build`: `vp run test` builds a dedicated fixture and runs browser checks against standalone Wrangler.
-- `tests/e2e-dev`: `vp run test` starts Vite development and verifies Markdown edits, additions, and deletion using a minimal fixture.
-- Each E2E project has its own fixed Vite and Playwright configuration and only the fixture assets needed for its tests.
-- Each package runs its fixed fixture directly. The HMR test restores edited files and removes added files in `finally`; browser artifacts use the ignored standard `test-results/` directory.
+For package checks and unit coverage, use the [package development instructions](../AGENTS.md).
+For rendered Markdown and asset behavior, use [built-artifact acceptance](../../../docs/TESTING.md).
+For document edits, additions, and deletion, use [development HMR acceptance](../../../docs/TESTING.md).
 
-Typed metadata, relationships, loaders, and richer SSR support remain separate roadmap items.
+Typed metadata, relationships, loaders, and richer SSR support remain separate [roadmap items](../../../docs/ROADMAP.md).

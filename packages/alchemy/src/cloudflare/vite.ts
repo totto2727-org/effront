@@ -1,7 +1,5 @@
 import { join, resolve } from "node:path";
 
-import { effront } from "@effront/vite";
-import { purePlugin } from "alchemy/Bundle/PurePlugin";
 import { normalizePath, type Plugin, type PluginOption } from "vite";
 
 import { alchemyRuntimeProjection } from "./runtime-projection";
@@ -12,12 +10,10 @@ const resolvedEntryId = `\0${entryId}`;
 export type EffrontAlchemyOptions = {
   /** Module default-exporting the native Alchemy Worker construct. Relative to the Vite root. Defaults to `./src/entry.workers.ts`. */
   readonly worker?: string;
-  /** Browser-safe application definition entry used by Effront's client graph. */
-  readonly application?: string;
 };
 
 /**
- * Composes Effront's RSC, SSR, and browser graphs with Alchemy's native Worker bridge.
+ * Configures Alchemy's native Worker bridge alongside the separate `effront()` integration.
  *
  * Declare the Worker directly with `vite: { viteEnvironments: { entry: "rsc",
  * children: ["ssr"] } }`. Alchemy CLI supplies its host plugin. Application
@@ -28,51 +24,38 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
   const workerEntry = options.worker ?? "./src/entry.workers.ts";
   if (!workerEntry) throw new TypeError("Effront Alchemy requires a nonempty Worker module.");
   let worker = workerEntry;
-  const optimizeDeps = () => ({
-    rolldownOptions: {
-      transform: { define: { "globalThis.__ALCHEMY_RUNTIME__": "true" } },
-      plugins: [alchemyRuntimeProjection(), purePlugin()],
+  const ssrOutput: Plugin = {
+    name: "effront:alchemy-cloudflare-ssr-output",
+    config: {
+      // Set the host default before RSC supplies its generic SSR output directory.
+      order: "pre",
+      handler: (config) => {
+        if (config.environments?.["ssr"]?.build?.outDir !== undefined) return;
+        const rscOutput =
+          config.environments?.["rsc"]?.build?.outDir ??
+          join(config.build?.outDir ?? "dist", "rsc");
+        return { environments: { ssr: { build: { outDir: join(rscOutput, "ssr") } } } };
+      },
     },
-  });
+  };
   const bridge: Plugin = {
     name: "effront:alchemy-cloudflare-bridge",
-    config: (config) => ({
-      define: { "globalThis.__ALCHEMY_RUNTIME__": "true" },
-      resolve: { dedupe: ["react", "react-dom", "effect"] },
-      environments: {
-        rsc: {
-          optimizeDeps: {
-            ...optimizeDeps(),
-            entries: [workerEntry],
-            include: [
-              "alchemy/Cloudflare",
-              "alchemy/Cloudflare/Workers",
-              "alchemy/Cloudflare/KV",
-              "alchemy/RuntimeContext",
-              "alchemy/Self",
-              "effect",
-              "effect/unstable/http",
-              "alchemy > @effect/platform-node > @effect/platform-node-shared/NodePath",
-            ],
-          },
-        },
-        ssr: {
-          optimizeDeps: optimizeDeps(),
-          ...(config.environments?.["ssr"]?.build?.outDir === undefined
-            ? {
-                build: {
-                  outDir: join(
-                    config.environments?.["rsc"]?.build?.outDir ??
-                      join(config.build?.outDir ?? "dist", "rsc"),
-                    "ssr",
-                  ),
-                },
-              }
-            : {}),
-        },
-      },
-    }),
+    config: {
+      // The host must see the bridge before it captures its Worker entry.
+      handler: () => ({
+        define: { "globalThis.__ALCHEMY_RUNTIME__": "true" },
+        resolve: { dedupe: ["react", "react-dom", "effect"] },
+        environments: { rsc: { build: { rollupOptions: { input: { index: entryId } } } } },
+      }),
+    },
     configResolved: (config) => {
+      const portableIndex = config.plugins.findIndex((plugin) => plugin.name === "rsc");
+      const bridgeIndex = config.plugins.findIndex((plugin) => plugin.name === bridge.name);
+      if (portableIndex !== -1 && portableIndex > bridgeIndex) {
+        throw new TypeError(
+          "Register effront() before effrontAlchemy() so the host receives the native Worker bridge.",
+        );
+      }
       worker = normalizePath(resolve(config.root, workerEntry));
     },
     resolveId: (id) => (id === entryId ? resolvedEntryId : undefined),
@@ -89,11 +72,5 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
     },
   };
 
-  return [
-    bridge,
-    ...effront({
-      rsc: entryId,
-      ...(options.application === undefined ? {} : { application: options.application }),
-    }),
-  ];
+  return [ssrOutput, bridge, alchemyRuntimeProjection()];
 };

@@ -60,7 +60,12 @@ KV is eventually consistent; the fixed greeting demonstrates binding use, not a 
 
 Each migrated application has an `alchemy.run.ts`, a native Worker module, and a `vite.config.ts`.
 `alchemy.run.ts` defines the stack and providers, the Worker declares infrastructure/runtime requirements, and Vite configures the React compilation graphs.
+Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@effront/vite` and `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`.
+`effront()` owns the React, RSC, SSR, and browser compilation graphs and the application-entry alias; the Alchemy adapter does not register it implicitly.
+Set a custom application entry only through `effront({ application })`; the Alchemy options contain only `worker` for the native Worker module.
 The adapter uses Alchemy's official `makeWorkerBridge`, rather than passing a Promise-based Fetch function to the Worker.
+Register `effront()` before `effrontAlchemy()` so the adapter replaces the portable RSC input before the Cloudflare host captures its Worker entry.
+A separate pre-order hook colocates the default SSR output before the portable compiler supplies its generic default, while preserving explicit output directories.
 The native Worker declares `viteEnvironments: { entry: "rsc", children: ["ssr"] }`.
 Do not set a competing `vite.main`: the Effront adapter owns the RSC bridge entry.
 
@@ -73,38 +78,12 @@ Alchemy CLI injects the Cloudflare runtime host and the bindings registered duri
 Applications do not import the runtime plugin or inspect `ALCHEMY_CLOUDFLARE_VITE_INJECTED`.
 The independent browser test owns its local runtime plugin and KV simulator; that setup is not part of the application configuration.
 The native bridge uses only Alchemy's injected stack name and stage.
-Independent E2E hosts supply these runtime bindings explicitly; applications use `effrontAlchemy()` without duplicate stack configuration.
+Independent E2E hosts supply these runtime bindings explicitly; applications compose `effront()` with `effrontAlchemy()` without duplicate stack configuration.
 
-## Local commands
+## Local orchestration
 
-First run `vp install` and `vp run w:pack` from the repository root.
-Then enter `examples/alchemy`, `examples/markdown`, or `app/docs` and run:
-
-```sh
-vp run dev
-```
-
-This invokes `alchemy dev`, which plans local resources and injects the Vite host.
-Stage selection follows Alchemy defaults: `ALCHEMY_STAGE` when configured, otherwise `dev_${USER}`; the application script does not force a shared stage.
-The applications listen on ports 1337, 1338, and 1339 respectively.
-Bare `vp dev` invokes Vite directly and bypasses this orchestration.
-Local state is generated under ignored `.alchemy/` directories using `localState()`.
-Application configuration contains no manual Cloudflare runtime plugin and no Wrangler configuration.
-
-The pinned beta.77 requires a configured Cloudflare profile before planning, even for locally supported Worker and KV resources.
-If required, configure it interactively:
-
-```sh
-vp exec alchemy profile edit --profile default --add Cloudflare
-```
-
-Do not invent credentials or deploy cloud resources to bypass this prerequisite.
-The actual CLI was checked with an isolated empty profile and failed with `Provider 'Cloudflare' is not configured in profile 'default'`.
-A configured profile permits Alchemy to plan and reconcile locally supported resources without deploying them to the cloud.
-Profile configuration is distinct from cloud deployment and does not imply that browser-based login is the only authentication method.
-
-The fixed browser test owns a separate workerd runtime configuration so local acceptance does not require an account.
-That test exercises the committed application, but does not establish CLI planning or cloud deployment behavior by itself.
+See [Alchemy development commands](../AGENTS.md#development-commands) for package preparation, official CLI orchestration, profile requirements, test-host boundaries, and local ports.
+The fixed browser test exercises the committed application without an account, but does not establish CLI planning or cloud deployment behavior by itself.
 
 ## Alternative integration
 
@@ -119,13 +98,23 @@ This Alchemy version uses `Config.string`, which is incompatible with rc.113's r
 Keep one coherent Effect version across native bridge, core, platform layers and SQL dependencies.
 The local workerd compatibility date is `2026-09-01`, supported by the pinned runtime.
 
-In beta.77, the public Cloudflare barrels export both runtime APIs and Node-only deployment providers.
-Vite dependency optimization otherwise retains the deployment exports and tries to load workerd's Node binary resolver inside workerd itself.
-The adapter applies a version-checked, optimizer-only projection of the installed Worker/KV runtime exports and Alchemy's official pure-call plugin.
-It forwards to the real installed library modules, without copying Alchemy implementations or changing deployment-time construction imports.
-This experimental projection supports the Worker/request services and KV APIs used here, not every Cloudflare product.
-Upgrading Alchemy or adding another Cloudflare capability requires reviewing the projection and its tests.
-Explicit optimizer entries and shared React/Effect deduplication prevent mixed cold-start module identities.
+Applications select capabilities through Alchemy's public APIs rather than an Effront-defined feature allowlist.
+The adapter leaves `optimizeDeps` unchanged and does not reject an Alchemy package based on its version number.
+Shared React/Effect deduplication remains in place.
+
+A temporary server-development plugin removes known deployment-only and local-host export modules from Alchemy's Cloudflare entry points.
+It reads the installed module exports, subtracts infrastructure-provider factories identified by their actual provider-builder calls, and preserves the remaining exports, including non-KV namespaces, HTTP clients, `BrowserLocal`, and `WorkerConfigProvider`.
+The exclusion list is in `src/cloudflare/runtime-projection.ts`; local emulators, artifact builders and stack-state management are not available inside a Worker through these development entry points.
+Using a new Alchemy capability does not require adding it to an allowed-export list.
+
+Each requested entry is compiled once into an in-memory virtual runtime module using Vite's build API and Alchemy's purity transform, with Effect and host built-ins shared with the surrounding graph.
+This is a development compatibility compilation step, not an `optimizeDeps` setting; the host's own dependency discovery remains unchanged.
+Node-side deployment imports, browser modules and production builds are not projected.
+Missing actual modules or unsupported module structure still report errors rather than silently inventing exports.
+Preserving an API export is not proof of every cloud product's binding or remote behavior.
+
+Removing all compatibility handling caused HTTP 500 in official CLI development because Node-only workerd code was evaluated inside a Worker.
+The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions and HMR as removal checks.
 
 Effect rc.112 transfers streaming scopes before discarding HEAD bodies.
 Core normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.
@@ -134,10 +123,15 @@ Both behaviors have maintained regression tests and should be revisited together
 
 ## Verification
 
-- `vp run w:pack`, `vp run check`, and `vp run test` cover builds, public types, native capability/context propagation and lifetime regressions.
-- `cd tests/e2e-alchemy && vp run test` builds the committed KV example and checks real native workerd HTML, HEAD, browser hydration, Server Functions and navigation.
-- `tests/e2e-build` and `tests/e2e-dev` retain independent standalone Fetch/Workers and HMR coverage.
-- Official Alchemy CLI planning and reconciliation are verified separately from the credential-free test host; cloud deployment and remote permissions are not inferred from either local check.
+Use the [package development commands](../AGENTS.md#development-commands) for native helper tests and independent browser acceptance.
+The repository checks cover builds, public types, native capability/context propagation, and lifetime regressions.
+The native browser suite checks the committed KV example; standalone Fetch/Workers and HMR fixtures remain independent.
+Official Alchemy CLI planning and reconciliation require separate verification from the credential-free test host, and neither local check proves cloud deployment or remote permissions.
 
 References: [Alchemy](https://alchemy.run/), [state stores](https://alchemy.run/state-store), [native Worker bridge](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/WorkerBridge.ts), [Vite source integration](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/Sources/Vite.ts), and [KV binding construction](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/KV/NamespaceBinding.ts).
 The source links track upstream main; the compatibility findings above were checked against the installed beta.77 package.
+
+## Alternative host
+
+`examples/basic` is a relative symlink to `examples/alchemy`, the default native Alchemy sample.
+For Cloudflare Workers without Alchemy, use [`examples/workers`](../../../examples/workers/README.md), which uses a static application import, `createFetchHandler`, and Wrangler bindings.
