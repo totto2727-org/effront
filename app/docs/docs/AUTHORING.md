@@ -28,7 +28,8 @@ Local development keeps Alchemy's separate `dev_<user>` stage, but the docs stat
 Do not set `ALCHEMY_STAGE=production` when running `alchemy dev`.
 
 The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to `main` and can be dispatched manually from `main` only.
-It builds the required workspace packages before invoking `vp run deploy` from `app/docs`.
+It builds the required workspace packages before invoking `vp exec alchemy deploy --stage production --yes` from `app/docs` directly in the workflow.
+There is no package-level `deploy` script, to avoid accidental production deployment through a local task shortcut.
 Repository checks and tests belong to the separate CI workflow and are not repeated or awaited by the deployment workflow.
 Deployments are serialized without cancelling an in-progress reconciliation and do not run for pull requests or forks.
 Alchemy builds the application as part of deployment; there is no separate Wrangler deployment or local-state artifact to restore.
