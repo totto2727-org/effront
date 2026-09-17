@@ -18,18 +18,10 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
-        with:
-          install-args: --frozen-lockfile
       - name: Build public packages
-        run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          # vp run scans consumer configs even with --filter, before their dist imports exist.
-          # exec runs each package's pack in dependency order without that global task scan.
-          vp exec --filter "./packages/*" -- vp pack
+        uses: ./.github/actions/build-workspace
       - name: Publish public packages
         uses: totto2727-org/monorepo/.github/actions/publish-npm@main
         with:

@@ -1,0 +1,14 @@
+name: Build workspace packages
+description: Build workspace packages after Nix setup and dependency installation.
+
+runs:
+  using: composite
+  steps:
+    - name: Build workspace packages
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: |
+        eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+        # vp run scans consumer configs even with --filter, before their dist imports exist.
+        # exec runs each package's pack in dependency order without that global task scan.
+        vp exec --filter "./packages/*" -- vp pack
