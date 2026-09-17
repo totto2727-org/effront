@@ -1,5 +1,10 @@
+import type { ReadWriteNamespaceClient } from "alchemy/Cloudflare/KV";
 import { Context, Effect, Layer } from "effect";
-import { CacheClient } from "./cache";
+
+/** Capability constructed by Alchemy, consumed only by the request layer. */
+export class CacheClient extends Context.Service<CacheClient, ReadWriteNamespaceClient>()(
+  "examples/workers/CacheClient",
+) {}
 
 /** Application-facing data has no Cloudflare or Alchemy requirement. */
 export class Host extends Context.Service<

@@ -57,6 +57,7 @@ The root `vite.config.ts` owns repository formatting, linting, and test configur
 Both examples and the documentation site use Tailwind CSS through `@tailwindcss/vite`.
 Application definitions live in `src/entry.effront.tsx`; `entry.workers.ts` documents the customizable host wiring and required integration boundaries.
 Keep feature-independent React UI under `components/`; colocate greeting services, capabilities, Server Functions, and their UI under `features/greeting/` in the Workers sample.
+Use `server.ts` for Server Functions, `client.tsx` for feature UI, and `services.ts` for the small shared capability/service definitions.
 Preserve separate client/server modules instead of mixing directives or introducing re-export barrels.
 Keep samples minimal: introductory routes, framework features, and Tailwind utility classes without custom CSS or advanced transition demos.
 Advanced transition behavior remains covered by the independent regression fixtures.

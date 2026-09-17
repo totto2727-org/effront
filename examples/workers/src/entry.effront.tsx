@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { EFFRONT } from "./effront";
-import { GreetingAction } from "./features/greeting/greeting-action";
-import { Host, HostLive } from "./features/greeting/host";
+import { GreetingAction } from "./features/greeting/client";
+import { Host, HostLive } from "./features/greeting/services";
 import { Counter } from "./components/counter";
 import { Shell } from "./components/shell";
 

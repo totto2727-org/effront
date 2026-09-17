@@ -1,7 +1,7 @@
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
-import { CacheClient } from "./features/greeting/cache";
+import { CacheClient } from "./features/greeting/services";
 
 // Customize: declare the resources your application needs.
 export const Cache = Cloudflare.KV.Namespace("Cache");
