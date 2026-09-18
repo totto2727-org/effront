@@ -144,6 +144,21 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(390);
+  // A full-page screenshot during a native ViewTransition can capture its
+  // viewport-sized snapshot instead of the complete destination article.
+  await page.evaluate(() =>
+    Promise.all(
+      document.getAnimations().map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  );
+  const finalSection = page.getByRole("heading", { name: "見出し・コード・スタイル", exact: true });
+  await finalSection.scrollIntoViewIfNeeded();
+  await expect(finalSection).toBeInViewport();
+  await page.goto("/guide/markdown#authoring");
+  await expect(page).toHaveURL(/#authoring$/);
+  await expect(finalSection).toBeInViewport();
+  await expect(page.locator("article")).toContainText("完全な Math / Mermaid SSR");
+  await page.screenshot({ path: "tmp/docs-mobile-authoring.png" });
   await page.screenshot({ path: "tmp/docs-mobile.png", fullPage: true });
 });
 
