@@ -1,15 +1,11 @@
-import { guidePages } from "./guides";
-import { platformPages } from "./platforms";
+import { Effect } from "effect";
+import type { RenderableDocPage } from "./types";
+import { markdownPages } from "./markdown";
 import { corePages } from "./core";
-import { advancedPages } from "./advanced";
-import { apiReferencePages } from "./api-reference";
 
-export const pages = [
-  ...guidePages,
-  ...platformPages,
-  ...advancedPages,
-  ...apiReferencePages,
-  ...corePages,
+export const pages: readonly RenderableDocPage[] = [
+  ...markdownPages,
+  ...corePages.map(({ content, ...page }) => ({ ...page, content: () => Effect.sync(content) })),
 ];
 export const navigation = pages.map(({ slug, title, section, group }) => ({
   slug,

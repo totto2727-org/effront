@@ -1,24 +1,19 @@
 # SSR documentation site
 
-`app/docs` is a private workspace application that uses the public Effront API to render its own documentation.
-It combines nine Guide pages, two Platforms pages, five Advanced pages, seven API reference pages, and seven Architecture implementation chapters in one shadcn/ui sidebar.
-The content is Japanese, with source identifiers and commands preserved in English.
+`app/docs` is the private Japanese documentation application, rendered on each request by Effront and hosted by Alchemy's native Cloudflare integration.
+Its consumer navigation is Getting started, Platforms, Guides, API reference, and アーキテクチャ.
+Guides nests application-facing runtime contracts under 実行時の契約; Architecture nests the seven source-based chapters under 実装解説.
+Existing URLs, including `/advanced/*`, remain stable independently of their sidebar section.
 
 ## Run locally
 
-Install dependencies with `vp install` and build packages with `vp exec --filter "./packages/*" -- vp pack` at the repository root, then enter the site application:
-
-```sh
-cd app/docs
-vp run dev
-```
-
-Open `http://localhost:1339` after Alchemy reports that the local Worker is ready.
-The script invokes `alchemy dev`; bare `vp dev` invokes Vite directly and bypasses Alchemy orchestration.
-Alchemy configures workerd, bindings, and the Vite host without an application-level runtime plugin or Wrangler configuration.
-The pinned beta.77 requires a configured Cloudflare profile even when the resources run locally.
-If no profile exists, run `vp exec alchemy profile edit --profile default --add Cloudflare` interactively before starting the application.
-See [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for the configuration and verification boundary.
+Run `vp install` and `vp exec --filter "./packages/*" -- vp pack` from the repository root before starting the application.
+From `app/docs`, `vp run dev` invokes `alchemy dev` and serves `http://localhost:1339` after the local Worker is ready.
+Bare `vp dev` bypasses Alchemy orchestration and is not the application's development entry.
+The pinned Alchemy beta.77 requires a configured Cloudflare profile even for local CLI planning.
+Do not force automated acceptance through this user-controlled prerequisite or supply fake credentials.
+See [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for official CLI setup and compatibility boundaries.
+The separate built-site acceptance command below requires no Cloudflare authentication and performs no deployment.
 
 ## Production deployment and state
 
@@ -51,131 +46,104 @@ No cloud deployment or credential/permission validation is implied by local chec
 References: [Alchemy state stores](https://alchemy.run/state-store), [Cloudflare state implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/StateStore/State.ts), and [Cloudflare authentication implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Auth/AuthProvider.ts).
 API and CI behavior were checked against the installed `alchemy@2.0.0-beta.77`; the source URLs track upstream main.
 
-## Rendering and authoring
+## Content ownership and rendering
 
-Pages are JSX functions in `src/content/guides.tsx`, `guide-topics.tsx`, `platforms.tsx`, `advanced.tsx`, `api-reference.tsx`, `core-model.tsx`, and `core-runtime.tsx`.
-Effront renders them on each request; no SSG or Markdown parser is involved.
-Tailwind Typography styles articles, and the document starts in dark mode regardless of system preference.
-Shiki tokenizes code on the server with locally imported grammars and a JavaScript regex engine.
-The client receives rendered content and navigation metadata rather than the content registry or highlighter implementation.
+- `src/content/articles/` contains consumer articles in Markdown: onboarding, platforms, feature guides, runtime contracts, and public API reference.
+- `src/content/catalog.ts` owns typed navigation metadata, descriptions, explicit public routes, source-document lookup paths, and table-of-contents entries.
+- `src/content/markdown.tsx` uses Vite raw globs, `createMarkdownCollection`, `parseMarkdown`, and Comark's standard `MarkdownDocument` renderer in the server graph.
+- `src/content/core-model.tsx` and `core-runtime.tsx` retain the authored architecture explanations and exact source selections as JSX.
+- `src/entry.effront.tsx` owns explicit routes and the persistent shared RootLayout.
 
-The shared RootLayout owns DocsShell, including the sidebar, header, and table of contents; each Page owns its document metadata and article.
-The server supplies the destination's navigation metadata as Layout props, while React preserves the shared client shell and its sidebar scroll container during client navigation between routes.
-Sidebar search and scroll state belong to that persistent shell, and only the Page article participates in the framework's named page transition.
-Document scrolling and heading anchors remain native navigation behavior rather than a global scroll lock.
+Markdown is appropriate for the prose and code examples, but source excerpts retain their exact-string and historical-baseline contract in JSX.
+There is no custom Markdown parser, runtime filesystem loader, Git execution, or network content loading in the application.
+Vite loads Markdown at build/development time; parsing occurs in the Page Effect, with `MarkdownError` retained in the error channel.
+Only rendered content and navigation metadata cross the client boundary, not the collection or highlighter.
 
-To add a page, define its stable heading IDs and register its explicit route in `src/entry.effront.tsx`.
-Update the catalog count when deliberately changing the number of pages.
+The document starts in dark mode regardless of system preference.
+Tailwind Typography styles articles; Comark's standard Shiki output supplies server-rendered code tokens for Markdown.
+A standard `ProsePre` component mapping adds keyboard focus and existing code-block attributes without replacing Comark or reinterpreting its AST.
+The `.docs-markdown` dark-theme CSS applies only to Markdown tokens.
+Architecture excerpts retain the site's exact-text `CodeBlock` and its locally imported Shiki grammars.
+Neither renderer currently provides a copy button; code remains selectable text.
 
-## Architecture implementation chapters
+The RootLayout owns DocsShell, including sidebar, search, header, table of contents, and sidebar scrolling.
+Only the Page article participates in the named page transition.
+Do not put a route key on the shell or move shell state into the Page when changing article rendering.
+Document scrolling and heading links remain native navigation behavior.
+The deployment stylesheet remains explicitly selected through `effrontTailwind`, without a manual CSS import or extra runtime plugin.
 
-- `/architecture/implementation/overview`: the core package's responsibilities and overall request flow.
-- `/architecture/implementation/application`: application identity, definitions, services, and middleware views.
-- `/architecture/implementation/routing`: route composition, compilation, and page parameter handling.
-- `/architecture/implementation/request`: Fetch context, application Layer acquisition, and response resource lifetime.
-- `/architecture/implementation/rendering`: Flight, SSR, HTML streaming, and payload embedding.
-- `/architecture/implementation/navigation`: browser navigation, publication, and retained render resources.
-- `/architecture/implementation/server-functions`: server-side action execution and UI refresh.
+## Author or change an article
 
-The former upstream-comparison chapters and `/reading/*` routes have been removed.
-Upstream version, commit records, and license provenance remain in [UPSTREAM.md](../../../docs/UPSTREAM.md).
-The site links upstream only through its [official website](https://effective-rsc.nikhilsnayak.dev/).
+1. Add a trusted authored `.md` file below `src/content/articles/`.
+2. Add its metadata to `articleCatalog`, choosing the consumer section and optional group.
+3. Give each heading a stable explicit Comark ID, such as `## セットアップ {#setup}`, and list its ID/title in `headings`.
+4. Add the explicit route in `src/entry.effront.tsx`; registration preserves compile-time collision checks and native unknown-route 404 behavior.
+5. Run the content tests and built-site browser acceptance below.
 
-Architecture excerpts are exact contiguous selections of the current `packages/core/src` files, embedded as authored strings.
-`core.test.tsx` compares every excerpt with the current implementation during testing.
-The colocated rendering tests cover server-highlighted excerpt output.
-Rendering performs no filesystem reads, Git execution, or GitHub requests to obtain code.
-When implementation changes, update the relevant explanation and excerpt together.
+The collection strips only `.md`; it does not turn `index.md` into `/`.
+The catalog deliberately maps public `/` to document `/index`, without exposing `/index` as another route.
+Use site-absolute `/` when linking to the home page, not `./index.md`, which would resolve to the intentionally unregistered `/index`.
+Other relative `.md` links are resolved by the existing collection, with fragments preserved.
+Keep published URLs and heading IDs when moving sidebar groups; if a URL must change, supply an intentional compatibility route or redirect rather than silently dropping it.
+Tests check every Markdown file has catalog metadata, every declared heading exists, and all rendered internal article links resolve.
 
-## Audience
+Use fenced code blocks with an explicit language.
+Keep articles Effront-specific and link general React, Effect, Tailwind, and Comark concepts to their official documentation.
+Markdown allows HTML, attributes, and components and is not a sanitizer for untrusted submissions.
+Do not imply complete Math or Mermaid React SSR: the standard Comark renderer does not automatically register those components.
+See [Markdown collection guide](../../../packages/markdown/docs/GUIDE.md) for reference resolution and renderer limitations.
 
-Guide teaches application usage, with a complete Cloudflare-based getting-started example.
-Platforms owns host support and configuration.
-Advanced explains application-facing runtime guarantees and operational boundaries.
-API reference describes the current public package APIs and their type contracts.
-Architecture > Implementation explains the framework's current internals, without repeating generic React or Effect tutorials.
-Native Node/Bun HTTP hosting is documented in [`@effront/server`](../../../packages/server/README.md); this documentation application still uses Alchemy's Cloudflare host.
-Deferred features and other hosting designs remain in [ROADMAP.md](../../../docs/ROADMAP.md).
-Contributor workflow and framework-level acceptance requirements belong here and in AGENTS.md, not in the consumer testing guide.
+## Consumer compatibility and public packages
+
+The API index documents the matching Effront manifest version and compatible React, Effect, Alchemy, and Comark versions.
+The current `0.1.3` entries were checked with read-only `vp view @effront/<package>@0.1.3 version --json` for all seven public packages on 2026-09-18.
+A manifest alone does not prove registry publication; check the registry before changing publication claims.
+The content test compares the index with every public manifest export and version, excluding internal build-only entries.
+Do not bump library versions for private documentation-only changes.
+
+Platforms owns standalone Workers, Alchemy, and native Node.js/Bun setup.
+Bun production and Vite's Node-compatible dev/preview middleware are separate execution paths.
+Vercel and AWS adapters remain deferred rather than advertised as supported.
+The consumer testing article describes application behavior, not contributor commands or framework test implementation.
+
+## Architecture source baseline
+
+The architecture source of truth is `src/content/architecture-baseline.ts`: core version `0.1.1`, commit `8744ecb236cb4c815c3a0c208e02200f4eeeb3f8`, reviewed `2026-09-16`.
+This describes the implementation selections, not the latest documentation commit or current npm release.
+`core.test.tsx` compares every exact source selection against both the current source and that historical Git object, and checks the baseline package version.
+The browser tests verify the rendered excerpt text and displayed baseline metadata as well.
+Update explanations, source selections, and baseline metadata together only after deliberately reviewing an implementation change.
+The Markdown migration does not update or reinterpret this historical contract.
 
 ## Validation
 
-Run `vp run check` and `vp run test` at the repository root.
-The site's colocated tests validate its content registry, rendered headings, source excerpts, and server-side highlighting.
-Run `vp run test` from `tests/e2e-build` for framework browser acceptance using its dedicated fixture on the generated Wrangler artifact.
-Run `vp run test` from `tests/e2e-dev` for HMR-only acceptance using its separate minimal fixture.
-These packages do not start or modify the documentation site.
-Each owns one Vite configuration, one Playwright configuration, one fixed webServer command, a fixed fixture and test port, and standard Playwright failure traces.
-Verify the documentation application through `vp run dev` from `app/docs` when changing site integration; this is separate from the fixed framework E2E configurations.
+From the repository root, run `vp run check` and `vp run test` after the initial package bootstrap.
+Site-owned unit tests cover the catalog, all article headings and internal links, public package coverage, Markdown rendering, persistent shell metadata, source baselines, and exact highlighted code text.
+If ignored `tmp/` contains another checkout, run the full current-repository suite with `vp test run --exclude '**/tmp/**'`; the default test discovery otherwise includes that checkout.
+For a focused site run, use `vp test run app/docs/src --exclude '**/tmp/**'`.
+The exclusion avoids discovering unrelated old worktrees under ignored `tmp/` without changing or deleting them.
 
-The stream injector preserves HTML chunk boundaries and emits embedded Flight payloads after HTML EOF, before the closing document trailer.
-Cancellation during a pending Flight flush is covered by the core stream tests.
-The explicit Tailwind stylesheet is loaded by `@effront/tailwind` through the Client DocsShell boundary so initial SSR includes its CSS dependency.
+From `app/docs`, run:
+
+```sh
+vp run test:browser
+```
+
+`tests/vite.config.ts` reuses the production application config, Worker entry, styles, routes, and content, adding only the local runtime host pattern already used by `tests/e2e-alchemy`.
+It never evaluates `alchemy.run.ts`, invokes Alchemy planning, accesses cloud state, or deploys.
+Playwright builds the actual site and runs the built Worker through preview on fixed port `4394`, with no server reuse.
+This is built-site runtime evidence, not evidence about official CLI authentication or remote deployment.
+Failure traces and screenshots stay under ignored `app/docs/tmp/`.
+
+Browser acceptance covers all routes without JavaScript, metadata, stable headings, architecture excerpts, initial CSS, dark highlighting, keyboard-reachable code, mobile navigation/overflow, unknown-route HTML/Flight 404 responses, and persistent sidebar DOM/search/scroll through sidebar, article, previous/next and Back/Forward navigation.
+Framework-only build and HMR suites retain their independent fixtures and commands described in [test boundaries](../../../docs/TESTING.md).
+Do not substitute a successful build, source inspection, or mocked parser for the real site acceptance workflow.
 
 ## Sources and licenses
 
+- [Comark React rendering](https://comark.dev/rendering/react).
+- [Vite glob imports](https://vite.dev/guide/features.html#glob-import).
 - [shadcn/ui Sidebar](https://ui.shadcn.com/docs/components/sidebar).
 - [Shiki](https://shiki.style/) and its [JavaScript regex engine](https://shiki.style/guide/regex-engines).
 - [Tailwind CSS Typography](https://github.com/tailwindlabs/tailwindcss-typography).
-- [VitePlus integrated checks](https://viteplus.dev/guide/check).
 - [Third-party notices](../THIRD-PARTY-NOTICES.md).
-
-## Core chapter replacement validation
-
-On 2026-09-12, `vp run check` passed formatting, lint, and type checks, and `vp run test` passed 273 tests across 36 files.
-The documentation acceptance suite passed all 10 cases against separate Vite development and built Wrangler hosts.
-The checks covered all 15 pages without JavaScript, all 14 current-source excerpts, navigation and heading links, dark typography, mobile sidebar behavior, and HTML/Flight 404 responses for all five removed Code Reading routes.
-The public sidebar links upstream only through its official website.
-
-## Upstream Guide and Advanced coverage
-
-The official Guide and Advanced indexes were reviewed on 2026-09-12.
-The site adapts their supported topics to current Effront rather than preserving upstream host-specific guarantees.
-
-| Upstream chapter                      | Effront location                                  | Treatment and reason                                                                                                                                                 |
-| ------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Server Functions                      | `/guide/server-functions`                         | Dedicated guide for typed inputs, execution, and forms, separated from Component usage.                                                                              |
-| Services                              | `/guide/effect`                                   | Retained, including required Layer provision and concrete missing-service type diagnostics.                                                                          |
-| Routing                               | `/guide/routes`                                   | Retained with the current Page, Layout, parameters, and route composition contracts.                                                                                 |
-| Middleware                            | `/guide/middleware`                               | Dedicated guide for derived application views and the distinction from native HTTP middleware.                                                                       |
-| Userland HTTP                         | `/guide/http`                                     | Added native Effect HTTP routes through the application Layer; host-served assets remain outside this handler.                                                       |
-| Deploying to Vercel                   | `/platforms`                                      | No deployment tutorial: the upstream Vercel adapter was removed and a current adapter is not provided. Platform support is tracked separately from framework guides. |
-| Request runtime and lifetimes         | `/advanced/request-runtime-and-lifetimes`         | Retained with request-local application Layer construction and streaming lifetime, replacing upstream server-global runtime assumptions.                             |
-| Client navigation                     | `/advanced/client-navigation`                     | Retained for current native Navigation API capabilities, fallback, cancellation, and cache behavior.                                                                 |
-| Server Function execution and refresh | `/advanced/server-function-execution-and-refresh` | Retained for result ordering, refresh, and concurrent navigation guarantees.                                                                                         |
-| Production startup                    | `/advanced/production-startup`                    | Rewritten for Vite build and host-adapter ownership. Specific host commands live in Platforms.                                                                       |
-
-The removed Bun `ersc build` / `ersc start`, `start({ root, hostname, port })`, `.ersc` deployment layout, and `BuildHook` adapter API are not current Effront APIs.
-Production startup therefore teaches the replacement build/host boundary rather than documenting those commands as usable.
-The old development warning panel is not part of the retained browser runtime, so its UI is not described as an available feature.
-Generic React and Effect concepts are linked to their official documentation, as requested, while Effront-specific Component usage and consumer testing remain useful additional guides.
-Page ViewTransition defaults and overrides are documented in Advanced and API reference.
-At the 2026-09-12 review, Node/Bun/Vercel hosting remained deferred.
-The subsequent native Node/Bun integration is documented in [`@effront/server`](../../../packages/server/README.md), while Vercel remains deferred in [ROADMAP.md](../../../docs/ROADMAP.md).
-
-## Architecture baseline and hierarchy
-
-The sidebar and breadcrumb hierarchy is `アーキテクチャ > 実装解説 > chapter`, with a nested semantic list rather than another peer section.
-Each implementation chapter displays `effront@0.1.4-workers.0`, baseline commit `68f3dfc809ec11a881b9b857648a3541abd78503`, and review date `2026-09-12`.
-These values describe the implementation being explained, not the latest documentation commit or an assertion of npm publication.
-The authored baseline is in `src/content/architecture-baseline.ts`.
-Tests compare its package version and every implementation excerpt against that exact local Git object, in addition to comparing current source files.
-Re-review the text and update the baseline deliberately when core implementation changes.
-
-## Guide, Advanced, API reference, and hierarchy validation
-
-The expanded site has 30 pages: nine Guide pages, two Platforms pages, five Advanced pages, seven API reference pages, and seven nested Architecture implementation chapters.
-On 2026-09-12, the full suite passed 297 tests in 38 files, including four public Fetch integration cases for service-backed userland HTTP, request isolation, JSON status, resource release, and scoped/global middleware behavior.
-An unmatched route returns 404 without the example's success-only `Effect.map` header; the Guide states this explicitly.
-All 10 documentation browser cases passed against Vite development and independently hosted Wrangler builds, including no-JavaScript traversal of all pages, current-source and baseline metadata checks, nested semantic navigation, and mobile checks for new API and Advanced pages.
-A long API identifier initially overflowed the desktop table of contents; applying word wrapping to TOC links resolved the observed overflow and the rerun passed.
-The Guide author checked 18 extracted source files and the API reference author checked 17 CodeBlock examples against the installed public package types with the imports and surrounding definitions stated in the text.
-Those extracted fixtures are temporary and are not substitutes for the real Fetch and browser acceptance checks above.
-
-## Shared sidebar validation
-
-On 2026-09-12, the shared Layout change passed `vp run check` and all 308 Vitest tests.
-Real Vite and standalone Wrangler browser checks retain the sidebar, overflow container, and input DOM identities, the search query, and nonzero sidebar scroll through sidebar links, article links, previous/next links, and Back/Forward.
-The history check changes the sidebar position on the destination before traversing, verifying that it retains the latest position rather than restoring an older entry's sidebar offset.
-The active link, title, breadcrumb, and table of contents update for the destination, while document scrolling and heading anchors continue to work.
-Native animation samples and observed capture styles confirm that `effront-page` captures the article and excludes the sidebar.

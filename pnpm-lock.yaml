@@ -243,6 +243,9 @@ importers:
 
   app/docs:
     dependencies:
+      '@comark/react':
+        specifier: 'catalog:'
+        version: 0.6.2(beautiful-mermaid@1.1.3)(katex@0.17.0)(react@19.3.0-canary-1d34f91d-20260909)(shiki@4.4.3)
       '@effect/platform-browser':
         specifier: 4.0.0-rc.112
         version: 4.0.0-rc.112(effect@4.0.0-rc.112)
@@ -252,6 +255,9 @@ importers:
       '@effront/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@effront/markdown':
+        specifier: workspace:*
+        version: link:../../packages/markdown
       alchemy:
         specifier: 'catalog:'
         version: 2.0.0-beta.77(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@types/react@19.3.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(typescript@7.0.2)(vitest@4.1.11)(ws@8.21.3)
@@ -283,12 +289,18 @@ importers:
         specifier: 'catalog:'
         version: 3.6.0
     devDependencies:
+      '@alchemy.run/cloudflare-runtime':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.77(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
       '@effront/tailwind':
         specifier: workspace:*
         version: link:../../packages/tailwind
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.63.0
       '@tailwindcss/typography':
         specifier: 'catalog:'
         version: 0.5.20(tailwindcss@4.3.3)

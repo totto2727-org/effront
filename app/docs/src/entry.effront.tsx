@@ -46,44 +46,45 @@ const RootLayout = EFFRONT.Layout.make({
 
 function documentPage(slug: string) {
   const page = getPage(slug);
-  const Content = page.content;
   return EFFRONT.Page.make({
     render: () =>
-      Effect.succeed(
-        <>
-          <title>{`${page.title} | Effront`}</title>
-          <meta name="description" content={page.description} />
-          <article
-            className="prose prose-neutral max-w-none dark:prose-invert"
-            data-doc-page={page.slug}
-          >
-            <header className="not-prose mb-10 border-b pb-8">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-emerald-700">
-                {page.section}
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>
-              <p className="mt-4 text-base leading-8 text-muted-foreground">{page.description}</p>
-            </header>
-            {page.section === "アーキテクチャ" && (
-              <aside
-                className="not-prose mb-8 rounded-lg border p-4 text-sm leading-7 text-muted-foreground"
-                data-architecture-baseline={architectureBaseline.commit}
-              >
-                <p>
-                  解説対象: <code>@effront/core@{architectureBaseline.version}</code>
+      Effect.map(page.content(), (content) => {
+        return (
+          <>
+            <title>{`${page.title} | Effront`}</title>
+            <meta name="description" content={page.description} />
+            <article
+              className="prose prose-neutral max-w-none dark:prose-invert"
+              data-doc-page={page.slug}
+            >
+              <header className="not-prose mb-10 border-b pb-8">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-emerald-700">
+                  {page.section}
                 </p>
-                <p>
-                  基準コミット: <code className="break-all">{architectureBaseline.commit}</code>
-                </p>
-                <p>
-                  確認日: {architectureBaseline.reviewedOn}。この版の実装を基準に解説しています。
-                </p>
-              </aside>
-            )}
-            <Content />
-          </article>
-        </>,
-      ),
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>
+                <p className="mt-4 text-base leading-8 text-muted-foreground">{page.description}</p>
+              </header>
+              {page.section === "アーキテクチャ" && (
+                <aside
+                  className="not-prose mb-8 rounded-lg border p-4 text-sm leading-7 text-muted-foreground"
+                  data-architecture-baseline={architectureBaseline.commit}
+                >
+                  <p>
+                    解説対象: <code>@effront/core@{architectureBaseline.version}</code>
+                  </p>
+                  <p>
+                    基準コミット: <code className="break-all">{architectureBaseline.commit}</code>
+                  </p>
+                  <p>
+                    確認日: {architectureBaseline.reviewedOn}。この版の実装を基準に解説しています。
+                  </p>
+                </aside>
+              )}
+              {content}
+            </article>
+          </>
+        );
+      }),
   });
 }
 
@@ -97,6 +98,15 @@ export default EFFRONT.make({
     .page("/guide/components", documentPage("/guide/components"))
     .page("/guide/effect", documentPage("/guide/effect"))
     .page("/platforms", documentPage("/platforms"))
+    .page("/platforms/node-bun", documentPage("/platforms/node-bun"))
+    .page("/platforms/alchemy", documentPage("/platforms/alchemy"))
+    .page("/guide/markdown", documentPage("/guide/markdown"))
+    .page("/guide/styling", documentPage("/guide/styling"))
+    .page("/api-reference/http", documentPage("/api-reference/http"))
+    .page("/api-reference/server", documentPage("/api-reference/server"))
+    .page("/api-reference/markdown", documentPage("/api-reference/markdown"))
+    .page("/api-reference/alchemy", documentPage("/api-reference/alchemy"))
+    .page("/api-reference/tailwind", documentPage("/api-reference/tailwind"))
     .page("/platforms/cloudflare", documentPage("/platforms/cloudflare"))
     .page("/guide/testing", documentPage("/guide/testing"))
     .page("/guide/server-functions", documentPage("/guide/server-functions"))

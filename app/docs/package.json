@@ -3,12 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "alchemy dev"
+    "dev": "alchemy dev",
+    "test:browser": "playwright test --config tests/playwright.config.ts"
   },
   "dependencies": {
+    "@comark/react": "catalog:",
     "@effect/platform-browser": "catalog:",
     "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
+    "@effront/markdown": "workspace:*",
     "alchemy": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
@@ -21,8 +24,10 @@
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
+    "@alchemy.run/cloudflare-runtime": "catalog:",
     "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
+    "@playwright/test": "catalog:",
     "@tailwindcss/typography": "catalog:",
     "@tsconfig/strictest": "catalog:",
     "@types/node": "catalog:",
