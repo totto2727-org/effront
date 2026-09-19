@@ -34,13 +34,6 @@ const Layout = EFFRONT.Layout.make({
       <div lang="ja">
         <header className="my-5 rounded bg-blue-100 p-4" data-testid="loading-layout">
           <h1 className="text-2xl font-bold">Loading / Suspense 実験室</h1>
-          <noscript>
-            <p className="my-3 rounded bg-amber-100 p-3">
-              この実験には JavaScript
-              が必要です。ストリーミング結果の表示と操作を試すには、JavaScript
-              を有効にして再読み込みしてください。
-            </p>
-          </noscript>
           <p className="my-3">
             このレイアウトはルート Loading の外側です。Navigation API
             対応環境では、カウンターを増やしてから移動すると状態が残ります。未対応環境では通常のページ移動になります。

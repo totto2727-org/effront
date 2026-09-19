@@ -138,17 +138,13 @@ for (const destination of ["2. 段階的な表示", "3. 操作で Suspend"]) {
   });
 }
 
-test("plain links navigate without JavaScript and explain the streaming prerequisite", async ({
-  browser,
-  baseURL,
-}) => {
+test("plain links navigate without JavaScript", async ({ browser, baseURL }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   try {
     const page = await context.newPage();
     await page.goto(`${baseURL}/loading`);
     await page.getByRole("link", { name: "1. リンクで2秒待つ" }).click();
     await expect(page).toHaveURL(/\/loading\/navigation$/);
-    await expect(page.getByText(/この実験には JavaScript が必要です/)).toBeVisible();
     await page.waitForLoadState("load");
   } finally {
     await context.close();
