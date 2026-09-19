@@ -1,7 +1,7 @@
 ## 準備 {#setup}
 
 まず [Platforms](../platforms.md) で実行環境を選びます。
-以下は Effront `0.1.4` 公開後の standalone Cloudflare の手順です。
+以下は standalone Cloudflare の手順です。
 Node.js / Bun を選ぶ場合も [共通のアプリケーション定義](#application) は同じで、その後は [専用の起動手順](../platforms/node-bun.md) へ進んでください。
 VitePlusで管理するアプリケーションに、npmレジストリから必要なパッケージを追加します。 VitePlusの導入方法は [公式ガイド](https://viteplus.dev/guide/) を参照してください。
 

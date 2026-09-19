@@ -23,7 +23,7 @@ See the [Workers example Usage](../../examples/workers/README.md#usage) for the 
 
 ## Setup
 
-After version `0.1.4` is published, install the integration and its core peer in your Vite application:
+Install the integration and its core peer in your Vite application:
 
 ```bash
 npm install @effront/core@0.1.4

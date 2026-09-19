@@ -1,7 +1,6 @@
 ## バージョンと依存関係 {#versions}
 
-このガイドは次回リリース `0.1.4` を対象にしています。
-以下のインストール手順は `0.1.4` の公開後に利用できます。
+このガイドは Effront `0.1.4` を対象にしています。
 core、vite、cloudflare、server、alchemy、markdown、tailwind の Effront パッケージは同じ版を揃えます。
 
 ```bash

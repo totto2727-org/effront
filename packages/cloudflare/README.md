@@ -48,8 +48,6 @@ The Fetch handler comes from `@effront/core/workers`; import request accessors f
 
 ## Setup
 
-After version `0.1.4` is published:
-
 ```sh
 npm install @effront/core@0.1.4 @effront/cloudflare@0.1.4
 npm install --save-dev @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35 vite-plus@0.3.1

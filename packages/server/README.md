@@ -46,12 +46,10 @@ The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](..
 
 ## Setup
 
-This guide targets the upcoming `0.1.4` release.
-Link an already prepared checkout into a consumer:
+Install the adapter and Node.js platform dependencies:
 
 ```sh
-vp link /absolute/path/to/effront/packages/server
-vp add @effect/platform-node@4.0.0-rc.112 effect@4.0.0-rc.112
+vp add @effront/server@0.1.4 @effect/platform-node@4.0.0-rc.112 effect@4.0.0-rc.112
 ```
 
 For Bun production, additionally install `@effect/platform-bun@4.0.0-rc.112`.

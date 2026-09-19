@@ -50,7 +50,7 @@ See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) f
 
 ## Setup
 
-After version `0.1.4` is published, install the collection package and Effect in your application:
+Install the collection package and Effect in your application:
 
 ```bash
 npm install @effront/markdown@0.1.4 effect@4.0.0-rc.112

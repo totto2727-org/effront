@@ -23,7 +23,7 @@ These styles apply before hydration, including when JavaScript is disabled.
 
 ## Setup
 
-After version `0.1.4` is published, install the integration:
+Install the integration:
 
 ```bash
 vp add -D @effront/tailwind@0.1.4
