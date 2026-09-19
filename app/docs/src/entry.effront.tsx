@@ -13,17 +13,21 @@ const RequestPathLive = Layer.effect(
     (request) => new URL(request.url, "https://effront.local").pathname,
   ),
 );
-// A global HTTP middleware handles the retired URL before route matching for both HTML and Flight.
-const ProductionStartupRedirect = HttpRouter.middleware(
+// A global HTTP middleware handles retired URLs before route matching for both HTML and Flight.
+const RetiredArticleRedirects = HttpRouter.middleware(
   (httpEffect) =>
     Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest;
       const url = new URL(request.url, "https://effront.local");
-      if (
-        (request.method === "GET" || request.method === "HEAD") &&
-        url.pathname === "/advanced/production-startup"
-      ) {
-        return HttpServerResponse.redirect(`/platforms${url.search}`, { status: 308 });
+      if (request.method === "GET" || request.method === "HEAD") {
+        if (url.pathname === "/advanced/production-startup") {
+          return HttpServerResponse.redirect(`/platforms${url.search}`, { status: 308 });
+        }
+        if (url.pathname === "/guide/testing") {
+          return HttpServerResponse.redirect(`/best-practices/testing${url.search}`, {
+            status: 308,
+          });
+        }
       }
       return yield* httpEffect;
     }),
@@ -106,7 +110,7 @@ function documentPage(slug: string) {
 
 // Explicit routes preserve Effront's compile-time collision checks and its native 404 handling.
 export default EFFRONT.make({
-  layer: Layer.mergeAll(RequestPathLive, ProductionStartupRedirect),
+  layer: Layer.mergeAll(RequestPathLive, RetiredArticleRedirects),
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", documentPage("/"))
     .page("/guide/getting-started", documentPage("/guide/getting-started"))
@@ -124,7 +128,7 @@ export default EFFRONT.make({
     .page("/api-reference/alchemy", documentPage("/api-reference/alchemy"))
     .page("/api-reference/tailwind", documentPage("/api-reference/tailwind"))
     .page("/platforms/cloudflare", documentPage("/platforms/cloudflare"))
-    .page("/guide/testing", documentPage("/guide/testing"))
+    .page("/best-practices/testing", documentPage("/best-practices/testing"))
     .page("/guide/server-functions", documentPage("/guide/server-functions"))
     .page("/guide/middleware", documentPage("/guide/middleware"))
     .page("/guide/http", documentPage("/guide/http"))

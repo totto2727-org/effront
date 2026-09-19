@@ -71,16 +71,31 @@ catch-all ルートでは HTTP middleware で lookup し、見つからなけれ
 [完全な collection example](https://github.com/totto2727-org/effront/blob/main/examples/markdown/src/entry.effront.tsx) は request-local な記事選択を示しています。
 collection と parse の失敗は `MarkdownError`、通常の lookup miss は `undefined` です。
 
-## 見出し・コード・スタイル {#authoring}
+## 標準設定と拡張 {#authoring}
 
-Comark の属性構文で `## セットアップ {#setup}` のように安定した ID を付けると、目次や外部リンクの対象を保てます。
-fenced code block の言語を指定すると、コードをシンタックスハイライトできます。
-スタイルはアプリケーションの責任です。
-[Tailwind と Typography](./styling.md) を組み合わせるか、独自の CSS を用意します。
-標準 renderer の `components` で `ProseA` などを置き換えることもできます。
+設定を変えない場合は `parseMarkdown(entry)` を使います。
+[本パッケージの標準設定](../api-reference/markdown.md#parse)をそのまま利用できます。
+Markdown の構文や Comark 自体の設定は [Comark 公式ドキュメント](https://comark.dev)を参照してください。
 
-Markdown は信頼できる著者のコンテンツとして扱います。
-HTML・components・attributes が有効なので、未信頼投稿を sanitize する境界ではありません。
-Math と Mermaid の parser plugin はありますが、Comark 0.6.2 の標準 React renderer は対応 component を自動登録しません。
-完全な Math / Mermaid SSR が提供されると仮定しないでください。
+設定を変更する場合は、第2引数に Comark の `ParserOptions` を渡します。
+例えば URL の自動リンク化を無効にする場合は、次のように指定します。
+
+```typescript
+const document = yield * parseMarkdown(entry, { linkify: false });
+```
+
+プラグインを追加する場合は `plugins` に指定します。
+例えば Comark の TOC プラグインを追加する場合は、次のように設定します。
+
+```typescript
+import toc from "comark/plugins/toc";
+
+const document = yield * parseMarkdown(entry, { plugins: [toc()] });
+```
+
+Comark のプラグインを直接 import する場合は、アプリケーションにも `comark@0.6.2` を追加してください。
+指定したプラグインは Effront の既定プラグインの後に追加され、既定プラグインを置き換えません。
+描画用コンポーネントの設定は [Comark の React renderer](https://comark.dev/rendering/react)、CSS の設定は [スタイリング](./styling.md) を参照してください。
+
+信頼できる著者の Markdown を対象とし、未信頼の投稿を安全化する機能としては使わないでください。
 API の詳細と参照の制約は [Markdown reference](../api-reference/markdown.md) にまとめています。

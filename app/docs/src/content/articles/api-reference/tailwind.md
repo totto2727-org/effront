@@ -20,5 +20,5 @@ CSS ファイルには `@import "tailwindcss";` と、必要なテーマ設定�
 指定したファイルは自動で読み込まれるため、コンポーネントからの import は不要です。
 
 Tailwind クラスの変更と、指定した CSS ファイルの変更は HMR で反映されます。
-テーマ設定や任意の Typography 追加は [スタイリングの手順](../guide/styling.md) を参照してください。
+テーマや追加プラグインの設定例は [スタイリングの手順](../guide/styling.md) を参照してください。
 CSS の設定構文は [公式 Tailwind documentation](https://tailwindcss.com/docs/installation/using-vite) を参照してください。

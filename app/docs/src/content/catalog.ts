@@ -314,31 +314,6 @@ export const articleCatalog = [
     source: "/guide/http",
   },
   {
-    slug: "/guide/testing",
-    title: "アプリケーションのテスト",
-    description: "アプリケーションの処理、ページ表示、ユーザー操作を検証します。",
-    section: "Guides",
-    headings: [
-      {
-        id: "services",
-        title: "アプリケーションの処理",
-      },
-      {
-        id: "pages",
-        title: "ページとユーザー操作",
-      },
-      {
-        id: "production",
-        title: "ビルド済みアプリケーションの受け入れ確認",
-      },
-      {
-        id: "tools",
-        title: "テストツール",
-      },
-    ],
-    source: "/guide/testing",
-  },
-  {
     slug: "/guide/markdown",
     title: "Markdown で記事を書く",
     description: "Vite collection と標準 Comark renderer で記事と相対リンクを扱います。",
@@ -358,7 +333,7 @@ export const articleCatalog = [
       },
       {
         id: "authoring",
-        title: "見出し・コード・スタイル",
+        title: "標準設定と拡張",
       },
     ],
     source: "/guide/markdown",
@@ -379,7 +354,7 @@ export const articleCatalog = [
       },
       {
         id: "scope",
-        title: "Markdown の見た目を整える",
+        title: "プラグインを追加する",
       },
     ],
     source: "/guide/styling",
@@ -477,6 +452,31 @@ export const articleCatalog = [
     ],
     source: "/advanced/server-function-execution-and-refresh",
     group: "実行時の契約",
+  },
+  {
+    slug: "/best-practices/testing",
+    title: "アプリケーションのテスト",
+    description: "アプリケーションの処理、ページ表示、ユーザー操作を検証する観点を整理します。",
+    section: "Best practices",
+    headings: [
+      {
+        id: "services",
+        title: "アプリケーションの処理",
+      },
+      {
+        id: "pages",
+        title: "ページとユーザー操作",
+      },
+      {
+        id: "production",
+        title: "ビルド済みアプリケーションの受け入れ確認",
+      },
+      {
+        id: "tools",
+        title: "テストツール",
+      },
+    ],
+    source: "/best-practices/testing",
   },
   {
     slug: "/api-reference",

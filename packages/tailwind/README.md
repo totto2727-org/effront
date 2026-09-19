@@ -73,8 +73,9 @@ Keep Tailwind's import in the selected file, followed by custom theme or plugin 
 
 This example makes `text-brand` and `bg-brand` available.
 
-For optional Markdown typography styles, install `@tailwindcss/typography` and add `@plugin "@tailwindcss/typography";` to the selected stylesheet.
-This extra package is not required for the default configuration or custom themes.
+To add a Tailwind plugin, install the chosen package and configure it in the selected stylesheet according to its documentation.
+For example, `@tailwindcss/typography` uses `@plugin "@tailwindcss/typography";` and provides the `prose` class.
+Typography is one optional plugin, not a requirement for Effront or Markdown.
 The [Markdown stylesheet](../../examples/markdown/src/styles.css) demonstrates Typography configuration, while the [documentation stylesheet](../../app/docs/src/styles.css) adds theme definitions.
 Tailwind syntax and supported directives are documented in the [official Vite integration guide](https://tailwindcss.com/docs/installation/using-vite).
 

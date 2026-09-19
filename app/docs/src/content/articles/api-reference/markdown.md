@@ -31,10 +31,18 @@ Workers のホストでは `nodejs_compat` を有効にします。
 
 ## parseMarkdown と renderer {#parse}
 
-`parseMarkdown` は標準 Comark document を返す Effect です。
-標準 parser に footnotes、math、mermaid、shiki plugins を加え、指定された plugins をその後に追加します。
-parse 後の literal `a.href` と `img.src` を解決し、dynamic bindings と application components は維持します。
-parser exception は元の `cause` を保持する `MarkdownError` になります。
+`parseMarkdown(entry, options?)` は Comark の文書を返す Effect です。
+設定の省略時は Comark の既定設定に、脚注・数式・Mermaid・コードハイライトのプラグインを追加します。
+Mermaid のテーマは `tokyo-night` です。
+
+第2引数は Comark の `ParserOptions` を受け取り、`linkify` などの設定変更や `plugins` による追加ができます。
+`plugins` は本パッケージの既定プラグインの後に追加されます。
+既定プラグインの削除・置き換えを行うオプションはありません。
+`registerDefaultPlugins: false` は Comark 自体の既定プラグインにだけ作用し、本パッケージが追加するプラグインは無効になりません。
+Comark の設定・構文は [公式ドキュメント](https://comark.dev)を参照してください。
+
+Markdown 内の相対リンク・画像は collection の参照ルールで解決します。
+解析に失敗すると、元の `cause` を保持する `MarkdownError` になります。
 
 `MarkdownDocument` を `@comark/react/components/MarkdownDocument` から import して、そのまま使います。
 `components={{ ProseA: MyLink }}` などの標準 mapping を渡せます。

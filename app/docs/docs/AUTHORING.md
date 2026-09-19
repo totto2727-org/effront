@@ -1,10 +1,12 @@
 # SSR documentation site
 
 `app/docs` is the private Japanese documentation application, rendered on each request by Effront and hosted by Alchemy's native Cloudflare integration.
-Its consumer navigation is Getting started, Platforms, Guides, API reference, and アーキテクチャ.
+Its consumer navigation is Getting started, Platforms, Guides, Best practices, API reference, and アーキテクチャ.
 Guides nests application-facing runtime contracts under 実行時の契約; Architecture nests the seven source-based chapters under 実装解説.
-Existing article URLs remain stable independently of their sidebar section.
+Best practices contains application-development recommendations rather than framework features.
+When a canonical article URL changes, preserve bookmarks through a permanent redirect.
 The retired `/advanced/production-startup` article redirects permanently to `/platforms` through native global HTTP middleware, for both HTML and Flight requests, and is absent from the catalog/navigation.
+The former `/guide/testing` URL similarly redirects to `/best-practices/testing`; only the latter appears in the catalog.
 
 ## Run locally
 

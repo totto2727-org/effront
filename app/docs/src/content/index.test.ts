@@ -16,7 +16,7 @@ const retainedUrls = [
   "/guide/routes",
   "/guide/components",
   "/guide/effect",
-  "/guide/testing",
+  "/best-practices/testing",
   "/guide/server-functions",
   "/guide/middleware",
   "/guide/http",
@@ -60,6 +60,7 @@ describe("documentation catalog", () => {
       "Getting started",
       "Platforms",
       "Guides",
+      "Best practices",
       "API reference",
       "アーキテクチャ",
     ]);
@@ -82,6 +83,20 @@ describe("documentation catalog", () => {
     expect(() => getPage(retired)).toThrow("Documentation route is missing content");
   });
 
+  it("separates testing best practices from feature guides without duplicating the article", () => {
+    expect(
+      pages.filter((page) => page.section === "Best practices").map((page) => page.slug),
+    ).toEqual(["/best-practices/testing"]);
+    expect(getPage("/best-practices/testing").headings.map((heading) => heading.id)).toEqual([
+      "services",
+      "pages",
+      "production",
+      "tools",
+    ]);
+    expect(navigation.map((page) => page.slug)).not.toContain("/guide/testing");
+    expect(() => getPage("/guide/testing")).toThrow("Documentation route is missing content");
+  });
+
   it("keeps every Markdown document registered, including the explicit root alias", () => {
     const sources = Object.keys(import.meta.glob("./articles/**/*.md"));
     expect(articleCatalog.map((page) => `./articles${page.source}.md`).toSorted()).toEqual(
@@ -99,7 +114,7 @@ describe("documentation catalog", () => {
       "/guide/server-functions",
       "/guide/middleware",
       "/guide/http",
-      "/guide/testing",
+      "/best-practices/testing",
     ]) {
       expect(await text(slug)).not.toMatch(/Cloudflare|Workers|Wrangler|workerd|Vercel/);
     }
@@ -117,7 +132,7 @@ describe("documentation catalog", () => {
       expect(start).toContain(required);
     }
     expect(start).not.toMatch(/vp install|チェックアウト|workspace依存/);
-    expect(await text("/guide/testing")).toContain("フォーム送信");
+    expect(await text("/best-practices/testing")).toContain("フォーム送信");
     for (const diagnostic of ["TS2769", "TS2345", "TS2322"]) {
       expect(await text("/guide/effect")).toContain(diagnostic);
     }
@@ -141,7 +156,7 @@ describe("documentation catalog", () => {
     expect(await text("/platforms")).toContain(
       "SSR モジュールとブラウザーアセットを含む成果物全体",
     );
-    expect(await text("/guide/testing")).toContain("JavaScript 無効時のフォーム送信");
+    expect(await text("/best-practices/testing")).toContain("JavaScript 無効時のフォーム送信");
     expect(await text("/platforms/alchemy")).toContain("profile が必要");
     expect(await text("/advanced/request-runtime-and-lifetimes")).toContain(
       "ハンドラーを作り、リクエスト間で再利用",
@@ -174,8 +189,12 @@ describe("documentation catalog", () => {
     expect(html).toContain('data-code-block=""');
     expect(html).toContain('tabindex="0"');
     expect(html).toContain("--shiki-dark");
-    expect(html).toContain("sanitize");
-    expect(html).toContain("Math / Mermaid SSR");
+    expect(html).toContain("未信頼の投稿を安全化する機能としては使わないでください");
+    expect(html).toContain("標準設定と拡張");
+    expect(html).toContain('href="/api-reference/markdown#parse"');
+    const reference = await render("/api-reference/markdown");
+    expect(reference).toContain("sanitizer");
+    expect(reference).toContain("Math / Mermaid SSR");
     expect(html).toContain("MarkdownError");
   });
 

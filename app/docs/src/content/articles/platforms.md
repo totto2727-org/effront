@@ -33,4 +33,4 @@ SSR モジュールとブラウザーアセットを含む成果物全体を配�
 [Alchemy CLI の profile と状態管理](./platforms/alchemy.md#stack) は別の前提なので、standalone Workers の起動コマンドを Alchemy アプリへそのまま流用しないでください。
 
 アプリケーションサービスの取得と解放は[リクエスト runtime と寿命](./advanced/request-runtime-and-lifetimes.md) を参照してください。
-起動後は[ビルド済みアプリケーションの受け入れ確認](./guide/testing.md#production) を行います。
+起動後は[ビルド済みアプリケーションの受け入れ確認](./best-practices/testing.md#production) を行います。

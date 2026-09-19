@@ -40,22 +40,23 @@ effrontTailwind({ stylesheet: "./src/styles.css" });
 この例では `text-brand` や `bg-brand` を使えるようになります。
 指定した CSS は自動で読み込まれるため、コンポーネントからの import は不要です。
 
-## Markdown の見た目を整える {#scope}
+## プラグインを追加する {#scope}
 
-Markdown の本文に見出しや段落のスタイルをまとめて適用したい場合は、任意で Tailwind Typography を追加できます。
-標準の Tailwind クラスを使うだけなら、この追加設定は不要です。
+Tailwind の追加プラグインも、`stylesheet` で指定した CSS ファイルから設定します。
+使いたいプラグインをインストールし、そのプラグインの手順に従って CSS に `@plugin` などを記述してください。
+標準の Tailwind クラスを使うだけなら、追加プラグインは不要です。
+
+例えば、文章向けのスタイルを提供する Typography を選ぶ場合は、次のように追加します。
 
 ```bash
 vp add -D @tailwindcss/typography
 ```
-
-上の `stylesheet` で指定した CSS ファイルに、Typography の設定を追加します。
 
 ```css
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 ```
 
-本文を `className="prose dark:prose-invert"` の要素で囲みます。
-記事の表示方法は [Markdown guide](./markdown.md) を参照してください。
-その他の設定は [Tailwind API](../api-reference/tailwind.md) と [公式 Tailwind documentation](https://tailwindcss.com/docs/installation/using-vite) を参照してください。
+この例では `prose` クラスを使えます。
+Typography は追加プラグインの一例で、Effront や Markdown の利用に必須ではありません。
+設定方法は [Tailwind API](../api-reference/tailwind.md) と [公式 Tailwind documentation](https://tailwindcss.com/docs/installation/using-vite) を参照してください。

@@ -6,7 +6,13 @@ export interface DocPage {
   readonly slug: string;
   readonly title: string;
   readonly description: string;
-  readonly section: "Getting started" | "Platforms" | "Guides" | "API reference" | "アーキテクチャ";
+  readonly section:
+    | "Getting started"
+    | "Platforms"
+    | "Guides"
+    | "Best practices"
+    | "API reference"
+    | "アーキテクチャ";
   readonly group?: string;
   readonly headings: readonly { readonly id: string; readonly title: string }[];
   readonly content: () => ReactNode;

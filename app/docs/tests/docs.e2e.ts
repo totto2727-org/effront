@@ -152,13 +152,15 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
       document.getAnimations().map((animation) => animation.finished.catch(() => undefined)),
     ),
   );
-  const finalSection = page.getByRole("heading", { name: "見出し・コード・スタイル", exact: true });
+  const finalSection = page.getByRole("heading", { name: "標準設定と拡張", exact: true });
   await finalSection.scrollIntoViewIfNeeded();
   await expect(finalSection).toBeInViewport();
   await page.goto("/guide/markdown#authoring");
   await expect(page).toHaveURL(/#authoring$/);
   await expect(finalSection).toBeInViewport();
-  await expect(page.locator("article")).toContainText("完全な Math / Mermaid SSR");
+  await expect(page.locator("article")).toContainText(
+    "指定したプラグインは Effront の既定プラグインの後に追加され",
+  );
   await page.screenshot({ path: "tmp/docs-mobile-authoring.png" });
   await page.screenshot({ path: "tmp/docs-mobile.png", fullPage: true });
 });
@@ -171,6 +173,7 @@ test("unknown and historical removed routes return real HTML and Flight 404 resp
     "/index",
     "/reading/overview",
     "/advanced/production-startup-extra",
+    "/guide/testing-extra",
   ]) {
     const html = await request.get(slug);
     expect(html.status()).toBe(404);
@@ -179,25 +182,53 @@ test("unknown and historical removed routes return real HTML and Flight 404 resp
   }
 });
 
-for (const accept of ["text/html", "text/x-component"]) {
-  test(`retired startup URL redirects ${accept} to Platforms`, async ({ request }) => {
-    const retired = "/advanced/production-startup?from=bookmark";
-    const headers = { Accept: accept };
-    const redirect = await request.get(retired, { headers, maxRedirects: 0 });
-    expect(redirect.status()).toBe(308);
-    expect(redirect.headers()["location"]).toBe("/platforms?from=bookmark");
-    expect(await redirect.body()).toHaveLength(0);
-    const head = await request.head(retired, { headers, maxRedirects: 0 });
-    expect(head.status()).toBe(308);
-    expect(head.headers()["location"]).toBe("/platforms?from=bookmark");
-    expect(await head.body()).toHaveLength(0);
-    const followed = await request.get(retired, { headers });
-    expect(followed.status()).toBe(200);
-    expect(new URL(followed.url()).pathname).toBe("/platforms");
-    expect(followed.headers()["content-type"]).toContain(accept);
-    expect(await followed.text()).toContain("ビルドと起動の契約");
-  });
+for (const { retired, canonical, heading } of [
+  {
+    retired: "/advanced/production-startup",
+    canonical: "/platforms",
+    heading: "ビルドと起動の契約",
+  },
+  {
+    retired: "/guide/testing",
+    canonical: "/best-practices/testing",
+    heading: "ビルド済みアプリケーションの受け入れ確認",
+  },
+]) {
+  for (const accept of ["text/html", "text/x-component"]) {
+    test(`${retired} redirects ${accept} to ${canonical}`, async ({ request }) => {
+      const bookmark = `${retired}?from=bookmark`;
+      const headers = { Accept: accept };
+      const redirect = await request.get(bookmark, { headers, maxRedirects: 0 });
+      expect(redirect.status()).toBe(308);
+      expect(redirect.headers()["location"]).toBe(`${canonical}?from=bookmark`);
+      expect(await redirect.body()).toHaveLength(0);
+      const head = await request.head(bookmark, { headers, maxRedirects: 0 });
+      expect(head.status()).toBe(308);
+      expect(head.headers()["location"]).toBe(`${canonical}?from=bookmark`);
+      expect(await head.body()).toHaveLength(0);
+      const followed = await request.get(bookmark, { headers });
+      expect(followed.status()).toBe(200);
+      expect(new URL(followed.url()).pathname).toBe(canonical);
+      expect(followed.headers()["content-type"]).toContain(accept);
+      expect(await followed.text()).toContain(heading);
+    });
+  }
 }
+
+test.describe("testing bookmark without JavaScript", () => {
+  test.use({ javaScriptEnabled: false });
+  test("keeps the production anchor under Best practices", async ({ page }) => {
+    await page.goto("/guide/testing?from=bookmark#production");
+    await expect(page).toHaveURL(/\/best-practices\/testing\?from=bookmark#production$/);
+    await expect(page.locator("article")).toHaveAttribute(
+      "data-doc-page",
+      "/best-practices/testing",
+    );
+    await expect(page.locator("article header")).toContainText("Best practices");
+    await expect(page.locator("article #production")).toBeInViewport();
+    await expect(page.locator('a[href^="/guide/testing"]')).toHaveCount(0);
+  });
+});
 
 test.describe("retired startup bookmark without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
@@ -206,14 +237,14 @@ test.describe("retired startup bookmark without JavaScript", () => {
     await expect(page).toHaveURL(/\/platforms$/);
     await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
     await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
-    await expect(page.locator('a[href="/guide/testing#production"]')).toBeVisible();
+    await expect(page.locator('a[href="/best-practices/testing#production"]')).toBeVisible();
   });
 });
 
 test("native Flight navigation follows the retired URL while preserving the shell", async ({
   page,
 }) => {
-  await page.goto("/guide/testing");
+  await page.goto("/best-practices/testing");
   await page.waitForLoadState("networkidle");
   const search = await page.getByRole("textbox", { name: "ガイドを絞り込む" }).elementHandle();
   // Simulate an inbound bookmark link without putting the retired URL back in authored navigation.

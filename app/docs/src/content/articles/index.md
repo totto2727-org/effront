@@ -21,5 +21,7 @@ React Server Components による UI と、Effect による依存関係・リソ
 - **Getting started**: [はじめる](./guide/getting-started.md) と [ホストの選択](./platforms.md)。
 - **Guides**: [ルーティング](./guide/routes.md)、[サービス](./guide/effect.md)、[Markdown 記事](./guide/markdown.md)、[スタイリング](./guide/styling.md)。
 - **実行時の契約**: [寿命と画面更新](./advanced.md) を設計時に確認します。
+- **Best practices**: [アプリケーションのテスト](./best-practices/testing.md)。
+
 - **API reference**: [公開パッケージとバージョン](./api-reference.md) から必要な契約を探します。
 - **アーキテクチャ**: [基準ソースに沿った実装解説](/architecture/implementation/overview) で内部を追います。
