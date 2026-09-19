@@ -46,6 +46,47 @@ test.describe("built documentation without JavaScript", () => {
   }
 });
 
+test("styling distinguishes default setup from optional theme and plugin configuration", async ({
+  page,
+}) => {
+  await page.goto("/guide/styling");
+  const article = page.locator("article");
+  await expect(article.locator("h2")).toHaveText([
+    "標準設定で使う",
+    "テーマなどを設定する",
+    "プラグインを追加する",
+  ]);
+  await expect(article).toContainText(
+    "CSS ファイルの作成やコンポーネントからの CSS import は不要です",
+  );
+  await expect(
+    article.locator("pre code").filter({ hasText: "plugins: [effrontTailwind()" }),
+  ).toBeVisible();
+  await expect(article.locator("pre code").filter({ hasText: "--color-brand" })).toBeVisible();
+  await expect(article).toContainText("Typography は追加プラグインの一例");
+  await expect(article).toContainText("Effront や Markdown の利用に必須ではありません");
+  await article.getByRole("link", { name: "Tailwind API", exact: true }).click();
+  await expect(page).toHaveURL(/\/api-reference\/tailwind$/);
+  await expect(page.locator("article")).toContainText("設定を変更したい場合にだけ");
+});
+
+test("Markdown readers can reach the default configuration and find the extension contract", async ({
+  page,
+}) => {
+  await page.goto("/guide/markdown#authoring");
+  const article = page.locator("article");
+  await expect(article.getByRole("heading", { name: "標準設定と拡張" })).toBeInViewport();
+  await expect(article.locator("pre code").filter({ hasText: "linkify: false" })).toBeVisible();
+  await expect(article.locator("pre code").filter({ hasText: "plugins: [toc()]" })).toBeVisible();
+  await article.getByRole("link", { name: "本パッケージの標準設定", exact: true }).click();
+  await expect(page).toHaveURL(/\/api-reference\/markdown#parse$/);
+  await expect(page.locator("article #parse")).toBeInViewport();
+  await expect(page.locator("article")).toContainText(
+    "既定プラグインの削除・置き換えを行うオプションはありません",
+  );
+  await expect(page.locator('article a[href="https://comark.dev"]')).toBeVisible();
+});
+
 test("Markdown search and shell persist across sidebar, article and history navigation", async ({
   page,
 }) => {
