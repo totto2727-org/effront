@@ -3,7 +3,6 @@
 このガイドは次回リリース `0.1.4` を対象にしています。
 以下のインストール手順は `0.1.4` の公開後に利用できます。
 core、vite、cloudflare、server、alchemy、markdown、tailwind の Effront パッケージは同じ版を揃えます。
-Architecture の基準版は実装を説明した時点の履歴で、このインストール対象版とは別です。
 
 ```bash
 vp add @effront/core@0.1.4 effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112
@@ -23,20 +22,21 @@ Vite の public peer は `*` ですが、ここでは VitePlus を使う構成�
 
 アプリケーションを定義する API、リクエストを処理する API、ビルド設定を分けて読み込みます。以下は現在の Effront パッケージの公開契約です。
 
-| API / 項目                                                                                      | 契約                                                                                          |
-| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `@effront/core`                                                                                 | Application、PageViewTransition を公開。実行時は react-server 条件の RSC グラフで使用します。 |
-| `@effront/core/http`                                                                            | [native HTTP Effect と構築時の能力の捕捉](./api-reference/http.md)                            |
-| `@effront/core/workers`                                                                         | Fetch ハンドラー、リクエストコンテキストと型付き reader を公開します。                        |
-| `@effront/vite`                                                                                 | effront と EffrontViteOptions。Vite の RSC・SSR・ブラウザー環境を構成します。                 |
-| `@effront/cloudflare`                                                                           | effrontCloudflare と EffrontCloudflareOptions。Cloudflare のビルド・開発統合です。            |
-| `@effront/cloudflare/workers`                                                                   | CloudflareExecutionContext と Cloudflare 向けの型付き reader。リクエスト処理から利用します。  |
-| `@effront/server/node`・`@effront/server/bun`・`@effront/server/assets`・`@effront/server/vite` | [native hosting・assets・Vite middleware](./api-reference/server.md)                          |
-| `@effront/alchemy/cloudflare`・`@effront/alchemy/cloudflare/vite`                               | [native Worker の能力とビルド統合](./api-reference/alchemy.md)                                |
-| `@effront/markdown`                                                                             | [collection と Comark parsing](./api-reference/markdown.md)                                   |
-| `@effront/tailwind`                                                                             | [Tailwind CSS の自動接続](./api-reference/tailwind.md)                                        |
+| API / 項目                                                                                      | 契約                                                                                         |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `@effront/core`                                                                                 | Application、PageViewTransition を公開。実行時の import には react-server 条件が必要です。   |
+| `@effront/core/http`                                                                            | [native HTTP Effect と構築時の能力の捕捉](./api-reference/http.md)                           |
+| `@effront/core/workers`                                                                         | Fetch ハンドラー、リクエストコンテキストと型付き reader を公開します。                       |
+| `@effront/vite`                                                                                 | effront と EffrontViteOptions。アプリケーションの開発・ビルド設定です。                      |
+| `@effront/cloudflare`                                                                           | effrontCloudflare と EffrontCloudflareOptions。Cloudflare のビルド・開発統合です。           |
+| `@effront/cloudflare/workers`                                                                   | CloudflareExecutionContext と Cloudflare 向けの型付き reader。リクエスト処理から利用します。 |
+| `@effront/server/node`・`@effront/server/bun`・`@effront/server/assets`・`@effront/server/vite` | [native hosting・assets・Vite middleware](./api-reference/server.md)                         |
+| `@effront/alchemy/cloudflare`・`@effront/alchemy/cloudflare/vite`                               | [native Worker の能力とビルド統合](./api-reference/alchemy.md)                               |
+| `@effront/markdown`                                                                             | [collection と Comark parsing](./api-reference/markdown.md)                                  |
+| `@effront/tailwind`                                                                             | [Tailwind CSS の自動接続](./api-reference/tailwind.md)                                       |
 
-`@effront/core/internal/client-entry` と `@effront/core/internal/ssr-entry` はビルド統合が読み込むエントリーです。アプリケーションの組み立てには以下の API を使います。ファクトリーの戻り値の型は推論されるため、内部モジュールから型を直接 import する必要はありません。
+アプリケーションの組み立てには以下の API を使います。
+ファクトリーの戻り値の型は推論されます。
 
 ## API 索引 {#index}
 

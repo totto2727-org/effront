@@ -10,19 +10,26 @@ intercept 可能で、ハッシュだけの移動、ダウンロード、フォ�
 
 ## 最初の commit とストリーム完了 {#commit-and-stream}
 
-- React Transition 内で遷移先の Flight を取得します。現在の画面は後続の画面が準備される間も維持します。 共通する Layout の先頭部分を保ちながら、新しいツリーを別の Transition で公開します。
+- 遷移先の画面が準備される間も現在の画面を維持し、共通する Layout を保ちながら切り替えます。
 
-- 通常のキャンセル可能な遷移では、遷移先の最初の UI commit で precommit handler が完了します。 ブラウザーは URL と履歴を commit し、標準のフォーカス移動とスクロール処理を進められます。 Suspense の全内容や Flight EOF を待つ必要はありません。
+- 通常のキャンセル可能な遷移では、遷移先の最初の UI commit で URL と履歴が確定し、ブラウザー標準のフォーカス移動とスクロール処理が進みます。
+  Suspense の全内容や Flight ストリームの完了を待つ必要はありません。
 
-- commit 後の Flight は、EOF または React による当該レンダーの退役までブラウザー側の runtime が所有します。 別のリンクを押しただけで現在の表示のストリームを閉じず、後続のレンダーへの切り替えを確認して解放します。
+- commit 後も表示中の画面のストリーム更新は続きます。
+  別のリンクを押しただけでは中断せず、後続の画面へ切り替わるか、ストリームが完了するまで維持します。
 
-commit 前の中止や後続遷移による置き換えは、未採用の画面候補を破棄して通信を解放します。 commit 後の残りのストリームは Browser Stop の signal から切り離されます。 その後の Flight エラーを扱うため、アプリケーションの適切な位置に React Error Boundary を設けます。 ブラウザーがキャンセル不可とする履歴移動では、precommit ではなく通常の intercept handler を使います。
+commit 前に中止した遷移や後続遷移に置き換えられた画面は採用されず、その通信も終了します。
+commit 後の残りのストリームは、ブラウザーの停止操作では中断されません。
+その後の Flight エラーを扱うため、アプリケーションの適切な位置に React Error Boundary を設けます。
+ブラウザーがキャンセル不可とする履歴移動では、最初の UI commit より先に URL が変わる場合があります。
 
 ## 履歴キャッシュとリダイレクト {#history-cache}
 
 戻る・進むでは、遷移が commit した正確な履歴 entry id に紐づく完了済みツリーを再利用できます。 URL だけで共有するキャッシュではありません。push、replace、未キャッシュの履歴移動は新しい Flight を取得します。 履歴 entry の dispose で対応するキャッシュを削除し、ルート更新の準備時には全履歴キャッシュを無効化します。
 
-Flight のリダイレクトはレスポンスの最終 URL を確認します。同一 origin の通常遷移では precommit の redirect を使い、別 origin や履歴移動中の URL 変更などではドキュメント移動へ切り替えます。 非成功レスポンスや Flight 以外のレスポンスもドキュメント移動として扱います。
+同一 origin の通常遷移ではリダイレクト先へクライアントナビゲーションを続けます。
+別 origin や履歴移動中の URL 変更などではドキュメント全体の移動へ切り替えます。
+非成功レスポンスや Flight 以外のレスポンスもドキュメント移動として扱います。
 
 フォーカスとスクロールはブラウザー標準の動作を使います。commit 後にも Suspense の内容が増えるため、 履歴に記録される位置は fallback 表示中の位置になり得ます。 ストリーム完了に合わせた独自のスクロール復元は実装されていません。
 
@@ -61,6 +68,9 @@ const QuietPage = EFFRONT.Page.make({
 </a>
 ```
 
-リンクの属性は push・replace に独自の種別を追加します。戻る・進むには再適用されません。 navigation と navigation-\*、server-function、hmr-refresh はフレームワークが付ける予約済みの種別です。 既存の startTransition と addTransitionType を利用し、URL の確定を Flight の完了まで待たせません。 後から解決する Suspense の表示には、アプリケーション側で個別の境界を追加できます。
+リンクの属性は push・replace に独自の種別を追加します。
+戻る・進むには再適用されません。
+navigation と navigation-\*、server-function、hmr-refresh はフレームワークが付ける予約済みの種別です。
+後から解決する Suspense の表示には、アプリケーション側で個別の境界を追加できます。
 
 ネイティブ API の仕様は[MDN の Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API)を参照してください。

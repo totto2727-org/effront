@@ -371,15 +371,15 @@ export const articleCatalog = [
     headings: [
       {
         id: "setup",
-        title: "Tailwind の統合",
+        title: "標準設定で使う",
       },
       {
         id: "stylesheet",
-        title: "独自 stylesheet と記事の Typography",
+        title: "テーマなどを設定する",
       },
       {
         id: "scope",
-        title: "テーマとレイアウト",
+        title: "Markdown の見た目を整える",
       },
     ],
     source: "/guide/styling",

@@ -1,22 +1,26 @@
 ## Layer はリクエストごとに構築する {#request-layer}
 
-`EFFRONT.make({ routes, layer })` はルートグラフと Layer の定義を保持します。
-`createFetchHandler` は factory の呼び出し時に Web ハンドラーを作り、リクエスト間で再利用します。
-その内側の native HTTP Effect は評価ごとに新しい Layer の memo map を使うので、アプリケーションサービスの取得はリクエスト単位です。
+`EFFRONT.make({ routes, layer })` に渡したアプリケーションの Layer は、リクエストごとに取得します。
+`createFetchHandler` でハンドラーを作り、リクエスト間で再利用できます。
 ハンドラーの再利用は、サービスがサーバー全体で一度だけ取得されることを意味しません。
 Node.js / Bun と Alchemy の native HTTP 接続も、このリクエスト単位の境界を使います。
 
-Workers の `env`、execution context、元の `Request` は、そのリクエストの Effect context に提供されます。Layer の取得中も参照でき、別リクエストの値を共有 runtime 経由で読む構成にはなりません。バインディングの読み方は[Workers のリクエストコンテキスト](/platforms/cloudflare#context)を参照してください。
+Workers の `env`、execution context、元の `Request` は、処理中のリクエストの値を Layer の取得中も参照できます。
+バインディングの読み方は[Workers のリクエストコンテキスト](/platforms/cloudflare#context)を参照してください。
 
 ## レンダーを所有する Scope {#render-scope}
 
-Server Function の Effect は HTTP リクエストの処理として実行します。 Flight レンダーでは親 Scope から子の render Scope を作り、`FiberSet.makeRuntimePromise` で Page、Layout、Component の Effect を実行します。 実行関数と有効な middleware は非同期ローカルなコンテキストに束縛されます。 これはリクエスト所有の scoped runtime であり、全リクエスト共通の実行サービスではありません。
+Server Function と Page、Layout、Component の Effect は、リクエストの Scope のもとでアプリケーションのサービスを使って実行します。
+レンダーの Scope はリクエストを越えて共有されず、レンダーが終了または中断すると閉じます。
 
 対応するリクエスト runtime の外でレンダーした場合や、宣言した middleware が有効でない場合は`TypeError` になります。手動で Component のレンダー関数を起動するのではなく、 アプリケーションの Routes を通してレンダーしてください。
 
 ## Response を返した後も続く寿命 {#response-lifetime}
 
-Fetch の Promise が Response に解決した時点では、Suspense の内容や Flight の送信が残っている可能性があります。 ハンドラーは Response body を包み、EOF、読み取りエラー、キャンセルのいずれかで取得済みサービスを解放します。 body がない場合はすぐに解放し、Response の生成自体が失敗した場合にも cleanup を実行します。 Flight の render Scope もストリームの終了や解放に合わせて閉じ、未完了のレンダー処理を中断します。
+Fetch の Promise が Response に解決した時点では、Suspense の内容や Flight の送信が残っている可能性があります。
+リクエストで取得したサービスは、レスポンス本文の読み取りが完了、失敗、キャンセルするまで保持されます。
+本文がない場合はすぐに解放し、Response の生成自体が失敗した場合にも解放します。
+レンダーのストリームを中断した場合は、未完了のレンダー処理も中断します。
 
 ## アプリケーション側の設計 {#resource-design}
 

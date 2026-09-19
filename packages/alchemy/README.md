@@ -7,14 +7,13 @@ This experimental adapter connects Effront applications to native Alchemy Cloudf
 Use the [native Alchemy example](../../examples/alchemy/src/entry.workers.ts) to serve `Hello from Alchemy KV` from a request-local service backed by an Alchemy KV binding, then invoke its greeting Server Function from the browser.
 Pair that Worker with its [stack](../../examples/alchemy/alchemy.run.ts), [Vite configuration](../../examples/alchemy/vite.config.ts), and [application](../../examples/alchemy/src/entry.effront.tsx) for the complete integration.
 Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@effront/vite` and `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`.
-The compiler owns the React, RSC, SSR, and browser graphs and accepts `application`; the Alchemy adapter accepts only `worker` and adds the native bridge and runtime compilation settings.
+Configure the application entry with `effront({ application })` and the native Worker entry with `effrontAlchemy({ worker })`.
 Its `CacheClient` holds an Alchemy-native client, while only the resulting label and greeting reach the rendered page.
 This capability boundary still depends on Alchemy's client type and is not a provider-independent cache abstraction.
 
 The official CLI path uses `alchemy dev` orchestration, which injects the host and runtime stack bindings.
 With the pinned beta, even local CLI planning requires a configured Cloudflare profile.
 If it reports `Provider 'Cloudflare' is not configured in profile 'default'`, configure that profile before retrying rather than supplying fake credentials.
-The separate local test host does not establish that Alchemy CLI planning is authentication-free.
 The pinned development host has a [reproduced runtime failure](docs/INTEGRATION.md#compatibility) after planning; a configured profile does not resolve it, and passing production build/preview checks do not establish working development.
 
 ## Key features

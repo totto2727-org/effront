@@ -67,6 +67,7 @@ export default EFFRONT.make({
 
 ## リクエストごとの生存期間 {#lifetime}
 
-Fetch ランタイムはアプリケーション Layer をグローバルに一度だけ構築しません。各 request で取得し、Response body の EOF、エラー、キャンセルまで scope を保持します。リクエスト固有の接続や値をモジュールグローバルにキャッシュしないでください。
+アプリケーション Layer のサービスはリクエストごとに提供され、Response body の読み取り完了、エラー、キャンセルまで利用できます。
+サーバー全体で一度だけ初期化されるサービスとして扱わず、リクエスト固有の接続や値をモジュールグローバルにキャッシュしないでください。
 
 Middleware が提供するサービスは、その Middleware を追加した EFFRONT の Page、Layout、Component、Server Function で利用できます。認証のような依存関係を明示する用途に向きます。

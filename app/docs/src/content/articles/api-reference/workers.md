@@ -30,7 +30,9 @@ import { WorkersRequestContext } from "@effront/core/workers";
 //   readonly request: Request
 ```
 
-値としての `WorkersRequestContext` は Effect の Context.Reference で、型は `WorkersRequestContext<unknown, unknown>` です。Fetch ハンドラーが供給します。Context が提供されていない場所で読むと、既定値の取得が `TypeError` になります。
+値としての `WorkersRequestContext` は Effect の Context.Reference で、型は `WorkersRequestContext<unknown, unknown>` です。
+Fetch ハンドラーが供給します。
+Context が提供されていない場所で読むと `TypeError` になります。
 
 ## コアの reader {#readers}
 

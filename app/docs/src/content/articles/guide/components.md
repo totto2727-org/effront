@@ -16,7 +16,9 @@ const HomePage = EFFRONT.Page.make({
 
 ## Client boundary と CSS {#client-boundary}
 
-`"use client"` の詳細は [React の公式リファレンス](https://react.dev/reference/rsc/use-client) を参照してください。 グローバル CSS は Layout が実際に render する export 済み Client Component から import します。 アプリケーション定義オブジェクトだけから import すると、Vite RSC が renderable な CSS 依存として 追跡できない場合があります。
+`"use client"` の詳細は [React の公式リファレンス](https://react.dev/reference/rsc/use-client) を参照してください。
+グローバル CSS を手動で読み込む場合は、Layout が実際に render する export 済み Client Component から import します。
+アプリケーション定義オブジェクトだけから import すると、スタイルがページに反映されない場合があります。
 
 フォームからサーバー処理を呼び出す方法は、[Server Function](/guide/server-functions) で説明します。 Server Component は表示を組み立て、Server Function は入力を検証して更新処理を実行します。
 

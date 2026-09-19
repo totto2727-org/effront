@@ -32,7 +32,11 @@ const Home = EFFRONT.Page.make({
 | `Page.make({ viewTransition: false, render })`  | この Page のアニメーションを無効化します。                                    |
 | `Page.make({ viewTransition: config, render })` | この Page に個別の設定を指定します。                                          |
 
-設定は Flight を通るシリアライズ可能な値です。 境界名 effront-page はフレームワーク用に予約されています。独自の境界には React の自動名か別の名前を使います。コールバックは設定に含めず、独自の React 境界で扱います。 利用例は [ページ遷移のアニメーション](/advanced/client-navigation#transition-scope) を参照してください。
+設定にはシリアライズ可能な値を使います。
+境界名 effront-page はフレームワーク用に予約されています。
+独自の境界には React の自動名か別の名前を使います。
+コールバックは設定に含めず、独自の React 境界で扱います。
+利用例は [ページ遷移のアニメーション](/advanced/client-navigation#transition-scope) を参照してください。
 
 全体で無効にした場合も Page 側の enabled: true で有効にできます。 表示中に enabled を切り替えると境界が追加・削除されるため、ページ内の状態が再初期化される場合があります。 継続して保持する状態は共有 Layout に置きます。 OS の減速モーション設定の切替では境界を維持し、ページ内の入力状態を保持します。
 

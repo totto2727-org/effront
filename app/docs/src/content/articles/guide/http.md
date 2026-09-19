@@ -2,7 +2,8 @@ Effront のアプリケーション Layer は Effect の HttpRouter を要求で
 
 ## HttpRouter にルートを登録する {#router}
 
-`HttpRouter.use` は Layer の構築時に router を受け取ります。[サービス](/guide/effect) で定義した Greeting を取得し、GET の応答を登録します。 次の `src/http.ts` は `/api/greeting` で JSON を返します。
+`HttpRouter.use` で HTTP ルートを登録する Layer を作ります。
+[サービス](/guide/effect) で定義した Greeting を使い、次の `src/http.ts` は `GET /api/greeting` で JSON を返します。
 
 ```typescript
 import { Effect } from "effect";

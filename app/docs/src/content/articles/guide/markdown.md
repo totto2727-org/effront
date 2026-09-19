@@ -2,13 +2,12 @@
 
 `@effront/markdown` は Vite が読み込んだ文書から collection を作り、Comark の標準 document を返します。
 記事本文は Markdown、ルーティング・レイアウト・ナビゲーションはアプリケーションで管理します。
-このサイトも一般記事にはこの構成を使い、正確なソース抜粋を含む実装解説には JSX を残しています。
 
 ```bash
 vp add @effront/markdown@0.1.4 @comark/react@0.6.2
 ```
 
-collection と parser の import はサーバーグラフに置いてください。
+collection と parser はサーバー側のモジュールから import し、Client Component には読み込まないでください。
 
 ## Vite の collection {#collection}
 
@@ -36,7 +35,7 @@ export const manual = createMarkdownCollection({
 ```
 
 両方の glob は同じ `base` を使います。
-Vite が raw text と asset URL を用意し、collection が相対参照を解決します。
+文書やアセットへの相対リンクは公開 URL に変換されます。
 `intro.md` は `/manual/intro`、`index.md` は `/manual/index` です。
 index の暗黙 alias はありません。`/` などの別 URL はアプリケーションが明示的に対応させます。
 
@@ -75,7 +74,7 @@ collection と parse の失敗は `MarkdownError`、通常の lookup miss は `u
 ## 見出し・コード・スタイル {#authoring}
 
 Comark の属性構文で `## セットアップ {#setup}` のように安定した ID を付けると、目次や外部リンクの対象を保てます。
-fenced code block の言語を指定すると、既定の Shiki plugin がサーバー側で token を生成します。
+fenced code block の言語を指定すると、コードをシンタックスハイライトできます。
 スタイルはアプリケーションの責任です。
 [Tailwind と Typography](./styling.md) を組み合わせるか、独自の CSS を用意します。
 標準 renderer の `components` で `ProseA` などを置き換えることもできます。

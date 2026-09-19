@@ -1,4 +1,6 @@
-`EFFRONT.ServerFn.make` は Schema と Effect の handler を結び付けます。 React の Server Function として公開することで、フォームや Client Component からサーバー側の処理を呼び出せます。 通信や参照のエンコードは React に任せ、アプリケーション独自の RPC エンドポイントを用意する必要はありません。
+`EFFRONT.ServerFn.make` は Schema と Effect の handler を結び付けます。
+React の Server Function として公開することで、フォームや Client Component からサーバー側の処理を呼び出せます。
+呼び出し用の RPC エンドポイントを別途用意する必要はありません。
 
 ## アプリケーションと同じ定義を使う {#identity}
 
@@ -147,6 +149,8 @@ export default EFFRONT.make({
 
 ## 再表示と失敗の扱い {#refresh}
 
-呼び出しの成功後は現在のルートを再表示します。更新結果を読む Page と更新処理が同じサービスの契約を使うため、画面の再取得を別の通信方式で実装する必要はありません。 入力のデコード失敗と handler の失敗は action の失敗として React のエラー処理へ届きます。 想定内の業務上の失敗をフォームに表示したい場合は、handler の中で明示的に state へ変換してください。
+呼び出しの成功後は現在のルートを再表示するため、画面の再取得を別の通信方式で実装する必要はありません。
+入力のデコード失敗と handler の失敗は action の失敗として React のエラー処理へ届きます。
+想定内の業務上の失敗をフォームに表示したい場合は、handler の中で明示的に state へ変換してください。
 
 Server Function をサーバーグラフで通常の async 関数として直接呼び出すことはできません。 サーバー内で共有する処理は Effect のサービスや関数へ切り出し、React からの呼び出しだけを Server Function にします。 認証・認可は入力 Schema とは別に、[Middleware](/guide/middleware) や handler で確認します。 hidden フィールドや前回の state もクライアントから届く入力です。

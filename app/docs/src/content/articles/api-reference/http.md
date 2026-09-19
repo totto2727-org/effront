@@ -1,7 +1,7 @@
 ## toHttpEffect {#handler}
 
 `@effront/core/http` の `toHttpEffect(application)` は native Effect HTTP の `HttpServerResponse` を返す Effect です。
-`HttpApplicationEffect<ApplicationError, Requirements>` はアプリケーションのエラーと外部要件、HTTP routing の error / requires markers を保持します。
+`HttpApplicationEffect<ApplicationError, Requirements>` はアプリケーションと HTTP ルートのエラー型・必要サービスを保持します。
 ホストが `HttpServerRequest` と request Scope を提供し、残る外部要件も満たします。
 
 ```typescript
@@ -11,7 +11,7 @@ import application from "./entry.effront";
 export const handler = toHttpEffect(application);
 ```
 
-同じ Effect を再利用しても、評価ごとに新しい Layer memo map でアプリケーションサービスを取得します。
+同じ Effect を再利用しても、アプリケーション Layer はリクエストごとに構築されます。
 Scope はレスポンスの生成だけでなく body の完了・エラー・キャンセルまで保持してください。
 ヘッダーの生成だけを `Effect.scoped` で囲んで即座に Scope を閉じる構成にはしません。
 [Node.js / Bun の serve](./server.md) と [Workers Fetch](./workers.md) は対応する host boundary を提供します。
@@ -22,7 +22,7 @@ Scope はレスポンスの生成だけでなく body の完了・エラー・�
 参照の捕捉はサービスの取得や寿命の延長ではありません。
 所有者は全レスポンスの body が完了するまで捕捉した能力を生存させます。
 
-構築時の Scope、request、route context、router、Layer memo map は持ち越しません。
+構築時の Scope や HTTP リクエストのサービスは持ち越しません。
 実際の request context が捕捉した context より優先されます。
 [Alchemy adapter](./alchemy.md) はこの境界を native Worker の能力と結び付けます。
 

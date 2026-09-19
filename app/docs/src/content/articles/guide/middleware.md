@@ -2,7 +2,9 @@ Middleware は後続の HTTP Effect を受け取り、処理の前後を包み�
 
 ## Middleware を持つ定義を派生させる {#view}
 
-`src/request-scope.ts` では RequestInfo を提供します。 ベースの `EFFRONT.Middleware.make` から作り、`withMiddleware` で派生させます。 RequestEFFRONT は元と同じアプリケーションの identity を保ち、RequestInfo を利用可能なサービスに加えます。
+`src/request-scope.ts` では RequestInfo を提供します。
+ベースの `EFFRONT.Middleware.make` から作り、`withMiddleware` で派生させます。
+RequestEFFRONT を使うと、同じアプリケーション内で RequestInfo を必要とする Page、Layout、Component、Server Function を定義できます。
 
 ```typescript
 import { Context, Effect } from "effect";

@@ -44,7 +44,7 @@ export default { fetch: createFetchHandler(application) };
 
 ## Vite 設定 {#vite}
 
-Vite 統合と Cloudflare adapter は分けて登録します。`effront()` が React、Vite RSC、 compiler を担当し、`effrontCloudflare()` は `rsc` Worker environment、子`ssr` environment、Workers 向け SSR 出力配置だけを担当します。
+共通の `effront()` と Workers 用の `effrontCloudflare()` を登録します。
 
 ```typescript
 import { effront } from "@effront/vite";
@@ -56,7 +56,10 @@ export default defineConfig({
 });
 ```
 
-Cloudflare の option が必要な場合は `effrontCloudflare({ ...options })` と 直接渡します。通常の設定では option は不要です。`cloudflare` で入れ子にせず、React plugin と Vite RSC plugin はアダプターと共通プラグインが登録します。デフォルトでは RSC entry は`src/entry.workers.ts`、アプリケーションの alias は `src/entry.effront.tsx` です。
+Cloudflare の option が必要な場合は `effrontCloudflare({ ...options })` と直接渡します。
+通常の設定では option は不要です。
+`cloudflare` で入れ子にせず、React plugin と Vite RSC plugin を別途登録しないでください。
+デフォルトの Worker entry は `src/entry.workers.ts`、アプリケーション定義は `src/entry.effront.tsx` です。
 
 ## ローカル実行と検証 {#local}
 
@@ -68,7 +71,9 @@ vp build
 vp exec wrangler dev --local --config dist/rsc/wrangler.json
 ```
 
-開発時は Cloudflare Vite plugin が RSC と SSR を workerd で実行します。 ビルド後は Wrangler が `dist/rsc/wrangler.json` を読み込みます。 未処理の RSC ソースを Wrangler に直接コンパイルさせません。 ローカル検証に Cloudflare の認証やデプロイは不要です。
+開発時もサーバー側のコードは Workers 環境で動きます。
+ビルド後は元のソースではなく、生成された `dist/rsc/wrangler.json` を指定して起動してください。
+ローカル検証に Cloudflare の認証やデプロイは不要です。
 
 ## リクエストコンテキスト {#context}
 
@@ -90,7 +95,8 @@ const requestInfo = Effect.gen(function* () {
 
 factory にアプリケーションの Env を一度指定すると、生成した取得関数がその型を返します。 ExecutionContext は `waitUntil(promise: Promise<unknown>): void`を持つ型に設定済みです。個別の呼び出しで型を指定する場合は、同じモジュールが公開する`getWorkersEnv<Env>()` と `getWorkersRequestContext<Env>()`も使えます。リクエスト処理中の Effect から取得してください。
 
-どの factory も同じリクエスト用 Context を読みます。型指定はアプリケーション側の契約で、 binding の実行時検証は必要に応じて Layer で行います。`@effront/cloudflare/workers` はランタイム用の入口で、Vite プラグインとは分離されています。
+型指定だけでは binding の値を実行時に検証しません。
+必要に応じて Layer で検証してください。
 
 ## 環境値と秘密値 {#secrets}
 

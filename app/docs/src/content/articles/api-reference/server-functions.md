@@ -47,6 +47,8 @@ const update = EFFRONT.ServerFn.make({
 
 ## 実行境界 {#execution}
 
-ServerFn は React の Server Function プロトコルで実行するための定義です。`"use server"` モジュールから公開する関数として利用し、ブラウザーから届いた呼び出しを Effront の Fetch ランタイムが解釈して、入力のデコードと handler の Effect を実行します。
+ServerFn は React の Server Function として利用します。
+`"use server"` モジュールから公開してください。
+ブラウザーから呼び出すと、サーバー側で入力をデコードしてから handler の Effect を実行します。
 
 通常のサーバー関数のように RSC 内から直接 await すると `TypeError` で拒否されます。サーバー内でも使いたい処理は通常の Effect として切り出し、ServerFn の handler から呼びます。返す値は React の転送可能な値にし、env や秘密値を含めないでください。

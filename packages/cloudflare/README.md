@@ -38,7 +38,7 @@ The Fetch handler comes from `@effront/core/workers`; import request accessors f
 - Execute the `rsc` Worker environment and its `ssr` child in workerd.
 - Nest default SSR output inside the Worker upload directory while preserving explicit output paths.
 - Forward Cloudflare Vite options while keeping Effront's required environment wiring intact.
-- Read typed bindings and the Cloudflare execution context through the existing request-local core Context.
+- Read typed bindings and the Cloudflare execution context in request Effects.
 
 ## Prerequisites
 
@@ -90,7 +90,7 @@ const { getWorkersEnv, getWorkersRequestContext } = createWorkersContextAccessor
 }>();
 ```
 
-Both readers use the existing core request Context without creating a service or Layer and preserve host object identity.
+Both readers preserve host object identity.
 Omitted Env defaults to `unknown`.
 Types describe host values without validating them at runtime.
 Use them during `createFetchHandler` request processing; outside that context, the core accessor reports a wiring `TypeError`.

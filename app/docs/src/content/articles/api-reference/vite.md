@@ -1,6 +1,7 @@
 ## @effront/vite {#effront}
 
-`effront(options: EffrontViteOptions = ): PluginOption[]` は React Compiler、RSC・SSR・ブラウザーの各エントリー、アプリケーション定義の alias を設定します。
+`effront(options?: EffrontViteOptions): PluginOption[]` は Effront アプリケーションの開発・ビルドに必要な Vite plugins を返します。
+React Compiler は有効です。
 
 ```typescript
 export type EffrontViteOptions = {
@@ -19,7 +20,8 @@ React plugin と RSC plugin はこの統合が登録します。同じ構成へ�
 
 ## @effront/cloudflare {#cloudflare}
 
-`effrontCloudflare(options: EffrontCloudflareOptions = ): PluginOption[]` は Cloudflare Vite plugin を構成します。オプションの型は次の定義です。
+`effrontCloudflare(options?: EffrontCloudflareOptions): PluginOption[]` は Cloudflare Workers 向けの開発・ビルドに使います。
+オプションの型は次の定義です。
 
 ```typescript
 import { cloudflare } from "@cloudflare/vite-plugin";
@@ -33,11 +35,12 @@ export type EffrontCloudflareOptions = Omit<
 | API / 項目                      | 契約                                                                                                                        |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `options`                       | viteEnvironment 以外の Cloudflare Vite plugin オプションを、そのまま転送します。cloudflare プロパティの下へネストしません。 |
-| `viteEnvironment`               | rsc と、その子環境 ssr に固定されます。オプションから変更できません。                                                       |
+| `viteEnvironment`               | Effront が設定します。オプションから変更できません。                                                                        |
 | `SSR の出力先`                  | 既定で RSC 出力ディレクトリー内の ssr。通常は dist/rsc/ssr です。                                                           |
 | `environments.ssr.build.outDir` | 利用者が明示した場合は維持されます。変更時も Wrangler が SSR モジュールを取り込める構成にします。                           |
 
-RSC と SSR は Cloudflare の workerd で動作します。ビルド後のローカル実行には生成された Wrangler 設定を使います。ランタイムで env を読む場合は、このビルド用エントリーではなく `@effront/cloudflare/workers` を読み込みます。
+ビルド後のローカル実行には生成された Wrangler 設定を使います。
+ランタイムで env を読む場合は、このビルド用エントリーではなく `@effront/cloudflare/workers` を読み込みます。
 
 ## 組み合わせ方 {#configuration}
 

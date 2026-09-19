@@ -11,21 +11,23 @@ vp add react@19.3.0 react-dom@19.3.0
 vp add -D @effront/vite@0.1.4 @effront/cloudflare@0.1.4 @vitejs/plugin-rsc@0.5.35 wrangler
 ```
 
-ReactとEffectは、インストールするEffrontのpeer dependenciesに合うバージョンを使います。`@vitejs/plugin-rsc` は開発時の依存最適化でアプリケーションから直接解決するため、明示的に追加します。
+ReactとEffectは、インストールするEffrontのpeer dependenciesに合うバージョンを使います。
+`@vitejs/plugin-rsc` もアプリケーションの開発依存として明示的に追加してください。
 
 ## アプリケーションの構成 {#files}
 
 ```text
 src/
   entry.workers.ts # Fetch ハンドラーを公開するエントリ
-  entry.effront.tsx  # JSXを含むルートグラフ
+  entry.effront.tsx  # ページとルートの定義
 vite.config.ts    # ビルドとホスト統合
 wrangler.jsonc    # Cloudflareの設定
 ```
 
 ## アプリケーションを書く {#application}
 
-同じ `EFFRONT` 値から Layout、Page、Routes を作り、`EFFRONT.make` で閉じます。 次の `src/entry.effront.tsx` はサービスを要求しないため `layer` は不要です。
+同じ `EFFRONT` 値から Layout、Page、Routes を作り、`EFFRONT.make` でアプリケーションを定義します。
+次の `src/entry.effront.tsx` はサービスを要求しないため `layer` は不要です。
 
 ```tsx
 import { Effect } from "effect";

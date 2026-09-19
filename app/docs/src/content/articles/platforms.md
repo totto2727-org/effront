@@ -1,11 +1,9 @@
 ## ホスト統合の役割 {#architecture}
 
-Effront のコアは native Effect HTTP と互換用の Web Fetch 境界を提供します。
-`@effront/vite` が RSC・SSR・ブラウザーのグラフを構成し、ホストアダプターが実行環境へ接続します。
-React の `react-server` 条件は RSC グラフだけに適用します。
-ページ定義とサービスは共通にし、起動方法とホスト固有の能力を境界で選びます。
+共通の `@effront/vite` と、実行環境に合うホストアダプターを組み合わせます。
+ページ定義とサービスは共通にし、起動方法とホスト固有の設定を選びます。
 `src/entry.effront.tsx` はホスト起動とは独立したアプリケーション定義です。
-リスナー、プロセスの signal、静的アセット、ホスト設定はアダプターと起動エントリーが担当します。
+リスナーや静的アセットの配信は、ホストごとの手順に従って設定します。
 `react-server` 条件をプロセス全体へ指定しないでください。
 
 ## 対応状況 {#support}
@@ -16,8 +14,7 @@ React の `react-server` 条件は RSC グラフだけに適用します。
 | [Alchemy + Cloudflare](./platforms/alchemy.md)  | `@effront/alchemy`    | Worker と binding を Alchemy の構築 Effect で管理する   |
 | [Node.js / Bun](./platforms/node-bun.md)        | `@effront/server`     | native Effect HTTP でリスナーと静的アセットをホストする |
 
-Workers では RSC と SSR を workerd で実行します。
-Node.js / Bun ではそれぞれのホストで独立した RSC・SSR グラフを実行します。
+サーバー側のコードは選んだホストで動くため、その環境で利用できる API を使ってください。
 Bun 構成でも Vite の dev / preview は Node 互換のミドルウェアです。
 Vercel と AWS の専用アダプターは提供していません。
 
@@ -29,7 +26,7 @@ Alchemy CLI はローカル利用でも profile の準備が必要です。
 
 `vp build` はホストが実行できるコードとアセットを生成します。
 ビルド成功はリスナーの起動やリモートへの公開を意味しません。
-SSR モジュールとブラウザーアセットを含む成果物全体を配置し、変換前の RSC ソースをホストで再コンパイルしません。
+SSR モジュールとブラウザーアセットを含む成果物全体を配置してください。
 
 ビルド後のローカル起動は、[standalone Workers](./platforms/cloudflare.md#local) では生成された Wrangler 設定を使い、[Node.js / Bun](./platforms/node-bun.md#node) ではビルド済みの server entry を実行します。
 これらのローカル起動にはクラウドへのデプロイは不要です。

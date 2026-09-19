@@ -1,6 +1,6 @@
 EffrontはWeb標準とEffectベースで実装されたReactのメタフレームワークです。
 
-native Effect HTTP と互換用の Web Fetch・ストリームを境界にすることで、 対応するホストアダプターを通じて、実行環境や既存フレームワークへ組み込める設計です。
+対応するホストアダプターを選び、Cloudflare Workers、Node.js、Bun でアプリケーションを実行できます。
 
 ## Effrontについて {#overview}
 
@@ -8,7 +8,9 @@ React Server Components による UI と、Effect による依存関係・リソ
 
 ## Web標準を境界にする {#boundaries}
 
-リクエストから Flight と HTML を生成し、ブラウザーでは hydration とナビゲーションを行います。 アプリケーションの定義と、ビルド統合・実行環境の接続を分けているため、 ページやサービスのコードにプラットフォームの起動処理を混ぜる必要はありません。
+サーバーで HTML を返し、ブラウザーでは hydration とナビゲーションを行います。
+リンクやフォームには標準の HTML 要素を使えます。
+ページやサービスのコードにプラットフォームの起動処理を混ぜる必要はありません。
 
 実行環境ごとの対応状況と必要な設定は、[Platforms](/platforms) にまとめています。
 

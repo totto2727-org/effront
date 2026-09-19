@@ -33,7 +33,10 @@ const ManualPage = EFFRONT.Page.make({
 const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/manual/*path", ManualPage);
 ```
 
-`/manual` と `/manual/` では `path` は空文字列になります。`/manual/a/b` では Effect HTTP が一度だけdecodeした `"a/b"` をSchemaへ渡します。URLの照合と検証はEffect HTTPへ委ね、coreはcatch-allの名前を変換します。 catch-all は末尾だけに置けます。`/manual` を別のPageとして同時に登録することはできません。
+`/manual` と `/manual/` では `path` は空文字列になります。
+`/manual/a/b` では、一度だけ URL デコードした `"a/b"` を Schema へ渡します。
+catch-all は末尾だけに置けます。
+`/manual` を別の Page として同時に登録することはできません。
 
 ## ネストした Routes と Loading {#mount}
 
@@ -70,7 +73,9 @@ Layout の `children` に子の表示が入り、Loading はそのスコープ�
 
 GET と HEAD では、レンダリング前に Page のパスパラメーターを Schema で一度だけ decode します。 この Schema に適合しないパスは 404 を返します。予約済みの `/_effront` 名前空間はアプリケーションのルートに使えません。 ナビゲーション用の Flight リクエストでも、decode 失敗時は空の 404 です。 decode には、そのルートで有効な Middleware が提供するサービスを使えます。
 
-Server Function の POST 後の再表示では、パラメーターの拒否を React のレンダリングエラーとして扱い、完了した action の結果を保持します。 URL のマッチングは Effect HTTP に任せ、Routes の構築時には同じ形のパスの重複や不正な合成を検出します。 たとえば `/articles/:slug` と `/articles/:id` は別ルートとして重ねられません。
+Server Function の POST 後の再表示では、パラメーターの拒否を React のレンダリングエラーとして扱い、完了した action の結果を保持します。
+Routes の構築時には同じ形のパスの重複や不正な合成を検出します。
+たとえば `/articles/:slug` と `/articles/:id` は別ルートとして重ねられません。
 
 catch-all と同じ接頭辞に置いたリテラルや `:parameter` は、より具体的なルートとして catch-all より先に照合されます。パーセントエンコードが不正なURL、エンコードされた`/`・`\`、NUL を含む catch-all のリクエストは 404 です。
 

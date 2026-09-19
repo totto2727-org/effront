@@ -25,9 +25,9 @@ fragment-only・site-absolute・external references はそのまま通します�
 query と fragment は保持し、asset の URL へ suffix をそのまま追加します。
 既存 URL の query / fragment と merge はしないので、競合する suffix を重ねないでください。
 
-内部のパス処理には `node:path` と `node:url` が必要です。
 Workers のホストでは `nodejs_compat` を有効にします。
-ファイルを読むのは Vite で、runtime filesystem loader はありません。
+文書と asset は Vite の glob で渡します。
+実行時にファイルを追加・読み込みする API ではありません。
 
 ## parseMarkdown と renderer {#parse}
 

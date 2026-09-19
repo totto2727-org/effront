@@ -1,7 +1,6 @@
 ## 準備とホストの選択 {#setup}
 
 `@effront/server` は Node.js と Bun の native Effect HTTP ホストです。
-Fetch shim を介さず、リクエスト Scope とストリームを Effect の HTTP サーバーへ接続します。
 共通のアプリケーションは [はじめる](../guide/getting-started.md#application) の `entry.effront.tsx` を使えます。
 Workers 用の `entry.workers.ts` と Wrangler 設定は不要です。
 
@@ -42,7 +41,6 @@ export default defineConfig({
 ```
 
 `effrontServer({ rsc?, server? })` の既定値は `src/entry.rsc.ts` と `src/entry.server.ts` です。
-RSC と SSR は別のグラフです。
 `NODE_OPTIONS=--conditions=react-server` をプロセス全体に設定しません。
 
 ## Node.js で起動する {#node}
