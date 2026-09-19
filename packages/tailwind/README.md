@@ -24,10 +24,10 @@ These styles apply before hydration, including when JavaScript is disabled.
 
 ## Setup
 
-After version `0.1.3` is published, install the integration:
+After version `0.1.4` is published, install the integration:
 
 ```bash
-vp add -D @effront/tailwind@0.1.3
+vp add -D @effront/tailwind@0.1.4
 ```
 
 Import its integration in the Vite configuration:

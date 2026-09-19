@@ -8,8 +8,8 @@ Workers 用の `entry.workers.ts` と Wrangler 設定は不要です。
 [公開パッケージのバージョンと peer requirements](../api-reference.md#versions) を揃え、Node.js 用には次を追加します。
 
 ```bash
-vp add @effront/server@0.1.3 @effect/platform-node@4.0.0-rc.112
-vp add -D @effront/vite@0.1.3 @vitejs/plugin-rsc
+vp add @effront/server@0.1.4 @effect/platform-node@4.0.0-rc.112
+vp add -D @effront/vite@0.1.4 @vitejs/plugin-rsc
 ```
 
 Vite tooling には Node.js 22 以降を使います。

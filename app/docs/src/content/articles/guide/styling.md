@@ -5,7 +5,7 @@
 手動の CSS import は不要です。
 
 ```bash
-vp add -D @effront/tailwind@0.1.3
+vp add -D @effront/tailwind@0.1.4
 ```
 
 既存の Vite config へ `effrontTailwind()` を一度だけ追加します。

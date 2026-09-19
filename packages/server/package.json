@@ -1,6 +1,6 @@
 {
   "name": "@effront/server",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Native Effect HTTP hosting and Vite integration for Effront on Node.js and Bun.",
   "license": "MIT",
   "repository": {

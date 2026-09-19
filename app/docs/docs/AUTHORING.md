@@ -97,7 +97,8 @@ See [Markdown collection guide](../../../packages/markdown/docs/GUIDE.md) for re
 ## Consumer compatibility and public packages
 
 The API index documents the matching Effront manifest version and compatible React, Effect, Alchemy, and Comark versions.
-The current `0.1.3` entries were checked with read-only `vp view @effront/<package>@0.1.3 version --json` for all seven public packages on 2026-09-18.
+The preceding `0.1.3` release was checked with read-only `vp view @effront/<package>@0.1.3 version --json` for all seven public packages on 2026-09-18.
+The `0.1.4` instructions target the next release and do not claim it has already been published.
 A manifest alone does not prove registry publication; check the registry before changing publication claims.
 The content test compares the index with every public manifest export and version, excluding internal build-only entries.
 Do not bump library versions for private documentation-only changes.

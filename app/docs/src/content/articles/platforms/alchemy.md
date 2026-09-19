@@ -6,8 +6,8 @@ Alchemy と Cloudflare runtime は `2.0.0-beta.77`、Effect family は `4.0.0-rc
 [共通の React peers](../api-reference.md#versions) と `entry.effront.tsx` を準備してから追加します。
 
 ```bash
-vp add @effront/alchemy@0.1.3 alchemy@2.0.0-beta.77
-vp add -D @effront/vite@0.1.3 @vitejs/plugin-rsc
+vp add @effront/alchemy@0.1.4 alchemy@2.0.0-beta.77
+vp add -D @effront/vite@0.1.4 @vitejs/plugin-rsc
 ```
 
 ## Native Worker と Vite {#worker}

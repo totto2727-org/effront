@@ -32,10 +32,10 @@ The pinned development host has a [reproduced runtime failure](docs/INTEGRATION.
 
 ## Setup
 
-After version `0.1.3` is published, install the adapter and matching host dependencies:
+After version `0.1.4` is published, install the adapter and matching host dependencies:
 
 ```sh
-vp add @effront/alchemy@0.1.3 alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.3 @effront/vite@0.1.3
+vp add @effront/alchemy@0.1.4 alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.4 @effront/vite@0.1.4
 ```
 
 Use the [core runtime peer requirements](../core/README.md#setup) for React and `@effect/platform-browser`.

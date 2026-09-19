@@ -105,7 +105,7 @@ describe("documentation catalog", () => {
     }
     const start = await text("/guide/getting-started");
     for (const required of [
-      "vp add @effront/core@0.1.3",
+      "vp add @effront/core@0.1.4",
       "effect@4.0.0-rc.112",
       "effrontCloudflare()",
       "createFetchHandler(application)",

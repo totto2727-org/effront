@@ -60,15 +60,17 @@ Native Effect HTTP hosts can instead use [`toHttpEffect` or `makeHttpEffect`](do
 
 ## Setup
 
+After version `0.1.4` is published:
+
 ```sh
-npm install @effront/core@0.1.3
-npm install --save-dev @effront/vite@0.1.3 @vitejs/plugin-rsc@0.5.34
+npm install @effront/core@0.1.4
+npm install --save-dev @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35
 ```
 
 For the current compatibility baseline, install matching runtime peers:
 
 ```sh
-npm install effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112 react@19.3.0-canary-1d34f91d-20260909 react-dom@19.3.0-canary-1d34f91d-20260909
+npm install effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112 react@19.3.0 react-dom@19.3.0
 ```
 
 ## API

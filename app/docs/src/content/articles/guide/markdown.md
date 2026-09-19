@@ -5,7 +5,7 @@
 このサイトも一般記事にはこの構成を使い、正確なソース抜粋を含む実装解説には JSX を残しています。
 
 ```bash
-vp add @effront/markdown@0.1.3 @comark/react@0.6.2
+vp add @effront/markdown@0.1.4 @comark/react@0.6.2
 ```
 
 collection と parser の import はサーバーグラフに置いてください。

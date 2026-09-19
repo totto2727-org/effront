@@ -1,17 +1,19 @@
 ## バージョンと依存関係 {#versions}
 
-このガイドは公開パッケージ `0.1.3` を対象にしています。
-2026-09-18 に npm registry の各パッケージの `0.1.3` を確認しました。
+このガイドは次回リリース `0.1.4` を対象にしています。
+以下のインストール手順は `0.1.4` の公開後に利用できます。
 core、vite、cloudflare、server、alchemy、markdown、tailwind の Effront パッケージは同じ版を揃えます。
 Architecture の基準版は実装を説明した時点の履歴で、このインストール対象版とは別です。
 
 ```bash
-vp add @effront/core@0.1.3 effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112
-vp add react@19.3.0-canary-1d34f91d-20260909 react-dom@19.3.0-canary-1d34f91d-20260909
-vp add -D @effront/vite@0.1.3 @vitejs/plugin-rsc@0.5.34
+vp add @effront/core@0.1.4 effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112
+vp add react@19.3.0 react-dom@19.3.0
+vp add -D @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35
 ```
 
-React / React DOM の canary と Effect family は対応する版を一致させてください。
+React / React DOM は安定版 `19.3.0` に揃えます。
+[`ViewTransition`](https://react.dev/reference/react/ViewTransition) と [`addTransitionType`](https://react.dev/reference/react/addTransitionType) はこの安定版の公開 API です。
+RSC transport も `19.3.0` を内包する `@vitejs/plugin-rsc@0.5.35` を使い、Effect family も対応する版を一致させてください。
 ホスト用 platform packages も Effect `4.0.0-rc.112` に揃えます。
 Alchemy は `2.0.0-beta.77`、Markdown の React renderer は `@comark/react@0.6.2` を使います。
 ホストと optional な機能に必要な追加依存は、それぞれの手順で導入します。
