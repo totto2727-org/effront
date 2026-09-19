@@ -13,6 +13,11 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
   expect(await head.body()).toHaveLength(0);
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (/hydrat|server rendered html|did not match/i.test(message.text())) {
+      errors.push(message.text());
+    }
+  });
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   expect(errors).toEqual([]);
@@ -20,9 +25,37 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Call a Server Function" }).click();
   await expect(page.getByTestId("action-greeting")).toHaveText(`Hello from ${runtime}!, Ada!`);
+  // Observe real native animation frames, not a mocked transition API or React callback.
+  const transition = page.evaluate(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const deadline = performance.now() + 5_000;
+        const observe = () => {
+          for (const animation of document.getAnimations()) {
+            const effect = animation.effect;
+            if (!(effect instanceof KeyframeEffect)) continue;
+            const progress = effect.getComputedTiming().progress;
+            if (
+              effect.pseudoElement?.includes("effront-page") &&
+              animation.playState === "running" &&
+              typeof progress === "number" &&
+              progress > 0 &&
+              progress < 1
+            ) {
+              resolve(true);
+              return;
+            }
+          }
+          if (performance.now() >= deadline) resolve(false);
+          else requestAnimationFrame(observe);
+        };
+        requestAnimationFrame(observe);
+      }),
+  );
   await page.getByRole("link", { name: "About", exact: true }).click();
   await expect(page).toHaveURL(/\/about$/);
   await expect(page.getByTestId("label")).toHaveText(runtime);
+  expect(await transition).toBe(true);
   expect(errors).toEqual([]);
 });
 

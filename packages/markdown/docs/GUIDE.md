@@ -78,7 +78,7 @@ The collection also exposes `resolveLink(entry, href)` and `resolveImage(entry, 
 
 Inside `content/guide/start.md`, `[Details](./deep/details.md#example)` becomes `/manual/guide/deep/details#example`.
 An image such as `![Diagram](../images/diagram.svg)` resolves from the Markdown file's directory and uses its imported Vite URL.
-File paths use Effect's `Path` service with `NodePath.layerPosix`, preserving POSIX semantics independently of the host operating system or working directory.
+File paths use POSIX semantics independently of the host operating system or working directory.
 The server runtime must support `node:path` and `node:url`.
 For Cloudflare Workers, enable the `nodejs_compat` compatibility flag in your Wrangler configuration.
 Queries and fragments are retained, and site-absolute, fragment-only, and external references pass through unchanged.
@@ -106,11 +106,9 @@ Use `MarkdownDocument` from `@comark/react/components/MarkdownDocument` directly
 Pass user mappings through its normal `components` prop, for example `<MarkdownDocument value={document} components={{ ProseA: MyLink }} />`.
 Resolved AST URLs reach those components without wrappers or forced link/image mappings.
 Comark 0.6.2 does not automatically register Math or Mermaid React components or merge `document.meta.components`.
-The package preserves the standard renderer's output and does not replace components, rewrite SVG/fonts, or add SSR workarounds.
 Complete Math and Mermaid SSR support is deferred in the [roadmap](../../../docs/ROADMAP.md).
 
 The application owns all rendering styles.
-The package retains KaTeX as a dependency because Comark's math parser plugin imports it directly, independently of React rendering.
 
 ### Public collection types
 

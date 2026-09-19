@@ -195,247 +195,288 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
 export const coreRuntimePages: readonly DocPage[] = [
   {
     slug: "/architecture/implementation/request",
-    title: "04. リクエストとサービスの寿命",
+    title: "04. リクエストのサービスとその寿命",
     description:
-      "Fetchの入口からEffectのLayer構築、レスポンス本文の終了まで、リクエスト単位の所有権を追います。",
+      "リクエストがアプリケーションサービスを取得し、ストリーミング中も維持する仕組みと、ホスト所有のサービスを借りて使う境界を追います。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
-      { id: "fetch-entry", title: "1. HTTP Effectの実行ごとにLayerを構築する" },
-      { id: "request-services", title: "2. HTTPのContextとアプリケーションサービスを接続する" },
-      { id: "response-lifetime", title: "3. Responseではなく本文の終了まで所有する" },
-      { id: "host-boundary", title: "4. ホストの値を型付きで読む境界" },
+      { id: "fetch-entry", title: "1. 現在のリクエスト用にサービスを取得する" },
+      { id: "request-services", title: "2. 取得したサービスをルートで使えるようにする" },
+      { id: "response-lifetime", title: "3. レスポンス本文が終わるまでリソースを維持する" },
+      {
+        id: "host-boundary",
+        title: "4. リクエストの状態を持ち越さずにホストのサービスを再利用する",
+      },
     ],
     content: () => (
       <>
         <p>
-          <a href="/architecture/implementation/application">アプリケーションの定義</a>と
-          <a href="/architecture/implementation/routing">ルートの組み立て</a>
-          が済むと、次はその定義を一件のHTTPリクエストに結び付けます。 この章では{" "}
-          <code>packages/core/src/http.ts</code> から <code>server/application.ts</code>{" "}
-          へ進み、サービスを取得する時点と解放する時点を分けて読みます。
+          ストリーミングレスポンスは、それを生成した処理が終わった後も続くことがあります。
+          アプリケーションサービスをいつまで安全に使えるかを理解するには、リクエストがサービスを取得する仕組みと、最終的に誰が解放するかの両方を追う必要があります。
+          この章では、HTTPの入口からルートの実行、レスポンス本文の終了まで所有権をたどり、最後に再利用可能なハンドラーがホストのサービスを借りる仕組みを説明します。
         </p>
-        <h2 id="fetch-entry">1. HTTP Effectの実行ごとにLayerを構築する</h2>
         <p>
-          <code>@effront/core/http</code> の <code>toHttpEffect(application)</code>
-          は、現在の <code>HttpServerRequest</code>、<code>Scope</code>、外部サービスを使って
-          <code>HttpServerResponse</code> を返すEffectです。
-          実行時にContent-Lengthを確認し、安全な非負整数でない値や10 MiB超を413にします。
-          この入口の検査はヘッダーがない本文の実測ではありません。Server Functionの本文には
-          <a href="/architecture/implementation/server-functions">別の読み取り上限</a>があります。
+          出発点は、Layerと<a href="/ja/architecture/implementation/routing">登録済みのルート</a>
+          を持つ<a href="/ja/architecture/implementation/application">アプリケーション定義</a>です。
+          実装は <code>packages/core/src/http.ts</code> と{" "}
+          <code>packages/core/src/server/application.ts</code> にあります。
+          リクエスト間でサービスが共有される問題や、描画が終わる前にリソースが解放される問題を調べるときは、この経路を確認してください。
+        </p>
+        <h2 id="fetch-entry">1. 現在のリクエスト用にサービスを取得する</h2>
+        <p>
+          <code>toHttpEffect(application)</code> は、現在の <code>HttpServerRequest</code>{" "}
+          を処理して <code>HttpServerResponse</code> を返すEffectを作ります。
+          呼び出し側は、リクエストのScopeと、アプリケーションLayerが必要とする外部サービスを供給します。
+          このEffectを作るだけではアプリケーションサービスは構築されず、リクエストに対してEffectを実行するときに取得されます。
         </p>
         <SourceExcerpt source={coreRuntimeSources.requestHandler} />
         <p>
-          抜粋の <code>HttpRouter.toHttpEffect</code> はEffectの実行中に
-          <code>ServerApplication.httpLayer(application)</code>{" "}
-          を構築し、生成したルーターをそのまま実行します。
-          同じEffect値を再利用しても、Layerとルーターの獲得はリクエストごとです。 毎回新しい{" "}
-          <code>Layer.CurrentMemoMap</code>{" "}
-          を使うため、ホストの構築時にメモ化されたLayerのインスタンスも再利用しません。
-          ホストが提供したContextを引き継ぐため、Layerの獲得中から現在の外部サービスとHTTPリクエストを参照できます。
-          Workers互換の <code>createFetchHandler</code> はこのEffectを
-          <code>HttpEffect.toWebHandler</code> へ渡し、呼び出しごとに{" "}
-          <code>WorkersRequestContext</code> を提供します。
-        </p>
-        <h2 id="request-services">2. HTTPのContextとアプリケーションサービスを接続する</h2>
-        <p>
-          <code>server/application.ts</code> の <code>httpLayer</code> は、定義から取得した{" "}
-          <code>applicationState.layer</code> と <code>FlightRenderer.layer</code>、
-          <code>HtmlRenderer.layer</code> を <code>RequestLayer</code> にまとめます。
-          <code>Layer.build(RequestLayer)</code> の結果は <code>applicationServices</code>{" "}
-          としてルート登録時に保持されます。 各ルートの <code>RequestContextMiddleware</code>{" "}
-          は、実行中のHTTP Contextにそのサービス群を <code>Context.merge</code>{" "}
-          して処理を実行します。 型の <code>Services</code>{" "}
-          はアプリケーションLayerの出力を表し、HTTPのリクエストサービスやレンダラーとは供給元が異なります。
-          Layerの入力である <code>Requirements</code> はHTTP
-          Effectの要求として残るため、外部サービスの未提供を型で検出できます。
+          新しい <code>Layer.CurrentMemoMap</code>{" "}
+          により、今回の取得はホストの構築時にメモ化済みのLayerから切り離されます。
+          <code>HttpRouter.toHttpEffect</code> はその実行の中でアプリケーションのHTTP
+          Layerを構築し、得られたハンドラーを直ちに実行します。
+          そのため、同じEffectを再利用しても、現在のリクエストとホスト提供のサービスを参照しながら、実行ごとにリクエストLayerを構築します。
         </p>
         <p>
-          GETではページに至るMiddlewareの列をEffect HTTPのdescriptorとして合成します。
-          POSTではReactの参照を復号して初めて呼び出し対象のMiddlewareが分かるため、まずRequest
-          Contextを供給し、後からハンドラーを包みます。 この違いは{" "}
-          <code>application/middleware.ts</code> の <code>getScopedHttpMiddleware</code> と{" "}
-          <code>applyMiddleware</code> に対応します。 HTTP Layerの取得失敗には{" "}
-          <code>ApplicationError</code> や <code>PlatformError</code>、ルート処理には{" "}
-          <code>HtmlRenderError</code> やServer Functionの失敗という別の型境界があります。
+          サービスの取得前に、入口ではContent-Lengthが指定されていればその数値を調べ、安全な非負整数でない場合や10
+          MiBを超える場合に413を返します。
+          これはヘッダーの検査であり、ヘッダーがない本文のサイズを実測するものではありません。
+          <a href="/ja/architecture/implementation/server-functions">Server Functionの復号処理</a>
+          では、本文の読み取り時に別の上限を適用します。
         </p>
-        <h2 id="response-lifetime">3. Responseではなく本文の終了まで所有する</h2>
         <p>
-          HTTP
-          Effectが応答を返しても、遅延して描画されるコンポーネントはまだサービスを必要とします。
-          Effect HTTPの <code>toHandled</code> がリクエストScopeを所有し、Web変換の
-          <code>scopeTransferToStream</code> がストリームの終了へ解放責任を移します。
-          EOF・エラー・キャンセルで本文のEffect Streamが終了するとScopeが閉じます。
-          生成済みのJSONやtextなどの非ストリーム応答は、本文を後で読む場合もリクエスト処理の完了で解放されます。
+          Web Fetchへの橋渡しも同じ経路を使います。
+          <code>workers.ts</code> の <code>createFetchHandler</code> は、このEffectを{" "}
+          <code>HttpEffect.toWebHandler</code> に渡し、呼び出しごとに新しい{" "}
+          <code>WorkersRequestContext</code> を供給します。
+          この橋渡しはホストの値を供給するものであり、リクエスト単位の取得の仕組みを置き換えるものではありません。
+        </p>
+        <h2 id="request-services">2. 取得したサービスをルートで使えるようにする</h2>
+        <p>
+          <code>ServerApplication.httpLayer</code> では、<code>RequestLayer</code>{" "}
+          がアプリケーションのLayerと <code>FlightRenderer.layer</code>、
+          <code>HtmlRenderer.layer</code> をまとめます。
+          <code>Layer.build(RequestLayer)</code> が生成する <code>applicationServices</code>{" "}
+          のContextは、今回のリクエスト用のルートMiddlewareに保持されます。
+          <code>RequestContextMiddleware</code> はルートの実行前に、そのContextを実行中のHTTP
+          Contextへ合流させます。
+          これにより、ルートの処理は現在のHTTPサービスと、アプリケーション用に取得したばかりのサービスの両方を使えます。
+        </p>
+        <p>
+          この境界の二つの型引数も、同じ関係を表します。
+          <code>Services</code> はアプリケーションLayerが供給するものを、<code>Requirements</code>{" "}
+          はその構築や実行に供給が必要なものを表します。
+          外部への要求は、ルーターを組み立てても消えず、HTTP Effectの型に残ります。
+        </p>
+        <p>
+          サービスを使える状態にした後、Middlewareが選択された処理を包みます。
+          GETルートは、ページのMiddlewareをEffect HTTPのMiddleware descriptorで合成します。
+          POSTルートは、まずReactのServer
+          Function参照を復号し、選ばれた関数のMiddlewareと、ページの再描画に追加で必要なMiddlewareを適用します。
+          どちらも今回のリクエストで取得したサービスを使いますが、関数固有のMiddlewareは、復号によって関数を特定するまで選べません。
+        </p>
+        <h2 id="response-lifetime">3. レスポンス本文が終わるまでリソースを維持する</h2>
+        <p>
+          <code>HttpServerResponse</code>{" "}
+          を返しても、ストリーミング描画がサービスを使い終えたとは限りません。
+          ホストは、本文の終了、失敗、キャンセルまでリクエストのScopeを開いたままにする必要があります。
+          Effect HTTPのWebハンドラーは、この寿命をレスポンスストリームへ自動的に引き継ぎます。
+          生成済みのtextなどの非ストリーム応答では、呼び出し側が本文を読むのを待たず、リクエスト処理の完了時にリソースを解放します。
         </p>
         <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
         <p>
-          固定しているEffect rc.112はHEADの本文を破棄する前にもScopeをストリームへ移します。
-          coreはHEADを空の本文へ正規化し、GETのヘッダーを保ったまま、消費されないストリームへのScope移譲を防ぎます。
-          応答生成だけを <code>Effect.scoped</code>{" "}
-          で包むと、ストリームの途中でサービスを解放してしまうため、この所有権をホストのHTTP処理へ接続します。
-          Flightの子Scopeにも独自のreleaseがあり、
-          <a href="/architecture/implementation/rendering">次章</a>でHTTPの寿命との接続を追います。
+          HEADは本文が消費されないため、特別な扱いが必要です。 固定しているEffect
+          rc.112は、HEADの本文を破棄する前にストリーミングレスポンスのScopeを移譲します。
+          Effrontはレスポンスヘッダーを保ちながら本文を <code>HttpBody.empty</code>{" "}
+          に置き換え、読まれないストリームへ所有権が移ることを防ぎます。
         </p>
         <p>
-          Effect HTTPへ直接接続するホストも、ストリームの寿命に合わせてScopeを所有します。
-          coreはホスト固有の転送処理やインフラサービスを持たず、HTTPのEffectと型付きContextを接続境界にします。
-          独自の遅延本文がリクエストサービスを読む場合は、その本文を作る時点で必要なContextを束縛します。
-          応答を作るEffectへサービスを提供することと、後から実行される本文へContextを提供することは別です。
+          HTTP Effectに直接接続するホストも、同じ寿命の境界を守る必要があります。
+          レスポンスを生成する部分だけを <code>Effect.scoped</code>{" "}
+          で包むと、遅延して実行される本文には早すぎる時点でリソースを解放してしまいます。
+          独自の本文が後からサービスを読む場合は、本文の構築時に必要なContextも束縛してください。
+          サービスを生かしておくことと、後から動くEffectで使えるようにすることは別の責務です。
         </p>
-        <h2 id="host-boundary">4. ホストの値を型付きで読む境界</h2>
         <p>
-          <code>makeHttpEffect(application)</code> は構築時の外部サービスへの参照を保持します。
-          返されたEffectの実行時には現在のContextを優先して合流させるため、同じハンドラーを並行リクエストで使えます。
-          <code>captureExternalContext</code>{" "}
-          は構築時のScope、HTTPリクエスト、検索パラメーター、RouteContext、HttpRouter、Layer.CurrentMemoMapを除外します。
-          <code>Effect.context&lt;R&gt;()</code>{" "}
-          の型指定だけでは実行時のキーは絞られないため、この除外が必要です。
+          描画処理は、Flight用の子Scopeと、ストリームの終了に結び付いた明示的な解放処理を追加します。
+          <a href="/ja/architecture/implementation/rendering">描画の章</a>
+          では、その子ScopeがHTTPレスポンスの寿命にどう接続するかを追います。
+        </p>
+        <h2 id="host-boundary">4. リクエストの状態を持ち越さずにホストのサービスを再利用する</h2>
+        <p>
+          多くのリクエストが使うサービスを、ホストがすでに所有している場合があります。
+          <code>makeHttpEffect(application)</code>{" "}
+          は、そうした外部サービスへの参照を保持し、再利用可能なHTTP Effectを返します。
+          構築時にアプリケーションのリクエストLayerを取得することも、保持したサービスの所有権を引き取ることもありません。
+          所有者は、そのサービスを使うすべてのレスポンス本文が終わるまで存続する必要があります。
         </p>
         <SourceExcerpt source={coreRuntimeSources.externalContext} />
         <p>
-          Contextに参照を保持してもサービスの所有権は移りません。
-          ホストが構築した共有サービスはホストのScopeに属し、リクエストLayerは今回のHTTP
-          Scopeに属します。
-          外部サービスの所有者は、それを使うすべての応答本文が終了するまで自身のScopeを保ちます。
-          アプリケーションのLayerを構築する処理は、参照を保持するこのfactoryではなく、返されたHTTP
-          Effectの内側に残ります。
+          Contextの合流では、保持済みの値よりも実行中のリクエストContextを優先します。 その前に{" "}
+          <code>captureExternalContext</code>{" "}
+          が、構築時のScope、HTTPリクエスト、解析済みの検索パラメーター、ルートContext、ルーター、Layerのmemo
+          mapを除外します。
+          <code>Effect.context&lt;R&gt;()</code>{" "}
+          の型引数は実行時のキーを絞り込まないため、この明示的な除外が必要です。
+          ハンドラーを再利用するときに、構築時にたまたま存在したリクエストの状態を復元してはいけません。
         </p>
         <p>
-          <code>workers.ts</code> の <code>WorkersRequestContext&lt;Env, ExecutionContext&gt;</code>{" "}
-          は三つの値をreadonlyで持ちます。 対応する <code>Context.Reference</code>{" "}
-          はFetch処理外の未供給アクセスでTypeErrorを投げます。
-          <code>
-            createWorkersContextAccessors&lt;Env = unknown, ExecutionContext = unknown&gt;()
-          </code>{" "}
-          は既存のReferenceを読む関数を返すだけで、新しいServiceやLayerを作りません。
-          <code>getWorkersEnv()</code> と <code>getWorkersRequestContext()</code>{" "}
-          の型指定はホストの値を説明するためのもので、実行時のSchema検証ではありません。
+          Fetchホストでは、<code>WorkersRequestContext</code> が現在の <code>request</code>、
+          <code>env</code>、<code>executionContext</code> をreadonlyフィールドに保持します。
+          <code>createWorkersContextAccessors</code>{" "}
+          は、既存の参照を読む型付きの関数を作るもので、別のServiceやLayerを作るものではありません。
+          型はホスト提供の値を説明するだけで実行時には検証せず、参照が供給されていない状態で読むと{" "}
+          <code>TypeError</code> を投げます。
         </p>
         <p>
-          パッケージ境界の例として、<code>packages/cloudflare/src/workers.ts</code> は{" "}
-          <code>@effront/core/workers</code> のこのfactoryを呼び出します。 公開runtime subpathの{" "}
-          <code>@effront/cloudflare/workers</code> では型引数はEnvのみで、ExecutionContextは{" "}
+          <code>@effront/cloudflare/workers</code> は、この読み取り関数の型を、
           <code>waitUntil(Promise&lt;unknown&gt;)</code> を持つ{" "}
-          <code>CloudflareExecutionContext</code> に固定した薄いラッパーです。
-          ビルド統合の入口とは分離されており、ここからenvやexecutionContextをFlightやHTMLへ自動で付加する処理はありません。
-          <a href="/architecture/implementation/overview">全体図</a>のホスト境界と、次の
-          <a href="/architecture/implementation/rendering">描画境界</a>
-          を区別して読み進めてください。
+          <code>CloudflareExecutionContext</code> に具体化します。
+          これはビルド統合とは別のアダプター境界であり、ホストの値はEffect
+          Contextにとどまり、FlightやHTMLに自動で追加されません。
+          <a href="/ja/architecture/implementation/overview">アーキテクチャの全体図</a>
+          と合わせて読むと、ホストによる共有サービスの所有、リクエストごとの取得、レスポンスのストリーミング期間を区別できます。
         </p>
       </>
     ),
   },
   {
     slug: "/architecture/implementation/rendering",
-    title: "05. RSCからHTMLへ",
+    title: "05. ルートからHTMLとFlightへ",
     description:
-      "ルートツリーをFlightとして描画し、独立したSSR環境とブラウザーへ分岐するストリームを追います。",
+      "一つのルート描画からHTMLとFlightを返し、リクエストのサービスを維持しながら初期描画のデータをブラウザーへ届ける流れを追います。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
-      { id: "route-to-flight", title: "1. ルートツリーをFlightの入力にする" },
-      { id: "render-runtime", title: "2. Reactの描画をリクエストのEffectへ接続する" },
-      { id: "ssr-branch", title: "3. SSRとブラウザーにFlightを分岐する" },
-      { id: "html-eof", title: "4. HTMLのEOFで安全に埋め込み、cancelを伝える" },
+      { id: "ssr-branch", title: "一つの描画から二つのレスポンス形式を返す" },
+      { id: "route-to-flight", title: "共通のFlightペイロードを組み立てる" },
+      { id: "render-runtime", title: "非同期の描画をリクエストの中で実行する" },
+      { id: "html-eof", title: "HTMLストリームを壊さずにFlightを届ける" },
     ],
     content: () => (
       <>
         <p>
-          <a href="/architecture/implementation/request">リクエストのサービス</a>がそろうと、
-          <code>server/application.ts</code> の <code>render</code> が{" "}
-          <code>CompiledDestination</code> を描画します。 読む順序は{" "}
-          <code>rsc/render-route-tree.tsx</code>、<code>server/flight-renderer.tsx</code>、
-          <code>server/html-renderer.tsx</code>、<code>server/ssr.tsx</code>、
-          <code>server/flight-html-stream.ts</code> です。
+          ドキュメントのリクエストには表示用のHTMLが必要で、アプリ内の遷移には新しいReactのルートツリーが必要です。
+          Effrontは用途ごとにPageを別実装するのではなく、どちらもFlightの描画結果から返します。
+          この章ではその共通経路を追い、レスポンス形式が想定と違うとき、描画に必要なサービスを利用できないとき、ストリームが終了しないときに、どの境界を調べればよいかを説明します。
         </p>
-        <h2 id="route-to-flight">1. ルートツリーをFlightの入力にする</h2>
+        <h2 id="ssr-branch">一つの描画から二つのレスポンス形式を返す</h2>
         <p>
-          HTTPのURLを絶対パスとして取り出し、
-          <a href="/architecture/implementation/routing">ルートのパラメーター</a>
-          を用意します。
-          POST以外でparamsSchemaがある場合は先にSchemaで復号し、失敗を404の空レスポンスにします。
-          <code>renderRouteTree</code>{" "}
-          はPageを葉に置き、scopeの列を内側から逆順にたどってLoadingとLayoutを巻き、
-          <code>RouteTreeModel</code> を返します。 これはHTML文字列ではなく、<code>id</code>、
-          <code>content</code>、<code>child</code> で表したReactのルート構造です。
+          出発点は、ルーティングで描画先が決まり、
+          <a href="/ja/architecture/implementation/request">リクエストのサービスを取得した</a>
+          後に呼ばれる、<code>packages/core/src/server/application.ts</code> の <code>render</code>{" "}
+          です。 まず <code>FlightRenderer</code> にルートの描画を依頼します。
+          その後でストリームの返し方を選び、Acceptヘッダーが <code>text/x-component</code>{" "}
+          と完全に一致すればFlightを、それ以外ならHTMLを返します。
+          これは完全一致による判定であり、Acceptの候補リストからメディアタイプを選ぶ処理ではありません。
         </p>
         <p>
-          <code>FlightRenderer.render</code> にこのツリーと <code>formState</code>、
-          <code>serverFnResult</code>、必要に応じて <code>temporaryReferences</code> を渡します。
-          <code>rsc/flight.ts</code> の <code>FlightPayload</code> は先頭の三つを持つ共有契約です。
-          サーバーのサービスContextを送信するのではなく、そのContextを使って生成した描画結果をReactのFlightプロトコルで送ります。
+          HTMLを返す場合、<code>HtmlRenderer</code> は{" "}
+          <code>import.meta.viteRsc.loadModule("ssr", "index")</code>{" "}
+          で独立したSSR環境を読み込みます。
+          <code>server/ssr.tsx</code> では、<code>tee()</code>{" "}
+          によってFlightストリームを二つの読み手に分けます。 SSR側は{" "}
+          <code>@vitejs/plugin-rsc/ssr</code> でペイロードを復号し、その <code>RouteTree</code> を{" "}
+          <code>react-dom/server.edge</code> でHTMLに描画します。
+          もう一方はブラウザー向けにFlightデータを保持し、そのHTMLに埋め込まれます。
+          つまりSSRはRSCの結果を利用する処理であり、Pageのサーバー側の描画Effectを独立してもう一度実行する処理ではありません。
         </p>
-        <h2 id="render-runtime">2. Reactの描画をリクエストのEffectへ接続する</h2>
+        <p>
+          HTMLレンダラーには、フォームの状態、リクエストのScopeに結び付いたAbortSignal、クライアント入口をimportするbootstrap
+          scriptも渡します。 どちらのレスポンス形式にも{" "}
+          <code>Cache-Control: private, no-store</code> を設定します。 GETとPOSTのpre-response
+          handlerは既存のVaryフィールドを維持し、Acceptまたは <code>*</code>{" "}
+          が含まれていなければAcceptを追加して、形式の違いをキャッシュに伝えます。
+        </p>
+        <h2 id="route-to-flight">共通のFlightペイロードを組み立てる</h2>
+        <p>
+          二つの読み手が受け取る内容を知るには、<code>rsc/render-route-tree.tsx</code> の{" "}
+          <code>renderRouteTree</code> を追います。
+          一致したPageを起点に、描画先のScopeを内側から外側へたどり、それぞれのLoading境界とLayoutを追加します。
+          戻り値はHTML文字列ではなく、<code>id</code>、<code>content</code>、<code>child</code>{" "}
+          を持つ <code>RouteTreeModel</code> です。
+          LayoutのIDにはScopeの識別子を使い、PageとLoadingのIDにはpathnameも含めます。
+        </p>
+        <p>
+          POST以外のリクエストでPageにパラメーターSchemaがある場合は、ツリーを組み立てる前に
+          <a href="/ja/architecture/implementation/routing">ルートのパラメーター</a>を復号します。
+          復号に失敗すると、Flightの描画を始めずに空の404レスポンスを返します。
+          POSTでは符号化されたパラメーターを描画経路へ渡すため、この事前検査があらゆる描画の前に行われるわけではありません。
+        </p>
+        <p>
+          <code>rsc/flight.ts</code> は、<code>routeTree</code>、<code>formState</code>、
+          <code>serverFnResult</code> を持つ共通の <code>FlightPayload</code> を定義します。
+          <code>FlightRenderer</code> はこのオブジェクトを{" "}
+          <code>@vitejs/plugin-rsc/rsc/server</code> の <code>renderToReadableStream</code>{" "}
+          に渡し、temporary referencesがあれば描画オプションとして渡します。
+          ペイロードが運ぶのは描画結果とアクションの状態であり、サーバーのサービスContextが自動で複製されるわけではありません。
+        </p>
+        <h2 id="render-runtime">非同期の描画をリクエストの中で実行する</h2>
+        <p>
+          読み取り可能なストリームを取得できても、Reactがその内容をすべて描画し終えたとは限りません。
+          Page、Layout、Componentは、その後も現在のリクエストのサービスを使ってEffectを実行することがあります。
+          そこで <code>FlightRenderer</code>{" "}
+          は描画用の子Scopeを作り、ストリームとAbortSignalに加えて、そのScopeを解放する操作も返します。
+        </p>
         <SourceExcerpt source={coreRuntimeSources.flightRuntime} />
         <p>
-          <code>FlightRenderer</code> はEffectのServiceです。
-          <code>render</code> の要求環境は <code>Services | Scope.Scope</code>{" "}
-          で、親Scopeからforkした <code>renderScope</code> 内に{" "}
-          <code>FiberSet.makeRuntimePromise</code> とAbortSignalを作ります。 戻り値の{" "}
-          <code>FlightRender</code> は <code>stream</code>、<code>signal</code>、
-          <code>release</code>{" "}
-          を組にし、ストリームを取得した後も描画用のFiberを生かせるようにしています。 開始時の失敗は{" "}
-          <code>Effect.onError</code>{" "}
-          でScopeを閉じ、Reactから通知された描画エラーはabort済みでなければこのRuntime経由で記録します。
-        </p>
-        <p>
+          <code>FiberSet.makeRuntimePromise</code>{" "}
+          がReactの描画中に使うPromiseベースの実行関数を提供し、そのFiberは <code>renderScope</code>{" "}
+          に属します。
           <code>application/render-runtime.ts</code> の <code>renderRuntime.bind</code>{" "}
-          は、AsyncLocalStorageにRuntimeと有効なMiddlewareの列を保持します。
-          Page、Layout、ComponentがEffectを実行する <code>run</code>{" "}
-          はこの値を取得し、必要なMiddlewareが列にすべて含まれることを確認します。
-          アプリケーションの描画Runtime外、または必要なMiddlewareのscope外ならTypeErrorです。
-          <a href="/architecture/implementation/application">定義時のサービス型</a>
-          だけに任せず、Reactの非同期描画時にも接続の不変条件を検査しています。
-        </p>
-        <h2 id="ssr-branch">3. SSRとブラウザーにFlightを分岐する</h2>
-        <p>
-          <code>server/application.ts</code> はAcceptが正確に <code>text/x-component</code>{" "}
-          と一致すればFlight本文を直接返します。 それ以外は <code>HtmlRenderer</code> が{" "}
-          <code>import.meta.viteRsc.loadModule("ssr", "index")</code> で別のSSR環境を読み、
-          <code>renderHtml</code> を呼びます。 RSC側の <code>@vitejs/plugin-rsc/rsc/server</code>{" "}
-          による描画と、SSR側の <code>@vitejs/plugin-rsc/ssr</code> による復号、
-          <code>react-dom/server.edge</code> によるHTML化は別の役割です。
-          <code>HtmlRenderer</code> のPromise境界の失敗は <code>HtmlRenderError</code> になります。
+          は、AsyncLocalStorageを使い、この実行関数と有効なMiddlewareの列を非同期の描画処理から利用できるようにします。
+          Page、Layout、Componentが <code>run</code>{" "}
+          を呼ぶときには、結び付けられたRuntimeと、その定義が要求するすべてのMiddlewareのScopeが必要です。
+          いずれかが欠けると接続の誤りとして <code>TypeError</code> を報告し、
+          <a href="/ja/architecture/implementation/application">定義時に確立したサービスの契約</a>
+          を実行時にも補います。
         </p>
         <p>
-          <code>server/ssr.tsx</code> はFlightストリームを <code>tee()</code> し、一方を{" "}
-          <code>createFromReadableStream</code> で復号します。
-          <code>SsrRoot</code> は同じpayloadのPromiseを保持して <code>RouteTree</code>{" "}
-          を描画し、HTMLレンダラーにはクライアント入口をimportするbootstrap、formState、HTTPのscopeから得たsignalを渡します。
-          もう一方のFlightはブラウザー用で、生成したHTMLへ埋め込まれます。 HTTPへ戻す両方の分岐に{" "}
+          解放のタイミングは、ストリームを作る呼び出しの終了ではなく、レスポンスのライフサイクルに結び付きます。
+          <code>server/application.ts</code> は両方のレスポンス本文に{" "}
           <code>Stream.ensuring(flight.release)</code>{" "}
-          があり、HTML生成開始の失敗にもreleaseが付いています。 動的レスポンスは{" "}
-          <code>private, no-store</code>、GET/POSTのpre-response処理は既存値を保って{" "}
-          <code>Vary: Accept</code> を追加します。
+          を付け、HTMLの生成開始に失敗した場合にもFlightを解放します。
+          Flightの生成開始に失敗した場合も子Scopeを閉じ、Reactが報告したエラーはSignalがabort済みでなければそのRuntimeを通じて記録します。
+          HTMLの読み込みと描画を開始するPromise境界の失敗は <code>HtmlRenderError</code>{" "}
+          になり、その後のストリームの失敗はレスポンス本文を通じて伝わります。
         </p>
-        <h2 id="html-eof">4. HTMLのEOFで安全に埋め込み、cancelを伝える</h2>
+        <h2 id="html-eof">HTMLストリームを壊さずにFlightを届ける</h2>
+        <p>
+          HTMLレスポンスは、表示用のマークアップと、ブラウザーがhydrationに使うFlightのバイト列を両方運ぶ必要があります。
+          HTMLチャンクはタグなどの構文の途中で終わることがあるため、任意のチャンクの直後にscriptを挿入するのは安全ではありません。
+          <code>server/flight-html-stream.ts</code>{" "}
+          は代わりにHTMLのEOFを待ち、そこでブラウザー向けのFlightを挿入します。
+        </p>
         <SourceExcerpt source={coreRuntimeSources.htmlEof} />
         <p>
-          <code>flight-html-stream.ts</code> は任意のHTMLチャンク境界をタグ境界と仮定しません。
-          <code>makeHtmlWriter</code> が末尾の <code>{"</body></html>"}</code>{" "}
-          に一致し得るバイト列を保留し、HTMLのEOFでFlightをscriptとして書き、その後に閉じタグを出力します。
-          SSR側はFlightを読み続けるためHTML自体はストリーミングできますが、ブラウザー用のFlightはその間キューにたまります。
-          チャンクごとの即時注入とは異なる、EOFを安全な挿入位置とする設計です。
+          <code>makeHtmlWriter</code> はマークアップを転送しながら、末尾の{" "}
+          <code>{"</body></html>"}</code> に一致する可能性のあるバイト列を保留します。
+          EOFに達すると、transformがFlightのscriptを書き込み、その後で閉じタグを出力します。
+          SSR側がFlightを読み続けるためHTML自体はストリーミングできますが、ブラウザー向けの分岐は挿入位置に達するまでキューにたまります。
+          HTMLの各チャンクに合わせて、埋め込みFlightも逐次届く設計ではありません。
         </p>
         <p>
-          Flightの各チャンクはfatalなUTF-8 decoderで独立に復号します。
-          不正UTF-8や途中で分割された文字のバイト列はbase64から <code>Uint8Array</code>{" "}
-          として復元し、文字列へ無理に置換してバイナリーを壊しません。 inline scriptには{" "}
-          <code>{"</script"}</code> と <code>{"<!--"}</code> のescapeもあります。 ブラウザーの{" "}
+          挿入位置と同じくらい、バイト列の保存も重要です。 Flightの各チャンクをfatalなUTF-8
+          decoderで独立に復号し、不正または不完全なUTF-8ならbase64へ切り替え、ブラウザーで{" "}
+          <code>Uint8Array</code> に復元します。 inline scriptでは <code>{"</script"}</code> と{" "}
+          <code>{"<!--"}</code> の並びもescapeします。
           <code>client/initial-flight-stream.ts</code> は <code>self.__FLIGHT_DATA</code>{" "}
-          の文字列を再encodeし、Uint8Arrayはそのまま流し、DOMContentLoadedで閉じます。
-          このストリームが<a href="/architecture/implementation/navigation">hydrationの入力</a>
-          です。
+          の文字列をバイト列へ戻し、バイト配列は変更せずに流し、DOMContentLoadedでストリームを閉じます。
+          ドキュメントの準備が済んでいれば直ちに閉じます。 このストリームが
+          <a href="/ja/architecture/implementation/navigation">ブラウザーのhydration</a>
+          への入力になります。
         </p>
         <p>
-          cancel時は外側のReadableStreamが先にFlight readerをcancelし、lockを解放してからHTML
-          readerをcancelします。 teeの片側のcancel Promiseはもう片側を待つため、
-          <code>cancelFlight</code> はそのPromiseをawaitしません。
-          flush中のFlight待ちと、リクエストScopeのabortを待つ描画が互いを待ち続けないための順序です。
-          読み取り・flushのエラーもcontrollerへ伝え、最終的には
-          <a href="/architecture/implementation/request#response-lifetime">本文の所有者</a>
-          がリクエストを解放します。
+          キャンセルも、互いを待ち続けることなく両方の分岐へ伝える必要があります。
+          外側のReadableStreamはFlight readerをキャンセルしてlockを解放してから、HTML
+          readerをキャンセルします。 Flightのtee分岐のキャンセルPromiseは意図的にawaitしません。
+          このPromiseはもう一方の分岐を待つことがあり、その分岐の終了にはリクエストのAbortSignalが必要な場合があるためです。
+          読み取りとflushのエラーもストリームのcontrollerに伝え、
+          <a href="/ja/architecture/implementation/request#response-lifetime">
+            レスポンス本文の所有者
+          </a>
+          が描画処理を残さずにリクエストの後始末を完了できるようにします。
         </p>
       </>
     ),
@@ -444,248 +485,329 @@ export const coreRuntimePages: readonly DocPage[] = [
     slug: "/architecture/implementation/navigation",
     title: "06. ブラウザーの遷移",
     description:
-      "hydration後のNavigation API、Flight取得、Reactのcommitと履歴・キャッシュの寿命を分けて追います。",
+      "リンクによる遷移をFlight取得からReactと履歴のcommitまで追い、通信資源を解放できる時点とルートをキャッシュできる条件を理解します。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
-      { id: "browser-start", title: "1. 初期Flightでhydrateし、遷移を選別する" },
-      { id: "flight-load", title: "2. Flightとドキュメント遷移を判別する" },
-      { id: "transition-commit", title: "3. Transitionで公開してReactのcommitを待つ" },
-      { id: "navigation-lifetime", title: "4. 履歴・ストリーム・競合の寿命を分ける" },
+      { id: "browser-start", title: "初期ツリーを確立し、クライアント遷移を選ぶ" },
+      { id: "flight-load", title: "ルートを取得するか、ブラウザーに処理を戻す" },
+      { id: "transition-commit", title: "描画の予約とcommitを区別する" },
+      { id: "navigation-lifetime", title: "完了したルートを保存し、不要になった描画を退役させる" },
     ],
     content: () => (
       <>
         <p>
-          <a href="/architecture/implementation/rendering">HTMLへ埋め込んだFlight</a>
-          は初期表示だけで終わりません。
-          <code>client/application.ts</code> を入口に、<code>RouteLoader</code> が取得し、
-          <code>BrowserRenderer</code> が公開し、<code>ReactDOMRenderer</code>{" "}
-          がcommitを通知する役割分担を読みます。 ルート構造の契約は
-          <a href="/architecture/implementation/routing">サーバー側のルーティング</a>
-          と共有しています。
-        </p>
-        <h2 id="browser-start">1. 初期Flightでhydrateし、遷移を選別する</h2>
-        <p>
-          <code>activateBrowser</code> は <code>routeLoader.loadInitial</code>、
-          <code>reactDOMRenderer.hydrate(document, initialPayload)</code>、refreshの登録、Server
-          Function callbackの登録、client routerの登録の順に進みます。
-          hydrateはformStateをReactへ渡し、layout effectで <code>BrowserRenderer.initialize</code>{" "}
-          が済むまで待ちます。
-          <code>browserMain</code> は <code>Effect.scoped</code> と <code>Effect.never</code>{" "}
-          でブラウザーのサービスと購読を維持し、初期Flightの失敗やhydration開始の失敗は失敗画面へ進みます。
-          Reactの描画中のエラーは別途Error Boundaryが報告します。
+          クライアント遷移では、遷移先のFlightデータがすべて届く前に、新しいルートを表示できます。
+          Reactによるツリーのcommit、ブラウザーによる履歴エントリーのcommit、応答ストリームの完了は、それぞれ別の出来事です。
+          この章ではリンクによる遷移をこの三つの境界に沿って追い、ドキュメント読み込みに切り替わる理由、「戻る」でルートを再利用できる条件、新しい遷移が未完了の処理に取って代わる仕組みを理解します。
         </p>
         <p>
-          <code>client/browser-capabilities.ts</code> は <code>window.navigation</code> と{" "}
-          <code>window.NavigationPrecommitController</code> の両方がある場合だけclient
-          routerを有効にします。 それ以外はドキュメント遷移を使います。
-          <code>client/navigation-api.ts</code> はブラウザーのNavigation APIをEffect
-          Serviceとして包むもので、react-routerライブラリーのルーターではありません。
+          出発点は、
+          <a href="/ja/architecture/implementation/rendering">初期HTMLに埋め込まれたFlight</a>です。
+          以降の応答も同じ
+          <a href="/ja/architecture/implementation/routing">
+            サーバールーティングが生成するルートツリー
+          </a>
+          を運びますが、既存のReactルートを更新するには、新しいドキュメントを読み込む場合にはない調整が必要です。
+        </p>
+        <h2 id="browser-start">初期ツリーを確立し、クライアント遷移を選ぶ</h2>
+        <p>
+          ルートを置き換える前に、ブラウザーのランタイムには、次の読み込み中も表示を続けられる描画済みのツリーが必要です。
+          <code>client/application.ts</code> の <code>activateBrowser</code>{" "}
+          は初期Flightのpayloadを読み込み、<code>ReactDOMRenderer.hydrate</code> に渡します。
+          hydrationでは <code>formState</code> をReactに渡し、layout
+          effectが初期ツリーとReactのstate更新関数で <code>BrowserRenderer</code>{" "}
+          を初期化するまで待ちます。 その後にルートのrefresh、Server
+          Functionのcallback、対応している場合はクライアントルーターを登録します。
+        </p>
+        <p>
+          対応の条件は <code>window.navigation</code> と{" "}
+          <code>window.NavigationPrecommitController</code> の両方が存在することで、
+          <code>client/browser-capabilities.ts</code> が判定します。
+          条件を満たさない場合、ページがhydrateされていても、遷移はドキュメント読み込みのままです。
+          両APIを利用できる場合も、ルーターはすべての遷移をFlightリクエストに変えるのではなく、一部の操作をブラウザーに任せます。
         </p>
         <SourceExcerpt source={coreRuntimeSources.navigationEligibility} />
         <p>
-          <code>client/navigation-routing.ts</code>{" "}
-          はintercept可能な遷移のうち、hash変更、download、form送信、reload、React側の識別情報と明示的なドキュメント遷移を除外します。
-          すべてのリンク操作をFlight取得に置き換えるのではなく、ブラウザーに任せる操作を入口で分けています。
-        </p>
-        <h2 id="flight-load">2. Flightとドキュメント遷移を判別する</h2>
-        <p>
-          <code>client/route-loader.ts</code>{" "}
-          はtraverse時だけ履歴entryのidでキャッシュを参照し、なければ <code>FlightClient.load</code>{" "}
-          へ進みます。
-          <code>client/flight-client.ts</code> は子のresponseScopeをforkし、Acceptに{" "}
-          <code>text/x-component</code> を付けたGETをEffectのHttpClientで実行します。
-          2xx以外、またはFlight以外のContent-Typeはナビゲーションでは <code>Document</code>{" "}
-          として返し、routerが資源をreleaseしてドキュメント遷移に切り替えます。
-          一方、通信失敗・復号失敗は <code>FlightLoadError</code> で、理由は{" "}
-          <code>RequestFailed</code>、<code>UnexpectedResponse</code>、<code>DecodeFailed</code>{" "}
-          に区別します。
+          対象となるイベントはintercept可能で、hashのみの変更、download、フォーム送信、reloadのいずれでもない必要があります。
+          二つの <code>info</code>{" "}
+          マーカーは、Reactが管理する遷移と、Effrontが明示的に開始したドキュメント遷移も除外します。
+          特に後者は、フォールバックとして開始したドキュメント読み込みを再びinterceptしないためのものです。
         </p>
         <p>
-          Flightの戻り値にはpayloadだけでなく、本文終端を表す <code>completed</code>、解放用の{" "}
-          <code>release</code>、redirect後の <code>resolvedUrl</code> があります。
-          ルートの先頭が復号できる時点と、遅延したデータまで届く時点は同じではありません。
-          routerは解決先が別originならドキュメントへ移り、同一originでもprecommit
-          redirectが使えない場合やtraverseでは必要に応じてdocument replaceへ切り替えます。
-          URLのorigin・path・queryが同じで応答側にhashがないときだけ、要求されたhashを保持します。
+          <code>browserMain</code> は <code>Effect.scoped</code> と <code>Effect.never</code>{" "}
+          でサービスと購読を維持します。
+          初期Flightの失敗とhydration開始時のエラーは、ブラウザーの失敗画面につながります。
+          React描画中のエラーは、レンダラーのError Boundaryが別に扱います。
         </p>
-        <h2 id="transition-commit">3. Transitionで公開してReactのcommitを待つ</h2>
+        <h2 id="flight-load">ルートを取得するか、ブラウザーに処理を戻す</h2>
+        <p>
+          対象となるイベントを受けると、<code>client/route-loader.ts</code>{" "}
+          はまず取得が必要かを判断します。
+          履歴をたどる遷移では、移動先の履歴エントリーのIDを使い、キャッシュ済みのツリーを再利用できます。
+          それ以外の遷移と、履歴をたどってもキャッシュが見つからない場合は、
+          <code>FlightClient.load</code> が <code>Accept: text/x-component</code>{" "}
+          を付けてGETを送ります。
+          リクエストには専用の応答スコープがあり、初期payloadの復号後も資源を維持しつつ、必要がなくなれば解放できるようにしています。
+        </p>
+        <p>
+          ナビゲーションでは、2xx範囲外の応答やFlight以外のContent-Typeを持つ応答は、描画するツリーではなく{" "}
+          <code>Document</code> という結果になります。
+          ルーターはその応答を解放し、要求した移動先へのドキュメント遷移を開始します。
+          一方、通信の失敗、解決済みの応答URLの欠落や不正、復号の失敗には{" "}
+          <code>FlightLoadError</code> を使い、理由をそれぞれ <code>RequestFailed</code>、
+          <code>UnexpectedResponse</code>、<code>DecodeFailed</code> として区別します。
+          これらのエラーは、意図的にドキュメント読み込みへ切り替える場合とは別の扱いです。
+        </p>
+        <p>
+          Flightの取得に成功すると、復号されたpayloadに加えて <code>completed</code>、
+          <code>release</code>、<code>resolvedUrl</code> が得られます。
+          遅延データのストリーミング中でもpayloadは利用可能になるため、ルートツリーを得たことは{" "}
+          <code>completed</code> の成功を意味しません。
+          後述のキャッシュ処理を読むときにも、この違いが重要になります。
+        </p>
+        <p>
+          ツリーを公開する前に、<code>client/client-router.ts</code>{" "}
+          は解決済みの移動先を検査します。 originが異なる場合はドキュメント遷移が必要です。
+          同じoriginでもURLが変わった場合、履歴をたどる遷移か、precommit
+          controllerが使えない状況では、ドキュメントを置き換えます。
+          それ以外では、Reactのcommit後にcontrollerを通じてredirectできます。
+          要求されたhashを保持するのは、解決済みURLにhashがなく、origin・path・queryが要求したURLと一致するときだけです。
+        </p>
+        <h2 id="transition-commit">描画の予約とcommitを区別する</h2>
+        <p>
+          ツリーの準備ができると、ルーターはReactに描画を依頼しますが、その依頼を遷移の完了とは見なしません。
+          非同期のTransition Actionが <code>BrowserEffectRunner</code>{" "}
+          を通じて読み込み処理を実行し、EffectをネイティブなPromiseの境界につなぎます。
+          読み込み後、次の内側のTransitionがツリーを公開します。
+        </p>
         <SourceExcerpt source={coreRuntimeSources.navigationPublication} />
         <p>
-          <code>client/client-router.ts</code>{" "}
-          は各遷移にsymbolのgenerationとAbortControllerを与え、読み込み後のRouteを{" "}
-          <code>startTransition</code> 内で <code>browserRenderer.navigate</code> に公開します。
-          その外側にも非同期のTransition Actionがあり、Effectの実行は{" "}
-          <code>BrowserEffectRunner</code> を通してPromise境界に接続されます。
-          <code>addTransitionType</code> はpush・replace・traverseや進行方向を付記し、リンクの{" "}
-          <code>data-effront-transition-types</code> は予約語を除いて重複を除去します。
-          これはTransitionへの分類情報です。Page の既定の ViewTransition
-          境界はこの情報を利用します。設定方法は Advanced のページ遷移の章で説明します。
+          <code>browserRenderer.navigate</code>{" "}
+          はReactのstate更新を予約し、ライフサイクルを扱う三つの値を返します。
+          <code>committed</code> はレンダラーがツリーのcommitを通知すると解決し、
+          <code>retired</code>{" "}
+          は置き換えのcommitによってそのツリーを保持する必要がなくなると解決します。
+          <code>discard</code> は未commitの描画に対して現在のツリーの復元を依頼し、退役を待ちます。
+          commitの通知元は <code>client/react-dom-renderer.tsx</code> で、layout effectが{" "}
+          <code>browserRenderer.commit(render)</code> を呼びます。
+          stateの公開だけでは、この通知にはなりません。
         </p>
         <p>
-          <code>client/browser-renderer.ts</code> の <code>navigate</code>{" "}
-          はReactのstate更新を公開し、<code>committed</code>、<code>retired</code>、
-          <code>discard</code> を返します。
-          <code>client/react-dom-renderer.tsx</code> のlayout effectが{" "}
-          <code>browserRenderer.commit(render)</code>{" "}
-          を呼ぶまで、state更新の依頼はcommitではありません。 routerは <code>committed</code>{" "}
-          を待った後に履歴への接続を進めます。 cancel可能なら <code>event.intercept</code>{" "}
-          のprecommitHandlerを使い、redirectを調整してaddHandlerで履歴commitを追跡します。
-          cancel不能なtraverseでは通常のhandlerを使い、準備中の失敗にはdocument
-          reloadの経路があります。
-        </p>
-        <h2 id="navigation-lifetime">4. 履歴・ストリーム・競合の寿命を分ける</h2>
-        <p>
-          routerの状態は候補の <code>Loading → Publishing → Rendering</code> と、現在見えている{" "}
-          <code>visible</code> を分けています。
-          新しい遷移は候補のlifetimeをabortしますが、見えているツリーを即座に破棄しません。
-          公開済みの未commit候補は <code>discard</code>{" "}
-          で復元用の描画を依頼し、retirementを待ってから資源を解放します。
-          古いgenerationから届いたRouteLoadedもreleaseへ回し、古い結果が新しい画面を上書きするのを防ぎます。
-          二重commitや公開していないツリーのcommitはTypeErrorとなる内部不変条件です。
+          キャンセル可能なイベントには、ルーターは <code>precommitHandler</code> を指定して{" "}
+          <code>event.intercept</code> を使います。
+          <code>committed</code>{" "}
+          を待ち、可能なredirectを適用したうえで、ブラウザーの履歴commitを記録するcallbackを{" "}
+          <code>addHandler</code> に登録します。
+          キャンセル不能な履歴遷移では通常のhandlerを使うため、同じように履歴の確定を遅らせることはできません。
+          この経路で準備が失敗すると、ルーターはドキュメントをreloadします。
         </p>
         <p>
-          キャッシュ保存にはFlightの正常完了と履歴commitの両方が必要です。
-          どちらが先でも処理できるよう <code>NavigationEntryState</code> と{" "}
-          <code>NavigationFlightState</code> を分け、ストリーム失敗ではreleaseだけを行います。
-          entryのdisposeでキャッシュを消し、refreshではMap自体を入れ替えるため、古い取得結果の遅延保存は新しいキャッシュを汚しません。
-          描画のretirementにもreleaseを結び付け、キャッシュされたツリーと開いた通信資源を同一視しない構成です。
-          同じ仕組みを使って現在画面を更新する
-          <a href="/architecture/implementation/server-functions">Server Functionの応答処理</a>
-          へ進みます。
+          抜粋にあるTransition typeは、遷移の種類と、判別できる場合には進行方向を表します。
+          リンクからのpush・replace遷移では <code>data-effront-transition-types</code>{" "}
+          の値も追加でき、重複とフレームワークの予約済みtypeは除かれます。
+          これらのラベルはReactのTransitionを分類するもので、commitや資源の寿命に関する規則を変えるものではありません。
+          アプリケーションでの使い方は、
+          <a href="/ja/advanced/client-navigation">クライアントナビゲーションとページ遷移</a>
+          を参照してください。
+        </p>
+        <h2 id="navigation-lifetime">完了したルートを保存し、不要になった描画を退役させる</h2>
+        <p>
+          最初の移動先を読み込み中、あるいは描画中に、別のリンクをクリックする場合を考えます。
+          ルーターは処理中の候補を表示中の遷移と分けて管理し、候補を{" "}
+          <code>Loading → Publishing → Rendering</code> の状態で表します。
+          各候補はgenerationを表すsymbolとAbortControllerを持つため、新しい遷移は表示中のツリーの資源をすぐに解放せずに、処理中の候補をキャンセルできます。
+        </p>
+        <p>
+          古くなった読み込みがルートを返しても、generationの検査によって、公開せずに解放します。
+          すでに描画を予約している場合は、ルーターは <code>discard</code>{" "}
+          を呼び、退役を待ってから資源を解放します。
+          <code>BrowserRenderer</code>{" "}
+          は、表示中のツリーと、復元の依頼を含む保留中の公開から参照されているツリーを保持します。
+          このため、遷移をabortすることと、その描画を退役させることは同じ操作ではありません。
+          未公開または退役済みのツリーのcommitや、不正なライフサイクル遷移は、内部の不変条件への違反としてTypeErrorになります。
+        </p>
+        <p>
+          新たに取得して表示されたルートをキャッシュするには、履歴エントリーのcommitとFlightの正常完了の両方が必要です。
+          どちらが先に届くこともあるため、<code>NavigationEntryState</code> と{" "}
+          <code>NavigationFlightState</code> がそれぞれを追跡します。
+        </p>
+        <ul>
+          <li>
+            履歴が先にcommitした場合、ルーターはストリームの完了を待ってからキャッシュし、応答を解放します。
+          </li>
+          <li>
+            Flightが先に完了した場合、ルーターは応答を解放し、履歴エントリーが分かるまでキャッシュ用のcallbackを保持します。
+          </li>
+          <li>ストリームが失敗した場合、ルーターはルートをキャッシュせずに資源を解放します。</li>
+        </ul>
+        <p>
+          描画の退役時にも、すでに新しいgenerationへ進んでいるかどうかにかかわらず資源を解放します。
+          キャッシュが保持するのはルートツリーであり、その応答ストリームを開き続ける必要はありません。
+          <code>RouteLoader</code>{" "}
+          は履歴エントリーのdispose時に対応するキャッシュを削除し、refresh時にはキャッシュのMapを置き換えるため、古い読み込みのcallbackが遅れて実行されても新しいキャッシュに保存できません。
+          <a href="/ja/architecture/implementation/server-functions">Server Functionの実行の章</a>
+          では、同じレンダラーのライフサイクルを使い、応答によって現在のページを更新する流れを追います。
         </p>
       </>
     ),
   },
   {
     slug: "/architecture/implementation/server-functions",
-    title: "07. Server Functionの実行",
+    title: "07. Server Functionの呼び出しから画面更新まで",
     description:
-      "Reactの呼び出しをSchemaとMiddlewareへ接続し、フォーム送信・実行結果・画面更新の順序を追います。",
+      "Server FunctionのPOSTを入力検証、リクエスト内での実行、画面更新まで追い、通信エラー・関数の失敗・古い応答を区別します。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
-      { id: "function-definition", title: "1. Schema付きの実行記述を作る" },
-      { id: "request-decoding", title: "2. POSTを検査しReactの引数を復号する" },
-      { id: "execution-outcome", title: "3. Middleware内で実行しフォームと結果を分ける" },
-      { id: "result-refresh", title: "4. 呼び出し結果を確定してから画面を更新する" },
+      { id: "request-decoding", title: "1. 届いた呼び出しを識別して検証する" },
+      { id: "function-definition", title: "2. Reactの参照から型付きの実行処理を取り出す" },
+      { id: "execution-outcome", title: "3. Middleware内で実行し結果を描画に渡す" },
+      { id: "result-refresh", title: "4. 呼び出し結果を確定してから画面の更新方法を選ぶ" },
     ],
     content: () => (
       <>
         <p>
-          この章では <code>application/server-fn.ts</code> で作った関数が{" "}
-          <code>server/server-fn-request.ts</code> で認識され、<code>server/application.ts</code>{" "}
-          の再描画を経て <code>client/call-server.ts</code> に戻るまでを追います。
-          <a href="/architecture/implementation/application">アプリケーションのidentity</a>、
-          <a href="/architecture/implementation/request">リクエストContext</a>、
-          <a href="/architecture/implementation/rendering">Flight</a>
-          が一つの呼び出しで接続される箇所です。
+          Server
+          Functionの呼び出しでは、呼び出し元に返す値と、実行後に描画するページの二つを調整します。
+          それぞれの経路を理解すると、関数が失敗してもHTTP
+          200が返る理由や、遅れて届いた応答で離れたページを表示してはいけない理由が分かります。
+          この章では、一つのPOSTを検証からブラウザーの画面更新まで追います。
+          実装の仕組みではなくアプリケーションの書き方を知りたい場合は、
+          <a href="/ja/advanced/server-function-execution-and-refresh">実行と画面更新のガイド</a>
+          を参照してください。
         </p>
-        <h2 id="function-definition">1. Schema付きの実行記述を作る</h2>
-        <SourceExcerpt source={coreRuntimeSources.serverFnSchema} />
+        <h2 id="request-decoding">1. 届いた呼び出しを識別して検証する</h2>
         <p>
-          <code>makeServerFnFactory</code> の <code>input</code>{" "}
-          は単一Schemaまたは位置付きSchemaの配列です。
-          呼び出し側の型はEncoded、handler側の型はTypeで、<code>Schema.Tuple</code>{" "}
-          の復号後にhandlerのEffectを実行します。
-          単一Schemaの場合は最初の引数だけを取り、欠落時はundefinedを復号します。配列指定は引数列をそのまま検証します。
-          復号にもhandlerにも <code>AvailableServices</code> を要求でき、失敗は{" "}
-          <code>ServerFnOperationError</code> に包みます。
-        </p>
-        <p>
-          返すPromiseには、Effect・identity・Middlewareを持つ内部brandが付いています。
-          この関数をサーバー内で直接awaitするとTypeErrorでrejectする一方、HTTP側は{" "}
-          <code>matchServerFnInvocation</code>{" "}
-          でbrandとアプリケーションidentityを確かめ、実行記述を取り出します。
-          他のEFFRONTモジュールの関数ならidentity不一致として扱い、brandのないネイティブなReact
-          Server FunctionはPromise結果をEffectで待つ経路へ進みます。
-          この接続により、Reactのネイティブな参照解決の後もアプリケーションのサービス境界を確認できます。
-        </p>
-        <h2 id="request-decoding">2. POSTを検査しReactの引数を復号する</h2>
-        <p>
-          <code>server/application.ts</code> は各destinationのPOSTを{" "}
-          <code>prepareServerFnRequest</code> に渡します。 最初の <code>validateOrigin</code>{" "}
-          はOriginを必須とし、そのURLのhostをHostヘッダーの小文字化した値と比較します。
-          これはschemeまで含むorigin全体の比較ではありません。欠落・不一致・URL解析失敗は403です。
-          次にscopeのAbortSignal付きでWeb Requestへ変換し、<code>x-effront-server-fn</code>{" "}
-          ヘッダーがあればクライアント呼び出し、なければprogressive
-          enhancementのフォーム経路を選びます。
+          <code>client/call-server.ts</code>
+          のブラウザー側コールバックは、現在の履歴entryまたはURLと、単調増加する呼び出し順序を記録します。
+          Reactの <code>encodeReply</code> で引数を符号化し、<code>FlightClient</code>{" "}
+          を通じてそのURLへPOSTします。
+          <code>x-effront-server-fn</code>{" "}
+          ヘッダーでactionを指定し、AcceptヘッダーでFlightを要求します。
+          サーバーでは、送信先のPOSTルートがリクエストを <code>prepareServerFnRequest</code>{" "}
+          に渡します。
         </p>
         <p>
-          <code>readBodyBytes</code> は実際に読み取ったバイト数を数えて10 MiBを超えたら400にします。
-          入口のContent-Lengthによる413とは別の検査です。
-          読んだ本文をRequestへ再構成し、multipartならFormData、それ以外ならtextとしてReactへ渡します。
-          読み取り・フォーム解析の失敗も <code>ServerFnRequestError</code> になります。
+          actionを復号する前に、<code>validateOrigin</code>{" "}
+          がOriginを必須とし、解析したURLのhostを小文字化したHostヘッダーと比較します。
+          ヘッダーの欠落、OriginのURL解析失敗、不一致は403になります。
+          これはhostの比較であり、schemeを含むorigin全体の比較ではありません。
+          続いて、リクエストのscopeのAbortSignalを使ってWeb Requestへ変換します。 action
+          IDのヘッダーがあればクライアント呼び出しの経路を選びます。
+          なければ、JavaScriptなしでも使うprogressive enhancementのフォーム経路へ進みます。
+        </p>
+        <p>
+          どちらの経路でも、実際に読み取ったバイト数を数え、本文が10 MiBを超えたら400で拒否します。
+          これはHTTPの入口にあるContent-Lengthの検査とは別です。
+          入口の検査では、本文を読む前に413を返す場合があります。 詳しくは
+          <a href="/ja/architecture/implementation/request">リクエストの寿命の章</a>
+          を参照してください。 読み取った本文は、multipartならFormData、それ以外ならtextになります。
+          本文の読み取りやmultipartの解析に失敗した場合も、status 400のリクエストエラーになります。
         </p>
         <SourceExcerpt source={coreRuntimeSources.serverFnDecode} />
         <p>
-          クライアント呼び出しは <code>decodeReply</code> の配列サイズ上限10,000とtemporary
-          reference setを使い、さらに <code>Schema.Array(Schema.Unknown)</code>{" "}
-          で引数列であることを確認します。
-          <code>loadServerAction</code> の参照解決失敗も400です。
-          この段階の配列検査と、関数自身のinput Schemaによる業務入力の復号は別の処理です。
-          <code>temporaryReferences</code> は応答のFlightにも引き継ぎ、ブラウザーの{" "}
-          <code>encodeReply</code> と復号側の参照集合を対応させます。
+          クライアント呼び出しでは、<code>decodeReply</code>{" "}
+          が配列サイズ上限10,000と一時参照の集合を使ってReactの引数を復元します。
+          Effrontは結果が配列であることを確認してから、<code>loadServerAction</code>{" "}
+          で関数の参照を解決します。 復号、引数配列の検証、参照解決のエラーは400です。
+          この検査が確かめるのは通信上の形式であり、関数のアプリケーション入力Schemaではありません。
+          サーバーは一時参照をFlight応答に引き継ぎ、ブラウザーは <code>encodeReply</code>{" "}
+          に渡した集合を使ってその応答を復号します。
         </p>
-        <h2 id="execution-outcome">3. Middleware内で実行しフォームと結果を分ける</h2>
+        <h2 id="function-definition">2. Reactの参照から型付きの実行処理を取り出す</h2>
         <p>
-          準備結果は <code>PreparedServerFnRequest</code> の <code>execute</code> と{" "}
-          <code>middleware</code> です。
-          <code>executeServerFnAndRefresh</code>{" "}
-          は関数のMiddlewareで実行と再描画を包み、destination側で不足するMiddlewareだけを再描画に追加します。
-          共有するMiddlewareを二度適用せず、関数のサービスとページ更新のサービスを同じリクエストの中で接続します。
-          再描画に渡すMiddleware一覧にも両方を含め、描画Runtimeのscope検査と一致させます。
+          Reactの参照を解決すると関数を特定できますが、Effrontの関数でhandlerを実行するには、対応するアプリケーションサービスとMiddlewareも必要です。
+          <code>makeServerFnFactory</code>{" "}
+          は、呼び出し時にhandlerをすぐ実行する代わりに、実行すべきEffectの記述を返すことで、その情報を保持します。
         </p>
+        <SourceExcerpt source={coreRuntimeSources.serverFnSchema} />
         <p>
-          クライアント呼び出しの実行は <code>server/server-fn-outcome.ts</code> の{" "}
-          <code>serverFnOutcome</code> がExitを観測します。 通常の失敗は <code>serverFnResult</code>{" "}
-          のFailure、成功はSuccessとして、どちらもHTTP 200の再描画結果に入ります。
-          割り込みはFailureデータに変えず再度interruptします。 その前段の{" "}
-          <code>normalizeServerFnFailure</code>{" "}
-          も割り込みを維持し、それ以外を実行エラーに正規化します。
-          HTTP成功と関数成功を同一視してはいけない理由が、この二段の表現にあります。
+          呼び出し元はSchemaのEncodedの値を渡します。 handlerが復号済みのTypeの値を受け取るのは、
+          <code>Schema.Tuple</code> が成功した後です。
+          単一の入力Schemaは最初の引数だけを復号し、ネイティブな呼び出しの余分な引数を無視します。
+          引数が省略された場合はundefinedを復号します。
+          Schemaの配列を指定した場合は、位置付きの引数列を検証します。 復号とhandlerは{" "}
+          <code>AvailableServices</code> を要求でき、それぞれの型付きの失敗は{" "}
+          <code>ServerFnOperationError</code> に包まれます。
         </p>
         <p>
-          JavaScriptなしのフォームはmultipartを必須とし、<code>decodeAction</code>{" "}
-          でReactのactionを復号します。 actionがない・復号できない場合は400、実行や{" "}
-          <code>decodeFormState</code> の失敗は500です。 成功時は <code>formState</code> と{" "}
+          返されるPromiseには、Effect、アプリケーションidentity、Middlewareを含む内部brandが付いています。
+          サーバーグラフで直接awaitするとTypeErrorでrejectします。 HTTPの経路では、代わりに{" "}
+          <code>matchServerFnInvocation</code> が実行処理を取り出し、
+          <a href="/ja/architecture/implementation/application">アプリケーションidentity</a>
+          を検証します。
+          別のEFFRONTモジュールで作った関数はidentity不一致であり、そのモジュールのサービスを使えるわけではありません。
+          brandのないネイティブなReact Server
+          Functionは別の経路を通り、Effrontの関数Middlewareを使わずにEffect内で結果を待ちます。
+        </p>
+        <h2 id="execution-outcome">3. Middleware内で実行し結果を描画に渡す</h2>
+        <p>
+          準備処理は、<code>execute</code> と関数のMiddlewareを含む{" "}
+          <code>PreparedServerFnRequest</code> を返します。
+          <code>server/application.ts</code> の <code>executeServerFnAndRefresh</code>{" "}
+          は、実行とその後の描画の両方を関数のMiddlewareで包みます。
+          送信先だけが必要とするMiddlewareは描画処理を包み、関数のMiddlewareに含まれるものはそこで二度適用しません。
+          rendererには両方を合わせた一覧を渡すため、Runtimeのscope検査でも更新先ページが使えるMiddlewareを確認できます。
+        </p>
+        <p>
+          クライアント呼び出しでは、<code>serverFnOutcome</code> が実行処理のExitを{" "}
+          <code>serverFnResult</code> のSuccessの値またはFailureのエラーに変換します。
+          どちらもstatus 200で描画へ進むため、HTTPの成功だけでは関数の成功を判断できません。
+          割り込みは別扱いです。
+          失敗の正規化と結果の処理は、どちらも割り込みをFailureのデータにせず、割り込みのまま保ちます。
+          生成する<a href="/ja/architecture/implementation/rendering">Flightのペイロード</a>
+          には、ルートツリーと関数の結果を一緒に含めます。
+        </p>
+        <p>
+          progressive
+          enhancementのフォーム送信には、確定させるクライアント呼び出しのPromiseがないため、別の結果が必要です。
+          multipartのFormDataを必須とし、Reactの <code>decodeAction</code> を使います。
+          actionがない、または復号できない場合は400です。 実行後、<code>decodeFormState</code>{" "}
+          がSSRとhydrationの両方へ渡す状態を作ります。 成功時はstatus 200、<code>formState</code>、
           <code>serverFnResult: null</code>{" "}
-          を持つ200の描画へ進み、通常のフォーム要求ではHTMLが返ります。
-          そのformStateをSSRとhydrationの双方へ渡すことでReactのフォーム状態を引き継ぎます。
+          で描画し、通常のドキュメントとしてのフォーム要求にはHTMLを返します。
+          フォーム実行の型付きエラーとフォーム状態の復号エラーは500になります。 POSTルートは{" "}
           <code>ServerFnRequestError</code>{" "}
-          はPOSTルートで捕捉され、指定statusとテキスト本文に変換されます。
+          を関数結果のペイロードにはせず、指定されたstatusとテキスト応答に変換します。
         </p>
-        <h2 id="result-refresh">4. 呼び出し結果を確定してから画面を更新する</h2>
+        <h2 id="result-refresh">4. 呼び出し結果を確定してから画面の更新方法を選ぶ</h2>
         <p>
-          <code>client/call-server.ts</code> の <code>setServerCallback</code>{" "}
-          は呼び出し時の履歴entryまたはURLと単調増加するorderを記録し、<code>encodeReply</code>{" "}
-          した引数をそのURLへPOSTします。
-          <code>FlightClient</code> はServer
-          Functionの非2xxや非Flight応答をエラーにし、欠けた戻り値も <code>ServerFnCallError</code>{" "}
-          になります。 Successなら呼び出し元Promiseを値でresolveし、Failureならrejectします。
-          そのPromiseにReactが先に登録したActionの処理が進んでから、Effrontのrefreshを始める順序です。
+          ブラウザーでは、非2xx応答、Flightではない応答、関数結果の欠落は呼び出しをrejectし、結果に基づく画面更新の経路には進みません。
+          有効なSuccessは呼び出し元のPromiseをその値でresolveします。 有効なFailureは{" "}
+          <code>ServerFnCallError</code> でrejectします。
+          EffrontはPromiseの確定後に継続処理を登録するため、Reactが先に登録したActionの処理が進んでから更新のTransitionを開始します。
+          その後、SuccessもFailureも同じ更新判定へ進みます。
+          失敗は「画面を変えない」という意味ではありません。
+        </p>
+        <p>返されたツリーを再利用できるのは、次の条件がすべて保たれている場合だけです。</p>
+        <ul>
+          <li>応答が、最後に開始した呼び出しに対応している。</li>
+          <li>画面遷移のTransitionが進行中ではない。</li>
+          <li>
+            現在の履歴entryのIDが記録したIDと一致する。
+            呼び出し時にentryがなかった場合は、現在もentryがなく、URLが変わっていない。
+          </li>
+        </ul>
+        <p>
+          既存のルート更新をinterruptした後にも、Effrontは条件を再確認します。
+          後片付けの間に、別の呼び出しや遷移が先へ進む可能性があるためです。
+          応答が使えなくなっていれば、その資源を解放し、代わりに{" "}
+          <code>RouteRefresher.refreshCurrentRoute("server-function")</code> を呼びます。
+          この経路は遷移が落ち着くのを待ち、新たなルート遷移と更新を競合させます。
+          古い応答を無条件に画面へ反映するわけではありません。
         </p>
         <p>
-          成功時にも単純に応答のツリーを上書きするのではありません。
-          最新の呼び出しで、遷移中ではなく、履歴entryまたはURLが呼び出し時と一致するときだけ応答のツリーを採用します。
-          進行中のrefreshをinterruptした後にも条件を再確認します。
-          条件が変わった場合は古い応答をreleaseし、
-          <code>RouteRefresher.refreshCurrentRoute("server-function")</code>{" "}
-          で現在のルートを取得し直します。
-          Failureの戻り値を通知した場合も同じrefresh判定へ進むため、「失敗なら画面更新しない」という実装ではありません。
-        </p>
-        <p>
-          応答を採用する場合は <code>RouteLoader.prepareRefresh</code> でキャッシュを無効化し、
-          <code>startTransition</code> と <code>addTransitionType("server-function")</code>{" "}
-          の中で新しいツリーを公開します。 commit PromiseをそのTransition
-          Actionの戻り値にせず、本文完了とReactのcommitを別Fiberで待ってからキャッシュを保存します。
-          retirementが先ならその待機を終え、いずれも <code>resource.release</code>{" "}
-          で通信資源を閉じます。
-          <code>client/route-refresh.ts</code>{" "}
-          の再取得経路も遷移が落ち着くのを待ち、新たな遷移と競合させるため、更新が別画面を取り戻すことを防ぎます。
-          <a href="/architecture/implementation/navigation">遷移の寿命</a>と照合し、
-          <a href="/architecture/implementation/overview">全体図</a>
-          へ戻ると、定義・HTTP・Flight・ブラウザーが別々の所有権でつながっていることを確認できます。
+          応答を再利用できる場合は、<code>RouteLoader.prepareRefresh</code> がキャッシュを無効化し、
+          <code>startTransition</code> の中でTransition typeを <code>server-function</code>{" "}
+          として新しいツリーを公開します。 公開処理のcommit Promiseを、このTransition
+          Actionの戻り値にはしません。 そこで待つと、待機対象であるcommit自体を妨げるためです。
+          別のscope付きFiberが応答の完了とReactのcommitの両方を待ってからキャッシュを保存します。
+          先に公開がretireされた場合は待機を終了し、どちらの場合も後片付けで応答の資源を解放します。
+          この所有権を<a href="/ja/architecture/implementation/navigation">画面遷移</a>
+          と比較するか、
+          <a href="/ja/architecture/implementation/overview">実装の全体図</a>
+          に戻ると、リクエストからブラウザーまでの流れの中に、この呼び出しを位置付けられます。
         </p>
       </>
     ),

@@ -207,3 +207,18 @@ input {
 [data-doc-page] :where(a) {
   overflow-wrap: anywhere;
 }
+
+/* Comark's standard Shiki output carries both theme values. The site is dark. */
+.dark .docs-markdown pre.shiki span {
+  color: var(--shiki-dark) !important;
+}
+[data-doc-page] pre.shiki {
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+[data-doc-page] pre.shiki code {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+}

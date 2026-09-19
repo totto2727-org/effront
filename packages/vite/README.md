@@ -26,14 +26,14 @@ See the [Workers example Usage](../../examples/workers/README.md#usage) for the 
 Install the integration and its core peer in your Vite application:
 
 ```bash
-npm install @effront/core@0.1.3
-npm install --save-dev @effront/vite@0.1.3 vite
+npm install @effront/core@0.1.4
+npm install --save-dev @effront/vite@0.1.4 vite
 ```
 
 For the standalone Workers configuration below, also install its host integration:
 
 ```bash
-npm install --save-dev @effront/cloudflare@0.1.3
+npm install --save-dev @effront/cloudflare@0.1.4
 ```
 
 ## API
@@ -57,7 +57,7 @@ The plugin owns the React and Vite RSC plugins, so do not register them a second
 It does not install or register a host adapter.
 For native Node or Bun HTTP hosting, register `plugins: [effront(), effrontServer()]` with `effrontServer` from `@effront/server/vite`; see the [server package setup and runtime boundaries](../server/README.md).
 For the experimental native Alchemy integration, register `plugins: [effront(), effrontAlchemy()]` with `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`; see the [Alchemy setup and compatibility limits](../alchemy/README.md).
-Keep application-entry configuration on `effront({ application })`; the Alchemy adapter accepts only `worker` and replaces the RSC input with its native bridge.
+Keep application-entry configuration on `effront({ application })`; the Alchemy adapter accepts only `worker`.
 
 ### `EffrontViteOptions`
 
