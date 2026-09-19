@@ -21,6 +21,7 @@
 
 - Getting started and Guides are for npm consumers, not repository contributors; Platforms owns host-specific setup, and Guides nests application-facing runtime contracts without changing their `/advanced/*` URLs.
 - Write Effront-specific explanations and link generic React/Effect concepts to official documentation. Keep developer commands here or in the authoring guide, not consumer testing pages.
+- Consumer guides describe required steps, observable results, and actionable caveats. Keep internal wiring in Architecture; avoid explanations of mechanisms users do not need to configure or unsupported scenarios unrelated to the guide.
 - Use the existing `@effront/markdown` collection/parser and standard Comark renderer for prose articles; preserve explicit routes and heading IDs and keep loading/parsing in the server graph.
 - Architecture excerpts are authored exact source selections; never read the filesystem, execute Git, or fetch GitHub while rendering pages.
 - Update source excerpts, explanations, and reviewed baseline metadata together when core changes. Tests compare the excerpts to both the current source and the explicit historical baseline.

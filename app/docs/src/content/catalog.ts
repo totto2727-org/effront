@@ -379,7 +379,7 @@ export const articleCatalog = [
       },
       {
         id: "scope",
-        title: "責務の境界",
+        title: "テーマとレイアウト",
       },
     ],
     source: "/guide/styling",
