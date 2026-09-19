@@ -1,9 +1,11 @@
-## 準備 {#setup}
+トップページを作り、URL を割り当てて、ブラウザーで動かしてみましょう。
+このガイドではローカルの Cloudflare Worker を使い、ページやアプリケーションサービスを増やす前に、ひととおり動く Effront アプリケーションを試します。
+すでに別の実行環境を使う予定なら、対応する [プラットフォームのガイド](../platforms.md) でセットアップを進めてください。
 
-まず [Platforms](../platforms.md) で実行環境を選びます。
-以下は standalone Cloudflare の手順です。
-Node.js / Bun を選ぶ場合も [共通のアプリケーション定義](#application) は同じで、その後は [専用の起動手順](../platforms/node-bun.md) へ進んでください。
-VitePlusで管理するアプリケーションに、npmレジストリから必要なパッケージを追加します。 VitePlusの導入方法は [公式ガイド](https://viteplus.dev/guide/) を参照してください。
+## プロジェクトを準備する {#setup}
+
+VitePlus のプロジェクトを用意し、アプリケーションのディレクトリで次のコマンドを実行します。
+VitePlus のインストールとプロジェクトの初期設定は [VitePlus のガイド](https://viteplus.dev/guide/) を参照してください。
 
 ```bash
 vp add @effront/core@0.1.4 effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112
@@ -11,23 +13,14 @@ vp add react@19.3.0 react-dom@19.3.0
 vp add -D @effront/vite@0.1.4 @effront/cloudflare@0.1.4 @vitejs/plugin-rsc@0.5.35 wrangler
 ```
 
-ReactとEffectは、インストールするEffrontのpeer dependenciesに合うバージョンを使います。
-`@vitejs/plugin-rsc` もアプリケーションの開発依存として明示的に追加してください。
+指定したバージョンを変更する場合も、React と Effect は Effront の peer dependencies に合うものを使ってください。
+RSC の連携には、`@vitejs/plugin-rsc` も明示的な開発依存として追加します。
 
-## アプリケーションの構成 {#files}
+## トップページを定義する {#application}
 
-```text
-src/
-  entry.workers.ts # Fetch ハンドラーを公開するエントリ
-  entry.effront.tsx  # ページとルートの定義
-vite.config.ts    # ビルドとホスト統合
-wrangler.jsonc    # Cloudflareの設定
-```
-
-## アプリケーションを書く {#application}
-
-同じ `EFFRONT` 値から Layout、Page、Routes を作り、`EFFRONT.make` でアプリケーションを定義します。
-次の `src/entry.effront.tsx` はサービスを要求しないため `layer` は不要です。
+次の内容で `src/entry.effront.tsx` を作成します。
+Effront のページでは、`render` 関数が React の描画内容を持つ Effect を返します。
+このような固定の見出しなら、`Effect.succeed` で書けます。
 
 ```tsx
 import { Effect } from "effect";
@@ -55,11 +48,14 @@ export default EFFRONT.make({
 });
 ```
 
-`src/entry.effront.tsx` はアプリケーション定義を公開します。ブラウザーのhydration entryはEffrontが提供します。
+最後の `.page("/", HomePage)` がページの URL を決め、`RootLayout` がページの内容を HTML ドキュメントの中に配置します。
+default export では、これらの定義をアプリケーションとしてまとめています。
+後でファイルを分ける場合も、Layout・Page・Routes は同じ `EFFRONT` 値から作成してください。
 
-## ビルド統合と実行 {#run}
+## アプリケーションを Workers に接続する {#files}
 
-`src/entry.workers.ts` にFetchハンドラーを定義します。
+ページは定義できましたが、HTTP リクエストを受け取る入口がまだ必要です。
+`src/entry.workers.ts` を作り、アプリケーションの Fetch ハンドラーを Workers に公開します。
 
 ```typescript
 import { createFetchHandler } from "@effront/core/workers";
@@ -68,7 +64,8 @@ import application from "./entry.effront";
 export default { fetch: createFetchHandler(application) };
 ```
 
-`vite.config.ts` でEffrontとCloudflareのプラグインを登録します。
+この実行環境向けに Vite でビルドできるよう、プロジェクトのルートに `vite.config.ts` を追加します。
+次のプラグインは、ここまでで作成したエントリのファイル名をデフォルトで使います。
 
 ```typescript
 import { effront } from "@effront/vite";
@@ -80,7 +77,11 @@ export default defineConfig({
 });
 ```
 
-`wrangler.jsonc` にアプリケーション名とサーバーエントリを設定します。
+`@vitejs/plugin-rsc` のインストールは必要ですが、このプラグイン一覧には自分で追加しないでください。
+`effront()` が RSC と React の両方のプラグインを登録します。
+
+Vite の設定と同じディレクトリに `wrangler.jsonc` を追加し、Worker の名前とエントリポイントを指定します。
+ビルドしたブラウザー向けファイルを Workers から配信できるよう、`ASSETS` binding を残してください。
 
 ```json
 {
@@ -92,17 +93,31 @@ export default defineConfig({
 }
 ```
 
-アプリケーションのディレクトリから開発サーバーを起動します。
+## 表示を確認して書き換える {#run}
+
+同じアプリケーションのディレクトリから開発サーバーを起動します。
 
 ```bash
 vp dev
 ```
 
-ターミナルに表示されたURLを開くと `Hello, Effront` が表示されます。 ビルド済みのアプリケーションは次のコマンドで確認できます。
+ターミナルに表示された URL を開いてください。
+トップページに `Hello, Effront` が表示されます。
+`HomePage` のこの文章を書き換えて保存し、ページを再読み込みして自分の内容を確認してみましょう。
+これでアプリケーションを作り込む準備ができました。
+表示内容はページで、その外側のドキュメントはレイアウトで編集できます。
+
+開発サーバーではなくビルド済みのアプリケーションを試すには、`vp dev` を終了して次を実行します。
 
 ```bash
 vp build
 vp exec wrangler dev --local --config dist/rsc/wrangler.json
 ```
 
-環境変数やホスト設定の詳細は [Cloudflare](/platforms/cloudflare) のページを参照してください。
+ここでは生成された `dist/rsc/wrangler.json` を使います。
+元の設定にあるソースのエントリではなく、ビルド済みの Worker を指定するためです。
+Wrangler が表示する URL を開き、もう一度トップページを確認してください。
+
+次の手順は、変更したい内容に合わせて選べます。
+[ルーティング](./routes.md) ではページと URL を増やし、[スタイリング](./styling.md) では見た目を整えます。
+環境変数やその他の Workers の設定を進める場合は、[Cloudflare のガイド](/platforms/cloudflare) に進んでください。

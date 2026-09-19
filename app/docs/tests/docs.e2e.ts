@@ -5,6 +5,12 @@ import { architectureBaseline } from "../src/content/architecture-baseline";
 
 const pages = [...articleCatalog, ...corePages];
 
+function articleMetadata(slug: string) {
+  const article = pages.find((candidate) => candidate.slug === slug);
+  if (!article) throw new Error(`Missing browser-test article metadata: ${slug}`);
+  return article;
+}
+
 test.describe("built documentation without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
   for (const article of pages) {
@@ -13,6 +19,7 @@ test.describe("built documentation without JavaScript", () => {
       expect(response?.status()).toBe(200);
       await expect(page).toHaveTitle(`${article.title} | Effront`);
       await expect(page.locator("html")).toHaveClass("dark");
+      await expect(page.locator("html")).toHaveAttribute("lang", "ja");
       await expect(page.locator("article h1")).toHaveText(article.title);
       await expect(page.locator("article")).toHaveAttribute("data-doc-page", article.slug);
       await expect(
@@ -51,11 +58,13 @@ test("styling distinguishes default setup from optional theme and plugin configu
 }) => {
   await page.goto("/guide/styling");
   const article = page.locator("article");
-  await expect(article.locator("h2")).toHaveText([
-    "標準設定で使う",
-    "テーマなどを設定する",
-    "プラグインを追加する",
-  ]);
+  await expect(article.locator("h2")).toHaveText(
+    articleMetadata("/guide/styling").headings.map((heading) => heading.title),
+  );
+  await expect(article.locator("h2")).toHaveCount(3);
+  for (const id of ["setup", "stylesheet", "scope"]) {
+    await expect(article.locator(`h2#${id}`)).toBeVisible();
+  }
   await expect(article).toContainText(
     "CSS ファイルの作成やコンポーネントからの CSS import は不要です",
   );
@@ -63,11 +72,12 @@ test("styling distinguishes default setup from optional theme and plugin configu
     article.locator("pre code").filter({ hasText: "plugins: [effrontTailwind()" }),
   ).toBeVisible();
   await expect(article.locator("pre code").filter({ hasText: "--color-brand" })).toBeVisible();
-  await expect(article).toContainText("Typography は追加プラグインの一例");
-  await expect(article).toContainText("Effront や Markdown の利用に必須ではありません");
+  await expect(article).toContainText(/Typography は[^。]*一例/);
+  await expect(article).toContainText(/Typography は[^。]*Markdown[^。]*必須ではありません/);
   await article.getByRole("link", { name: "Tailwind API", exact: true }).click();
   await expect(page).toHaveURL(/\/api-reference\/tailwind$/);
-  await expect(page.locator("article")).toContainText("設定を変更したい場合にだけ");
+  await expect(page.locator("article")).toContainText("省略可能なオプション");
+  await expect(page.locator("article")).toContainText(/標準設定では CSS ファイルは不要/);
 });
 
 test("Markdown readers can reach the default configuration and find the extension contract", async ({
@@ -75,14 +85,14 @@ test("Markdown readers can reach the default configuration and find the extensio
 }) => {
   await page.goto("/guide/markdown#authoring");
   const article = page.locator("article");
-  await expect(article.getByRole("heading", { name: "標準設定と拡張" })).toBeInViewport();
+  await expect(article.locator("#authoring")).toBeInViewport();
   await expect(article.locator("pre code").filter({ hasText: "linkify: false" })).toBeVisible();
   await expect(article.locator("pre code").filter({ hasText: "plugins: [toc()]" })).toBeVisible();
-  await article.getByRole("link", { name: "本パッケージの標準設定", exact: true }).click();
+  await article.locator('a[href="/api-reference/markdown#parse"]').click();
   await expect(page).toHaveURL(/\/api-reference\/markdown#parse$/);
   await expect(page.locator("article #parse")).toBeInViewport();
   await expect(page.locator("article")).toContainText(
-    "既定プラグインの削除・置き換えを行うオプションはありません",
+    /プラグインを削除・置き換え[^。]*オプションはありません/,
   );
   await expect(page.locator('article a[href="https://comark.dev"]')).toBeVisible();
 });
@@ -99,14 +109,16 @@ test("Markdown search and shell persist across sidebar, article and history navi
   await search.fill("Markdown");
   const sidebar = page.locator('[data-slot="sidebar-content"]');
   await expect(sidebar.getByRole("link")).toHaveCount(2);
-  await sidebar.getByRole("link", { name: "Markdown で記事を書く", exact: true }).click();
+  await sidebar.locator('a[href="/guide/markdown"]').click();
   await expect(page).toHaveURL(/\/guide\/markdown$/);
-  await expect(page.locator("article h1")).toHaveText("Markdown で記事を書く");
-  await expect(sidebar.locator('[aria-current="page"]')).toHaveText("Markdown で記事を書く");
+  await expect(page.locator("article h1")).toHaveText(articleMetadata("/guide/markdown").title);
+  await expect(sidebar.locator('[aria-current="page"]')).toHaveText(
+    articleMetadata("/guide/markdown").title,
+  );
   await page.locator('article a[href="/api-reference/markdown"]').click();
   await expect(page).toHaveURL(/\/api-reference\/markdown$/);
   await expect(page.getByRole("navigation", { name: "パンくずリスト" })).toContainText(
-    "Markdown API",
+    articleMetadata("/api-reference/markdown").title,
   );
   await page.goBack();
   await expect(page).toHaveURL(/\/guide\/markdown$/);
@@ -120,7 +132,7 @@ test("Markdown search and shell persist across sidebar, article and history navi
 test("sidebar DOM and latest scroll position survive article, previous-next and history navigation", async ({
   page,
 }) => {
-  await page.goto("/guide/getting-started");
+  await page.goto("/platforms");
   await page.waitForLoadState("networkidle");
   const sidebar = page.locator('[data-slot="sidebar-content"]');
   const sidebarNode = await sidebar.elementHandle();
@@ -153,10 +165,7 @@ test("Markdown headings scroll natively and highlighted code remains selectable 
   page,
 }) => {
   await page.goto("/platforms/node-bun");
-  await page
-    .getByRole("complementary", { name: "このページ内" })
-    .getByRole("link", { name: "Bun で起動する" })
-    .click();
+  await page.getByRole("complementary", { name: "このページ内" }).locator('a[href="#bun"]').click();
   await expect(page).toHaveURL(/#bun$/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
   const code = page
@@ -179,7 +188,7 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
   await page.getByRole("button", { name: "Toggle Sidebar" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox", { name: "ガイドを絞り込む" }).fill("Markdown");
-  await dialog.getByRole("link", { name: "Markdown で記事を書く", exact: true }).click();
+  await dialog.locator('a[href="/guide/markdown"]').click();
   await expect(page).toHaveURL(/\/guide\/markdown$/);
   await expect(dialog).not.toBeVisible();
   await expect(page.locator("article h1")).toBeVisible();
@@ -193,7 +202,7 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
       document.getAnimations().map((animation) => animation.finished.catch(() => undefined)),
     ),
   );
-  const finalSection = page.getByRole("heading", { name: "標準設定と拡張", exact: true });
+  const finalSection = page.locator("article #authoring");
   await finalSection.scrollIntoViewIfNeeded();
   await expect(finalSection).toBeInViewport();
   await page.goto("/guide/markdown#authoring");
@@ -223,16 +232,14 @@ test("unknown and historical removed routes return real HTML and Flight 404 resp
   }
 });
 
-for (const { retired, canonical, heading } of [
+for (const { retired, canonical } of [
   {
     retired: "/advanced/production-startup",
     canonical: "/platforms",
-    heading: "ビルドと起動の契約",
   },
   {
     retired: "/guide/testing",
     canonical: "/best-practices/testing",
-    heading: "ビルド済みアプリケーションの受け入れ確認",
   },
 ]) {
   for (const accept of ["text/html", "text/x-component"]) {
@@ -251,7 +258,7 @@ for (const { retired, canonical, heading } of [
       expect(followed.status()).toBe(200);
       expect(new URL(followed.url()).pathname).toBe(canonical);
       expect(followed.headers()["content-type"]).toContain(accept);
-      expect(await followed.text()).toContain(heading);
+      expect(await followed.text()).toContain(articleMetadata(canonical).title);
     });
   }
 }
@@ -278,7 +285,8 @@ test.describe("retired startup bookmark without JavaScript", () => {
     await expect(page).toHaveURL(/\/platforms$/);
     await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
     await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
-    await expect(page.locator('a[href="/best-practices/testing#production"]')).toBeVisible();
+    await expect(page.locator("article h2#build-startup")).toBeVisible();
+    await expect(page.locator('article a[href="/platforms/node-bun"]')).toBeVisible();
   });
 });
 
@@ -289,7 +297,7 @@ test("native Flight navigation follows the retired URL while preserving the shel
   await page.waitForLoadState("networkidle");
   const search = await page.getByRole("textbox", { name: "ガイドを絞り込む" }).elementHandle();
   // Simulate an inbound bookmark link without putting the retired URL back in authored navigation.
-  await page.locator('article a[href="/platforms"]').evaluate((link) => {
+  await page.locator('article a[href="/platforms#build-startup"]').evaluate((link) => {
     link.setAttribute("href", "/advanced/production-startup");
   });
   const flight = page.waitForResponse(

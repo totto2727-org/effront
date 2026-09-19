@@ -1,9 +1,16 @@
-Effront のアプリケーション Layer は Effect の HttpRouter を要求できます。 そこに登録した HTTP ルートは Page や Server Function と同じ Fetch ハンドラーで処理されます。 JSON API、ヘルスチェック、外部サービスからの通知など、React の表示とは別の HTTP 応答を返す用途に使います。
+呼び出し元が表示用の Page ではなくデータを必要とする場合は、独自の HTTP ルートを使います。
+既存の Page を残したまま、そこで使うアプリケーションサービスを JSON エンドポイントからも利用できます。
 
-## HttpRouter にルートを登録する {#router}
+この例では、[サービスの章](/guide/effect) のアプリケーションを拡張します。
+`/` は引き続き挨拶を表示し、`GET /api/greeting` はその挨拶を JSON で返します。
+まずエンドポイントを定義し、その登録処理をアプリケーションの Layer に組み込んで応答を確認します。
+その後、両方のルートに共通のレスポンスヘッダーを追加できます。
 
-`HttpRouter.use` で HTTP ルートを登録する Layer を作ります。
-[サービス](/guide/effect) で定義した Greeting を使い、次の `src/http.ts` は `GET /api/greeting` で JSON を返します。
+## JSON エンドポイントを定義する {#router}
+
+`src/http.ts` を作り、次のルート登録処理を記述します。
+`HttpRouter.use` は登録処理にルーターを渡し、`router.add` はメソッドとパスを、応答を生成する Effect に関連付けます。
+ここでは、ハンドラーが `Greeting` サービスの `message("Ada")` を呼び出し、その結果を `message` フィールドを持つオブジェクトにまとめます。
 
 ```typescript
 import { Effect } from "effect";
@@ -22,11 +29,15 @@ export const GreetingApi = HttpRouter.use(
 );
 ```
 
-応答はネイティブの HttpServerResponse で構築します。 たとえば `HttpServerResponse.jsonUnsafe({ accepted: true }, { status: 202 })` は 202 の JSON 応答です。 jsonUnsafe は JSON に変換できる既知の値に使い、入力検証や失敗の扱いは HTTP handler 側で定義してください。 Page や Server Function と異なる URL を選び、`/_effront` の予約領域を避けます。
+独自のエンドポイントのパスは Page や Server Function の URL と重複しないように選び、予約領域の `/_effront` は使わないでください。
+この例では、オブジェクトの値が JSON に変換できる文字列だと分かっているため、`HttpServerResponse.jsonUnsafe` を使います。
+外部からの入力を受け付けるエンドポイントでは、入力を検証し、処理が失敗したときにどのような HTTP 応答を返すかも決めてください。
 
-## Page と HTTP でサービスを共有する {#services}
+## エンドポイントを登録してリクエストを送る {#services}
 
-HTTP 登録処理が要求するサービスを `Layer.provideMerge` で提供します。 単に provide するのではなく merge して出力にも残すことで、Page、Layout、Component、Server Function にも同じサービスを提供できます。 サービスの章の entry.effront.tsx で、`layer: Greeting.layer` の代わりに次の ApplicationLayer を渡します。
+`GreetingApi` をエクスポートするだけでは、アプリケーションには接続されません。
+`src/entry.effront.tsx` で `Greeting.layer` と組み合わせ、既存の `layer: Greeting.layer` の代わりにその結果を `EFFRONT.make` に渡します。
+`EFFRONT` と `routes` は、サービスの章の定義をそのまま使います。
 
 ```typescript
 import { Layer } from "effect";
@@ -39,11 +50,35 @@ const ApplicationLayer = GreetingApi.pipe(Layer.provideMerge(Greeting.layer));
 export default EFFRONT.make({ routes, layer: ApplicationLayer });
 ```
 
-ネイティブの HttpApi や RPC の HTTP ルート登録 Layer も、最終的に同じ HttpRouter へ登録し、要求するサービスを満たす形で合成します。 Effront 専用の API・RPC プロトコルはありません。この章では基本となる HttpRouter の合成を示しています。
+ここでの `Layer.provideMerge` には、HTTP ルートの登録に必要なサービスを提供し、Page でも使えるようにそのサービスを出力に残す、という二つの役割があります。
+これにより、サービスの実装を重複させずに、API と Page が同じサービスの契約を使えます。
 
-## グローバル Middleware を登録する {#global}
+開発中のアプリケーションを起動した状態で、そのオリジンの `/api/greeting` を開き、ブラウザーの Network パネルでリクエストを確認してください。
+ステータスが `200`、`Content-Type` が `application/json` を含み、レスポンスボディが次の内容になっていることを確認します。
 
-`HttpRouter.middleware(handler, { global: true })` はルーター全体へ登録する Layer を返します。`src/application-layer.ts` で HTTP ルートとまとめ、アプリケーションの layer に渡します。
+```json
+{ "message": "こんにちは、Ada さん。" }
+```
+
+`/` も開き、既存の Page が引き続き挨拶を表示することを確認してください。
+この日本語の挨拶はサンプルのサービスが返すもので、どちらの応答でも同じです。
+別のステータスを返したい場合は、`HttpServerResponse.jsonUnsafe({ accepted: true }, { status: 202 })` のように応答に指定します。
+
+## サービスのリソースをリクエスト内で使う {#boundary}
+
+複数のルート定義でサービスを共有しても、そのサービスがサーバー全体で一つのインスタンスになるわけではありません。
+Effront はリクエストごとにアプリケーション Layer を構築します。
+挨拶の実装を、接続などのスコープ付きリソースを取得する実装に置き換える場合は、そのリソースをリクエストの生存期間内だけで使ってください。
+リクエストのスコープはレスポンスボディの読み取り完了、エラー、キャンセルまで維持されるため、レスポンスヘッダーを生成した時点では生存期間は終わりません。
+リクエスト固有のサービスインスタンスを、後のリクエストで使うためにモジュール変数へ保存しないでください。
+
+## Page と API の応答にヘッダーを追加する {#global}
+
+エンドポイントが動作したら、各ハンドラーに処理を追加せずに、応答に共通の設定を適用できます。
+たとえば、次のグローバル Middleware は、Effront のルーターから成功として返された応答に `x-content-type-options: nosniff` を追加します。
+
+この合成した Layer を `src/application-layer.ts` に記述します。
+`src/entry.effront.tsx` では、ローカルの `ApplicationLayer` 定義を `./application-layer` からのインポートに置き換え、引き続き `EFFRONT.make` に渡してください。
 
 ```typescript
 import { Effect, Layer } from "effect";
@@ -62,10 +97,15 @@ export const ApplicationLayer = Layer.mergeAll(GreetingApi, GlobalHeaders).pipe(
 );
 ```
 
-このグローバル Middleware は Effront のルーターに到達した Page、Server Function、ユーザー定義 HTTP と未一致リクエストを対象にします。 ただし、この例の Effect.map がヘッダーを追加するのは、後続の Effect が成功として返した応答だけです。 未一致リクエストは RouteNotFound の失敗となるため、最終的な 404 応答にはこの例のヘッダーは付きません。 失敗時の応答も変更したい場合は、対象の HTTP エラーを扱って応答へ変換する処理を別途定義してください。[スコープ付き Middleware](/guide/middleware) のように特定の Routes の内側だけへ限定されません。
+`/api/greeting` と `/` にもう一度リクエストを送り、両方の応答に新しいヘッダーが含まれることを確認してください。
+`global: true` を指定すると、Page、Server Function、ユーザー定義 HTTP ルート、未一致リクエストを含むルーター全体に Middleware が適用されます。
+特定の Routes のスコープだけに設定を適用したい場合は、[スコープ付き Middleware](/guide/middleware) を使います。
 
-## Fetch の境界とリソースの生存期間 {#boundary}
+ただし、Middleware が適用される範囲と、この例で実際に変更される応答は区別する必要があります。
 
-「グローバル」はこの Fetch 内のルーターに対する範囲です。 ホストが Effront の Fetch を呼ぶ前に処理する応答には適用されません。 ホストが直接配信する静的アセットにはこの Layer の Middleware を適用できないため、アセットの共通ヘッダーはホスト側で設定します。 Fetch ランタイムがルーターの起動前に返すリクエストサイズ超過の 413 も対象外です。
-
-アプリケーション Layer はリクエストごとに構築され、同じリクエストの処理にサービスを提供します。 スコープの解放は Response body の読み取り完了、エラー、キャンセルに結び付きます。 常駐サーバー全体の終了時までサービスが生存する、という契約ではありません。 ホストとの接続方法は [プラットフォーム](/platforms) を参照してください。
+- `Effect.map` が変更するのは、後続の Effect が成功として返した応答だけです。
+  未一致リクエストは `RouteNotFound` の失敗となるため、最終的な 404 応答にはこのヘッダーが付きません。
+  エラー応答も変更するには、対象の HTTP エラーを扱い、応答へ変換してください。
+- ルーターの起動前に返される応答は、この Middleware を通りません。
+  ホストが直接配信する静的アセットや、サイズ超過のリクエストに対してランタイムが先に返す 413 応答が該当します。
+  アセットのヘッダーは、アセットを配信するホスト側で設定してください。

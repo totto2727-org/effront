@@ -12,7 +12,8 @@ export interface DocPage {
     | "Guides"
     | "Best practices"
     | "API reference"
-    | "アーキテクチャ";
+    | "アーキテクチャ"
+    | "Architecture";
   readonly group?: string;
   readonly headings: readonly { readonly id: string; readonly title: string }[];
   readonly content: () => ReactNode;

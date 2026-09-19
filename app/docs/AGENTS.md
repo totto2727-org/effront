@@ -2,7 +2,7 @@
 
 ## Repository structure
 
-- `src/content/articles/`: authored consumer Markdown, with typed route/navigation metadata in `src/content/catalog.ts`; architecture source chapters remain JSX in `src/content/`.
+- `src/content/en/articles/` and `src/content/articles/`: original English consumer Markdown and Japanese translations, with separate typed catalogs; English Architecture chapters live in `src/content/en/architecture/` and Japanese chapters alongside shared excerpts in `src/content/`.
 - `src/entry.effront.tsx`: explicit routes and shared layout.
 - `docs/AUTHORING.md`: site operation, page authoring, baseline metadata, and site-specific verification.
 
@@ -21,6 +21,7 @@
 
 - Getting started and Guides explain Effront features for npm consumers, not repository contributors. Platforms owns host-specific setup; Best practices owns testing and other application-development recommendations without implying a framework-specific API. Guides nests application-facing runtime contracts without changing their `/advanced/*` URLs.
 - Write Effront-specific explanations and link generic React/Effect concepts to official documentation. Keep developer commands here or in the authoring guide, not consumer testing pages.
+- Author English from the verified API and reader task, review it, then translate it into Japanese. Keep both catalogs, stable heading IDs, and examples aligned; validate `/en` and `/ja` without falling back to another language.
 - Consumer guides describe required steps, observable results, and actionable caveats. Keep internal wiring in Architecture; avoid explanations of mechanisms users do not need to configure or unsupported scenarios unrelated to the guide.
 - Use the existing `@effront/markdown` collection/parser and standard Comark renderer for prose articles; preserve explicit routes and heading IDs and keep loading/parsing in the server graph.
 - Architecture excerpts are authored exact source selections; never read the filesystem, execute Git, or fetch GitHub while rendering pages.

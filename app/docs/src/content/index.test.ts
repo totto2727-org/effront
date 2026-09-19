@@ -2,11 +2,20 @@ import { readFileSync, readdirSync } from "node:fs";
 import { Effect } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { getPage, navigation, pages } from "./index";
+import { getPage, localizedNavigation, localizedPages, navigation, pages } from "./index";
 import { articleCatalog } from "./catalog";
+import { englishArticleCatalog } from "./en/catalog";
+import { documentLocale, documentPath, localizedPath } from "./locale";
 
-const render = async (slug: string) =>
-  renderToStaticMarkup(await Effect.runPromise(getPage(slug).content()));
+const renderedPages = new Map<string, Promise<string>>();
+function render(slug: string) {
+  let html = renderedPages.get(slug);
+  if (!html) {
+    html = Effect.runPromise(getPage(slug).content()).then(renderToStaticMarkup);
+    renderedPages.set(slug, html);
+  }
+  return html;
+}
 const text = async (slug: string) => (await render(slug)).replace(/<[^>]*>/g, "");
 
 // These are published URLs, not a count that can silently hide a removed article.
@@ -53,7 +62,7 @@ const retainedUrls = [
 
 describe("documentation catalog", () => {
   it("preserves published URLs and unique serializable navigation metadata", () => {
-    expect(pages.map((page) => page.slug)).toEqual(expect.arrayContaining(retainedUrls));
+    expect(pages.map((page) => page.slug).toSorted()).toEqual(retainedUrls.toSorted());
     expect(new Set(pages.map((page) => page.slug)).size).toBe(pages.length);
     expect(JSON.parse(JSON.stringify(navigation))).toEqual(navigation);
     expect([...new Set(pages.map((page) => page.section))]).toEqual([
@@ -87,12 +96,11 @@ describe("documentation catalog", () => {
     expect(
       pages.filter((page) => page.section === "Best practices").map((page) => page.slug),
     ).toEqual(["/best-practices/testing"]);
-    expect(getPage("/best-practices/testing").headings.map((heading) => heading.id)).toEqual([
-      "services",
-      "pages",
-      "production",
-      "tools",
-    ]);
+    expect(
+      getPage("/best-practices/testing")
+        .headings.map((heading) => heading.id)
+        .toSorted(),
+    ).toEqual(["pages", "production", "services", "tools"]);
     expect(navigation.map((page) => page.slug)).not.toContain("/guide/testing");
     expect(() => getPage("/guide/testing")).toThrow("Documentation route is missing content");
   });
@@ -104,6 +112,52 @@ describe("documentation catalog", () => {
     );
     expect(articleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
     expect(() => getPage("/index")).toThrow("Documentation route is missing content");
+    const englishSources = Object.keys(import.meta.glob("./en/articles/**/*.md"));
+    expect(
+      englishArticleCatalog.map((page) => `./en/articles${page.source}.md`).toSorted(),
+    ).toEqual(englishSources.toSorted());
+    expect(englishArticleCatalog.map((page) => page.slug).toSorted()).toEqual(
+      articleCatalog.map((page) => page.slug).toSorted(),
+    );
+    expect(englishArticleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
+    for (const locale of ["ja", "en"] as const) {
+      expect(() => getPage(`/${locale}/index`)).toThrow("Documentation route is missing content");
+    }
+  });
+
+  it.each(["ja", "en"] as const)(
+    "registers every published page and serializable navigation item in %s",
+    (locale) => {
+      const items = localizedNavigation(locale);
+      const expectedSlugs = retainedUrls.map((slug) => localizedPath(slug, locale));
+      expect(items.map((item) => item.slug).toSorted()).toEqual(expectedSlugs.toSorted());
+      expect(JSON.parse(JSON.stringify(items))).toEqual(items);
+      for (const item of items) {
+        const { slug, title, section, group } = getPage(item.slug);
+        expect(item).toEqual({ slug, title, section, ...(group ? { group } : {}) });
+        expect(title.trim()).not.toBe("");
+        expect(section.trim()).not.toBe("");
+        expect(getPage(item.slug).description.trim()).not.toBe("");
+      }
+      expect(
+        items.filter((item) => documentPath(item.slug).startsWith("/architecture/implementation/")),
+      ).toHaveLength(7);
+      for (const retired of ["/advanced/production-startup", "/guide/testing"]) {
+        expect(() => getPage(localizedPath(retired, locale))).toThrow(
+          "Documentation route is missing content",
+        );
+      }
+    },
+  );
+
+  it("keeps localized pages unique and distinct from the legacy Japanese aliases", () => {
+    expect(localizedPages).toHaveLength(retainedUrls.length * 2);
+    const allPages = [...pages, ...localizedPages];
+    expect(new Set(allPages.map((page) => page.slug)).size).toBe(allPages.length);
+    for (const page of localizedPages) {
+      expect(page.slug).toMatch(/^\/(en|ja)(?:\/[a-z-]+)*$/);
+      expect(getPage(page.slug)).toBe(page);
+    }
   });
 
   it("keeps conceptual guides host-neutral and provides a complete selectable quickstart", async () => {
@@ -127,61 +181,89 @@ describe("documentation catalog", () => {
       "nodejs_compat",
       "entry.workers.ts",
       "dist/rsc/wrangler.json",
-      "Node.js / Bun",
+      "Application.effront()",
+      "EFFRONT.Page.make",
+      "ASSETS",
+      "Hello, Effront",
     ]) {
       expect(start).toContain(required);
     }
     expect(start).not.toMatch(/vp install|チェックアウト|workspace依存/);
     expect(await text("/best-practices/testing")).toContain("フォーム送信");
-    for (const diagnostic of ["TS2769", "TS2345", "TS2322"]) {
-      expect(await text("/guide/effect")).toContain(diagnostic);
+    const effect = await render("/guide/effect");
+    for (const contract of ["Context.Service", "Layer", "Application.effront"]) {
+      expect(effect.replace(/<[^>]*>/g, "")).toContain(contract);
     }
+    expect(effect).toContain('href="https://effect.website/');
   });
 
   it("describes implemented hosts and separates Bun production from Vite middleware", async () => {
-    expect(await text("/platforms")).toContain("@effront/server");
-    expect(await text("/platforms")).toContain("Vercel と AWS の専用アダプターは提供していません");
+    const platforms = await render("/platforms");
+    for (const host of ["cloudflare", "alchemy", "node-bun"]) {
+      expect(platforms).toContain(`href="/platforms/${host}"`);
+    }
+    for (const adapter of ["@effront/cloudflare", "@effront/alchemy", "@effront/server"]) {
+      expect(platforms).toContain(adapter);
+    }
     const native = await text("/platforms/node-bun");
     for (const required of [
       "node dist/rsc/server.js",
       "bun dist/rsc/server.js",
-      "Node 互換",
       "Bun 1.4.2",
       "@effect/platform-node",
+      "@effect/platform-bun",
       "effrontServer()",
       "Layer.launch",
+      "dist/client/assets",
+      "vp dev",
     ]) {
       expect(native).toContain(required);
     }
-    expect(await text("/platforms")).toContain(
-      "SSR モジュールとブラウザーアセットを含む成果物全体",
+    expect(await render("/platforms/node-bun")).toContain(
+      'href="/best-practices/testing#production"',
     );
-    expect(await text("/best-practices/testing")).toContain("JavaScript 無効時のフォーム送信");
-    expect(await text("/platforms/alchemy")).toContain("profile が必要");
-    expect(await text("/advanced/request-runtime-and-lifetimes")).toContain(
-      "ハンドラーを作り、リクエスト間で再利用",
-    );
-  });
-
-  it("indexes every public package export and the manifest release version", async () => {
-    const html = await render("/api-reference");
-    const root = new URL("../../../../packages/", import.meta.url);
-    for (const name of readdirSync(root)) {
-      const manifest = JSON.parse(readFileSync(new URL(`${name}/package.json`, root), "utf8")) as {
-        name: string;
-        version: string;
-        exports: Record<string, unknown>;
-      };
-      expect(html).toContain(manifest.version);
-      for (const subpath of Object.keys(manifest.exports).filter(
-        (path) => !path.includes("/internal/"),
-      )) {
-        expect(html).toContain(
-          subpath === "." ? manifest.name : `${manifest.name}${subpath.slice(1)}`,
-        );
-      }
+    const testing = await render("/best-practices/testing");
+    expect(testing).toContain('href="https://playwright.dev/docs/test-webserver"');
+    expect(testing).toContain('href="/guide/server-functions"');
+    expect(testing).toContain("JavaScript");
+    const alchemy = await render("/platforms/alchemy");
+    expect(alchemy).toContain("profile");
+    expect(alchemy).toContain('href="https://alchemy.run/');
+    const lifetime = await text("/advanced/request-runtime-and-lifetimes");
+    for (const contract of [
+      "Effect.acquireRelease",
+      "createFetchHandler",
+      "Effect.scoped",
+      "makeHttpEffect",
+    ]) {
+      expect(lifetime).toContain(contract);
     }
   });
+
+  it.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
+    "%s indexes every public package export and the manifest release version",
+    async (slug) => {
+      const html = await render(slug);
+      const root = new URL("../../../../packages/", import.meta.url);
+      for (const name of readdirSync(root)) {
+        const manifest = JSON.parse(
+          readFileSync(new URL(`${name}/package.json`, root), "utf8"),
+        ) as {
+          name: string;
+          version: string;
+          exports: Record<string, unknown>;
+        };
+        expect(html).toContain(manifest.version);
+        for (const subpath of Object.keys(manifest.exports).filter(
+          (path) => !path.includes("/internal/"),
+        )) {
+          expect(html).toContain(
+            subpath === "." ? manifest.name : `${manifest.name}${subpath.slice(1)}`,
+          );
+        }
+      }
+    },
+  );
 
   it("keeps Markdown caveats and server-only highlighting visible", async () => {
     const html = await render("/guide/markdown");
@@ -189,13 +271,18 @@ describe("documentation catalog", () => {
     expect(html).toContain('data-code-block=""');
     expect(html).toContain('tabindex="0"');
     expect(html).toContain("--shiki-dark");
-    expect(html).toContain("未信頼の投稿を安全化する機能としては使わないでください");
-    expect(html).toContain("標準設定と拡張");
+    expect(html).toContain("createMarkdownCollection");
+    expect(html).toContain("parseMarkdown");
+    expect(html).toContain('href="https://comark.dev/rendering/react"');
     expect(html).toContain('href="/api-reference/markdown#parse"');
     const reference = await render("/api-reference/markdown");
     expect(reference).toContain("sanitizer");
-    expect(reference).toContain("Math / Mermaid SSR");
+    expect(reference).toContain("Mermaid");
+    expect(reference).toContain("SSR");
     expect(html).toContain("MarkdownError");
+    const englishReference = await text("/en/api-reference/markdown");
+    expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
+    expect(englishReference).toMatch(/\b(?:not|cannot)\b[^.]*Math[^.]*Mermaid[^.]*SSR/i);
   });
 
   it("retains all seven authored architecture chapters under their implementation group", () => {
@@ -208,28 +295,62 @@ describe("documentation catalog", () => {
     expect(pages.some((page) => page.slug.startsWith("/reading/"))).toBe(false);
   });
 
-  it("rejects missing content instead of silently rendering another page", () => {
-    expect(() => getPage("/not-a-document")).toThrow("Documentation route is missing content");
+  it.each(
+    localizedPages.filter((page) => page.slug.startsWith("/en/architecture/implementation/")),
+  )("$slug labels every source excerpt in English", async (page) => {
+    const html = await render(page.slug);
+    const excerpts = [
+      ...html.matchAll(/<figure\b[^>]*data-core-source="([^"]+)"[^>]*>([\s\S]*?)<\/figure>/g),
+    ];
+    expect(excerpts.length).toBeGreaterThan(0);
+    for (const [, path, figure] of excerpts) {
+      const caption = figure?.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/)?.[1];
+      expect([`Excerpt from ${path}`, `${path} excerpt`]).toContain(
+        caption?.replace(/<[^>]*>/g, "").trim(),
+      );
+    }
   });
 
-  it.each(pages)(
+  it("rejects missing content instead of silently rendering another page", () => {
+    for (const slug of [
+      "/not-a-document",
+      "/en/not-a-document",
+      "/ja/not-a-document",
+      "/fr/guide/routes",
+    ]) {
+      expect(() => getPage(slug)).toThrow(`Documentation route is missing content: ${slug}`);
+    }
+  });
+
+  it.each([...pages, ...localizedPages])(
     "$slug renders every table-of-contents target and valid internal links",
     async (page) => {
       const html = await render(page.slug);
       expect(page.headings.length).toBeGreaterThan(0);
       const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
       expect(new Set(ids).size).toBe(ids.length);
+      const headingIds = [...html.matchAll(/<h[2-6]\b[^>]*\bid="([^"]+)"/g)].map(
+        (match) => match[1],
+      );
+      expect(headingIds).toEqual(page.headings.map((heading) => heading.id));
       for (const heading of page.headings) {
         expect(heading.id).toMatch(/^[a-z][a-z0-9-]*$/);
         expect(ids).toContain(heading.id);
       }
       for (const [, href] of html.matchAll(/href="([^"]+)"/g)) {
-        if (!href || (!href.startsWith("/") && !href.startsWith("#"))) continue;
+        if (!href || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href)) continue;
         const url = new URL(href, `https://docs.example${page.slug}`);
         const target = getPage(url.pathname);
+        if (/^\/(en|ja)(?:\/|$)/.test(page.slug)) {
+          expect(target.slug, `${page.slug} -> ${href}`).toBe(
+            localizedPath(target.slug, documentLocale(page.slug)),
+          );
+        }
         if (url.hash) {
           const targetHtml = url.pathname === page.slug ? html : await render(target.slug);
-          expect(targetHtml, `${page.slug} -> ${href}`).toContain(`id="${url.hash.slice(1)}"`);
+          expect(targetHtml, `${page.slug} -> ${href}`).toContain(
+            `id="${decodeURIComponent(url.hash.slice(1))}"`,
+          );
         }
       }
     },

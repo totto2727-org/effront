@@ -1,18 +1,30 @@
-## Markdown を選ぶ {#setup}
+記事本文をアプリケーションのページコンポーネントとは分けて編集したいときは、Markdown を使えます。
+`@effront/markdown` を使うと、プロジェクト内のファイルを Page に表示し、ほかの記事やアセットへのリンクも解決できます。
+記事を表示する URL と、その記事を囲むレイアウトはアプリケーションで決めます。
 
-`@effront/markdown` は Vite が読み込んだ文書から collection を作り、Comark の標準 document を返します。
-記事本文は Markdown、ルーティング・レイアウト・ナビゲーションはアプリケーションで管理します。
+まずは1つの記事を `/manual/intro` に表示しましょう。
+表示できたら、Page の描画コードを置き換えることなく、リンク先の記事を増やしたり Markdown の解析方法を変えたりできます。
+
+## 最初の記事を用意する {#setup}
+
+このガイドでは、[はじめる](./getting-started.md#application)で示した `EFFRONT` と RootLayout を含む Effront アプリケーションがあることを前提とします。
+collection と parser のパッケージ、および解析結果を表示する React コンポーネントを追加します。
 
 ```bash
 vp add @effront/markdown@0.1.4 @comark/react@0.6.2
 ```
 
-collection と parser はサーバー側のモジュールから import し、Client Component には読み込まないでください。
+`src/content/intro.md` を作り、公開したい記事を書きます。
+Markdown の構文は [Comark ドキュメント](https://comark.dev)を参照してください。
+parser は未信頼の投稿を安全化する機能ではないため、信頼できる著者が管理するコンテンツを使ってください。
 
-## Vite の collection {#collection}
+collection と parser は Client Component ではなく、サーバー側のモジュールで扱います。
+Cloudflare Workers では、ホストの設定で `nodejs_compat` を有効にしてください。
 
-`src/manual.ts` の隣に `src/content/intro.md` と `src/content/details.md` を置きます。
-`intro.md` に `[詳細](./details.md#example)` と書くと、公開 URL は `/manual/details#example` になります。
+## Page から記事を取得できるようにする {#collection}
+
+`content` ディレクトリの隣に `src/manual.ts` を作ります。
+次の collection は Markdown ファイルに `/manual` の URL プレフィックスを対応させ、読み込んだアセットを相対リンクから参照できるようにします。
 
 ```typescript
 import { createMarkdownCollection } from "@effront/markdown";
@@ -34,21 +46,22 @@ export const manual = createMarkdownCollection({
 });
 ```
 
-両方の glob は同じ `base` を使います。
-文書やアセットへの相対リンクは公開 URL に変換されます。
-`intro.md` は `/manual/intro`、`index.md` は `/manual/index` です。
-index の暗黙 alias はありません。`/` などの別 URL はアプリケーションが明示的に対応させます。
+`documents` は各記事の本文を、`assets` は画像やダウンロード用ファイルの URL を読み込みます。
+共通のコンテンツディレクトリを基準に参照を解決できるよう、両方の glob に同じ `base` を使ってください。
+記事がローカルのアセットを参照しない場合は、`assets` を省略できます。
 
-## Page の Effect で描画する {#render}
+この collection では、`intro.md` を `/manual/intro` として取得できます。
+ただし、取得できるようになっただけなので、次にアプリケーションのルートと結び付けます。
 
-collection の `get()` は未登録 URL に `undefined` を返します。
-以下は明示的な `/manual/intro` Page の例で、未登録のルートは通常の Effront 404 です。
-`EFFRONT` と RootLayout は [はじめる](./getting-started.md#application) と同じ値を使い、`Routes.page("/manual/intro", IntroPage)` へ登録します。
+## 記事を表示し、関連ページをつなぐ {#render}
+
+`src/entry.effront.tsx` では、「はじめる」で作成した `EFFRONT`、`RootLayout`、`HomePage` と `Effect` の import を残します。
+次の import を追加し、default export より前に `IntroPage` を定義します。
+この Page は記事を選択し、Effect 内で解析して、その結果を Comark の `MarkdownDocument` に渡します。
 
 ```tsx
 import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import { parseMarkdown } from "@effront/markdown";
-import { Effect } from "effect";
 import { manual } from "./manual";
 
 const IntroPage = EFFRONT.Page.make({
@@ -59,7 +72,7 @@ const IntroPage = EFFRONT.Page.make({
       if (!entry) throw new TypeError("Registered article is missing");
       const document = yield* parseMarkdown(entry);
       return (
-        <article className="prose">
+        <article>
           <MarkdownDocument value={document} />
         </article>
       );
@@ -67,25 +80,45 @@ const IntroPage = EFFRONT.Page.make({
 });
 ```
 
-catch-all ルートでは HTTP middleware で lookup し、見つからなければ描画・streaming の開始前に 404 を返してください。
-[完全な collection example](https://github.com/totto2727-org/effront/blob/main/examples/markdown/src/entry.effront.tsx) は request-local な記事選択を示しています。
-collection と parse の失敗は `MarkdownError`、通常の lookup miss は `undefined` です。
+既存の default export を、次のルート登録に置き換えます。
+ホームページを残したまま、記事のルートを追加できます。
 
-## 標準設定と拡張 {#authoring}
+```tsx
+export default EFFRONT.make({
+  routes: EFFRONT.Routes.make({ layout: RootLayout })
+    .page("/", HomePage)
+    .page("/manual/intro", IntroPage),
+});
+```
 
-設定を変えない場合は `parseMarkdown(entry)` を使います。
-[本パッケージの標準設定](../api-reference/markdown.md#parse)をそのまま利用できます。
-Markdown の構文や Comark 自体の設定は [Comark 公式ドキュメント](https://comark.dev)を参照してください。
+`/manual/intro` を開き、レイアウトの中に記事本文が表示されることを確認してください。
+余白や色などの見た目を変える場合は、[スタイリング](./styling.md)に進んでください。
 
-設定を変更する場合は、第2引数に Comark の `ParserOptions` を渡します。
-例えば URL の自動リンク化を無効にする場合は、次のように指定します。
+2つ目の記事をつなぐには、`src/content/details.md` を追加し、同じ方法で `/manual/details` の Page を登録します。
+`intro.md` に `[詳細](./details.md#example)` と書いたリンクは、`/manual/details#example` を指します。
+画像やファイルへの相対参照も collection に読み込んだアセットを使うため、参照先の各ファイルを対応する glob に含めてください。
+
+ルートを決めるときは、collection がファイル名から取り除くのは `.md` だけであることに注意してください。
+`index.md` は `/manual` ではなく `/manual/index` に対応します。
+別の URL を使うには、アプリケーションのルートと該当する文書を明示的に対応させます。
+
+記事が増えた場合は、[collection の実装例](https://github.com/totto2727-org/effront/blob/main/examples/markdown/src/entry.effront.tsx)のように、記事ごとのルート登録を catch-all ルートに置き換えられます。
+その場合は HTTP middleware でリクエストされた記事を探し、見つからなければ描画やストリーミングの開始前に 404 を返してください。
+記事が見つからない場合、`get()` は `undefined` を返しますが、collection の作成・解析・参照の解決に失敗した場合は Effect のエラーチャネルに `MarkdownError` が返ります。
+上の固定ルートの例では、`intro.md` が欠けていることを、訪問者が未知の URL を指定したケースではなく設定ミスとして扱っています。
+
+## 標準設定を使い、必要に応じて解析を変える {#authoring}
+
+上の Page では parser の設定は不要で、`parseMarkdown(entry)` が [Effront の標準設定](../api-reference/markdown.md#parse)を使います。
+まずはこの設定を使い、変更したい項目があるときに Comark の `ParserOptions` を第2引数に渡してください。
+例えば URL の自動リンク化は次のように無効にできます。
 
 ```typescript
 const document = yield * parseMarkdown(entry, { linkify: false });
 ```
 
-プラグインを追加する場合は `plugins` に指定します。
-例えば Comark の TOC プラグインを追加する場合は、次のように設定します。
+解析機能を追加するには、同じオプションのオブジェクトでプラグインを指定します。
+次の例では Comark の目次プラグインを追加しています。
 
 ```typescript
 import toc from "comark/plugins/toc";
@@ -93,9 +126,8 @@ import toc from "comark/plugins/toc";
 const document = yield * parseMarkdown(entry, { plugins: [toc()] });
 ```
 
-Comark のプラグインを直接 import する場合は、アプリケーションにも `comark@0.6.2` を追加してください。
-指定したプラグインは Effront の既定プラグインの後に追加され、既定プラグインを置き換えません。
-描画用コンポーネントの設定は [Comark の React renderer](https://comark.dev/rendering/react)、CSS の設定は [スタイリング](./styling.md) を参照してください。
+Comark のプラグインを直接 import する場合は、アプリケーションの依存関係に `comark@0.6.2` を追加してください。
+指定したプラグインは Effront の既定プラグインの後に追加され、既定プラグインを削除・置き換えするものではありません。
 
-信頼できる著者の Markdown を対象とし、未信頼の投稿を安全化する機能としては使わないでください。
-API の詳細と参照の制約は [Markdown reference](../api-reference/markdown.md) にまとめています。
+parser のオプションは文書の生成方法を、コンポーネントのマッピングは表示方法を制御します。
+描画用コンポーネントの変更は [Comark の React renderer ドキュメント](https://comark.dev/rendering/react)、Effront の API と参照の解決に関する制約は [Markdown reference](../api-reference/markdown.md)を参照してください。

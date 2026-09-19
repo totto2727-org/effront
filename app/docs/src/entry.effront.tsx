@@ -2,7 +2,8 @@ import { Context, Effect, Layer } from "effect";
 import { Application } from "@effront/core";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { DocsShell } from "./components/docs-shell";
-import { getPage, navigation } from "./content";
+import { getPage, navigation, localizedNavigation } from "./content";
+import { documentLocale, documentPath, localizedPath } from "./content/locale";
 import { architectureBaseline } from "./content/architecture-baseline";
 
 class RequestPath extends Context.Service<RequestPath, string>()("app/docs/RequestPath") {}
@@ -20,13 +21,22 @@ const RetiredArticleRedirects = HttpRouter.middleware(
       const request = yield* HttpServerRequest.HttpServerRequest;
       const url = new URL(request.url, "https://effront.local");
       if (request.method === "GET" || request.method === "HEAD") {
-        if (url.pathname === "/advanced/production-startup") {
-          return HttpServerResponse.redirect(`/platforms${url.search}`, { status: 308 });
-        }
-        if (url.pathname === "/guide/testing") {
-          return HttpServerResponse.redirect(`/best-practices/testing${url.search}`, {
+        const canonicalPath = documentPath(url.pathname);
+        const prefixed = /^\/(en|ja)(?:\/|$)/.test(url.pathname);
+        const destination = (path: string) =>
+          prefixed ? localizedPath(path, documentLocale(url.pathname)) : path;
+        if (canonicalPath === "/advanced/production-startup") {
+          return HttpServerResponse.redirect(`${destination("/platforms")}${url.search}`, {
             status: 308,
           });
+        }
+        if (canonicalPath === "/guide/testing") {
+          return HttpServerResponse.redirect(
+            `${destination("/best-practices/testing")}${url.search}`,
+            {
+              status: 308,
+            },
+          );
         }
       }
       return yield* httpEffect;
@@ -39,8 +49,10 @@ const RootLayout = EFFRONT.Layout.make({
     Effect.map(RequestPath, (pathname) => {
       // The shared layout keeps its client state while each request refreshes page metadata.
       const page = getPage(pathname);
+      const locale = documentLocale(pathname);
+      const prefixed = /^\/(en|ja)(?:\/|$)/.test(pathname);
       return (
-        <html lang="ja" className="dark">
+        <html lang={locale} className="dark">
           <head>
             <meta charSet="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -53,7 +65,8 @@ const RootLayout = EFFRONT.Layout.make({
                 section: page.section,
                 group: page.group,
               }}
-              navigation={navigation}
+              navigation={prefixed ? localizedNavigation(locale) : navigation}
+              locale={locale}
               headings={page.headings}
             >
               {children}
@@ -84,19 +97,23 @@ function documentPage(slug: string) {
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>
                 <p className="mt-4 text-base leading-8 text-muted-foreground">{page.description}</p>
               </header>
-              {page.section === "アーキテクチャ" && (
+              {(page.section === "アーキテクチャ" || page.section === "Architecture") && (
                 <aside
                   className="not-prose mb-8 rounded-lg border p-4 text-sm leading-7 text-muted-foreground"
                   data-architecture-baseline={architectureBaseline.commit}
                 >
                   <p>
-                    解説対象: <code>@effront/core@{architectureBaseline.version}</code>
+                    {documentLocale(page.slug) === "en" ? "Source version: " : "解説対象: "}
+                    <code>@effront/core@{architectureBaseline.version}</code>
                   </p>
                   <p>
-                    基準コミット: <code className="break-all">{architectureBaseline.commit}</code>
+                    {documentLocale(page.slug) === "en" ? "Baseline commit: " : "基準コミット: "}
+                    <code className="break-all">{architectureBaseline.commit}</code>
                   </p>
                   <p>
-                    確認日: {architectureBaseline.reviewedOn}。この版の実装を基準に解説しています。
+                    {documentLocale(page.slug) === "en"
+                      ? `Reviewed on ${architectureBaseline.reviewedOn}. This chapter explains the implementation at this baseline.`
+                      : `確認日: ${architectureBaseline.reviewedOn}。この版の実装を基準に解説しています。`}
                   </p>
                 </aside>
               )}
@@ -176,5 +193,135 @@ export default EFFRONT.make({
     .page(
       "/architecture/implementation/server-functions",
       documentPage("/architecture/implementation/server-functions"),
+    )
+    .page("/ja", documentPage("/ja"))
+    .page("/ja/guide/getting-started", documentPage("/ja/guide/getting-started"))
+    .page("/ja/guide/routes", documentPage("/ja/guide/routes"))
+    .page("/ja/guide/components", documentPage("/ja/guide/components"))
+    .page("/ja/guide/effect", documentPage("/ja/guide/effect"))
+    .page("/ja/platforms", documentPage("/ja/platforms"))
+    .page("/ja/platforms/node-bun", documentPage("/ja/platforms/node-bun"))
+    .page("/ja/platforms/alchemy", documentPage("/ja/platforms/alchemy"))
+    .page("/ja/guide/markdown", documentPage("/ja/guide/markdown"))
+    .page("/ja/guide/styling", documentPage("/ja/guide/styling"))
+    .page("/ja/api-reference/http", documentPage("/ja/api-reference/http"))
+    .page("/ja/api-reference/server", documentPage("/ja/api-reference/server"))
+    .page("/ja/api-reference/markdown", documentPage("/ja/api-reference/markdown"))
+    .page("/ja/api-reference/alchemy", documentPage("/ja/api-reference/alchemy"))
+    .page("/ja/api-reference/tailwind", documentPage("/ja/api-reference/tailwind"))
+    .page("/ja/platforms/cloudflare", documentPage("/ja/platforms/cloudflare"))
+    .page("/ja/best-practices/testing", documentPage("/ja/best-practices/testing"))
+    .page("/ja/guide/server-functions", documentPage("/ja/guide/server-functions"))
+    .page("/ja/guide/middleware", documentPage("/ja/guide/middleware"))
+    .page("/ja/guide/http", documentPage("/ja/guide/http"))
+    .page("/ja/advanced", documentPage("/ja/advanced"))
+    .page(
+      "/ja/advanced/request-runtime-and-lifetimes",
+      documentPage("/ja/advanced/request-runtime-and-lifetimes"),
+    )
+    .page("/ja/advanced/client-navigation", documentPage("/ja/advanced/client-navigation"))
+    .page(
+      "/ja/advanced/server-function-execution-and-refresh",
+      documentPage("/ja/advanced/server-function-execution-and-refresh"),
+    )
+    .page("/ja/api-reference", documentPage("/ja/api-reference"))
+    .page("/ja/api-reference/application", documentPage("/ja/api-reference/application"))
+    .page("/ja/api-reference/components", documentPage("/ja/api-reference/components"))
+    .page("/ja/api-reference/routing", documentPage("/ja/api-reference/routing"))
+    .page("/ja/api-reference/server-functions", documentPage("/ja/api-reference/server-functions"))
+    .page("/ja/api-reference/workers", documentPage("/ja/api-reference/workers"))
+    .page("/ja/api-reference/vite", documentPage("/ja/api-reference/vite"))
+    .page(
+      "/ja/architecture/implementation/overview",
+      documentPage("/ja/architecture/implementation/overview"),
+    )
+    .page(
+      "/ja/architecture/implementation/application",
+      documentPage("/ja/architecture/implementation/application"),
+    )
+    .page(
+      "/ja/architecture/implementation/routing",
+      documentPage("/ja/architecture/implementation/routing"),
+    )
+    .page(
+      "/ja/architecture/implementation/request",
+      documentPage("/ja/architecture/implementation/request"),
+    )
+    .page(
+      "/ja/architecture/implementation/rendering",
+      documentPage("/ja/architecture/implementation/rendering"),
+    )
+    .page(
+      "/ja/architecture/implementation/navigation",
+      documentPage("/ja/architecture/implementation/navigation"),
+    )
+    .page(
+      "/ja/architecture/implementation/server-functions",
+      documentPage("/ja/architecture/implementation/server-functions"),
+    )
+    .page("/en", documentPage("/en"))
+    .page("/en/guide/getting-started", documentPage("/en/guide/getting-started"))
+    .page("/en/guide/routes", documentPage("/en/guide/routes"))
+    .page("/en/guide/components", documentPage("/en/guide/components"))
+    .page("/en/guide/effect", documentPage("/en/guide/effect"))
+    .page("/en/platforms", documentPage("/en/platforms"))
+    .page("/en/platforms/node-bun", documentPage("/en/platforms/node-bun"))
+    .page("/en/platforms/alchemy", documentPage("/en/platforms/alchemy"))
+    .page("/en/guide/markdown", documentPage("/en/guide/markdown"))
+    .page("/en/guide/styling", documentPage("/en/guide/styling"))
+    .page("/en/api-reference/http", documentPage("/en/api-reference/http"))
+    .page("/en/api-reference/server", documentPage("/en/api-reference/server"))
+    .page("/en/api-reference/markdown", documentPage("/en/api-reference/markdown"))
+    .page("/en/api-reference/alchemy", documentPage("/en/api-reference/alchemy"))
+    .page("/en/api-reference/tailwind", documentPage("/en/api-reference/tailwind"))
+    .page("/en/platforms/cloudflare", documentPage("/en/platforms/cloudflare"))
+    .page("/en/best-practices/testing", documentPage("/en/best-practices/testing"))
+    .page("/en/guide/server-functions", documentPage("/en/guide/server-functions"))
+    .page("/en/guide/middleware", documentPage("/en/guide/middleware"))
+    .page("/en/guide/http", documentPage("/en/guide/http"))
+    .page("/en/advanced", documentPage("/en/advanced"))
+    .page(
+      "/en/advanced/request-runtime-and-lifetimes",
+      documentPage("/en/advanced/request-runtime-and-lifetimes"),
+    )
+    .page("/en/advanced/client-navigation", documentPage("/en/advanced/client-navigation"))
+    .page(
+      "/en/advanced/server-function-execution-and-refresh",
+      documentPage("/en/advanced/server-function-execution-and-refresh"),
+    )
+    .page("/en/api-reference", documentPage("/en/api-reference"))
+    .page("/en/api-reference/application", documentPage("/en/api-reference/application"))
+    .page("/en/api-reference/components", documentPage("/en/api-reference/components"))
+    .page("/en/api-reference/routing", documentPage("/en/api-reference/routing"))
+    .page("/en/api-reference/server-functions", documentPage("/en/api-reference/server-functions"))
+    .page("/en/api-reference/workers", documentPage("/en/api-reference/workers"))
+    .page("/en/api-reference/vite", documentPage("/en/api-reference/vite"))
+    .page(
+      "/en/architecture/implementation/overview",
+      documentPage("/en/architecture/implementation/overview"),
+    )
+    .page(
+      "/en/architecture/implementation/application",
+      documentPage("/en/architecture/implementation/application"),
+    )
+    .page(
+      "/en/architecture/implementation/routing",
+      documentPage("/en/architecture/implementation/routing"),
+    )
+    .page(
+      "/en/architecture/implementation/request",
+      documentPage("/en/architecture/implementation/request"),
+    )
+    .page(
+      "/en/architecture/implementation/rendering",
+      documentPage("/en/architecture/implementation/rendering"),
+    )
+    .page(
+      "/en/architecture/implementation/navigation",
+      documentPage("/en/architecture/implementation/navigation"),
+    )
+    .page(
+      "/en/architecture/implementation/server-functions",
+      documentPage("/en/architecture/implementation/server-functions"),
     ),
 });

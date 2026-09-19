@@ -1,10 +1,15 @@
-アプリケーションが要求するサービス union を `Application.effront<Services>()` に指定します。サービスを要求するなら `EFFRONT.make` の `layer` が必須です。
+アプリケーションサービスを使うと、サーバー側の処理が何に依存するかを明示しながら、その実装を一か所で選べます。
+複数の Page で同じデータアクセスの契約を使いたい場合や、呼び出す側を書き換えずにテスト用の実装へ差し替えたい場合に役立ちます。
+Effront では、アプリケーションが各処理で利用できるサービスを宣言し、Layer を通じてその実装を提供します。
 
-## 型付きサービスと Layer {#service}
+以下の例では、挨拶を返すサービスを Page に接続します。
+サービスの契約から画面への表示までを確認したあと、リクエストのスコープを保ちながら利用範囲を広げる方法を説明します。
 
-サービス自身の設計は [Effect Services](https://effect.website/docs/requirements-management/services/) と [Layers documentation](https://effect.website/docs/requirements-management/layers/) を参照してください。 Effront 固有の接続点は、`Application.effront<Services>()` と`EFFRONT.make` の `layer` です。
+## Page が使うサービスを接続する {#service}
 
-`src/greeting.ts` にサービスの契約と実装を定義します。
+まず、Page が必要とする操作を決めます。
+ここでは、名前を受け取って挨拶を返す操作です。
+この契約を `src/greeting.ts` の `Greeting` として定義し、`Greeting.layer` で簡単な実装を提供します。
 
 ```typescript
 import { Context, Effect, Layer } from "effect";
@@ -19,7 +24,12 @@ export class Greeting extends Context.Service<
 }
 ```
 
-`src/entry.effront.tsx` で要求を宣言し、同じ境界で Layer を提供します。
+`src/entry.effront.tsx` では、アプリケーション側で二つの設定を行ってサービスを接続します。
+`Application.effront<Greeting>()` は、Page が `Greeting` に依存できることを宣言します。
+`EFFRONT.make` の `layer` オプションは、提供する実装を選びます。
+型を宣言するだけでは実行時にサービスが提供されないため、両方が必要です。
+
+Page では `yield* Greeting` でサービスを取得し、その `message` メソッドを呼び出します。
 
 ```tsx
 import { Effect } from "effect";
@@ -53,21 +63,36 @@ export default EFFRONT.make({
 });
 ```
 
-## サービス不足の型エラー {#missing-services}
+このアプリケーションの `/` を開くと、Ada への日本語の挨拶「こんにちは、Ada さん。」が表示されます。
+Page は挨拶の取得方法を知っていますが、その実装を選択したり構築したりはしません。
+実装を変えるには、同じ `Greeting` の契約を満たす別の Layer を `EFFRONT.make` に渡します。
 
-要求するサービスの宣言と、Layer による提供は型チェックで確認されます。 上の Greeting を例にすると、次の不足を検出します。診断の全文は呼び出し方により変わります。
+## リクエストのスコープを保って利用範囲を広げる {#lifetime}
 
-- `Application.effront()` のまま Page の render で Greeting を要求すると、`TS2769: No overload matches this call` になります。 render が返す Effect の要求サービス Greeting が、利用可能なサービスに含まれないためです。`Application.effront<Greeting>()` と宣言します。
+接続したサービスは、同じ EFFRONT から作った Layout、Component、Server Function でも利用できます。
+別のアプリケーションサービスを追加するには、`Application.effront<ServiceA | ServiceB>()` のように union 型で宣言し、それらをすべて提供する Layer を渡します。
+サービスの契約設計や Layer の組み合わせ方は、公式の [Effect Services](https://effect.website/docs/requirements-management/services/) と [Layers documentation](https://effect.website/docs/requirements-management/layers/) を参照してください。
 
-- Greeting を宣言して `EFFRONT.make` の layer を省略すると、`TS2345` になります。渡したオブジェクトに必須の layer が不足しています。
+これらの定義から使えるサービスであっても、サーバー全体で共有するサービスになるわけではありません。
+アプリケーションの Layer は、サーバー起動時に一度だけではなく、リクエストごとに構築されます。
+サービスがリクエストのスコープでリソースを確保する場合、そのリソースはレスポンス本文の読み取り完了、エラー、キャンセルまで利用できます。
+Page が JSX を返したあともレスポンスのストリーミングが続くことがあるため、その時点で生存期間が終わるわけではありません。
+リクエスト固有の接続や値をモジュールグローバルにキャッシュしないでください。
 
-- `layer: Layer.empty` を渡すと、`TS2322: Type 'Layer<never, never, never>' is not assignable to type 'Layer<Greeting, never, HttpRouter>'`になります。Layer の出力に Greeting が不足しているため、`Greeting.layer` を渡します。
+認証が必要なルートやアクションで使う認証済み利用者の情報など、アプリケーションの一部だけに必要な依存関係もあります。
+そのようなサービスは [Middleware](/guide/middleware) で提供し、Middleware が有効なスコープで利用します。
+Page の場合、Middleware 付きの EFFRONT から Page を作るだけではスコープが有効にならないため、リンク先の手順に従って Routes にも適用してください。
 
-複数サービスを宣言した場合は、それらをすべて提供する Layer を渡します。 Middleware 経由で追加するサービスは、その Middleware を適用したスコープで利用します。
+## サービスの接続に関する型エラーを解消する {#missing-services}
 
-## リクエストごとの生存期間 {#lifetime}
+型チェックは、各処理が要求するサービスと、アプリケーションが宣言・提供するサービスを揃える助けになります。
+挨拶の例で型エラーが出たら、呼び出す側から提供する側へ順に依存関係を確認します。
 
-アプリケーション Layer のサービスはリクエストごとに提供され、Response body の読み取り完了、エラー、キャンセルまで利用できます。
-サーバー全体で一度だけ初期化されるサービスとして扱わず、リクエスト固有の接続や値をモジュールグローバルにキャッシュしないでください。
+1. **`render` のエラーでは、サービスの宣言を確認します。**
+   `Greeting` を使う Page には、そのサービスを利用できる EFFRONT が必要なので、`Application.effront()` ではなく `Application.effront<Greeting>()` を使います。
+2. **`EFFRONT.make` のエラーでは、`layer` の省略を確認します。**
+   アプリケーションサービスを宣言するとこのオプションが必須になるため、`layer: Greeting.layer` を渡します。
+3. **渡した `layer` が拒否される場合は、提供するサービスを確認します。**
+   `Layer.empty` は `Greeting` の要求を満たせず、一部のサービスだけを提供する Layer では、宣言したすべてのサービスの要求を満たせません。
 
-Middleware が提供するサービスは、その Middleware を追加した EFFRONT の Page、Layout、Component、Server Function で利用できます。認証のような依存関係を明示する用途に向きます。
+Middleware から提供するサービスの場合は、エラーを消すためだけにアプリケーション全体の実装を追加せず、Middleware のスコープを確認してください。

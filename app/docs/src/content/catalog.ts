@@ -5,20 +5,21 @@ export const articleCatalog = [
   {
     slug: "/",
     title: "Effront",
-    description: "Web標準とEffectベースで実装されたReactのメタフレームワークです。",
+    description:
+      "サーバー側のデータとユーザー操作を扱う React ページを作り、次の作業に合うガイドを選びます。",
     section: "Getting started",
     headings: [
       {
-        id: "overview",
-        title: "Effrontについて",
+        id: "boundaries",
+        title: "ページを表示する",
       },
       {
-        id: "boundaries",
-        title: "Web標準を境界にする",
+        id: "overview",
+        title: "データとユーザー操作を扱う",
       },
       {
         id: "next",
-        title: "次に読むもの",
+        title: "次のガイドを選ぶ",
       },
     ],
     source: "/index",
@@ -26,155 +27,158 @@ export const articleCatalog = [
   {
     slug: "/guide/getting-started",
     title: "はじめる",
-    description: "共通のアプリケーションを定義し、ホストを選んでローカル起動まで進めます。",
+    description: "トップページを作り、Cloudflare Workers でローカル起動します。",
     section: "Getting started",
     headings: [
       {
         id: "setup",
-        title: "準備",
-      },
-      {
-        id: "files",
-        title: "アプリケーションの構成",
+        title: "プロジェクトを準備する",
       },
       {
         id: "application",
-        title: "アプリケーションを書く",
+        title: "トップページを定義する",
+      },
+      {
+        id: "files",
+        title: "アプリケーションを Workers に接続する",
       },
       {
         id: "run",
-        title: "ビルド統合と実行",
+        title: "表示を確認して書き換える",
       },
     ],
     source: "/guide/getting-started",
   },
   {
     slug: "/platforms",
-    title: "プラットフォーム",
-    description: "実行環境に合わせたホスト統合を選びます。",
+    title: "デプロイ先",
+    description:
+      "ホスティング方法を選んでローカル開発を始め、Wrangler または Node.js・Bun の本番向け確認手順を探します。",
     section: "Platforms",
     headings: [
       {
-        id: "architecture",
-        title: "ホスト統合の役割",
+        id: "support",
+        title: "ホスティング方法を選ぶ",
       },
       {
-        id: "support",
-        title: "対応状況",
+        id: "architecture",
+        title: "ローカル開発を設定する",
       },
       {
         id: "build-startup",
-        title: "ビルドと起動の契約",
+        title: "本番の起動とアセットを準備する",
       },
     ],
     source: "/platforms",
   },
   {
     slug: "/platforms/cloudflare",
-    title: "Cloudflare Workers のホスト設定",
+    title: "Cloudflare Workers",
     description:
-      "Workers の env と execution context を安全に読む方法、および Vite と Wrangler の役割を説明します。",
+      "既存のアプリケーションを Cloudflare Workers に接続し、アセットと環境値を設定してローカルで確認します。",
     section: "Platforms",
     headings: [
       {
-        id: "alchemy",
-        title: "Alchemy native Worker（実験版）",
-      },
-      {
         id: "setup",
-        title: "公開版の standalone セットアップ",
+        title: "アプリケーションを Worker に接続する",
       },
       {
         id: "vite",
-        title: "Vite 設定",
+        title: "Worker とビルドを設定する",
       },
       {
         id: "local",
-        title: "ローカル実行と検証",
+        title: "アプリケーションを起動して確認する",
       },
       {
         id: "context",
-        title: "リクエストコンテキスト",
+        title: "アプリケーションの設定値を追加する",
       },
       {
         id: "secrets",
-        title: "環境値と秘密値",
+        title: "認証情報をサーバー側に留める",
+      },
+      {
+        id: "alchemy",
+        title: "Alchemy を使う構成を選ぶ",
       },
     ],
     source: "/platforms/cloudflare",
   },
   {
     slug: "/platforms/node-bun",
-    title: "Node.js / Bun",
-    description: "native Effect HTTP での開発・ビルド・静的アセット配信を始めます。",
+    title: "Node.js と Bun",
+    description:
+      "Vite で開発し、ページとブラウザー用アセットを配信する Node.js または Bun サーバーをビルドして起動します。",
     section: "Platforms",
     headings: [
       {
         id: "setup",
-        title: "準備とホストの選択",
+        title: "サーバー統合をインストールする",
       },
       {
         id: "entries",
-        title: "アプリケーションとビルド",
-      },
-      {
-        id: "node",
-        title: "Node.js で起動する",
-      },
-      {
-        id: "bun",
-        title: "Bun で起動する",
+        title: "Vite でアプリケーションを確認する",
       },
       {
         id: "assets",
-        title: "静的ファイルと運用境界",
+        title: "本番用アセットの配置を準備する",
+      },
+      {
+        id: "node",
+        title: "Node.js サーバーをビルドして起動する",
+      },
+      {
+        id: "bun",
+        title: "本番用サーバーに Bun を使う",
       },
     ],
     source: "/platforms/node-bun",
   },
   {
     slug: "/platforms/alchemy",
-    title: "Alchemy + Cloudflare",
-    description: "native Worker、Vite、Stack と能力の接続を設定します。",
+    title: "Alchemy と Cloudflare",
+    description:
+      "既存の Effront アプリケーションを Alchemy からローカルで動かし、必要に応じて KV によるデータ保存を追加します。",
     section: "Platforms",
     headings: [
       {
         id: "setup",
-        title: "Alchemy を選ぶ場合",
+        title: "既存の Effront アプリケーションを準備する",
       },
       {
         id: "worker",
-        title: "Native Worker と Vite",
+        title: "Alchemy で動かすアプリケーションを定義する",
       },
       {
         id: "stack",
-        title: "Stack とローカル起動",
+        title: "開発環境を起動してページを開く",
       },
       {
         id: "capabilities",
-        title: "能力とリクエストの境界",
+        title: "データ保存が必要になったら KV を追加する",
       },
     ],
     source: "/platforms/alchemy",
   },
   {
     slug: "/guide/routes",
-    title: "ルート、Layout、パラメーター",
+    title: "ページ、レイアウト、ルート",
     description:
-      "不変な Routes グラフに Page、ネストした Layout、Schema によるパスパラメーターを追加します。",
+      "URL をページに結び付け、ルートパラメーターを検証し、共通のレイアウトと読み込み中の UI を持つページをまとめます。",
     section: "Guides",
     headings: [
       {
         id: "pages",
-        title: "静的ページ、パラメーター、catch-all",
-      },
-      {
-        id: "mount",
-        title: "ネストした Routes と Loading",
+        title: "URL からページを開けるようにする",
       },
       {
         id: "matching",
-        title: "マッチング時の注意",
+        title: "URL のパターンと受け付ける値を決める",
+      },
+      {
+        id: "mount",
+        title: "共通の UI を持つページをまとめる",
       },
     ],
     source: "/guide/routes",
@@ -183,20 +187,20 @@ export const articleCatalog = [
     slug: "/guide/components",
     title: "Server Component と Client Component",
     description:
-      "Effectful なサーバー UI と、ブラウザーで操作する Client Component を組み合わせます。",
+      "データへのアクセスをサーバー側に保ちながら、再利用できる UI と操作用の部品を追加します。",
     section: "Guides",
     headings: [
       {
+        id: "boundary",
+        title: "処理をどこに置くか決める",
+      },
+      {
         id: "server",
-        title: "Effectful な Server Component",
+        title: "再利用するサーバー側の表示を切り出す",
       },
       {
         id: "client-boundary",
-        title: "Client boundary と CSS",
-      },
-      {
-        id: "boundary",
-        title: "境界を守る",
+        title: "Page を移さずに操作できる UI を加える",
       },
     ],
     source: "/guide/components",
@@ -204,55 +208,54 @@ export const articleCatalog = [
   {
     slug: "/guide/server-functions",
     title: "Server Function",
-    description:
-      "Schema で入力を検証し、アプリケーションサービスを使う更新処理を React のフォームから呼び出します。",
+    description: "入力を検証し、サーバーのサービスを呼び出して結果を表示するフォームを作ります。",
     section: "Guides",
     headings: [
       {
         id: "identity",
-        title: "アプリケーションと同じ定義を使う",
-      },
-      {
-        id: "input",
-        title: "入力の型とデコード",
-      },
-      {
-        id: "forms",
-        title: "フォームから直接呼び出す",
+        title: "action で使うサービスを用意する",
       },
       {
         id: "state",
-        title: "useActionState で結果を表示する",
+        title: "挨拶文をフォームに返す",
       },
       {
         id: "application",
-        title: "Page とアプリケーションへ組み込む",
+        title: "送信から結果表示まで動かす",
+      },
+      {
+        id: "forms",
+        title: "戻り値が不要なら action に直接渡す",
+      },
+      {
+        id: "input",
+        title: "FormData の代わりにオブジェクトを受け取る",
       },
       {
         id: "refresh",
-        title: "再表示と失敗の扱い",
+        title: "更新と失敗の表示を決める",
       },
     ],
     source: "/guide/server-functions",
   },
   {
     slug: "/guide/effect",
-    title: "Effect とアプリケーションサービス",
+    title: "アプリケーションサービス",
     description:
-      "Effect の Context.Service と Layer を使い、サーバーの依存関係を Page に注入します。",
+      "Page に型付きサービスを提供し、その実装を選んでリクエスト単位のリソースを管理します。",
     section: "Guides",
     headings: [
       {
         id: "service",
-        title: "型付きサービスと Layer",
-      },
-      {
-        id: "missing-services",
-        title: "サービス不足の型エラー",
+        title: "Page が使うサービスを接続する",
       },
       {
         id: "lifetime",
-        title: "リクエストごとの生存期間",
+        title: "リクエストのスコープを保って利用範囲を広げる",
+      },
+      {
+        id: "missing-services",
+        title: "サービスの接続に関する型エラーを解消する",
       },
     ],
     source: "/guide/effect",
@@ -261,114 +264,116 @@ export const articleCatalog = [
     slug: "/guide/middleware",
     title: "Middleware",
     description:
-      "リクエストの前後処理とサービスの提供を、Routes と Server Function のスコープに結び付けます。",
+      "対象のページと Server Function に対し、リクエストのデータを用意して必要なチェックを行います。",
     section: "Guides",
     headings: [
       {
+        id: "reach",
+        title: "対象のリクエストを選ぶ",
+      },
+      {
         id: "view",
-        title: "Middleware を持つ定義を派生させる",
+        title: "後続の処理に渡すサービスを用意する",
       },
       {
         id: "routes",
-        title: "Routes でスコープを有効にする",
-      },
-      {
-        id: "actions",
-        title: "Server Function でサービスを使う",
+        title: "サービスの値をページに表示する",
       },
       {
         id: "order",
-        title: "実行順序と応答の短絡",
+        title: "ハンドラーの実行前にリクエストを止める",
       },
       {
-        id: "reach",
-        title: "スコープと HTTP 全体の使い分け",
+        id: "actions",
+        title: "フォーム送信にも処理を適用する",
       },
     ],
     source: "/guide/middleware",
   },
   {
     slug: "/guide/http",
-    title: "ユーザー定義 HTTP",
+    title: "HTTP エンドポイント",
     description:
-      "Page と同じアプリケーション Layer に Effect HTTP のルートとグローバル Middleware を登録します。",
+      "Page とサービスを共有する JSON エンドポイントを追加し、Page と API の応答に共通のヘッダーを適用します。",
     section: "Guides",
     headings: [
       {
         id: "router",
-        title: "HttpRouter にルートを登録する",
+        title: "JSON エンドポイントを定義する",
       },
       {
         id: "services",
-        title: "Page と HTTP でサービスを共有する",
-      },
-      {
-        id: "global",
-        title: "グローバル Middleware を登録する",
+        title: "エンドポイントを登録してリクエストを送る",
       },
       {
         id: "boundary",
-        title: "Fetch の境界とリソースの生存期間",
+        title: "サービスのリソースをリクエスト内で使う",
+      },
+      {
+        id: "global",
+        title: "Page と API の応答にヘッダーを追加する",
       },
     ],
     source: "/guide/http",
   },
   {
     slug: "/guide/markdown",
-    title: "Markdown で記事を書く",
-    description: "Vite collection と標準 Comark renderer で記事と相対リンクを扱います。",
+    title: "Markdown でページを書く",
+    description:
+      "指定した URL で Markdown 記事を公開し、関連する記事やアセットをつなぎ、必要に応じて解析をカスタマイズします。",
     section: "Guides",
     headings: [
       {
         id: "setup",
-        title: "Markdown を選ぶ",
+        title: "最初の記事を用意する",
       },
       {
         id: "collection",
-        title: "Vite の collection",
+        title: "Page から記事を取得できるようにする",
       },
       {
         id: "render",
-        title: "Page の Effect で描画する",
+        title: "記事を表示し、関連ページをつなぐ",
       },
       {
         id: "authoring",
-        title: "標準設定と拡張",
+        title: "標準設定を使い、必要に応じて解析を変える",
       },
     ],
     source: "/guide/markdown",
   },
   {
     slug: "/guide/styling",
-    title: "スタイリング",
-    description: "Tailwind の自動 CSS 接続と記事の Typography を設定します。",
+    title: "Tailwind によるスタイリング",
+    description:
+      "Tailwind のユーティリティから始め、デザインに応じて共通のテーマ値やプラグインを追加します。",
     section: "Guides",
     headings: [
       {
         id: "setup",
-        title: "標準設定で使う",
+        title: "Tailwind のクラスを使う",
       },
       {
         id: "stylesheet",
-        title: "テーマなどを設定する",
+        title: "テーマに共通の値を定義する",
       },
       {
         id: "scope",
-        title: "プラグインを追加する",
+        title: "プラグインでスタイルを追加する",
       },
     ],
     source: "/guide/styling",
   },
   {
     slug: "/advanced",
-    title: "Advanced",
+    title: "実行時の動作",
     description:
-      "リクエストの寿命、画面遷移、更新の競合、ビルド済みアプリケーションの実行を理解します。",
+      "非同期処理を踏まえて、ユーザーへの結果表示、画面遷移、リソースの解放を設計します。",
     section: "Guides",
     headings: [
       {
         id: "chapters",
-        title: "実行時の契約を読む",
+        title: "非同期処理を踏まえて設計する",
       },
     ],
     source: "/advanced",
@@ -376,26 +381,26 @@ export const articleCatalog = [
   },
   {
     slug: "/advanced/request-runtime-and-lifetimes",
-    title: "リクエスト runtime と寿命",
+    title: "リクエストとリソースの生存期間",
     description:
-      "アプリケーション定義と、リクエストごとに構築されるサービスの寿命を分けて考えます。",
+      "描画やストリーミング中にリクエストのリソースを利用できる状態に保ち、応答の完了や中断に合わせて解放します。",
     section: "Guides",
     headings: [
       {
+        id: "response-lifetime",
+        title: "レスポンス本文の終了に合わせて解放する",
+      },
+      {
         id: "request-layer",
-        title: "Layer はリクエストごとに構築する",
+        title: "アプリケーションの Layer に取得と解放を登録する",
       },
       {
         id: "render-scope",
-        title: "レンダーを所有する Scope",
-      },
-      {
-        id: "response-lifetime",
-        title: "Response を返した後も続く寿命",
+        title: "Page や Server Function でリクエストのサービスを使う",
       },
       {
         id: "resource-design",
-        title: "アプリケーション側の設計",
+        title: "リソースを早く閉じずにレスポンス処理をカスタマイズする",
       },
     ],
     source: "/advanced/request-runtime-and-lifetimes",
@@ -404,24 +409,25 @@ export const articleCatalog = [
   {
     slug: "/advanced/client-navigation",
     title: "クライアントナビゲーション",
-    description: "Navigation API の commit と Flight の完了を分け、履歴と画面の寿命を理解します。",
+    description:
+      "クライアントナビゲーションに対応した環境で共通 UI の状態を保ち、ページのアニメーション、読み込み、履歴操作を設計します。",
     section: "Guides",
     headings: [
       {
         id: "native-navigation",
-        title: "ブラウザーのナビゲーションを使う",
-      },
-      {
-        id: "commit-and-stream",
-        title: "最初の commit とストリーム完了",
-      },
-      {
-        id: "history-cache",
-        title: "履歴キャッシュとリダイレクト",
+        title: "共通の操作部品を Page の外に置く",
       },
       {
         id: "transition-scope",
-        title: "ページ遷移のアニメーション",
+        title: "切り替わる内容のアニメーションを選ぶ",
+      },
+      {
+        id: "commit-and-stream",
+        title: "遷移後に届く内容の表示に備える",
+      },
+      {
+        id: "history-cache",
+        title: "戻る・進むとページ全体の読み込みを考慮する",
       },
     ],
     source: "/advanced/client-navigation",
@@ -429,25 +435,26 @@ export const articleCatalog = [
   },
   {
     slug: "/advanced/server-function-execution-and-refresh",
-    title: "Server Function の実行と更新",
-    description: "サーバー側の処理結果とルート更新を分離し、並行実行時の反映条件を確認します。",
+    title: "Server Function の結果と画面更新",
+    description:
+      "保存結果を表示するタイミングを決め、サーバーの書き込みを保護し、重なった送信やページ更新を扱います。",
     section: "Guides",
     headings: [
       {
         id: "execution",
-        title: "同じリクエスト内で実行して再レンダーする",
-      },
-      {
-        id: "result-and-refresh",
-        title: "戻り値と画面更新は別に完了する",
-      },
-      {
-        id: "concurrency",
-        title: "並行呼び出しと履歴の競合",
+        title: "保存から画面更新までの流れを組み立てる",
       },
       {
         id: "input-boundary",
-        title: "入力と認可の境界",
+        title: "フォームを公開する前に書き込みを保護する",
+      },
+      {
+        id: "result-and-refresh",
+        title: "ページ全体の更新を待たずに結果を伝える",
+      },
+      {
+        id: "concurrency",
+        title: "繰り返しの保存を安全に扱う",
       },
     ],
     source: "/advanced/server-function-execution-and-refresh",
@@ -456,46 +463,47 @@ export const articleCatalog = [
   {
     slug: "/best-practices/testing",
     title: "アプリケーションのテスト",
-    description: "アプリケーションの処理、ページ表示、ユーザー操作を検証する観点を整理します。",
+    description:
+      "一連のユーザー操作とその業務ルールをテストし、公開用ビルドでも同じ確認を繰り返します。",
     section: "Best practices",
     headings: [
       {
-        id: "services",
-        title: "アプリケーションの処理",
+        id: "pages",
+        title: "一連のユーザー操作を起点にする",
       },
       {
-        id: "pages",
-        title: "ページとユーザー操作",
+        id: "services",
+        title: "業務ルールをブラウザーから切り離して検証する",
       },
       {
         id: "production",
-        title: "ビルド済みアプリケーションの受け入れ確認",
+        title: "公開用ビルドを対象の実行環境で確かめる",
       },
       {
         id: "tools",
-        title: "テストツール",
+        title: "繰り返し実行できるテストにする",
       },
     ],
     source: "/best-practices/testing",
   },
   {
     slug: "/api-reference",
-    title: "API reference",
+    title: "API リファレンス",
     description:
-      "Effront の公開エントリーポイントと、アプリケーション・Fetch・ビルド API の索引です。",
+      "公開 import パス、アプリケーションファクトリーの API、互換性のある依存バージョンを調べます。",
     section: "API reference",
     headings: [
       {
-        id: "versions",
-        title: "バージョンと依存関係",
-      },
-      {
         id: "exports",
-        title: "公開エントリーポイント",
+        title: "公開 API の一覧",
       },
       {
         id: "index",
-        title: "API 索引",
+        title: "アプリケーションファクトリーの索引",
+      },
+      {
+        id: "versions",
+        title: "依存バージョン一覧",
       },
     ],
     source: "/api-reference",
@@ -503,20 +511,25 @@ export const articleCatalog = [
   {
     slug: "/api-reference/application",
     title: "Application",
-    description: "Application.effront で作る identity と、make に渡すルート・サービスの契約です。",
+    description:
+      "ページ、ルート、サービスを組み合わせてアプリケーションを作り、対象の定義を Middleware で拡張する方法を確認します。",
     section: "API reference",
     headings: [
       {
+        id: "example",
+        title: "ルートが一つのアプリケーション",
+      },
+      {
         id: "identity",
-        title: "Application.effront",
+        title: "Application.effront: 共通のファクトリーを作る",
       },
       {
         id: "make",
-        title: "make",
+        title: "EFFRONT.make: ルートとサービスを渡す",
       },
       {
-        id: "example",
-        title: "最小定義",
+        id: "middleware",
+        title: "EFFRONT.withMiddleware: 対象の定義にミドルウェアを追加する",
       },
     ],
     source: "/api-reference/application",
@@ -525,46 +538,46 @@ export const articleCatalog = [
     slug: "/api-reference/components",
     title: "Component・Page・Layout・Loading",
     description:
-      "描画ファクトリーの render、Page の params Schema、Loading の同期契約を確認します。",
+      "描画ファクトリーを選び、レイアウトと読み込み中の UI を追加し、URL パラメーターやページ遷移のオプションを確認します。",
     section: "API reference",
     headings: [
       {
         id: "render",
-        title: "描画 API",
-      },
-      {
-        id: "params",
-        title: "Page の params",
-      },
-      {
-        id: "view-transition",
-        title: "PageViewTransition",
+        title: "描画ファクトリーを選ぶ",
       },
       {
         id: "loading",
-        title: "Layout と Loading",
+        title: "共有 Layout と読み込み中の UI を追加する",
+      },
+      {
+        id: "params",
+        title: "Page で使う URL パラメーターをデコードする",
+      },
+      {
+        id: "view-transition",
+        title: "ページ遷移を設定する",
       },
     ],
     source: "/api-reference/components",
   },
   {
     slug: "/api-reference/routing",
-    title: "Routes・Middleware",
+    title: "Routes と Middleware",
     description:
-      "Routes の不変ビルダー、パス制約、Middleware が追加するサービスと実行スコープです。",
+      "ルートをまとめて組み合わせ、URL パラメーターを対応付け、そのセクションのリクエストに Middleware を適用します。",
     section: "API reference",
     headings: [
       {
         id: "routes",
-        title: "Routes",
+        title: "ルートの登録と合成",
       },
       {
         id: "paths",
-        title: "パスの契約",
+        title: "パスと Page パラメーターの対応",
       },
       {
         id: "middleware",
-        title: "Middleware と withMiddleware",
+        title: "ルートの集合に Middleware を適用する",
       },
     ],
     source: "/api-reference/routing",
@@ -573,109 +586,112 @@ export const articleCatalog = [
     slug: "/api-reference/server-functions",
     title: "ServerFn",
     description:
-      "ServerFn.make の input と handler、および Encoded / Type に基づく引数の対応です。",
+      "サーバーの処理を React から呼び出せるようにする際の、入力、ハンドラーの型、認可の要件を確認します。",
     section: "API reference",
     headings: [
       {
         id: "make",
-        title: "ServerFn.make",
+        title: "呼び出し可能な処理を定義する",
       },
       {
         id: "arguments",
-        title: "引数の対応",
+        title: "呼び出し側に合わせて引数を定義する",
       },
       {
         id: "execution",
-        title: "実行境界",
+        title: "操作を保護し、処理を再利用する",
       },
     ],
     source: "/api-reference/server-functions",
   },
   {
     slug: "/api-reference/workers",
-    title: "Fetch・Workers context",
+    title: "Fetch ハンドラーと Workers コンテキスト",
     description:
-      "createFetchHandler と、コアおよび Cloudflare のリクエストローカル reader を参照します。",
+      "Fetch エントリーを作り、アプリケーションの Effect から現在のリクエスト、環境の binding、実行コンテキストを読み取ります。",
     section: "API reference",
     headings: [
       {
         id: "fetch",
-        title: "createFetchHandler",
-      },
-      {
-        id: "context",
-        title: "WorkersRequestContext",
+        title: "createFetchHandler でアプリケーションを接続する",
       },
       {
         id: "readers",
-        title: "コアの reader",
+        title: "必要な値に応じてコアの reader を選ぶ",
       },
       {
         id: "cloudflare",
-        title: "Cloudflare の reader",
+        title: "Env の型を指定して Cloudflare の reader を使う",
+      },
+      {
+        id: "context",
+        title: "共有する WorkersRequestContext を確認する",
       },
     ],
     source: "/api-reference/workers",
   },
   {
     slug: "/api-reference/vite",
-    title: "Vite・Cloudflare plugins",
-    description: "effront と effrontCloudflare の公開オプション、既定エントリー、環境構成です。",
+    title: "Vite と Cloudflare のプラグイン",
+    description:
+      "Vite に Effront を登録し、エントリーファイルのオプションや Cloudflare Workers の設定を調べます。",
     section: "API reference",
     headings: [
       {
         id: "effront",
-        title: "@effront/vite",
-      },
-      {
-        id: "cloudflare",
-        title: "@effront/cloudflare",
+        title: "Vite に Effront を登録する",
       },
       {
         id: "configuration",
-        title: "組み合わせ方",
+        title: "エントリーファイルを指定する",
+      },
+      {
+        id: "cloudflare",
+        title: "Cloudflare Workers を設定する",
       },
     ],
     source: "/api-reference/vite",
   },
   {
     slug: "/api-reference/http",
-    title: "Native HTTP",
-    description: "toHttpEffect、makeHttpEffect と request Scope の契約です。",
+    title: "Effect HTTP ハンドラー",
+    description:
+      "アプリケーションを Effect HTTP ホストに接続し、リクエスト処理と応答のストリーミングに必要なサービスを提供します。",
     section: "API reference",
     headings: [
       {
+        id: "fetch",
+        title: "ホストとの接続方法を選ぶ",
+      },
+      {
         id: "handler",
-        title: "toHttpEffect",
+        title: "toHttpEffect でリクエストを処理する",
       },
       {
         id: "capture",
-        title: "makeHttpEffect",
-      },
-      {
-        id: "fetch",
-        title: "Fetch との使い分け",
+        title: "makeHttpEffect でホストのサービスを捕捉する",
       },
     ],
     source: "/api-reference/http",
   },
   {
     slug: "/api-reference/server",
-    title: "Node.js / Bun server",
-    description: "serve、withAssets、effrontServer の契約です。",
+    title: "Node.js と Bun のサーバー API",
+    description:
+      "ビルドのエントリーを設定し、本番用リスナーを起動して、Node.js または Bun で静的ファイルを配信します。",
     section: "API reference",
     headings: [
       {
+        id: "vite",
+        title: "Vite のエントリー: effrontServer",
+      },
+      {
         id: "serve",
-        title: "serve",
+        title: "本番用リスナー: serve",
       },
       {
         id: "assets",
-        title: "withAssets",
-      },
-      {
-        id: "vite",
-        title: "effrontServer",
+        title: "静的ファイル: withAssets",
       },
     ],
     source: "/api-reference/server",
@@ -683,20 +699,20 @@ export const articleCatalog = [
   {
     slug: "/api-reference/markdown",
     title: "Markdown API",
-    description: "collection、参照解決、parse と標準 renderer の契約です。",
+    description: "文書を取得し、Markdown の解析を設定して、記事やアセットへのリンクを解決します。",
     section: "API reference",
     headings: [
       {
         id: "collection",
-        title: "createMarkdownCollection",
-      },
-      {
-        id: "references",
-        title: "参照の解決",
+        title: "createMarkdownCollection: 文書の取得",
       },
       {
         id: "parse",
-        title: "parseMarkdown と renderer",
+        title: "parseMarkdown: 解析と描画",
+      },
+      {
+        id: "references",
+        title: "リンクとアセットの解決",
       },
     ],
     source: "/api-reference/markdown",
@@ -704,16 +720,17 @@ export const articleCatalog = [
   {
     slug: "/api-reference/alchemy",
     title: "Alchemy API",
-    description: "native Worker と構築時の能力を接続する API です。",
+    description:
+      "Alchemy Worker のハンドラーを作り、アプリケーションサービスを提供して Vite ビルドを設定します。",
     section: "API reference",
     headings: [
       {
         id: "http",
-        title: "Native HTTP への接続",
+        title: "リクエストハンドラーを作る",
       },
       {
         id: "vite",
-        title: "effrontAlchemy",
+        title: "Worker のビルドを設定する",
       },
     ],
     source: "/api-reference/alchemy",
@@ -721,16 +738,17 @@ export const articleCatalog = [
   {
     slug: "/api-reference/tailwind",
     title: "Tailwind API",
-    description: "effrontTailwind と stylesheet オプションの契約です。",
+    description:
+      "Tailwind 標準のユーティリティを有効にし、独自のテーマやプラグインには stylesheet オプションを使います。",
     section: "API reference",
     headings: [
       {
         id: "plugin",
-        title: "effrontTailwind",
+        title: "effrontTailwind で Tailwind を有効にする",
       },
       {
         id: "stylesheet",
-        title: "stylesheet",
+        title: "stylesheet でカスタマイズする",
       },
     ],
     source: "/api-reference/tailwind",

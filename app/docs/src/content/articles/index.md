@@ -1,27 +1,37 @@
-EffrontはWeb標準とEffectベースで実装されたReactのメタフレームワークです。
+Effront は React Server Components と Effect を組み合わせ、サーバー側のデータを読み取り、ユーザーの操作に応じて処理するページを作るためのフレームワークです。
+画面は React で書き、その画面に必要なサーバー側の処理を Effect で記述します。
 
-対応するホストアダプターを選び、Cloudflare Workers、Node.js、Bun でアプリケーションを実行できます。
+## ページを表示する {#boundaries}
 
-## Effrontについて {#overview}
+まずは [はじめる](./guide/getting-started.md) に進んでください。
+ページとレイアウトを定義し、ページを URL に結び付け、ローカルでアプリケーションを起動してブラウザーに `Hello, Effront` を表示します。
+この小さなアプリケーションを、自分のページを作る出発点にしましょう。
 
-React Server Components による UI と、Effect による依存関係・リソース管理を結び付けます。 アプリケーションを Routes、Layout、Page、Component、Middleware、Server Function から組み立て、 必要なサービスをアプリケーションの Layer から注入します。
+アプリケーションの起動方法とデプロイ方法は、実行環境によって異なります。
+Effront は Cloudflare Workers、Node.js、Bun 向けのアダプターを提供しています。
+使う環境が決まっている場合は、[Platforms](./platforms.md) でその環境の開発・本番の設定を確認してください。
 
-## Web標準を境界にする {#boundaries}
+## データとユーザー操作を扱う {#overview}
 
-サーバーで HTML を返し、ブラウザーでは hydration とナビゲーションを行います。
-リンクやフォームには標準の HTML 要素を使えます。
-ページやサービスのコードにプラットフォームの起動処理を混ぜる必要はありません。
+次の目標として、データを表示し、利用者がそのデータを変更できるページを作ってみましょう。
+次の 3 段階で組み立てられます。
 
-実行環境ごとの対応状況と必要な設定は、[Platforms](/platforms) にまとめています。
+1. **ページにアドレスを付ける:** [ルーティング](./guide/routes.md) で URL とページを結び付け、ルートパラメーターを読み取り、関連するページでレイアウトを共有します。
+2. **ページに必要なデータを取得する:** ページの描画関数は、React のコンテンツを含む Effect を返します。
+   [サービスの注入](./guide/effect.md) では、サービスを提供して描画中に利用し、データへのアクセスを画面から分離する方法を説明します。
+3. **ブラウザーからの操作を処理する:** [Server Functions](./guide/server-functions.md) を使って入力を検証し、サーバーで Effect のハンドラーを実行します。
+   このガイドでは、フォームの送信に対してサーバー側のサービスから結果を返す例を紹介します。
 
-## 次に読むもの {#next}
+読み取り専用のページなら、データを表示するところまでで完成です。
+ユーザーの入力を必要とする機能を作るときに、アクションを追加します。
 
-[はじめる](/guide/getting-started) でアプリケーションの構成を確認し、[ルーティング](/guide/routes) と [サービスの注入](/guide/effect) を読んでください。内部の処理を理解したい場合は [アーキテクチャの実装解説](/architecture/implementation/overview)を順に読み進めてください。
+## 次のガイドを選ぶ {#next}
 
-- **Getting started**: [はじめる](./guide/getting-started.md) と [ホストの選択](./platforms.md)。
-- **Guides**: [ルーティング](./guide/routes.md)、[サービス](./guide/effect.md)、[Markdown 記事](./guide/markdown.md)、[スタイリング](./guide/styling.md)。
-- **実行時の契約**: [寿命と画面更新](./advanced.md) を設計時に確認します。
-- **Best practices**: [アプリケーションのテスト](./best-practices/testing.md)。
+基本の流れができたら、次に作り込みたい部分に取り組みましょう。
 
-- **API reference**: [公開パッケージとバージョン](./api-reference.md) から必要な契約を探します。
-- **アーキテクチャ**: [基準ソースに沿った実装解説](/architecture/implementation/overview) で内部を追います。
+- **コンテンツと見た目:** [Markdown](./guide/markdown.md) では記事の表示を、[スタイリング](./guide/styling.md) ではアプリケーションへの Tailwind CSS の導入を扱います。
+- **リクエストや画面遷移に伴う動作:** [実行時の契約](./advanced.md) では、サービスの生存期間と画面が更新されるタイミングを説明します。
+- **アプリケーションの動作確認:** [アプリケーションのテスト](./best-practices/testing.md) では、処理のテストとブラウザーでの確認を組み合わせる方法を紹介します。
+
+特定のオプションや型を調べたいときは、[API reference](./api-reference.md) を直接参照してください。
+これらの API を支える実装については、[アーキテクチャの実装解説](/architecture/implementation/overview) を読んでください。

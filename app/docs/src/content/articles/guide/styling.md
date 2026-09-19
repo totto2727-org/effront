@@ -1,13 +1,18 @@
-## 標準設定で使う {#setup}
+Tailwind CSS のユーティリティクラスを使うと、コンポーネント内で Effront アプリの見た目を整えられます。
+既存のアプリに Effront の連携プラグインを追加すれば、スタイルシートを作らずに Tailwind の標準設定で使い始められます。
+共通のデザイン設定や Tailwind プラグインが必要になったら、後からスタイルシートを追加できます。
 
-`effrontTailwind()` を Vite の `plugins` に追加するだけで、標準の Tailwind CSS を使えます。
-CSS ファイルの作成やコンポーネントからの CSS import は不要です。
+## Tailwind のクラスを使う {#setup}
+
+アプリに連携パッケージをインストールします。
 
 ```bash
 vp add -D @effront/tailwind@0.1.4
 ```
 
-既存の Vite config に追加します。
+Vite の設定で `effrontTailwind` を import し、既存の `plugins` 配列に `effrontTailwind()` を追加します。
+配列内の `effront()` とホストアダプターはそのまま残してください。
+すでに `@tailwindcss/vite` が含まれている場合は、Tailwind の Vite 連携も含む `effrontTailwind()` に置き換えます。
 
 ```typescript
 import { effrontTailwind } from "@effront/tailwind";
@@ -16,13 +21,20 @@ import { effrontTailwind } from "@effront/tailwind";
 // plugins: [effrontTailwind(), effront(), hostAdapter()]
 ```
 
-あとはコンポーネントの `className` に `p-4` や `text-xl` などのクラスを指定します。
-すでに `@tailwindcss/vite` を登録している場合は、`effrontTailwind()` に置き換えてください。
+これでコンポーネントの `className` で見た目を指定でき、`p-4` で内側の余白を付けたり、`text-xl` で文字を大きくしたりできます。
+この設定では、CSS ファイルの作成やコンポーネントからの CSS import は不要です。
+標準のクラスで必要なデザインを表現できる間は、そのまま使い続けられます。
 
-## テーマなどを設定する {#stylesheet}
+## テーマに共通の値を定義する {#stylesheet}
 
-色やフォントなど、Tailwind CSS の設定を変更したい場合は CSS ファイルを用意し、そのパスを `stylesheet` に渡します。
-例えば `src/styles.css` に独自の色を追加します。
+アプリ独自の色やフォントを複数のコンポーネントで共有したい場合は、テーマ用のスタイルシートにまとめて定義します。
+独自のスタイルシートを使う場合は、Tailwind をインストールします。
+
+```bash
+vp add -D tailwindcss@4.3.3
+```
+
+例えば、ブランドカラーを定義する `src/styles.css` を作成します。
 
 ```css
 @import "tailwindcss";
@@ -32,31 +44,44 @@ import { effrontTailwind } from "@effront/tailwind";
 }
 ```
 
+既存の `effrontTailwind()` の `stylesheet` オプションで、このファイルを指定します。
+
 ```typescript
 effrontTailwind({ stylesheet: "./src/styles.css" });
 ```
 
 パスは Vite root を基準に指定します。
-この例では `text-brand` や `bg-brand` を使えるようになります。
-指定した CSS は自動で読み込まれるため、コンポーネントからの import は不要です。
+指定したファイルが標準のスタイルシートに代わるため、Tailwind のスタイルを読み込む `@import "tailwindcss";` の行は残してください。
+指定したファイルは Effront が自動で読み込みます。
+コンポーネントに CSS import を追加する必要はありません。
 
-## プラグインを追加する {#scope}
+これで、文字色には `text-brand`、背景色には `bg-brand` でブランドカラーを指定できます。
+Tailwind の標準クラスと同じように、`className` で使ってください。
 
-Tailwind の追加プラグインも、`stylesheet` で指定した CSS ファイルから設定します。
-使いたいプラグインをインストールし、そのプラグインの手順に従って CSS に `@plugin` などを記述してください。
-標準の Tailwind クラスを使うだけなら、追加プラグインは不要です。
+## プラグインでスタイルを追加する {#scope}
 
-例えば、文章向けのスタイルを提供する Typography を選ぶ場合は、次のように追加します。
+標準のユーティリティやテーマだけでは足りないスタイルは、必要に応じて Tailwind プラグインで追加できます。
+使いたいプラグインをインストールし、そのドキュメントに従って、`stylesheet` で指定したファイルに `@plugin` などの設定を記述します。
+まだ標準設定を使っている場合は、先ほどの手順でスタイルシートを作成して指定してください。
+独自のテーマ値を追加せずに、プラグインだけを利用することもできます。
+
+例えば、記事の見出しや段落、リスト、リンクの見た目をまとめて整えたい場合には、Typography が選択肢になります。
+利用する場合は、プラグインをインストールします。
 
 ```bash
 vp add -D @tailwindcss/typography
 ```
+
+次に、指定したスタイルシートで有効にします。
 
 ```css
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 ```
 
-この例では `prose` クラスを使えます。
-Typography は追加プラグインの一例で、Effront や Markdown の利用に必須ではありません。
-設定方法は [Tailwind API](../api-reference/tailwind.md) と [公式 Tailwind documentation](https://tailwindcss.com/docs/installation/using-vite) を参照してください。
+ファイルにテーマの設定がある場合は、その設定を残して `@plugin` の行を追加します。
+記事を囲む要素に `prose` を指定すると、その中の文章にスタイルが適用されます。
+Typography はあくまで一例であり、Effront アプリのスタイリングや Markdown の表示に必須ではありません。
+
+連携プラグインの設定項目は [Tailwind API](../api-reference/tailwind.md) を参照してください。
+ユーティリティクラス、テーマの構文、さらに詳しいカスタマイズについては、[Tailwind CSS 公式ドキュメント](https://tailwindcss.com/docs/installation/using-vite) を参照してください。

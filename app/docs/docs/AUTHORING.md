@@ -1,12 +1,16 @@
 # SSR documentation site
 
-`app/docs` is the private Japanese documentation application, rendered on each request by Effront and hosted by Alchemy's native Cloudflare integration.
-Its consumer navigation is Getting started, Platforms, Guides, Best practices, API reference, and アーキテクチャ.
+`app/docs` serves English documentation at `/en` and Japanese documentation at `/ja`, rendered on each request by Effront and hosted by Alchemy's native Cloudflare integration.
+The unprefixed Japanese URLs remain available for existing bookmarks.
+Each language has its own authored catalog and articles; there is no automatic translation or fallback to the other language.
+Its consumer navigation is Getting started, Platforms, Guides, Best practices, API reference, and Architecture (アーキテクチャ in Japanese).
 Guides nests application-facing runtime contracts under 実行時の契約; Architecture nests the seven source-based chapters under 実装解説.
 Best practices contains application-development recommendations rather than framework features.
 When a canonical article URL changes, preserve bookmarks through a permanent redirect.
 The retired `/advanced/production-startup` article redirects permanently to `/platforms` through native global HTTP middleware, for both HTML and Flight requests, and is absent from the catalog/navigation.
 The former `/guide/testing` URL similarly redirects to `/best-practices/testing`; only the latter appears in the catalog.
+Both redirects also preserve the `/en` or `/ja` prefix and query string.
+The language switch links to the same article in the other language; article links, search results, and previous/next navigation stay within the selected language.
 
 ## Run locally
 
@@ -51,10 +55,11 @@ API and CI behavior were checked against the installed `alchemy@2.0.0-beta.77`; 
 
 ## Content ownership and rendering
 
-- `src/content/articles/` contains consumer articles in Markdown: onboarding, platforms, feature guides, runtime contracts, and public API reference.
-- `src/content/catalog.ts` owns typed navigation metadata, descriptions, explicit public routes, source-document lookup paths, and table-of-contents entries.
+- `src/content/en/articles/` contains original English consumer articles and `src/content/articles/` contains their Japanese translations: onboarding, platforms, feature guides, runtime contracts, and public API reference.
+- `src/content/en/catalog.ts` and `src/content/catalog.ts` own the corresponding typed navigation metadata, descriptions, source-document lookup paths, and table-of-contents entries.
+- `src/content/locale.ts` owns the small site-specific locale/path helpers. The catalogs keep canonical paths without locale prefixes.
 - `src/content/markdown.tsx` uses Vite raw globs, `createMarkdownCollection`, `parseMarkdown`, and Comark's standard `MarkdownDocument` renderer in the server graph.
-- `src/content/core-model.tsx` and `core-runtime.tsx` retain the authored architecture explanations and exact source selections as JSX.
+- `src/content/en/architecture/` contains the English architecture chapters. `src/content/core-model.tsx` and `core-runtime.tsx` contain their Japanese translations and the shared exact source selections.
 - `src/entry.effront.tsx` owns explicit routes and the persistent shared RootLayout.
 
 Markdown is appropriate for the prose and code examples, but source excerpts retain their exact-string and historical-baseline contract in JSX.
@@ -77,15 +82,16 @@ The deployment stylesheet remains explicitly selected through `effrontTailwind`,
 
 ## Author or change an article
 
-1. Add a trusted authored `.md` file below `src/content/articles/`.
-2. Add its metadata to `articleCatalog`, choosing the consumer section and optional group.
-3. Give each heading a stable explicit Comark ID, such as `## セットアップ {#setup}`, and list its ID/title in `headings`.
-4. Add the explicit route in `src/entry.effront.tsx`; registration preserves compile-time collision checks and native unknown-route 404 behavior.
-5. Run the content tests and built-site browser acceptance below.
+1. Establish the reader's task and verify the relevant public API or source before outlining the English article.
+2. Write the original English article under `src/content/en/articles/`. Organize it around decisions, steps, and observable outcomes rather than implementation facts.
+3. Review the English article for technical correctness and usability, then write its Japanese translation under `src/content/articles/`. Keep examples and API contracts equivalent.
+4. Update both catalogs, including the translated title/description and the exact heading ID/title order. Preserve stable IDs across languages, such as `## Setup {#setup}` and `## セットアップ {#setup}`.
+5. Add explicit `/en` and `/ja` routes in `src/entry.effront.tsx`. Keep existing unprefixed compatibility routes when revising an established article.
+6. Run content tests and built-site browser acceptance for both languages, including the language switch and links to other articles.
 
 The collection strips only `.md`; it does not turn `index.md` into `/`.
 The catalog deliberately maps public `/` to document `/index`, without exposing `/index` as another route.
-Use site-absolute `/` when linking to the home page, not `./index.md`, which would resolve to the intentionally unregistered `/index`.
+Use `/en` or `/ja` when linking to the localized home page, not `./index.md`, which resolves to an intentionally unregistered index route.
 Other relative `.md` links are resolved by the existing collection, with fragments preserved.
 Keep published URLs and heading IDs when moving sidebar groups; if a URL must change, supply an intentional compatibility route or redirect rather than silently dropping it.
 Tests check every Markdown file has catalog metadata, every declared heading exists, and all rendered internal article links resolve.
