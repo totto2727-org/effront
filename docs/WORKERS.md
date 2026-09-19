@@ -64,7 +64,7 @@ The wrapper does not set server host, port, strict-port mode, project root, or a
 Vite runs from the application directory and uses normal configuration discovery.
 
 VitePlus drives Vite and builds the graph-specific outputs.
-Wrangler runs the generated `examples/workers/dist/rsc/wrangler.json` using `--local --no-bundle`.
+Wrangler runs the generated `examples/workers/dist/rsc/wrangler.json` using `--local`.
 The wrapper places SSR output inside the Worker upload root (by default `dist/rsc/ssr`) so dynamically loaded SSR modules are attached by Wrangler.
 Emitting SSR as a sibling `dist/ssr` builds successfully but fails in Wrangler at runtime because that module is not attached to the Worker.
 Workers assets are host-owned, not Bun filesystem middleware.

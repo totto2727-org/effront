@@ -65,7 +65,7 @@ vp dev
 
 # ビルド済み成果物を Vite と独立に実行する
 vp build
-vp exec wrangler dev --local --no-bundle --config dist/rsc/wrangler.json
+vp exec wrangler dev --local --config dist/rsc/wrangler.json
 ```
 
 開発時は Cloudflare Vite plugin が RSC と SSR を workerd で実行します。 ビルド後は Wrangler が `dist/rsc/wrangler.json` を読み込みます。 未処理の RSC ソースを Wrangler に直接コンパイルさせません。 ローカル検証に Cloudflare の認証やデプロイは不要です。

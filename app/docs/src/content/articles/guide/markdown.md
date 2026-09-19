@@ -8,7 +8,6 @@
 vp add @effront/markdown@0.1.3 @comark/react@0.6.2
 ```
 
-独自の Vite Markdown plugin 登録や runtime filesystem loader は不要です。
 collection と parser の import はサーバーグラフに置いてください。
 
 ## Vite の collection {#collection}

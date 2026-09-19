@@ -100,7 +100,7 @@ vp dev
 
 ```bash
 vp build
-vp exec wrangler dev --local --no-bundle --config dist/rsc/wrangler.json
+vp exec wrangler dev --local --config dist/rsc/wrangler.json
 ```
 
 環境変数やホスト設定の詳細は [Cloudflare](/platforms/cloudflare) のページを参照してください。
