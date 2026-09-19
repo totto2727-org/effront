@@ -1,6 +1,6 @@
 import { Context, Effect, Layer } from "effect";
 import { Application } from "@effront/core";
-import { HttpServerRequest } from "effect/unstable/http";
+import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { DocsShell } from "./components/docs-shell";
 import { getPage, navigation } from "./content";
 import { architectureBaseline } from "./content/architecture-baseline";
@@ -12,6 +12,22 @@ const RequestPathLive = Layer.effect(
     HttpServerRequest.HttpServerRequest,
     (request) => new URL(request.url, "https://effront.local").pathname,
   ),
+);
+// A global HTTP middleware handles the retired URL before route matching for both HTML and Flight.
+const ProductionStartupRedirect = HttpRouter.middleware(
+  (httpEffect) =>
+    Effect.gen(function* () {
+      const request = yield* HttpServerRequest.HttpServerRequest;
+      const url = new URL(request.url, "https://effront.local");
+      if (
+        (request.method === "GET" || request.method === "HEAD") &&
+        url.pathname === "/advanced/production-startup"
+      ) {
+        return HttpServerResponse.redirect(`/platforms${url.search}`, { status: 308 });
+      }
+      return yield* httpEffect;
+    }),
+  { global: true },
 );
 const EFFRONT = Application.effront<RequestPath>();
 const RootLayout = EFFRONT.Layout.make({
@@ -90,7 +106,7 @@ function documentPage(slug: string) {
 
 // Explicit routes preserve Effront's compile-time collision checks and its native 404 handling.
 export default EFFRONT.make({
-  layer: RequestPathLive,
+  layer: Layer.mergeAll(RequestPathLive, ProductionStartupRedirect),
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", documentPage("/"))
     .page("/guide/getting-started", documentPage("/guide/getting-started"))
@@ -122,7 +138,6 @@ export default EFFRONT.make({
       "/advanced/server-function-execution-and-refresh",
       documentPage("/advanced/server-function-execution-and-refresh"),
     )
-    .page("/advanced/production-startup", documentPage("/advanced/production-startup"))
     .page("/api-reference", documentPage("/api-reference"))
     .page("/api-reference/application", documentPage("/api-reference/application"))
     .page("/api-reference/components", documentPage("/api-reference/components"))

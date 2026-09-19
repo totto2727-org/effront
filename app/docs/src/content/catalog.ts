@@ -62,6 +62,10 @@ export const articleCatalog = [
         id: "support",
         title: "対応状況",
       },
+      {
+        id: "build-startup",
+        title: "ビルドと起動の契約",
+      },
     ],
     source: "/platforms",
   },
@@ -324,6 +328,10 @@ export const articleCatalog = [
         title: "ページとユーザー操作",
       },
       {
+        id: "production",
+        title: "ビルド済みアプリケーションの受け入れ確認",
+      },
+      {
         id: "tools",
         title: "テストツール",
       },
@@ -468,28 +476,6 @@ export const articleCatalog = [
       },
     ],
     source: "/advanced/server-function-execution-and-refresh",
-    group: "実行時の契約",
-  },
-  {
-    slug: "/advanced/production-startup",
-    title: "ビルド済みアプリケーションの起動",
-    description: "ビルドとホストの起動を分け、Workers・Node.js・Bun の成果物を確認します。",
-    section: "Guides",
-    headings: [
-      {
-        id: "host-boundary",
-        title: "起動はホスト統合が担当する",
-      },
-      {
-        id: "workers-artifact",
-        title: "ビルドと起動の契約を分ける",
-      },
-      {
-        id: "startup-checks",
-        title: "起動後に確認すること",
-      },
-    ],
-    source: "/advanced/production-startup",
     group: "実行時の契約",
   },
   {

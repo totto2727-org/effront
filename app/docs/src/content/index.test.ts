@@ -22,11 +22,19 @@ const retainedUrls = [
   "/guide/http",
   "/platforms",
   "/platforms/cloudflare",
+  "/platforms/node-bun",
+  "/platforms/alchemy",
+  "/guide/markdown",
+  "/guide/styling",
+  "/api-reference/http",
+  "/api-reference/server",
+  "/api-reference/markdown",
+  "/api-reference/alchemy",
+  "/api-reference/tailwind",
   "/advanced",
   "/advanced/request-runtime-and-lifetimes",
   "/advanced/client-navigation",
   "/advanced/server-function-execution-and-refresh",
-  "/advanced/production-startup",
   "/api-reference",
   "/api-reference/application",
   "/api-reference/components",
@@ -65,6 +73,13 @@ describe("documentation catalog", () => {
         ...(page.group ? { group: page.group } : {}),
       });
     }
+  });
+
+  it("removes the retired startup article from the catalog and navigation", () => {
+    const retired = "/advanced/production-startup";
+    expect(pages.map((page) => page.slug)).not.toContain(retired);
+    expect(navigation.map((page) => page.slug)).not.toContain(retired);
+    expect(() => getPage(retired)).toThrow("Documentation route is missing content");
   });
 
   it("keeps every Markdown document registered, including the explicit root alias", () => {
@@ -123,7 +138,10 @@ describe("documentation catalog", () => {
     ]) {
       expect(native).toContain(required);
     }
-    expect(await text("/advanced/production-startup")).not.toContain("今後の設計対象");
+    expect(await text("/platforms")).toContain(
+      "SSR モジュールとブラウザーアセットを含む成果物全体",
+    );
+    expect(await text("/guide/testing")).toContain("JavaScript 無効時のフォーム送信");
     expect(await text("/platforms/alchemy")).toContain("profile が必要");
     expect(await text("/advanced/request-runtime-and-lifetimes")).toContain(
       "ハンドラーを作り、リクエスト間で再利用",

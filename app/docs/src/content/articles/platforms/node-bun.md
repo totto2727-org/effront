@@ -104,4 +104,4 @@ public files は完全一致だけで、ディレクトリ index や SPA fallbac
 配信先には信頼できるビルド成果物と public directory だけを置きます。
 シンボリックリンクを含む配置内容の管理は利用者の責任です。
 
-詳細は [serve・withAssets の契約](../api-reference/server.md) と [production startup](../advanced/production-startup.md) を参照してください。
+詳細は [serve・withAssets の契約](../api-reference/server.md) と [ビルドと起動の契約](../platforms.md#build-startup) を参照してください。

@@ -3,7 +3,8 @@
 `app/docs` is the private Japanese documentation application, rendered on each request by Effront and hosted by Alchemy's native Cloudflare integration.
 Its consumer navigation is Getting started, Platforms, Guides, API reference, and アーキテクチャ.
 Guides nests application-facing runtime contracts under 実行時の契約; Architecture nests the seven source-based chapters under 実装解説.
-Existing URLs, including `/advanced/*`, remain stable independently of their sidebar section.
+Existing article URLs remain stable independently of their sidebar section.
+The retired `/advanced/production-startup` article redirects permanently to `/platforms` through native global HTTP middleware, for both HTML and Flight requests, and is absent from the catalog/navigation.
 
 ## Run locally
 
@@ -135,7 +136,7 @@ Playwright builds the actual site and runs the built Worker through preview on f
 This is built-site runtime evidence, not evidence about official CLI authentication or remote deployment.
 Failure traces and screenshots stay under ignored `app/docs/tmp/`.
 
-Browser acceptance covers all routes without JavaScript, metadata, stable headings, architecture excerpts, initial CSS, dark highlighting, keyboard-reachable code, mobile navigation/overflow, unknown-route HTML/Flight 404 responses, and persistent sidebar DOM/search/scroll through sidebar, article, previous/next and Back/Forward navigation.
+Browser acceptance covers all routes without JavaScript, metadata, stable headings, architecture excerpts, initial CSS, dark highlighting, keyboard-reachable code, mobile navigation/overflow, unknown-route HTML/Flight 404 responses, the retired startup URL’s HTML/Flight redirect and navigation absence, and persistent sidebar DOM/search/scroll through sidebar, article, previous/next and Back/Forward navigation.
 Framework-only build and HMR suites retain their independent fixtures and commands described in [test boundaries](../../../docs/TESTING.md).
 Do not substitute a successful build, source inspection, or mocked parser for the real site acceptance workflow.
 

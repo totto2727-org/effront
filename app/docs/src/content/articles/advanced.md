@@ -8,6 +8,6 @@
 
 - [Server Function の実行と更新](/advanced/server-function-execution-and-refresh): 戻り値と画面更新の分離、並行呼び出し、入力境界。
 
-- [ビルド済みアプリケーションの起動](/advanced/production-startup): ホストの責務と、Workers・Node.js・Bun のビルド済み成果物の実行。
+ホストの責務と起動方法は[プラットフォーム](/platforms)、起動後の受け入れ確認は[アプリケーションのテスト](/guide/testing#production) を参照してください。
 
 API の使い方は [はじめる](/guide/getting-started)、内部の処理を追う場合は[アーキテクチャ](/architecture/implementation/overview) を参照してください。

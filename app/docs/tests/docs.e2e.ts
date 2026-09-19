@@ -18,6 +18,7 @@ test.describe("built documentation without JavaScript", () => {
       await expect(
         page.getByRole("navigation", { name: "ドキュメントナビゲーション" }).getByRole("link"),
       ).toHaveCount(pages.length);
+      await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
       for (const heading of article.headings) {
         await expect(page.locator(`article #${heading.id}`)).toHaveText(heading.title);
       }
@@ -165,10 +166,69 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
 test("unknown and historical removed routes return real HTML and Flight 404 responses", async ({
   request,
 }) => {
-  for (const slug of ["/not-a-document", "/index", "/reading/overview"]) {
+  for (const slug of [
+    "/not-a-document",
+    "/index",
+    "/reading/overview",
+    "/advanced/production-startup-extra",
+  ]) {
     const html = await request.get(slug);
     expect(html.status()).toBe(404);
     const flight = await request.get(slug, { headers: { Accept: "text/x-component" } });
     expect(flight.status()).toBe(404);
   }
+});
+
+for (const accept of ["text/html", "text/x-component"]) {
+  test(`retired startup URL redirects ${accept} to Platforms`, async ({ request }) => {
+    const retired = "/advanced/production-startup?from=bookmark";
+    const headers = { Accept: accept };
+    const redirect = await request.get(retired, { headers, maxRedirects: 0 });
+    expect(redirect.status()).toBe(308);
+    expect(redirect.headers()["location"]).toBe("/platforms?from=bookmark");
+    expect(await redirect.body()).toHaveLength(0);
+    const head = await request.head(retired, { headers, maxRedirects: 0 });
+    expect(head.status()).toBe(308);
+    expect(head.headers()["location"]).toBe("/platforms?from=bookmark");
+    expect(await head.body()).toHaveLength(0);
+    const followed = await request.get(retired, { headers });
+    expect(followed.status()).toBe(200);
+    expect(new URL(followed.url()).pathname).toBe("/platforms");
+    expect(followed.headers()["content-type"]).toContain(accept);
+    expect(await followed.text()).toContain("ビルドと起動の契約");
+  });
+}
+
+test.describe("retired startup bookmark without JavaScript", () => {
+  test.use({ javaScriptEnabled: false });
+  test("lands on Platforms without advertising the retired article", async ({ page }) => {
+    await page.goto("/advanced/production-startup");
+    await expect(page).toHaveURL(/\/platforms$/);
+    await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
+    await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
+    await expect(page.locator('a[href="/guide/testing#production"]')).toBeVisible();
+  });
+});
+
+test("native Flight navigation follows the retired URL while preserving the shell", async ({
+  page,
+}) => {
+  await page.goto("/guide/testing");
+  await page.waitForLoadState("networkidle");
+  const search = await page.getByRole("textbox", { name: "ガイドを絞り込む" }).elementHandle();
+  // Simulate an inbound bookmark link without putting the retired URL back in authored navigation.
+  await page.locator('article a[href="/platforms"]').evaluate((link) => {
+    link.setAttribute("href", "/advanced/production-startup");
+  });
+  const flight = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/platforms" &&
+      response.headers()["content-type"]?.includes("text/x-component") === true,
+  );
+  await page.locator('article a[href="/advanced/production-startup"]').click();
+  expect((await flight).status()).toBe(200);
+  await expect(page).toHaveURL(/\/platforms$/);
+  await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
+  expect(await search?.evaluate((node) => node.isConnected)).toBe(true);
+  await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
 });
