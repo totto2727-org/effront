@@ -6,7 +6,7 @@ export const articleCatalog = [
     slug: "/",
     title: "Effront",
     description:
-      "サーバー側のデータとユーザー操作を扱う React ページを作り、次の作業に合うガイドを選びます。",
+      "サーバーでのページ描画、型付きサービス、Server Functions を備えた、Effect ベースの React メタフレームワーク。",
     section: "Getting started",
     headings: [
       { id: "boundaries", title: "ページを表示する" },
@@ -18,34 +18,27 @@ export const articleCatalog = [
   {
     slug: "/guide/getting-started",
     title: "はじめる",
-    description: "トップページを作り、選んだ実行環境でローカル起動します。",
+    description: "Hello, world を表示する、はじめての Effront アプリケーション。",
     section: "Getting started",
     headings: [
-      { id: "setup", title: "プロジェクトを準備する" },
-      { id: "application", title: "トップページを定義する" },
-      { id: "files", title: "アプリケーションを実行環境に接続する" },
-      { id: "run", title: "表示を確認して書き換える" },
+      { id: "setup", title: "サンプルを起動する" },
+      { id: "application", title: "サンプルの構成を見る" },
+      { id: "run", title: "表示内容を変える" },
     ],
     source: "/guide/getting-started",
   },
   {
     slug: "/platforms",
     title: "デプロイ先",
-    description:
-      "ホスティング方法を選んでローカル開発を始め、Wrangler または Node.js・Bun の本番向け確認手順を探します。",
+    description: "デプロイ先に合わせて、開発環境と本番環境をセットアップします。",
     section: "Platforms",
-    headings: [
-      { id: "support", title: "ホスティング方法を選ぶ" },
-      { id: "architecture", title: "ローカル開発を設定する" },
-      { id: "build-startup", title: "本番の起動とアセットを準備する" },
-    ],
+    headings: [{ id: "support", title: "ホスティング方法を選ぶ" }],
     source: "/platforms",
   },
   {
     slug: "/platforms/cloudflare",
     title: "Cloudflare Workers",
-    description:
-      "既存のアプリケーションを Cloudflare Workers に接続し、アセットと環境値を設定してローカルで確認します。",
+    description: "Cloudflare Workers 向けの開発環境・本番環境セットアップガイド。",
     section: "Platforms",
     headings: [
       { id: "setup", title: "アプリケーションを Worker に接続する" },
@@ -60,8 +53,7 @@ export const articleCatalog = [
   {
     slug: "/platforms/node-bun",
     title: "Node.js と Bun",
-    description:
-      "Vite で開発し、ページとブラウザー用アセットを配信する Node.js または Bun サーバーをビルドして起動します。",
+    description: "Node.js・Bun 向けの開発環境・本番環境セットアップガイド。",
     section: "Platforms",
     headings: [
       { id: "setup", title: "サーバー統合をインストールする" },
@@ -75,8 +67,7 @@ export const articleCatalog = [
   {
     slug: "/platforms/alchemy",
     title: "Alchemy と Cloudflare",
-    description:
-      "既存の Effront アプリケーションを Alchemy からローカルで動かし、必要に応じて KV によるデータ保存を追加します。",
+    description: "Alchemy を使った Cloudflare Workers 向けの開発環境セットアップガイド。",
     section: "Platforms",
     headings: [
       { id: "setup", title: "既存の Effront アプリケーションを準備する" },
@@ -89,8 +80,7 @@ export const articleCatalog = [
   {
     slug: "/guide/routes",
     title: "ページ、レイアウト、ルート",
-    description:
-      "URL をページに結び付け、ルートパラメーターを検証し、共通のレイアウトと読み込み中の UI を持つページをまとめます。",
+    description: "ページと共通のレイアウトを作り、URL に対応付けるためのガイド。",
     section: "Guides",
     headings: [
       { id: "pages", title: "Page を登録する" },
@@ -116,7 +106,7 @@ export const articleCatalog = [
     slug: "/guide/server-functions",
     title: "Server Function",
     description:
-      "検証したフォームデータを Server Function に送信し、useActionState で結果を表示します。",
+      "フォームの送信やクライアントからの呼び出しに対し、サーバー側で入力を検証し、UI で使える応答を返します。",
     section: "Guides",
     headings: [
       { id: "identity", title: "アプリケーション定義を共有する" },
@@ -131,8 +121,7 @@ export const articleCatalog = [
   {
     slug: "/guide/effect",
     title: "アプリケーションサービス",
-    description:
-      "Page に型付きサービスを提供し、その実装を選んでリクエスト単位のリソースを管理します。",
+    description: "Effect のサービスで、アプリケーションの処理と依存関係を構成するためのガイド。",
     section: "Guides",
     headings: [
       { id: "service", title: "Page でサービスを使う" },
@@ -144,8 +133,7 @@ export const articleCatalog = [
   {
     slug: "/guide/middleware",
     title: "Middleware",
-    description:
-      "対象のページと Server Function に対し、リクエストのデータを用意して必要なチェックを行います。",
+    description: "認証などのリクエスト処理を、ページや Server Function で共通化するためのガイド。",
     section: "Guides",
     headings: [
       { id: "reach", title: "適用するリクエストを選ぶ" },
@@ -159,8 +147,7 @@ export const articleCatalog = [
   {
     slug: "/guide/http",
     title: "HTTP エンドポイント",
-    description:
-      "Page とサービスを共有する JSON エンドポイントを追加し、Page と API の応答に共通のヘッダーを適用します。",
+    description: "アプリケーションのページと併せて HTTP API を提供するためのガイド。",
     section: "Guides",
     headings: [
       { id: "router", title: "JSON エンドポイントを定義する" },
@@ -173,8 +160,7 @@ export const articleCatalog = [
   {
     slug: "/guide/markdown",
     title: "Markdown でページを書く",
-    description:
-      "指定した URL で Markdown 記事を公開し、関連する記事やアセットをつなぎ、必要に応じて解析をカスタマイズします。",
+    description: "Markdown コンテンツを Effront のページとして公開するためのガイド。",
     section: "Guides",
     headings: [
       { id: "setup", title: "記事を追加する" },
@@ -187,8 +173,7 @@ export const articleCatalog = [
   {
     slug: "/guide/styling",
     title: "Tailwind によるスタイリング",
-    description:
-      "Tailwind のユーティリティから始め、デザインに応じて共通のテーマ値やプラグインを追加します。",
+    description: "Tailwind CSS を使った Effront アプリケーションのスタイリングガイド。",
     section: "Guides",
     headings: [
       { id: "setup", title: "Tailwind のユーティリティを使う" },
@@ -200,8 +185,7 @@ export const articleCatalog = [
   {
     slug: "/advanced",
     title: "実行時の動作",
-    description:
-      "非同期処理を踏まえて、ユーザーへの結果表示、画面遷移、リソースの解放を設計します。",
+    description: "ページ更新、画面遷移、リソースの生存期間に関する Effront の動作を解説します。",
     section: "Guides",
     headings: [{ id: "chapters", title: "実行時の契約" }],
     source: "/advanced",
@@ -211,7 +195,7 @@ export const articleCatalog = [
     slug: "/advanced/request-runtime-and-lifetimes",
     title: "リクエストとリソースの生存期間",
     description:
-      "描画やストリーミング中にリクエストのリソースを利用できる状態に保ち、応答の完了や中断に合わせて解放します。",
+      "リクエストの処理からレスポンスの配信まで、アプリケーションサービスの生存期間を解説します。",
     section: "Guides",
     headings: [
       { id: "response-lifetime", title: "Response の処理はハンドラーの後も続く" },
@@ -225,8 +209,7 @@ export const articleCatalog = [
   {
     slug: "/advanced/client-navigation",
     title: "クライアントナビゲーション",
-    description:
-      "クライアントナビゲーションに対応した環境で共通 UI の状態を保ち、ページのアニメーション、読み込み、履歴操作を設計します。",
+    description: "ページ遷移に伴う、共通 UI の状態・読み込み・ブラウザー履歴の動作を解説します。",
     section: "Guides",
     headings: [
       { id: "native-navigation", title: "ページ間で保持される状態" },
@@ -240,8 +223,7 @@ export const articleCatalog = [
   {
     slug: "/advanced/server-function-execution-and-refresh",
     title: "Server Function の結果と画面更新",
-    description:
-      "保存結果を表示するタイミングを決め、サーバーの書き込みを保護し、重なった送信やページ更新を扱います。",
+    description: "Server Function の実行結果と画面更新の関係を解説します。",
     section: "Guides",
     headings: [
       { id: "execution", title: "一度の呼び出しで結果と更新後のページを返す" },
@@ -255,8 +237,7 @@ export const articleCatalog = [
   {
     slug: "/best-practices/testing",
     title: "アプリケーションのテスト",
-    description:
-      "一連のユーザー操作とその業務ルールをテストし、公開用ビルドでも同じ確認を繰り返します。",
+    description: "アプリケーションの動作と業務ルールを検証するための、テストの設計・実行指針。",
     section: "Best practices",
     headings: [
       { id: "pages", title: "保存した変更をブラウザーで確かめる" },
@@ -282,8 +263,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/application",
     title: "Application",
-    description:
-      "ページ、ルート、サービスを組み合わせてアプリケーションを作り、対象の定義を Middleware で拡張する方法を確認します。",
+    description: "Effront アプリケーションとサービスの定義に使う API のリファレンス。",
     section: "API reference",
     headings: [
       { id: "example", title: "アプリケーション定義の例" },
@@ -297,7 +277,7 @@ export const articleCatalog = [
     slug: "/api-reference/components",
     title: "Component・Page・Layout・Loading",
     description:
-      "描画ファクトリーを選び、レイアウトと読み込み中の UI を追加し、URL パラメーターやページ遷移のオプションを確認します。",
+      "ページ、コンポーネント、レイアウト、読み込み中の表示を定義する API のリファレンス。",
     section: "API reference",
     headings: [
       { id: "render", title: "描画ファクトリー" },
@@ -310,8 +290,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/routing",
     title: "Routes と Middleware",
-    description:
-      "ルートをまとめて組み合わせ、URL パラメーターを対応付け、そのセクションのリクエストに Middleware を適用します。",
+    description: "ルートの定義とリクエストのミドルウェアに関する API リファレンス。",
     section: "API reference",
     headings: [
       { id: "routes", title: "Routes" },
@@ -323,8 +302,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/server-functions",
     title: "ServerFn",
-    description:
-      "サーバーの処理を React から呼び出せるようにする際の、入力、ハンドラーの型、認可の要件を確認します。",
+    description: "React から呼び出せるサーバー側の関数を定義する API のリファレンス。",
     section: "API reference",
     headings: [
       { id: "make", title: "ServerFn.make" },
@@ -336,8 +314,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/workers",
     title: "Fetch ハンドラーと Workers コンテキスト",
-    description:
-      "Fetch エントリーを作り、アプリケーションの Effect から現在のリクエスト、環境の binding、実行コンテキストを読み取ります。",
+    description: "Fetch ハンドラーと Workers のリクエストコンテキストを扱う API のリファレンス。",
     section: "API reference",
     headings: [
       { id: "fetch", title: "createFetchHandler" },
@@ -350,8 +327,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/vite",
     title: "Vite と Cloudflare のプラグイン",
-    description:
-      "Vite に Effront を登録し、エントリーファイルのオプションや Cloudflare Workers の設定を調べます。",
+    description: "Effront の Vite 連携と Cloudflare Workers 連携に関する設定リファレンス。",
     section: "API reference",
     headings: [
       { id: "effront", title: "effront" },
@@ -363,8 +339,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/http",
     title: "Effect HTTP ハンドラー",
-    description:
-      "アプリケーションを Effect HTTP ホストに接続し、リクエスト処理と応答のストリーミングに必要なサービスを提供します。",
+    description: "Effront アプリケーションを Effect HTTP サーバーに接続する API のリファレンス。",
     section: "API reference",
     headings: [
       { id: "fetch", title: "HTTP の接続 API" },
@@ -376,8 +351,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/server",
     title: "Node.js と Bun のサーバー API",
-    description:
-      "ビルドのエントリーを設定し、本番用リスナーを起動して、Node.js または Bun で静的ファイルを配信します。",
+    description: "Node.js と Bun で Effront アプリケーションを実行する API のリファレンス。",
     section: "API reference",
     headings: [
       { id: "vite", title: "effrontServer" },
@@ -389,7 +363,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/markdown",
     title: "Markdown API",
-    description: "文書を取得し、Markdown の解析を設定して、記事やアセットへのリンクを解決します。",
+    description: "Markdown コレクションとパーサーの API リファレンス。",
     section: "API reference",
     headings: [
       { id: "collection", title: "createMarkdownCollection" },
@@ -401,8 +375,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/alchemy",
     title: "Alchemy API",
-    description:
-      "Alchemy Worker のハンドラーを作り、アプリケーションサービスを提供して Vite ビルドを設定します。",
+    description: "Effront アプリケーションを Alchemy の Worker に接続する API のリファレンス。",
     section: "API reference",
     headings: [
       { id: "http", title: "HTTP ハンドラー" },
@@ -413,8 +386,7 @@ export const articleCatalog = [
   {
     slug: "/api-reference/tailwind",
     title: "Tailwind API",
-    description:
-      "Tailwind 標準のユーティリティを有効にし、独自のテーマやプラグインには stylesheet オプションを使います。",
+    description: "Effront の Tailwind CSS 連携に関する設定リファレンス。",
     section: "API reference",
     headings: [
       { id: "plugin", title: "effrontTailwind" },

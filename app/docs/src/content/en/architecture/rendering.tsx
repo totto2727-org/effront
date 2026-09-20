@@ -5,8 +5,7 @@ import type { DocPage } from "../../types";
 export const page: DocPage = {
   slug: "/architecture/implementation/rendering",
   title: "05. From a route to HTML and Flight",
-  description:
-    "Trace how one route render serves HTML and Flight responses, keeps request services available, and carries the initial payload to the browser.",
+  description: "How Effront renders an application into HTML and React Server Component payloads.",
   section: "Architecture",
   group: "Implementation",
   headings: [

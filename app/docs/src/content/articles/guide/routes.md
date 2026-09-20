@@ -1,3 +1,6 @@
+`Page` でページを作り、`Layout` で共通の UI を定義し、`Routes` に URL を登録します。
+ルートパラメーターで URL の値を受け取り、関連するページをグループにまとめてレイアウトや読み込み中の UI を共有できます。
+
 ## Page を登録する {#pages}
 
 `src/entry.effront.tsx` で Page とルート Layout を作り、Page の URL を登録します。

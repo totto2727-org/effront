@@ -1,4 +1,4 @@
-`@effront/alchemy/cloudflare` は、インフラ構築時にアプリケーションを評価せず、Alchemy のネイティブ HTTP Worker に接続します。
+`@effront/alchemy` は、Alchemy で Effront アプリケーションを Cloudflare Workers 上にホストするためのネイティブ HTTP ハンドラーと Vite アダプターを提供します。
 
 ## HTTP ハンドラー {#http}
 

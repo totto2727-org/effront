@@ -1,3 +1,6 @@
+Combine server-rendered UI with interactive Client Components without moving data access into the browser.
+The example pairs a reusable greeting with a counter, showing where each kind of component belongs.
+
 ## Choose a component for the task {#boundary}
 
 | Task                                 | Use                                             |

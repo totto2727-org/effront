@@ -1,3 +1,6 @@
+Publish Markdown content as pages in your Effront application, with article links and local assets resolved to their public URLs.
+The example renders an article with `@effront/markdown` and Comark's React renderer.
+
 ## Add an article {#setup}
 
 Install the collection/parser and React renderer in your application:

@@ -1,4 +1,5 @@
-Effront renders React pages with Effect and handles browser actions through Server Functions.
+Effront is a React meta-framework built on Effect.
+It combines React Server Components for page rendering and Server Functions for user actions with Effect services and dependency injection.
 
 ## Get a page on screen {#boundaries}
 

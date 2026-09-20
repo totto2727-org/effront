@@ -1,4 +1,4 @@
-`@effront/markdown` はインポート済み Markdown を索引化し、Comark で解析して、ファイルからの相対参照を解決します。
+`@effront/markdown` は、インポートした Markdown をアプリケーションで描画するために、URL で文書を検索できるコレクションと Comark による解析を提供します。
 ページへの組み込みは [Markdown](../guide/markdown.md) を参照してください。
 
 ## createMarkdownCollection {#collection}

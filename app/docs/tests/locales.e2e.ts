@@ -78,6 +78,11 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
         await expect(page.locator("html")).toHaveClass("dark");
         await expect(page.locator("article")).toHaveAttribute("data-doc-page", slug);
         await expect(page.locator("article h1")).toHaveText(article.title);
+        await expect(page.locator("article > header > p").last()).toHaveText(article.description);
+        await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+          "content",
+          article.description,
+        );
         await expect(page.locator("article h1")).toHaveCSS("font-size", "36px");
 
         const navigation = page.getByRole("navigation", { name: labels.navigation });

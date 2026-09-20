@@ -197,7 +197,7 @@ export const coreRuntimePages: readonly DocPage[] = [
     slug: "/architecture/implementation/request",
     title: "04. リクエストのサービスとその寿命",
     description:
-      "リクエストがアプリケーションサービスを取得し、ストリーミング中も維持する仕組みと、ホスト所有のサービスを借りて使う境界を追います。",
+      "リクエスト処理でアプリケーションサービスを取得・共有・解放する仕組みを読み解きます。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
@@ -333,7 +333,7 @@ export const coreRuntimePages: readonly DocPage[] = [
     slug: "/architecture/implementation/rendering",
     title: "05. ルートからHTMLとFlightへ",
     description:
-      "一つのルート描画からHTMLとFlightを返し、リクエストのサービスを維持しながら初期描画のデータをブラウザーへ届ける流れを追います。",
+      "アプリケーションから HTML と React Server Components のデータを生成する描画処理を読み解きます。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
@@ -470,7 +470,7 @@ export const coreRuntimePages: readonly DocPage[] = [
     slug: "/architecture/implementation/navigation",
     title: "06. ブラウザーの遷移",
     description:
-      "リンクによる遷移をFlight取得からReactと履歴のcommitまで追い、通信資源を解放できる時点とルートをキャッシュできる条件を理解します。",
+      "遷移先の読み込みから画面とブラウザー履歴の更新まで、ページ遷移の実装を読み解きます。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
@@ -636,7 +636,7 @@ export const coreRuntimePages: readonly DocPage[] = [
     slug: "/architecture/implementation/server-functions",
     title: "07. Server Functionの呼び出しから画面更新まで",
     description:
-      "Server FunctionのPOSTを入力検証、リクエスト内での実行、画面更新まで追い、通信エラー・関数の失敗・古い応答を区別します。",
+      "Server Function の呼び出しからサーバー側の処理、画面更新までの実装を読み解きます。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
@@ -648,8 +648,8 @@ export const coreRuntimePages: readonly DocPage[] = [
     content: () => (
       <>
         <p>
-          Server FunctionのPOSTは、呼び出し結果と更新されたルートツリーを返します。
-          そのため、関数の失敗がHTTP
+          ブラウザーからの Server Function 呼び出しに対する正しい Flight
+          レスポンスは、呼び出し結果と更新されたルートツリーを含みます。 そのため、関数の失敗がHTTP
           200で届くことがあります。一方、成功しても古くなった応答で、ユーザーが離れたページを復元してはいけません。
           アプリケーションでの利用方法は{" "}
           <a href="/ja/advanced/server-function-execution-and-refresh">実行と画面更新のガイド</a>{" "}

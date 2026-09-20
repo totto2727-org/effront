@@ -294,7 +294,7 @@ test.describe("retired startup bookmark without JavaScript", () => {
     await expect(page).toHaveURL(/\/platforms$/);
     await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
     await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
-    await expect(page.locator("article h2#build-startup")).toBeVisible();
+    await expect(page.locator("article h2#support")).toBeVisible();
     await expect(page.locator('article a[href="/platforms/node-bun"]')).toBeVisible();
   });
 });
@@ -306,7 +306,7 @@ test("native Flight navigation follows the retired URL while preserving the shel
   await page.waitForLoadState("networkidle");
   const search = await page.getByRole("textbox", { name: "ガイドを絞り込む" }).elementHandle();
   // Simulate an inbound bookmark link without putting the retired URL back in authored navigation.
-  await page.locator('article a[href="/platforms#build-startup"]').evaluate((link) => {
+  await page.locator('article a[href="/platforms#support"]').evaluate((link) => {
     link.setAttribute("href", "/advanced/production-startup");
   });
   const flight = page.waitForResponse(

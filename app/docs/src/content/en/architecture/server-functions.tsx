@@ -5,8 +5,7 @@ import type { DocPage } from "../../types";
 export const page: DocPage = {
   slug: "/architecture/implementation/server-functions",
   title: "07. From Server Function calls to refreshed UI",
-  description:
-    "Trace a Server Function POST through input validation, request-scoped execution, and UI refresh to distinguish transport errors, function failures, and stale responses.",
+  description: "How a Server Function call becomes server-side work and a refreshed page.",
   section: "Architecture",
   group: "Implementation",
   headings: [
@@ -21,9 +20,10 @@ export const page: DocPage = {
   content: () => (
     <>
       <p>
-        A Server Function POST returns both an invocation outcome and a refreshed route tree. A
-        function failure can therefore arrive with HTTP 200, while a successful but stale response
-        must not restore a page the user has left. For application usage, see the{" "}
+        A valid Flight response to a browser Server Function call carries both an invocation outcome
+        and a refreshed route tree. A function failure can therefore arrive with HTTP 200, while a
+        successful but stale response must not restore a page the user has left. For application
+        usage, see the{" "}
         <a href="/en/advanced/server-function-execution-and-refresh">execution and refresh guide</a>
         .
       </p>

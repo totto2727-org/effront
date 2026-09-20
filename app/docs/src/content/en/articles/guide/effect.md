@@ -1,4 +1,5 @@
-Declare application services with `Application.effront<Services>()` and supply their implementations through `EFFRONT.make({ layer })`.
+Use Effect services to keep application logic separate from the Pages that call it.
+The greeting example gives a Page a replaceable service, with its implementation and lifetime managed through an Effect Layer.
 
 ## Use a service in a Page {#service}
 

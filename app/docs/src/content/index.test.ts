@@ -160,7 +160,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("keeps conceptual guides host-neutral and provides a complete selectable quickstart", async () => {
+  it("keeps conceptual guides host-neutral and links the clone-and-run quickstart", async () => {
     for (const slug of [
       "/guide/routes",
       "/guide/components",
@@ -174,22 +174,23 @@ describe("documentation catalog", () => {
     }
     const start = await text("/guide/getting-started");
     for (const required of [
-      "vp add @effront/core@0.1.4",
-      "effect@4.0.0-rc.112",
-      "Application.effront()",
-      "EFFRONT.Page.make",
-      "EFFRONT.Layout.make",
-      "EFFRONT.Routes.make",
-      "Hello, Effront",
+      "git clone https://github.com/totto2727-org/effront.git",
+      "cd effront/examples/hello-world",
+      "vp install",
+      "node --run dev",
+      "Hello, world",
+      "src/entry.effront.tsx",
+      "src/entry.rsc.ts",
+      "src/entry.server.ts",
+      "vite.config.ts",
+      "package.json",
     ]) {
       expect(start).toContain(required);
     }
-    expect(start).not.toMatch(/vp install|チェックアウト|workspace依存/);
-    const startHtml = await render("/guide/getting-started");
-    for (const host of ["cloudflare", "node-bun", "alchemy"]) {
-      expect(startHtml).toContain(`href="/platforms/${host}#setup"`);
-    }
-    expect(start).not.toContain("wrangler.json");
+    expect(start).not.toContain("vp add");
+    expect(await render("/guide/getting-started")).toContain(
+      'href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"',
+    );
     expect(await text("/best-practices/testing")).toContain("フォーム送信");
     const effect = await render("/guide/effect");
     for (const contract of ["Context.Service", "Layer", "Application.effront"]) {

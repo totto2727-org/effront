@@ -28,7 +28,7 @@ A test double does not verify the real database or external API adapter, so cove
 ## Verify the release artifact {#production}
 
 Run the important journey against the built application in its target runtime, using test data and credentials.
-Use the host's production entry point from [Platforms](../platforms.md#build-startup), not a development server or a preview in a different runtime.
+Follow your [host's setup guide](../platforms.md#support) to run its production entry point, rather than a development server or a preview in a different runtime.
 
 Include checks for the boundaries the application uses:
 

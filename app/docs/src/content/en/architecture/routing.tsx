@@ -5,8 +5,7 @@ import type { DocPage } from "../../types";
 export const page: DocPage = {
   slug: "/architecture/implementation/routing",
   title: "03. From routes to requests",
-  description:
-    "Trace how Routes become server destinations, where invalid declarations are rejected, and when Page parameter validation returns a 404.",
+  description: "How route definitions become request destinations and validated page parameters.",
   section: "Architecture",
   group: "Implementation",
   headings: [

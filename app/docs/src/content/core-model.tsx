@@ -103,7 +103,7 @@ export const coreModelPages: readonly DocPage[] = [
     slug: "/architecture/implementation/overview",
     title: "01. ページ表示をcoreの実装から追う",
     description:
-      "アプリケーション定義からリクエスト処理、Flight、HTML、hydrationまでを追い、各段階を担当する実装を見つけます。",
+      "アプリケーションの定義からブラウザーでの表示まで、Effront の実装全体を読むための案内。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
@@ -249,7 +249,7 @@ export const coreModelPages: readonly DocPage[] = [
     slug: "/architecture/implementation/application",
     title: "02. アプリケーション定義",
     description:
-      "Pageのサービス契約からリクエスト時の実行までを追い、Layer、スコープ付きmiddleware、identityがそれらをどう結び付けるかを読み解きます。",
+      "アプリケーション定義がページとサービスをリクエスト時の実行につなぐ仕組みを、実装から読み解きます。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [
@@ -377,7 +377,7 @@ export const coreModelPages: readonly DocPage[] = [
     slug: "/architecture/implementation/routing",
     title: "03. ルート定義からリクエストへ",
     description:
-      "Routesがサーバーの描画先になる過程を追い、不正な定義を拒否する段階とPageのパラメーター検証が404を返す条件を読み解きます。",
+      "ルート定義からリクエストの振り分け、ページのパラメーター検証までの実装を読み解きます。",
     section: "アーキテクチャ",
     group: "実装解説",
     headings: [

@@ -1,3 +1,6 @@
+Build pages with `Page`, share their UI with `Layout`, and register their URLs with `Routes`.
+Route parameters provide values from the URL, while nested route groups let related pages share a layout and loading UI.
+
 ## Register a Page {#pages}
 
 In `src/entry.effront.tsx`, create a Page and a root Layout, then register the Page's URL:

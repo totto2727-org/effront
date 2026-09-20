@@ -1,3 +1,6 @@
+Effront Middleware runs checks or provides request-specific services around page requests and Server Function calls.
+Use it for shared behavior such as checking authentication or making the current user available to application code.
+
 ## Choose the request scope {#reach}
 
 Attach Middleware to Routes for page requests, and to the definition that creates a Server Function for its invocations.

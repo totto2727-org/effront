@@ -17,8 +17,7 @@ function SourceExcerpt({ source }: { readonly source: CoreSource }) {
 export const page: DocPage = {
   slug: "/architecture/implementation/request",
   title: "04. Request services and their lifetimes",
-  description:
-    "Trace how a request acquires application services, keeps them alive while streaming, and borrows host-owned services without taking ownership.",
+  description: "How request processing acquires, shares, and releases application services.",
   section: "Architecture",
   group: "Implementation",
   headings: [

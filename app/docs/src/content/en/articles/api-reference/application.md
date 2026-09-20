@@ -1,4 +1,4 @@
-`Application` from `@effront/core` defines an application's factories, routes, and service Layer.
+`Application` from `@effront/core` combines routes and a service Layer into an application definition, separate from the host that serves it.
 
 ## Application definition example {#example}
 

@@ -5,7 +5,7 @@ export const englishArticleCatalog = [
     slug: "/",
     title: "Effront",
     description:
-      "Build React pages with server-side data and user actions, then choose the guide for your next step.",
+      "A React meta-framework built on Effect, with server-rendered pages, typed services, and Server Functions.",
     section: "Getting started",
     headings: [
       { id: "boundaries", title: "Get a page on screen" },
@@ -17,34 +17,28 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/getting-started",
     title: "Getting started",
-    description: "Create a homepage and run it locally on your chosen host.",
+    description: "Display Hello, world with your first Effront application.",
     section: "Getting started",
     headings: [
-      { id: "setup", title: "Prepare your project" },
-      { id: "application", title: "Define the homepage" },
-      { id: "files", title: "Connect the application to a host" },
-      { id: "run", title: "See the result and make it your own" },
+      { id: "setup", title: "Run the sample" },
+      { id: "application", title: "Explore the sample" },
+      { id: "run", title: "Change the heading" },
     ],
     source: "/guide/getting-started",
   },
   {
     slug: "/platforms",
     title: "Deployment platforms",
-    description:
-      "Choose a hosting model, start development locally, and find the production checks for Wrangler or Node.js and Bun.",
+    description: "Set up development and production environments for your deployment target.",
     section: "Platforms",
-    headings: [
-      { id: "support", title: "Choose your hosting model" },
-      { id: "architecture", title: "Set up local development" },
-      { id: "build-startup", title: "Prepare production startup and assets" },
-    ],
+    headings: [{ id: "support", title: "Choose your hosting model" }],
     source: "/platforms",
   },
   {
     slug: "/platforms/cloudflare",
     title: "Cloudflare Workers",
     description:
-      "Connect an existing app to Cloudflare Workers, configure assets and environment values, and verify it locally.",
+      "A guide to setting up development and production environments for Cloudflare Workers.",
     section: "Platforms",
     headings: [
       { id: "setup", title: "Connect your application to a Worker" },
@@ -60,7 +54,7 @@ export const englishArticleCatalog = [
     slug: "/platforms/node-bun",
     title: "Node.js and Bun",
     description:
-      "Develop in Vite, then build and launch a Node.js or Bun server that serves pages and browser assets.",
+      "A guide to setting up development and production environments for Node.js and Bun.",
     section: "Platforms",
     headings: [
       { id: "setup", title: "Install the server integration" },
@@ -74,7 +68,7 @@ export const englishArticleCatalog = [
   {
     slug: "/platforms/alchemy",
     title: "Alchemy and Cloudflare",
-    description: "Run an existing Effront app locally with Alchemy and add KV storage when needed.",
+    description: "A guide to setting up a Cloudflare Workers development environment with Alchemy.",
     section: "Platforms",
     headings: [
       { id: "setup", title: "Prepare an existing Effront app" },
@@ -87,8 +81,7 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/routes",
     title: "Pages, layouts, and routes",
-    description:
-      "Connect URLs to pages, validate route parameters, and group related pages under shared layouts and loading UI.",
+    description: "A guide to building pages and shared layouts and connecting them to URLs.",
     section: "Guides",
     headings: [
       { id: "pages", title: "Register a Page" },
@@ -114,7 +107,7 @@ export const englishArticleCatalog = [
     slug: "/guide/server-functions",
     title: "Server Functions",
     description:
-      "Submit validated form data to a Server Function and display its result with useActionState.",
+      "Handle form submissions and client calls with server-side validation and responses your UI can use.",
     section: "Guides",
     headings: [
       { id: "identity", title: "Share the application definition" },
@@ -129,8 +122,7 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/effect",
     title: "Application services",
-    description:
-      "Supply a Page with a typed service, choose its implementation, and manage its request-scoped resources.",
+    description: "A guide to structuring application logic and dependencies with Effect services.",
     section: "Guides",
     headings: [
       { id: "service", title: "Use a service in a Page" },
@@ -142,7 +134,8 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/middleware",
     title: "Middleware",
-    description: "Prepare request data and enforce checks for selected pages and Server Functions.",
+    description:
+      "A guide to sharing request handling, such as authentication, across pages and Server Functions.",
     section: "Guides",
     headings: [
       { id: "reach", title: "Choose the request scope" },
@@ -156,8 +149,7 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/http",
     title: "HTTP endpoints",
-    description:
-      "Add a JSON endpoint that shares your Page's services and apply headers across Page and API responses.",
+    description: "A guide to adding HTTP APIs alongside your application pages.",
     section: "Guides",
     headings: [
       { id: "router", title: "Define a JSON endpoint" },
@@ -170,8 +162,7 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/markdown",
     title: "Writing pages in Markdown",
-    description:
-      "Publish a Markdown article at a chosen URL, connect related content and assets, and customize parsing when needed.",
+    description: "A guide to publishing Markdown content as Effront pages.",
     section: "Guides",
     headings: [
       { id: "setup", title: "Add an article" },
@@ -184,8 +175,7 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/styling",
     title: "Styling with Tailwind",
-    description:
-      "Start with Tailwind utilities, then add shared theme values or plugins when your design needs them.",
+    description: "A guide to styling Effront applications with Tailwind CSS.",
     section: "Guides",
     headings: [
       { id: "setup", title: "Add Tailwind utilities" },
@@ -197,7 +187,7 @@ export const englishArticleCatalog = [
   {
     slug: "/advanced",
     title: "Runtime behavior",
-    description: "Plan user feedback, navigation, and resource cleanup around asynchronous work.",
+    description: "How Effront handles page updates, navigation, and resource lifetimes.",
     section: "Guides",
     headings: [{ id: "chapters", title: "Runtime contracts" }],
     source: "/advanced",
@@ -207,7 +197,7 @@ export const englishArticleCatalog = [
     slug: "/advanced/request-runtime-and-lifetimes",
     title: "Request and resource lifetimes",
     description:
-      "Keep request resources available during rendering and streaming, and release them when the response finishes or is interrupted.",
+      "How long application services remain available during a request and a streamed response.",
     section: "Guides",
     headings: [
       { id: "response-lifetime", title: "A Response can outlive its handler" },
@@ -221,8 +211,7 @@ export const englishArticleCatalog = [
   {
     slug: "/advanced/client-navigation",
     title: "Client navigation",
-    description:
-      "Preserve shared UI state where client navigation is supported, and plan page animations, loading, and browser history behavior.",
+    description: "How page navigation affects shared UI state, loading, and browser history.",
     section: "Guides",
     headings: [
       { id: "native-navigation", title: "What persists between pages" },
@@ -236,8 +225,7 @@ export const englishArticleCatalog = [
   {
     slug: "/advanced/server-function-execution-and-refresh",
     title: "Server Function results and refresh",
-    description:
-      "Decide when to show a save result, protect server writes, and handle overlapping submissions and page refreshes.",
+    description: "How Server Function results and page updates relate to each other.",
     section: "Guides",
     headings: [
       { id: "execution", title: "One call returns a result and a refreshed page" },
@@ -251,8 +239,7 @@ export const englishArticleCatalog = [
   {
     slug: "/best-practices/testing",
     title: "Testing your application",
-    description:
-      "Test a user journey, cover its business rules, and repeat the checks against your release build.",
+    description: "Practical guidance for testing application behavior and business rules.",
     section: "Best practices",
     headings: [
       { id: "pages", title: "Test a persisted change in the browser" },
@@ -278,8 +265,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/application",
     title: "Application",
-    description:
-      "Assemble an application from pages, routes, and services, and check how to extend selected definitions with middleware.",
+    description: "API reference for defining an Effront application and its services.",
     section: "API reference",
     headings: [
       { id: "example", title: "Application definition example" },
@@ -292,8 +278,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/components",
     title: "Component, Page, Layout, and Loading",
-    description:
-      "Choose rendering factories, add layouts and loading UI, and check URL parameter and page transition options.",
+    description: "API reference for rendering pages, components, layouts, and loading states.",
     section: "API reference",
     headings: [
       { id: "render", title: "Rendering factories" },
@@ -306,8 +291,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/routing",
     title: "Routes and Middleware",
-    description:
-      "Compose route groups, match URL parameters, and apply Middleware to the requests a section handles.",
+    description: "API reference for route definitions and request middleware.",
     section: "API reference",
     headings: [
       { id: "routes", title: "Routes" },
@@ -319,8 +303,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/server-functions",
     title: "ServerFn",
-    description:
-      "Check accepted inputs, handler signatures, and authorization requirements when exposing a server operation to React.",
+    description: "API reference for defining server-side functions callable from React.",
     section: "API reference",
     headings: [
       { id: "make", title: "ServerFn.make" },
@@ -332,8 +315,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/workers",
     title: "Fetch handlers and Workers context",
-    description:
-      "Create a Fetch entry point and read the current request, environment bindings, and execution context from application Effects.",
+    description: "API reference for Fetch handlers and access to Workers request context.",
     section: "API reference",
     headings: [
       { id: "fetch", title: "createFetchHandler" },
@@ -346,8 +328,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/vite",
     title: "Vite and Cloudflare plugins",
-    description:
-      "Register Effront with Vite and look up entry-file options and Cloudflare Workers configuration.",
+    description: "Configuration reference for Effront’s Vite and Cloudflare Workers integrations.",
     section: "API reference",
     headings: [
       { id: "effront", title: "effront" },
@@ -359,8 +340,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/http",
     title: "Effect HTTP handlers",
-    description:
-      "Connect your application to an Effect HTTP host and supply the services needed to handle and stream responses.",
+    description: "API reference for connecting Effront applications to Effect HTTP servers.",
     section: "API reference",
     headings: [
       { id: "fetch", title: "HTTP boundaries" },
@@ -372,8 +352,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/server",
     title: "Node.js and Bun server APIs",
-    description:
-      "Configure build entries, launch a production listener, and serve static files on Node.js or Bun.",
+    description: "API reference for running Effront applications on Node.js and Bun.",
     section: "API reference",
     headings: [
       { id: "vite", title: "effrontServer" },
@@ -385,8 +364,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/markdown",
     title: "Markdown API",
-    description:
-      "Look up documents, configure Markdown parsing, and resolve links to articles and assets.",
+    description: "API reference for Markdown collections and parsing.",
     section: "API reference",
     headings: [
       { id: "collection", title: "createMarkdownCollection" },
@@ -398,8 +376,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/alchemy",
     title: "Alchemy API",
-    description:
-      "Create an Alchemy Worker handler, supply application services, and configure its Vite build.",
+    description: "API reference for connecting Effront applications to Alchemy Workers.",
     section: "API reference",
     headings: [
       { id: "http", title: "HTTP handlers" },
@@ -410,8 +387,7 @@ export const englishArticleCatalog = [
   {
     slug: "/api-reference/tailwind",
     title: "Tailwind API",
-    description:
-      "Enable Tailwind's default utilities and use the stylesheet option for custom themes or plugins.",
+    description: "Configuration reference for Effront’s Tailwind CSS integration.",
     section: "API reference",
     headings: [
       { id: "plugin", title: "effrontTailwind" },

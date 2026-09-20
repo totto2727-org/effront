@@ -1,4 +1,5 @@
-Effront は Effect で React のページを描画し、Server Functions でブラウザーからの操作を処理します。
+Effront は、Effect を基盤とする React メタフレームワークです。
+React Server Components によるページの描画と、Server Functions によるユーザー操作の処理を、Effect のサービスや依存性注入と組み合わせて実装できます。
 
 ## ページを表示する {#boundaries}
 

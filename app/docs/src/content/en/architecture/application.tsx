@@ -5,8 +5,7 @@ import type { DocPage } from "../../types";
 export const page: DocPage = {
   slug: "/architecture/implementation/application",
   title: "02. Application definitions",
-  description:
-    "Follow a Page from its service contract to request-time execution, and see how Layers, scoped middleware, and application identity keep those steps connected.",
+  description: "How application definitions connect pages and services to request-time execution.",
   section: "Architecture",
   group: "Implementation",
   headings: [

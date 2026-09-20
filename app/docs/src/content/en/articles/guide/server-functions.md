@@ -1,4 +1,5 @@
-Submit a name and display the server's response with `ServerFn.make` and React's `useActionState`.
+Server Functions let forms and Client Components invoke Effect handlers on the server, where schemas validate their input.
+The greeting form below displays the server's reply with React's `useActionState`.
 For a form that does not need a return value, use the [direct action variant](#forms).
 
 ## Share the application definition {#identity}

@@ -68,8 +68,6 @@ vp exec wrangler dev --local --config dist/rsc/wrangler.json
 ```
 
 Use the generated configuration, not the source `wrangler.jsonc`, so Wrangler loads the built Worker and its browser assets.
-Keep the complete output, including `dist/rsc/ssr`, when moving the build.
-Open Wrangler's URL and check page rendering, styles, and client-side controls.
 Neither local workflow deploys the application or requires Cloudflare authentication for this configuration.
 
 ## Add application configuration {#context}

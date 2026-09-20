@@ -1,4 +1,6 @@
-[サービスのガイド](/guide/effect)のアプリケーションに、既存の Page を残して `GET /api/greeting` を追加します。
+独自の HTTP エンドポイントを使うと、Effront アプリケーションは Page の描画に加えて JSON を返せます。
+どちらも同じアプリケーションサービスを利用できます。
+この例では、[サービスのガイド](/guide/effect)のアプリケーションに `GET /api/greeting` を追加し、Page と API のレスポンスに共通のヘッダーを適用します。
 
 ## JSON エンドポイントを定義する {#router}
 

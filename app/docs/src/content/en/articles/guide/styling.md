@@ -1,3 +1,6 @@
+Use Effront's Tailwind integration to style your components and share a theme across the application.
+It loads the stylesheet for you, whether you use Tailwind's default utilities or a stylesheet with custom theme values and plugins.
+
 ## Add Tailwind utilities {#setup}
 
 Install the integration:

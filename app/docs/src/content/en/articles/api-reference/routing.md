@@ -1,4 +1,5 @@
-`Routes` and `Middleware` belong to the shared `Application.effront()` factory.
+`Routes` maps URL paths to Pages and groups their shared UI and middleware.
+`Middleware` defines scoped request processing and services for route groups and Server Functions.
 
 ## Routes {#routes}
 

@@ -1,4 +1,4 @@
-`@effront/alchemy/cloudflare` connects an application to an Alchemy native HTTP Worker without evaluating the application during infrastructure construction.
+`@effront/alchemy` provides native HTTP handlers and a Vite adapter for hosting Effront applications with Alchemy on Cloudflare Workers.
 
 ## HTTP handlers {#http}
 

@@ -1,4 +1,4 @@
-`Component`, `Page`, `Layout`, and `Loading` are factories on the shared [application factory](./application.md#identity).
+`Component`, `Page`, `Layout`, and `Loading` define rendered content and shared route UI through the [application factory](./application.md#identity).
 
 ## Rendering factories {#render}
 

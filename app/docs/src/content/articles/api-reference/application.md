@@ -1,4 +1,4 @@
-`@effront/core` の `Application` は、アプリケーションのファクトリー、ルート、サービス Layer を定義します。
+`@effront/core` の `Application` は、ルートとサービス Layer をまとめ、配信を担うホストとは独立したアプリケーション定義を作ります。
 
 ## アプリケーション定義の例 {#example}
 

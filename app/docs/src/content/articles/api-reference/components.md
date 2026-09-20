@@ -1,4 +1,4 @@
-`Component`、`Page`、`Layout`、`Loading` は、共有する [アプリケーションファクトリー](./application.md#identity) のメンバーです。
+`Component`、`Page`、`Layout`、`Loading` は、[アプリケーションファクトリー](./application.md#identity) を通じて、描画内容やルートで共有する UI を定義します。
 
 ## 描画ファクトリー {#render}
 

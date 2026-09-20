@@ -1,4 +1,4 @@
-`@effront/markdown` indexes imported Markdown, parses it with Comark, and resolves file-relative references.
+`@effront/markdown` provides URL-based document collections and Comark parsing for applications that render imported Markdown.
 For page integration, see [Markdown](../guide/markdown.md).
 
 ## createMarkdownCollection {#collection}

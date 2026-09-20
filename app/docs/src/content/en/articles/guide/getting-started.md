@@ -1,61 +1,49 @@
-Create a homepage that displays `Hello, Effront`, then run it on your chosen host.
+Run a minimal Effront application that displays `Hello, world`, then explore the files that make up the page.
 
-## Prepare your project {#setup}
+## Run the sample {#setup}
 
-In a [VitePlus project](https://viteplus.dev/guide/), install Effront and its shared dependencies:
+Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then clone the [Hello world example](https://github.com/totto2727-org/effront/tree/main/examples/hello-world):
 
 ```bash
-vp add @effront/core@0.1.4 effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112
-vp add react@19.3.0 react-dom@19.3.0
-vp add -D @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35
+git clone https://github.com/totto2727-org/effront.git
+cd effront/examples/hello-world
+vp install
+node --run dev
 ```
 
-If you change these versions, keep them aligned with Effront's [peer dependencies](../api-reference.md#versions).
+Open [http://localhost:1340](http://localhost:1340).
+The page displays `Hello, world`.
 
-## Define the homepage {#application}
+## Explore the sample {#application}
 
-Create `src/entry.effront.tsx`:
+The example has one page and uses Node.js to run locally.
+Its five files have these roles:
+
+| File                    | Purpose                                                             |
+| ----------------------- | ------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | Defines the page content, its HTML layout, and the `/` route.       |
+| `src/entry.rsc.ts`      | Connects the application to the development and production servers. |
+| `src/entry.server.ts`   | Starts the Node.js server for a production build.                   |
+| `vite.config.ts`        | Configures Effront development and builds.                          |
+| `package.json`          | Lists dependencies and commands for running the example.            |
+
+The page is defined in [`src/entry.effront.tsx`](https://github.com/totto2727-org/effront/blob/main/examples/hello-world/src/entry.effront.tsx).
+`HomePage` contains the displayed heading, `RootLayout` provides the surrounding HTML, and `Routes` makes the page available at `/`.
+
+## Change the heading {#run}
+
+In `src/entry.effront.tsx`, replace:
 
 ```tsx
-import { Effect } from "effect";
-import { Application } from "@effront/core";
-
-const EFFRONT = Application.effront();
-
-const RootLayout = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.succeed(
-      <html lang="en">
-        <body>
-          <main>{children}</main>
-        </body>
-      </html>,
-    ),
-});
-
-const HomePage = EFFRONT.Page.make({
-  render: () => Effect.succeed(<h1>Hello, Effront</h1>),
-});
-
-export default EFFRONT.make({
-  routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage),
-});
+<h1>Hello, world</h1>
 ```
 
-The `render` callback returns an Effect containing the heading.
-`RootLayout` surrounds the page with the HTML document, and `.page("/", HomePage)` assigns it the homepage URL.
-Create the Layout, Page, and Routes from the same `EFFRONT` value, even if you move them into separate files.
+with:
 
-## Connect the application to a host {#files}
+```tsx
+<h1>Hello, Effront</h1>
+```
 
-Follow one [platform setup](../platforms.md) to add the host entry and `vite.config.ts`, then start its development server:
-
-- [Cloudflare Workers](../platforms/cloudflare.md#setup): run locally with Wrangler configuration and no Cloudflare account for this example.
-- [Node.js / Bun](../platforms/node-bun.md#setup): use Vite for development and a native server for production.
-- [Alchemy](../platforms/alchemy.md#setup): manage a Worker and its resources in code, with a configured Cloudflare profile.
-
-## See the result and make it your own {#run}
-
-Open the development URL printed in the terminal and visit `/`.
-The page should show `Hello, Effront`.
-Change that text in `HomePage`, save, and reload to see your new heading.
+Save the file.
+The browser updates to display `Hello, Effront`.
+To add another page, continue with [Pages, layouts, and routes](./routes.md).

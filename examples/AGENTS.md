@@ -2,6 +2,7 @@
 
 ## Repository structure
 
+- `hello-world/`: five-file introductory Node sample that displays only `Hello, world`.
 - `alchemy/`: native Alchemy Worker with construction-provided KV capability and request-local services.
 - `markdown/`: native Alchemy consumer of file-relative Markdown routing and assets.
 - `workers/`: standalone Cloudflare consumer without Alchemy.
@@ -13,6 +14,8 @@
 ### Standard tasks
 
 Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before entering an example.
+For `hello-world/`, run `vp install` and `node --run dev` from that directory instead; its development script bootstraps workspace packages before starting Vite on port 1340.
+Node's script runner avoids Vite task discovery before the initial package build.
 
 - `vp run dev` in `alchemy/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
 - `vp dev`, `vp build`, and `vp preview` in `workers/` use standalone Cloudflare hosting, without an Alchemy profile or remote resources.
@@ -34,7 +37,8 @@ Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before en
 
 ## Package-specific rules
 
-- Keep examples minimal: introductory routes, Counter, Server Function, and framework features with Tailwind utilities, not custom transition demos or CSS.
+- Keep `hello-world/` limited to one heading and its host configuration; verify its documented fresh-install startup and heading HMR without adding Counter, Server Functions, or styling.
+- Keep other examples minimal: introductory routes, Counter, Server Function, and framework features with Tailwind utilities, not custom transition demos or CSS.
 - Put feature-independent React UI in `components/`; avoid redundant `Example` name prefixes.
 - Group greeting behavior under `features/greeting/`: `server.ts` for Server Functions, `client.tsx` for feature UI, and `services.ts` for capabilities/services. Keep client/server directives in separate files, without re-export barrels.
 - Use `effrontTailwind()` for generated styles; Markdown may select its Typography stylesheet explicitly. Do not hand-import styles in client shells or add ambient CSS types supplied by Vite.

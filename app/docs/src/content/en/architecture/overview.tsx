@@ -6,7 +6,7 @@ export const page: DocPage = {
   slug: "/architecture/implementation/overview",
   title: "01. Trace a page load through core",
   description:
-    "Follow an application definition through request handling, Flight, HTML, and hydration to find the implementation responsible for each stage.",
+    "An implementation map from application definitions to pages displayed in the browser.",
   section: "Architecture",
   group: "Implementation",
   headings: [

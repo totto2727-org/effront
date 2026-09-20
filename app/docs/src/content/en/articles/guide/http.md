@@ -1,4 +1,5 @@
-Add `GET /api/greeting` to the application from the [services guide](/en/guide/effect) while keeping its existing Page.
+Custom HTTP endpoints let an Effront application return JSON alongside its rendered Pages, using the same application services.
+The example adds `GET /api/greeting` to the application from the [services guide](/en/guide/effect) and applies a shared response header to the Page and API.
 
 ## Define a JSON endpoint {#router}
 

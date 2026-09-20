@@ -1,4 +1,5 @@
-`Routes` と `Middleware` は、共有する `Application.effront()` ファクトリーのメンバーです。
+`Routes` は URL パスを Page に対応付け、共有する UI やミドルウェアとともにグループ化します。
+`Middleware` は、ルートグループや Server Function のスコープ内で適用するリクエスト処理とサービスを定義します。
 
 ## Routes {#routes}
 

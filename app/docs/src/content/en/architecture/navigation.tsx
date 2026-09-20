@@ -5,8 +5,7 @@ import type { DocPage } from "../../types";
 export const page: DocPage = {
   slug: "/architecture/implementation/navigation",
   title: "06. Browser navigation",
-  description:
-    "Trace a link navigation from Flight loading to React and history commits, and understand when streaming resources can be released or a route cached.",
+  description: "How navigation loads a destination and updates the page and browser history.",
   section: "Architecture",
   group: "Implementation",
   headings: [

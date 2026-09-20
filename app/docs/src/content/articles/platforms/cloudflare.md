@@ -68,8 +68,6 @@ vp exec wrangler dev --local --config dist/rsc/wrangler.json
 ```
 
 ビルド済み Worker とブラウザー用アセットを読み込むため、ソース用の `wrangler.jsonc` ではなく生成された設定を使ってください。
-ビルドを移す際は、`dist/rsc/ssr` を含む成果物全体を保持します。
-Wrangler の URL を開き、ページの表示、スタイル、クライアント側の操作を確認してください。
 この構成でのローカル実行は、どちらもデプロイを行わず、Cloudflare の認証も不要です。
 
 ## アプリケーションの設定値を追加する {#context}

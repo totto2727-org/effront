@@ -1,3 +1,6 @@
+Effront coordinates server-side work, streamed page rendering, and browser updates.
+These operations can finish at different times, which affects when users see saved data, which UI state survives navigation, and when request resources can be released.
+
 ## Runtime contracts {#chapters}
 
 - [Server Function execution and refresh](/en/advanced/server-function-execution-and-refresh): why a function result can arrive before the updated page, and why refresh ordering does not protect database writes.

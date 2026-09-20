@@ -1,4 +1,6 @@
-`ServerFn.make` と React の `useActionState` を使い、名前を送信してサーバーの応答を表示します。
+Server Function を使うと、フォームや Client Component からサーバー側の Effect ハンドラーを呼び出せます。
+入力はサーバー側で Schema によって検証されます。
+以下の挨拶フォームは、React の `useActionState` でサーバーの応答を表示します。
 戻り値が不要なフォームには、[直接 action に渡す方法](#forms)を使えます。
 
 ## アプリケーション定義を共有する {#identity}

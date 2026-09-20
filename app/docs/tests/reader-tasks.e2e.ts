@@ -27,40 +27,48 @@ async function followHeading(page: Page, reader: ReaderLocale, id: string) {
 }
 
 for (const reader of locales) {
-  test(`${reader.locale} reader finds a complete minimum homepage registration`, async ({
+  test(`${reader.locale} reader finds the clone-and-run sample and its file roles`, async ({
     page,
   }) => {
     await openGuide(page, reader, "/guide/getting-started");
+    await followHeading(page, reader, "setup");
+    const commands = page.locator("article pre code").filter({ hasText: "git clone" });
+    await expect(commands).toHaveText(
+      "git clone https://github.com/totto2727-org/effront.git\ncd effront/examples/hello-world\nvp install\nnode --run dev",
+    );
+    await expect(page.locator('article a[href="http://localhost:1340"]')).toBeVisible();
+    await expect(
+      page.locator(
+        'article a[href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"]',
+      ),
+    ).toBeVisible();
     await followHeading(page, reader, "application");
-    const example = page.locator("article pre code").filter({ hasText: "Application.effront()" });
-    await expect(example).toHaveCount(1);
-    await expect(example).toContainText('import { Application } from "@effront/core"');
-    await expect(example).toContainText('import { Effect } from "effect"');
-    await expect(example).toContainText("EFFRONT.Layout.make(");
-    await expect(example).toContainText("EFFRONT.Page.make(");
-    await expect(example).toContainText("<body>");
-    await expect(example).toContainText("{children}");
-    await expect(example).toContainText("<h1>Hello, Effront</h1>");
-    await expect(example).toContainText("export default EFFRONT.make(");
-    await expect(example).toContainText('Routes.make({ layout: RootLayout }).page("/", HomePage)');
+    for (const file of [
+      "src/entry.effront.tsx",
+      "src/entry.rsc.ts",
+      "src/entry.server.ts",
+      "vite.config.ts",
+      "package.json",
+    ]) {
+      await expect(
+        page.locator("article table").getByRole("row").filter({ hasText: file }),
+      ).toBeVisible();
+    }
     await followHeading(page, reader, "run");
     await expect(
-      page
-        .locator("article code")
-        .filter({ hasText: /^Hello, Effront$/ })
-        .last(),
+      page.locator("article pre code").filter({ hasText: "<h1>Hello, world</h1>" }),
+    ).toBeVisible();
+    await expect(
+      page.locator("article pre code").filter({ hasText: "<h1>Hello, Effront</h1>" }),
     ).toBeVisible();
   });
 
   test(`${reader.locale} reader chooses Node.js and finds development and production start commands`, async ({
     page,
   }) => {
-    await openGuide(page, reader, "/guide/getting-started");
-    const install = page.locator("article pre code").filter({ hasText: "vp add @effront/core" });
-    await expect(install).not.toContainText(/@effront\/(cloudflare|alchemy|server)|wrangler/);
-    await followHeading(page, reader, "files");
-    await page.locator(`article a[href="/${reader.locale}/platforms/node-bun#setup"]`).click();
-    await expect(page).toHaveURL(`/${reader.locale}/platforms/node-bun#setup`);
+    await page.goto(`/${reader.locale}/platforms`);
+    await page.locator(`article a[href="/${reader.locale}/platforms/node-bun"]`).click();
+    await expect(page).toHaveURL(`/${reader.locale}/platforms/node-bun`);
     await followHeading(page, reader, "entries");
     await expect(page.locator("article pre code").filter({ hasText: /^vp dev\s*$/ })).toBeVisible();
     await followHeading(page, reader, "node");

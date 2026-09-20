@@ -1,4 +1,5 @@
-`Application.effront<Services>()` でアプリケーションサービスを宣言し、`EFFRONT.make({ layer })` で実装を提供します。
+Effect のサービスを使うと、アプリケーションのロジックを、それを呼び出す Page から分離できます。
+挨拶を返す例では、実装を差し替えられるサービスを Page に提供し、その実装と生存期間を Effect の Layer で管理します。
 
 ## Page でサービスを使う {#service}
 

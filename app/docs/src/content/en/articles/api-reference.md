@@ -1,3 +1,7 @@
+Effront separates application APIs from host adapters and build integrations.
+Use `@effront/core` to define pages, routes, services, and Server Functions.
+Choose the other packages for hosting, Markdown, or styling.
+
 ## Public API map {#exports}
 
 | Import path                        | Main APIs                                                      | Reference                                                                                |
