@@ -1,4 +1,4 @@
-Routing connects the URLs your readers visit to the content your application renders.
+Routing maps URLs to the pages your application displays.
 In Effront, you register a Page for each URL pattern, validate any values captured from the path, and group related pages when they need shared UI.
 This guide builds a home page, an article route, and a manual section in `src/entry.effront.tsx`.
 It assumes your application's host setup is complete.
