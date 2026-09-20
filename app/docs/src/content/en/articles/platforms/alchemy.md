@@ -1,7 +1,7 @@
 ## Prepare an existing Effront app {#setup}
 
 Alchemy lets you define the Cloudflare Worker that serves your app alongside the resources it uses, such as KV namespaces.
-Start here if you already have an Effront application and want to run it locally through Alchemy before adding those resources.
+This guide shows how to run an existing Effront application locally with Alchemy, then add KV.
 By the end, you will be able to open a local URL and view a page from your application.
 
 This walkthrough assumes `src/entry.effront.tsx` default-exports your application, including its pages and routes, and the [shared React and Effect dependencies](../api-reference.md#versions) are installed.
