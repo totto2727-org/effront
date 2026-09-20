@@ -1,5 +1,4 @@
-Routing maps URLs to the pages your application displays.
-In Effront, you register a Page for each URL pattern, validate any values captured from the path, and group related pages when they need shared UI.
+This page shows how to create layouts and pages and register routes in Effront.
 
 ## Make a page reachable {#pages}
 
