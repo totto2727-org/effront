@@ -4,7 +4,7 @@ Choose the hosting and management model that fits your application.
 ## Choose your hosting model {#support}
 
 - **Cloudflare Workers managed with Wrangler:** use `@effront/cloudflare` and the [Cloudflare Workers guide](./platforms/cloudflare.md).
-- **A Worker and its bindings managed in Alchemy:** use the experimental `@effront/alchemy` adapter and the [Alchemy guide](./platforms/alchemy.md).
+- **A Worker and its bindings managed in Alchemy:** use the `@effront/alchemy` adapter and the [Alchemy guide](./platforms/alchemy.md).
 - **A server process you start with Node.js or Bun:** use `@effront/server` and the [Node.js / Bun guide](./platforms/node-bun.md).
 
 Wrangler and Alchemy are two ways to manage a Cloudflare Worker, rather than two different deployment environments.

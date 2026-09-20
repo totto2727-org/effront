@@ -3,7 +3,6 @@
 Alchemy を使うと、アプリケーションを動かす Cloudflare Worker と、KV の名前空間などの利用するリソースを一緒にコードで定義できます。
 既存の Effront アプリケーションにリソースを追加する前に、まず Alchemy からローカルで動かしたい場合は、この手順から始めてください。
 設定を終えると、ローカル URL を開いてアプリケーションのページを確認できます。
-`@effront/alchemy` による連携は実験的です。
 
 この手順では、ページとルートを含むアプリケーションを `src/entry.effront.tsx` から default export しており、[共通の React・Effect の依存関係](../api-reference.md#versions) がインストール済みであることを前提とします。
 アダプターとビルド用の連携パッケージを追加します。

@@ -4,7 +4,7 @@ Effront は、Cloudflare Workers と Node.js / Bun サーバー向けのアダ�
 ## ホスティング方法を選ぶ {#support}
 
 - **Wrangler で Cloudflare Workers を管理する場合:** `@effront/cloudflare` を使い、[Cloudflare Workers ガイド](./platforms/cloudflare.md)に従います。
-- **Alchemy で Worker と binding を管理する場合:** 実験版の `@effront/alchemy` アダプターを使い、[Alchemy ガイド](./platforms/alchemy.md)に従います。
+- **Alchemy で Worker と binding を管理する場合:** `@effront/alchemy` アダプターを使い、[Alchemy ガイド](./platforms/alchemy.md)に従います。
 - **Node.js または Bun でサーバープロセスを起動する場合:** `@effront/server` を使い、[Node.js / Bun ガイド](./platforms/node-bun.md)に従います。
 
 Wrangler と Alchemy は異なるデプロイ先ではなく、Cloudflare Worker を管理する二つの方法です。
