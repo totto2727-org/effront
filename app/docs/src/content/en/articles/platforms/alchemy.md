@@ -82,13 +82,7 @@ export default defineConfig({
 });
 ```
 
-These defaults match the file paths used above.
-For a different application path, set `effront({ application })`.
-For a different Worker path, set `effrontAlchemy({ worker })`.
-Update the imports in the Worker and Stack to match any moved files.
-Alchemy CLI supplies the running Cloudflare host, so do not add a second Cloudflare runtime plugin or a separate Wrangler configuration.
-
-The CLI also needs a configured Cloudflare profile before it can prepare resources, even for local development with `2.0.0-beta.77`.
+The CLI needs a configured Cloudflare profile before it can prepare resources, even for local development with `2.0.0-beta.77`.
 If your profile is not configured, complete the authentication setup in the [official Alchemy documentation](https://alchemy.run/docs) before continuing.
 
 Add `"dev": "alchemy dev"` to the scripts in `package.json`, then run the script from the project root:

@@ -82,13 +82,7 @@ export default defineConfig({
 });
 ```
 
-デフォルトの設定は、ここまでのファイルパスに対応しています。
-アプリケーションを別のパスに置く場合は `effront({ application })` を指定します。
-Worker を別のパスに置く場合は `effrontAlchemy({ worker })` を指定します。
-ファイルを移動した場合は、Worker と Stack の import も合わせて変更してください。
-Alchemy CLI が Cloudflare の実行環境を用意するため、Cloudflare の実行用プラグインや Wrangler 設定を別途追加しないでください。
-
-また、`2.0.0-beta.77` の CLI は、ローカル開発でもリソースを準備する前に設定済みの Cloudflare profile を必要とします。
+`2.0.0-beta.77` の CLI は、ローカル開発でもリソースを準備する前に設定済みの Cloudflare profile を必要とします。
 profile が未設定の場合は、先に [Alchemy の公式ドキュメント](https://alchemy.run/docs) に従って認証設定を済ませてください。
 
 `package.json` の scripts に `"dev": "alchemy dev"` を追加し、プロジェクトのルートで実行します。
