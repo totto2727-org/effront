@@ -115,7 +115,7 @@ Use the [built-application acceptance checks](../best-practices/testing.md#produ
 ## Use Bun for the production server {#bun}
 
 To run the same application on Bun, keep the handler and asset mounts and change the production runtime.
-Use Bun 1.4.2 or later because Bun 1.3.13 cannot parse the current React SSR output.
+Bun 1.4.2 or later is required.
 
 In `src/entry.server.ts`, replace `NodeRuntime` with `BunRuntime` imported from `@effect/platform-bun`, import `serve` from `@effront/server/bun`, and end the pipeline with `Layer.launch, BunRuntime.runMain`.
 Then add the Bun platform package and rebuild:

@@ -115,7 +115,7 @@ JavaScript と CSS が正しく読み込まれることも確認してくださ�
 ## 本番用サーバーに Bun を使う {#bun}
 
 同じアプリケーションを Bun で動かすには、ハンドラーとアセットのマウントはそのままに、本番用のランタイムを変更します。
-Bun 1.3.13 は現在の React SSR 出力を解釈できないため、Bun 1.4.2 以降を使ってください。
+Bun 1.4.2 以降が必要です。
 
 `src/entry.server.ts` で `NodeRuntime` を `@effect/platform-bun` から読み込む `BunRuntime` に置き換え、`serve` を `@effront/server/bun` から読み込み、末尾を `Layer.launch, BunRuntime.runMain` に変更します。
 続いて Bun 用の platform パッケージを追加し、再ビルドします。
