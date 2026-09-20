@@ -1,7 +1,7 @@
 ## Prepare an existing Effront app {#setup}
 
 Alchemy lets you define the Cloudflare Worker that serves your app alongside the resources it uses, such as KV namespaces.
-This guide shows how to run an existing Effront application locally with Alchemy, then add KV.
+This guide shows how to run an existing Effront application locally with Alchemy and connect the resources it needs.
 By the end, you will be able to open a local URL and view a page from your application.
 
 This walkthrough assumes `src/entry.effront.tsx` default-exports your application, including its pages and routes, and the [shared React and Effect dependencies](../api-reference.md#versions) are installed.
@@ -95,12 +95,10 @@ Use this script rather than bare `vp dev`, which does not start the Alchemy host
 Once the Worker is ready, open the local URL printed by the CLI and visit a route defined in `entry.effront.tsx`.
 Seeing your page confirms that the Worker, application, and development host are connected.
 
-## Add KV when your app needs storage {#capabilities}
+## Add bindings {#capabilities}
 
-Once your first page is working, add storage if your application needs it.
-For KV, extend the Worker declaration to create a namespace, obtain its client, and provide that client to `makeApplicationHttpEffect` as an application service.
-The [complete KV example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) demonstrates this setup, including the required `ReadWriteNamespaceBinding` and a request Layer that uses the client.
-Use the [Alchemy API reference](../api-reference/alchemy.md) when adapting the service types or connection helpers to your app.
+Define the resources your application needs in Alchemy and bind them to the Worker.
+Follow the [official Alchemy documentation](https://alchemy.run/docs) for each resource's configuration.
 
-Keep resource lifetimes separate from the Worker declaration: the application Layer is acquired for each request, so acquire connections that need request-end cleanup there rather than during Worker construction.
-Pass only application data to the browser through rendered pages or Server Function return values, never service clients or credentials.
+The [Alchemy API reference](../api-reference/alchemy.md) explains how to provide a client obtained from a binding as an Effront service.
+The [integration example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) demonstrates this connection using KV as one example.

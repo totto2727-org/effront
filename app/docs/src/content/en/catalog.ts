@@ -154,7 +154,7 @@ export const englishArticleCatalog = [
       },
       {
         id: "capabilities",
-        title: "Add KV when your app needs storage",
+        title: "Add bindings",
       },
     ],
     source: "/platforms/alchemy",

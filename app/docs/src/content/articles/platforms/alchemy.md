@@ -1,7 +1,7 @@
 ## 既存の Effront アプリケーションを準備する {#setup}
 
 Alchemy を使うと、アプリケーションを動かす Cloudflare Worker と、KV の名前空間などの利用するリソースを一緒にコードで定義できます。
-このガイドでは、既存の Effront アプリケーションを Alchemy でローカル起動し、その後で KV を追加する手順を説明します。
+このガイドでは、既存の Effront アプリケーションを Alchemy でローカル起動し、必要なリソースを接続する手順を説明します。
 設定を終えると、ローカル URL を開いてアプリケーションのページを確認できます。
 
 この手順では、ページとルートを含むアプリケーションを `src/entry.effront.tsx` から default export しており、[共通の React・Effect の依存関係](../api-reference.md#versions) がインストール済みであることを前提とします。
@@ -95,13 +95,10 @@ vp run dev
 Worker の準備ができたら、CLI に表示されるローカル URL を開き、`entry.effront.tsx` に定義したルートへアクセスします。
 ページが表示されれば、Worker、アプリケーション、開発用の実行環境が接続できたことを確認できます。
 
-## データ保存が必要になったら KV を追加する {#capabilities}
+## バインディングを追加する {#capabilities}
 
-最初のページが動いたら、アプリケーションに必要な場合はデータ保存機能を追加します。
-KV を使うには、Worker の定義を拡張して名前空間を作成し、クライアントを取得して、アプリケーションのサービスとして `makeApplicationHttpEffect` に渡します。
-[KV を使う完全なサンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) では、必要な `ReadWriteNamespaceBinding` と、クライアントを利用するリクエストごとの Layer を含む設定を確認できます。
-サービスの型や接続用の関数をアプリケーションに合わせる際は、[Alchemy API](../api-reference/alchemy.md) を参照してください。
+アプリケーションで利用するリソースは、Alchemy で定義して Worker にバインドします。
+リソースごとの設定方法は [Alchemy の公式ドキュメント](https://alchemy.run/docs) を参照してください。
 
-リソースの生存期間は Worker の定義と分けて扱ってください。
-アプリケーションの Layer はリクエストごとに取得されるため、リクエスト終了時に解放する接続などは Worker の構築時ではなく、この Layer で取得します。
-描画するページや Server Function の戻り値を通じてブラウザーへ渡すのはアプリケーションのデータだけにし、サービスのクライアントや認証情報は含めないでください。
+バインディングから取得したクライアントを Effront のサービスとして渡す方法は、[Alchemy API](../api-reference/alchemy.md) で説明しています。
+[連携サンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) では、KV を一例としてこの接続方法を確認できます。

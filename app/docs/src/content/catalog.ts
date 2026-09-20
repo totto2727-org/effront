@@ -156,7 +156,7 @@ export const articleCatalog = [
       },
       {
         id: "capabilities",
-        title: "データ保存が必要になったら KV を追加する",
+        title: "バインディングを追加する",
       },
     ],
     source: "/platforms/alchemy",
