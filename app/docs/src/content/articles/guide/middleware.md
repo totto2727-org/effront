@@ -1,23 +1,14 @@
-Middleware を使うと、ページやフォームのハンドラーで必要なリクエスト情報を用意できます。
-ハンドラーが処理を始める前に、アクセスを許可するかどうかを確認する場所としても使えます。
-リクエストに対して何を行うかと、アプリケーションのどの部分にその処理を適用するかを、それぞれ選べます。
-以下では、現在の URL をサービスとして提供する例を作り、通常の処理をメンテナンス応答に置き換える方法と、フォーム送信への適用方法へ進みます。
+## 適用するリクエストを選ぶ {#reach}
 
-## 対象のリクエストを選ぶ {#reach}
+ページへのリクエストには Routes に、Server Function の呼び出しにはその関数を作る定義に Middleware を付けます。
+保護されたページに表示しただけでは、アクションは保護されません。
 
-ページへのリクエストでは、対象の Routes に Middleware を適用します。
-Server Function では、その関数を作る定義に Middleware を追加すると、呼び出し時に確認処理が実行されます。
-この適用範囲をスコープと呼びます。
-一つの Routes に Middleware を追加しても、アプリケーション全体の方針にはなりません。
+独自の HTTP エンドポイントや、ルートに一致しないリクエストにも適用する場合は、[グローバル HTTP Middleware](/guide/http#global) を使います。
+ホストが直接配信する静的アセットには、ホスト側の設定が必要です。
 
-ユーザー定義 HTTP のエンドポイントや、どのルートにも一致しないリクエストにも同じ処理が必要なら、その広い範囲には [HTTP のグローバル Middleware](/guide/http#global) を使います。
-この登録が対象にするのは Effront の Fetch ハンドラー内のルーターであり、ホストが直接配信する静的アセットは含まれません。
-そのアセットにも同じヘッダーやアクセス制限が必要な場合は、ホスト側で設定します。
+## リクエストのサービスを提供する {#view}
 
-## 後続の処理に渡すサービスを用意する {#view}
-
-`src/request-scope.ts` を作り、利用側が読み取るサービスと、その値を提供する Middleware を定義します。
-この例の `RequestInfo` は、現在の HTTP リクエストの URL を保持します。
+`src/request-scope.ts` を作り、現在のリクエスト URL をサービスとして提供します。
 
 ```typescript
 import { Context, Effect } from "effect";
@@ -40,17 +31,13 @@ const WithRequestInfo = EFFRONT.Middleware.make<{ provides: RequestInfo }>(
 export const RequestEFFRONT = EFFRONT.withMiddleware(WithRequestInfo);
 ```
 
-ハンドラーが受け取る `httpEffect` は、Middleware が包む後続の処理です。
-この Effect を実行するとリクエストの処理が続き、`Effect.provideService` によって後続から URL を `RequestInfo` として利用できます。
-`provides: RequestInfo` という型の宣言は、派生した定義が利用できるサービスを伝えますが、それだけでは値を提供しません。
-この宣言と `Effect.provideService` の呼び出しをそろえて実装してください。
+`provides: RequestInfo` でサービスを宣言し、`Effect.provideService` で後続の処理に値を提供します。
+リクエストを続行するには `httpEffect` を実行します。
+このスコープの利用側と Routes は、派生した `RequestEFFRONT` から定義します。
 
-`EFFRONT.withMiddleware(WithRequestInfo)` は、同じアプリケーションに属し、Middleware とサービスが追加された定義 `RequestEFFRONT` を返します。
-この処理が必要な利用側の定義と Routes は、`RequestEFFRONT` から作ります。
+## Page にサービスを適用する {#routes}
 
-## サービスの値をページに表示する {#routes}
-
-`src/entry.effront.tsx` で `RequestInfo` を読み取る Page を作り、`RequestEFFRONT.Routes.make` を使って登録します。
+`src/entry.effront.tsx` を作成します。
 
 ```tsx
 import { Effect } from "effect";
@@ -59,7 +46,7 @@ import { EFFRONT, RequestEFFRONT, RequestInfo } from "./request-scope";
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.succeed(
-      <html lang="ja">
+      <html lang="en">
         <body>{children}</body>
       </html>,
     ),
@@ -68,7 +55,7 @@ const RootLayout = EFFRONT.Layout.make({
 const RequestPage = RequestEFFRONT.Page.make({
   render: Effect.fn("RequestPage.render")(function* () {
     const info = yield* RequestInfo;
-    return <p>アクセス先: {info.url}</p>;
+    return <p>Request URL: {info.url}</p>;
   }),
 });
 
@@ -77,19 +64,15 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 export default EFFRONT.make({ routes });
 ```
 
-`/request` を開くと、「アクセス先:」に続いて現在のリクエストの URL が表示されます。
-値を用意するのは Middleware であり、Page はその値を読み取って表示するだけです。
-`RequestEFFRONT` から作った Layout や Component も、この Routes の内側で描画されるときに同じサービスを読み取れます。
+`/request` を開くと、リクエスト URL が表示されます。
+`RequestEFFRONT` から Page を作るだけでは不十分で、Routes でも Middleware を有効にする必要があります。
+`RequestEFFRONT` から作った Layout と Component も、このスコープ内で描画される場合にサービスを読み取れます。
+一つのセクションに限定するには、この Routes を親 Routes に mount します。
 
-Page と Routes は組み合わせて設定してください。
-`RequestEFFRONT` から Page を作っても、ベースの `EFFRONT.Routes` に登録すると Middleware は有効になりません。
-大きなアプリケーションでは、Middleware を追加した Routes を親の Routes に `mount` することで、サイトの一部だけに処理を適用できます。
+## 後続の処理を止めて応答する {#order}
 
-## ハンドラーの実行前にリクエストを止める {#order}
-
-サービスを提供するハンドラーは、`httpEffect` を実行することで後続へ進みます。
-後続の処理を実行させたくない場合は、代わりに HTTP 応答を返します。
-たとえば、別の Middleware として次の `src/maintenance.ts` を用意します。
+後続の処理を止めるには、`httpEffect` を実行せずにレスポンスを返します。
+例えば、`src/maintenance.ts` を作成します。
 
 ```typescript
 import { Effect } from "effect";
@@ -97,32 +80,25 @@ import { HttpServerResponse } from "effect/unstable/http";
 import { EFFRONT } from "./request-scope";
 
 export const Maintenance = EFFRONT.Middleware.make(() =>
-  Effect.succeed(HttpServerResponse.text("メンテナンス中です", { status: 503 })),
+  Effect.succeed(HttpServerResponse.text("Under maintenance", { status: 503 })),
 );
 ```
 
-エントリーモジュールで `Maintenance` を import し、対象の Routes を `RequestEFFRONT.Routes.make(...)` の代わりに `RequestEFFRONT.withMiddleware(Maintenance).Routes.make(...)` から作ります。
-その Routes へのリクエストには、ページの代わりにステータス 503 と「メンテナンス中です」が返ります。
-この例では常に処理を止めます。
-条件によって処理を分ける場合は、リクエストを許可する分岐だけで `httpEffect` を実行してください。
+エントリーで `Maintenance` を import し、`RequestEFFRONT.Routes.make(...)` を `RequestEFFRONT.withMiddleware(Maintenance).Routes.make(...)` に置き換えます。
+Page の代わりに、ステータス 503 と `Under maintenance` が返ります。
+条件付きのチェックでは、リクエストを許可する場合にだけ `httpEffect` を実行してください。
 
-認証も同じ判断に沿って実装します。
-セッションを検証し、失敗したら 401 などの応答を返し、成功したら検証済みの利用者をサービスとして提供してから後続へ進みます。
-Cookie やヘッダーに書かれた利用者名は検証すべき入力であり、本人確認の証拠ではありません。
+認証も同じ流れです。
+セッションを検証し、不正なリクエストを拒否し、続行前に検証済みの利用者を提供します。
+cookie やヘッダーに入ったユーザー名は、本人である証明にはなりません。
 
-複数の確認処理が必要な場合、`EFFRONT.withMiddleware(first).withMiddleware(second)` は `first`、`second`、後続のハンドラーの順に入ります。
-返された応答を処理するコードは、逆の順序で実行されます。
-途中で応答を返すと残りの内側のハンドラーは実行されないため、確認したい順に Middleware を追加してください。
-同じ Middleware を一つのチェーンに二度追加することはできません。
+Middleware は宣言順に入り、レスポンスは逆順に処理します。
+途中で応答すると、残りの内側のハンドラーは実行されません。
+一つのチェーンに同じ Middleware を二度追加しないでください。
 
-## フォーム送信にも処理を適用する {#actions}
+## Server Function にチェックを適用する {#actions}
 
-フォームを表示するページが保護されていても、更新処理にはそのリクエストに対する確認が必要です。
-Server Function が使うのは自身の定義に追加された Middleware であり、ページ上で使われるだけで保護されるわけではありません。
-認証が必要な更新では、認証用の Middleware を含む定義から関数を作ってください。
-
-メンテナンスの例を一時的に有効にした場合は、フォームを試す前に Routes の定義を元に戻してください。
-送信時のサービス利用を試すには、`src/record-request.ts` を作り、`RequestEFFRONT` からハンドラーを定義します。
+`src/record-request.ts` で、Middleware 付きの `RequestEFFRONT` からアクションを定義します。
 
 ```typescript
 "use server";
@@ -132,24 +108,23 @@ import { RequestEFFRONT, RequestInfo } from "./request-scope";
 
 export const recordRequest = RequestEFFRONT.ServerFn.make({
   input: Schema.fromFormData(Schema.Struct({})),
-  handler: () =>
-    Effect.gen(function* () {
-      const info = yield* RequestInfo;
-      yield* Effect.logInfo("フォームを受信", { url: info.url });
-    }),
+  handler: Effect.fn("recordRequest")(function* () {
+    const info = yield* RequestInfo;
+    yield* Effect.logInfo("Form received", { url: info.url });
+  }),
 });
 ```
 
-Page のモジュールで `recordRequest` を import し、描画結果に次のフォームを含めます。
-この関数はフォームデータを受け取り、値を返さないため、`action` に直接渡せます。
+Routes を `Maintenance` なしの定義に戻し、Page のモジュールで `recordRequest` を import して、返す JSX に次のフォームを追加します。
 
 ```tsx
 <form action={recordRequest}>
-  <button type="submit">リクエストを記録</button>
+  <button type="submit">Record request</button>
 </form>
 ```
 
-フォームを送信し、サーバーログに「フォームを受信」と送信先の URL が記録されることを確認します。
-Middleware が読み取るのは今回の呼び出しのリクエストであり、ページ表示時に保存した値ではありません。
-この URL 用の Middleware はデータを提供するだけです。
-保護された更新に同じパターンを使う前に、実際のアクセス確認処理を Server Function の定義へ追加してください。
+送信すると、`Form received` と送信時の URL がログに出ます。
+ページを開いたときの値を保存して使うわけではありません。
+この Middleware はデータを提供するだけです。
+保護が必要な更新には、Server Function の定義に実際の認証と認可のチェックを付けてください。
+フォームの状態を返す方法は [Server Functions](/guide/server-functions) を参照してください。

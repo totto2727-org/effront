@@ -1,12 +1,13 @@
 # Markdown collection and rendering guide
 
-Use Vite-loaded Markdown as file-relative pages, resolve document links and assets, and render the resulting Comark document in React.
+Render Markdown files as React pages with working relative links and images.
 Keep collection imports and parsing in the server graph.
-The application owns routing, typography, and layout.
 
 ## Vite collections
 
-Place a collection module beside a `content/` directory:
+### Load documents and assets
+
+Create `manual.ts` beside your `content/` directory:
 
 ```ts
 import { createMarkdownCollection } from "@effront/markdown";
@@ -28,19 +29,35 @@ export const manual = createMarkdownCollection({
 });
 ```
 
-Both globs use Vite's native `base` option, so their keys are relative to `content/`, such as `./guide.md` and `./guide/start.md`.
-Use the same base for the document and asset maps.
-`manual` is an Effect, evaluated where the application handles configuration failures.
-Vite owns document loading and asset URL generation, including its asset inlining policy.
+Use the same `base` for both globs so document and asset paths resolve from the same directory.
+For example, `content/guide.md` becomes `/manual/guide`, and `![Logo](./logo.svg)` in that document uses Vite's imported URL for `content/logo.svg`.
 Use `?url&no-inline` when each asset should have a separately fetchable URL.
-No additional asset plugin, runtime filesystem loader, or copy step is required.
 
-Parse inside your Page's Effect and pass the result to the standard Comark component:
+### Select a page
+
+Evaluate the collection Effect, then look up the public pathname:
+
+```ts
+import { Effect } from "effect";
+import { manual } from "./manual";
+
+const collection = await Effect.runPromise(manual);
+const entry = collection.get("/manual/guide");
+console.log(entry?.source); // ./guide.md, if that file exists
+```
+
+Pass a pathname, not an absolute URL.
+For a Web `Request`, use `new URL(request.url).pathname`; Effect HTTP's server request already supplies a relative `request.url`.
+A missing entry returns `undefined` rather than failing the Effect.
+Choose the HTTP 404 response before streaming the page, as in the [complete Effront example](../../../examples/markdown/src/entry.effront.tsx).
+
+### Parse and render the entry
+
+Inside your Page's Effect, call this helper with the selected entry:
 
 ```tsx
 import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
-import { parseMarkdown } from "@effront/markdown";
-import type { MarkdownEntry } from "@effront/markdown";
+import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
 import { Effect } from "effect";
 
 export const renderArticle = Effect.fn("renderArticle")(function* (entry: MarkdownEntry) {
@@ -49,9 +66,9 @@ export const renderArticle = Effect.fn("renderArticle")(function* (entry: Markdo
 });
 ```
 
-Use `yield* manual` to obtain the collection, then call `collection.get(request.url)` with the original request pathname or relative request URL.
-`get` returns `undefined` for unknown pages, so the application can return a 404 before streaming begins.
-The [complete Effront example](../../../examples/markdown/src/entry.effront.tsx) uses one catch-all route with request-local entry selection.
+Comark renders the parsed document with resolved link and image URLs.
+Supply your own layout and styles.
+Treat Markdown and parser plugins as trusted content, not sanitized user submissions.
 
 ## Public API
 
@@ -63,12 +80,11 @@ Returns `Effect<MarkdownCollection, MarkdownError>`.
 - `documents`: eager raw-string glob map of `.md` files, with `./`-prefixed keys relative to the glob base.
 - `assets`: optional eager Vite URL-string glob map of linked files and images, relative to the same glob base.
 
-The resulting collection exposes pure `entries` and `get(pathname)` operations.
-Each entry has its base-relative glob key in `source`, Markdown text in `content`, and public `url`/`pathname` fields.
+The resulting collection exposes sorted `entries` and synchronous `get(pathname)` lookup.
 Each page URL removes only the `.md` extension from its base-relative filename.
 With `basePath: "/manual"`, `guide.md` becomes `/manual/guide`, `index.md` becomes `/manual/index`, and `guide/index.md` becomes `/manual/guide/index`.
 To serve `/manual`, use `content/manual.md` with `basePath: "/"`.
-Filenames are percent-encoded independently of route patterns, and lookup decodes URL escapes once.
+Each filename segment is percent-encoded independently of route patterns, and lookup decodes URL escapes once without turning encoded slashes into directory separators.
 A single trailing slash is accepted for page lookup.
 
 ### Reference resolution
@@ -81,7 +97,8 @@ An image such as `![Diagram](../images/diagram.svg)` resolves from the Markdown 
 File paths use POSIX semantics independently of the host operating system or working directory.
 The server runtime must support `node:path` and `node:url`.
 For Cloudflare Workers, enable the `nodejs_compat` compatibility flag in your Wrangler configuration.
-Queries and fragments are retained, and site-absolute, fragment-only, and external references pass through unchanged.
+Queries and fragments are retained.
+Site-absolute, fragment-only, and external references pass through unchanged; the application remains responsible for URL policy.
 Reference queries and fragments are appended literally to the imported asset URL, without merging existing URL queries or fragments.
 When an imported URL already contains a query or fragment, use a reference without a conflicting suffix or provide the final URL directly.
 Relative `.md` links must identify an imported document, and relative asset references must identify an imported asset.
@@ -93,12 +110,11 @@ The source Markdown remains unchanged.
 Returns `Effect<MarkdownDocument, MarkdownError>`, where `MarkdownDocument` is Comark's standard parsed-document type.
 `options` accepts standard Comark `ParserOptions`; additional `plugins` are appended after the package's mdts plugins.
 Parser exceptions become `MarkdownError`, preserving their original `cause`.
-After parsing and plugin execution, the package maps literal `a.href` and `img.src` references in the AST.
+After parsing and plugin execution, literal `a.href` and `img.src` attributes contain resolved URLs.
 Application-specific components and dynamic attribute bindings retain their normal Comark behavior.
 
 Comark's default configuration remains enabled, including frontmatter, HTML, alerts, task lists, components, and attributes.
 The mdts defaults add `footnotes()`, `math()`, `mermaid({ theme: "tokyo-night", themeDark: "tokyo-night" })`, and `shiki()`.
-Treat Markdown and its plugins as trusted authored content, not sanitized user submissions.
 
 ### Rendering and component mappings
 
@@ -108,13 +124,12 @@ Resolved AST URLs reach those components without wrappers or forced link/image m
 Comark 0.6.2 does not automatically register Math or Mermaid React components or merge `document.meta.components`.
 Complete Math and Mermaid SSR support is deferred in the [roadmap](../../../docs/ROADMAP.md).
 
-The application owns all rendering styles.
-
 ### Public collection types
 
 `MarkdownCollectionOptions` describes `basePath`, `documents`, and optional `assets` as shown above.
 `MarkdownCollection` exposes sorted `entries`, `get(pathname)`, and the two collection-level reference resolvers.
 `MarkdownEntry` exposes `source`, `content`, `url`, `pathname`, `resolveLink`, and `resolveImage`.
+`source` is the original `./`-prefixed glob key, and `content` is the Markdown source text.
 The `url` and `pathname` fields both contain the public absolute pathname.
 
 ```ts

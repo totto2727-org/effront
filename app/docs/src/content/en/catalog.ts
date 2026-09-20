@@ -8,43 +8,22 @@ export const englishArticleCatalog = [
       "Build React pages with server-side data and user actions, then choose the guide for your next step.",
     section: "Getting started",
     headings: [
-      {
-        id: "boundaries",
-        title: "Get a page on screen",
-      },
-      {
-        id: "overview",
-        title: "Add data and user actions",
-      },
-      {
-        id: "next",
-        title: "Choose your next guide",
-      },
+      { id: "boundaries", title: "Get a page on screen" },
+      { id: "overview", title: "Add data and user actions" },
+      { id: "next", title: "Choose your next guide" },
     ],
     source: "/index",
   },
   {
     slug: "/guide/getting-started",
     title: "Getting started",
-    description: "Create a homepage and run it locally on Cloudflare Workers.",
+    description: "Create a homepage and run it locally on your chosen host.",
     section: "Getting started",
     headings: [
-      {
-        id: "setup",
-        title: "Prepare your project",
-      },
-      {
-        id: "application",
-        title: "Define the homepage",
-      },
-      {
-        id: "files",
-        title: "Connect the application to Workers",
-      },
-      {
-        id: "run",
-        title: "See the result and make it your own",
-      },
+      { id: "setup", title: "Prepare your project" },
+      { id: "application", title: "Define the homepage" },
+      { id: "files", title: "Connect the application to a host" },
+      { id: "run", title: "See the result and make it your own" },
     ],
     source: "/guide/getting-started",
   },
@@ -55,18 +34,9 @@ export const englishArticleCatalog = [
       "Choose a hosting model, start development locally, and find the production checks for Wrangler or Node.js and Bun.",
     section: "Platforms",
     headings: [
-      {
-        id: "support",
-        title: "Choose your hosting model",
-      },
-      {
-        id: "architecture",
-        title: "Set up local development",
-      },
-      {
-        id: "build-startup",
-        title: "Prepare production startup and assets",
-      },
+      { id: "support", title: "Choose your hosting model" },
+      { id: "architecture", title: "Set up local development" },
+      { id: "build-startup", title: "Prepare production startup and assets" },
     ],
     source: "/platforms",
   },
@@ -77,30 +47,12 @@ export const englishArticleCatalog = [
       "Connect an existing app to Cloudflare Workers, configure assets and environment values, and verify it locally.",
     section: "Platforms",
     headings: [
-      {
-        id: "setup",
-        title: "Connect your application to a Worker",
-      },
-      {
-        id: "vite",
-        title: "Configure the Worker and build",
-      },
-      {
-        id: "local",
-        title: "Run and verify your application",
-      },
-      {
-        id: "context",
-        title: "Add application configuration",
-      },
-      {
-        id: "secrets",
-        title: "Keep credentials on the server",
-      },
-      {
-        id: "alchemy",
-        title: "Use Alchemy instead",
-      },
+      { id: "setup", title: "Connect your application to a Worker" },
+      { id: "vite", title: "Configure the Worker and build" },
+      { id: "local", title: "Run and verify your application" },
+      { id: "context", title: "Add application configuration" },
+      { id: "secrets", title: "Keep credentials on the server" },
+      { id: "alchemy", title: "Use Alchemy instead" },
     ],
     source: "/platforms/cloudflare",
   },
@@ -111,26 +63,11 @@ export const englishArticleCatalog = [
       "Develop in Vite, then build and launch a Node.js or Bun server that serves pages and browser assets.",
     section: "Platforms",
     headings: [
-      {
-        id: "setup",
-        title: "Install the server integration",
-      },
-      {
-        id: "entries",
-        title: "Verify the application in Vite",
-      },
-      {
-        id: "assets",
-        title: "Prepare the production asset layout",
-      },
-      {
-        id: "node",
-        title: "Build and launch a Node.js server",
-      },
-      {
-        id: "bun",
-        title: "Use Bun for the production server",
-      },
+      { id: "setup", title: "Install the server integration" },
+      { id: "entries", title: "Verify the application in Vite" },
+      { id: "assets", title: "Prepare the production asset layout" },
+      { id: "node", title: "Build and launch a Node.js server" },
+      { id: "bun", title: "Use Bun for the production server" },
     ],
     source: "/platforms/node-bun",
   },
@@ -140,22 +77,10 @@ export const englishArticleCatalog = [
     description: "Run an existing Effront app locally with Alchemy and add KV storage when needed.",
     section: "Platforms",
     headings: [
-      {
-        id: "setup",
-        title: "Prepare an existing Effront app",
-      },
-      {
-        id: "worker",
-        title: "Declare the app Alchemy will run",
-      },
-      {
-        id: "stack",
-        title: "Start development and open a page",
-      },
-      {
-        id: "capabilities",
-        title: "Add bindings",
-      },
+      { id: "setup", title: "Prepare an existing Effront app" },
+      { id: "worker", title: "Declare the app Alchemy will run" },
+      { id: "stack", title: "Start development and open a page" },
+      { id: "capabilities", title: "Add bindings" },
     ],
     source: "/platforms/alchemy",
   },
@@ -166,18 +91,9 @@ export const englishArticleCatalog = [
       "Connect URLs to pages, validate route parameters, and group related pages under shared layouts and loading UI.",
     section: "Guides",
     headings: [
-      {
-        id: "pages",
-        title: "Make a page reachable",
-      },
-      {
-        id: "matching",
-        title: "Choose URL patterns and accepted input",
-      },
-      {
-        id: "mount",
-        title: "Group pages under shared UI",
-      },
+      { id: "pages", title: "Register a Page" },
+      { id: "matching", title: "Read URL parameters" },
+      { id: "mount", title: "Add a section layout and loading UI" },
     ],
     source: "/guide/routes",
   },
@@ -188,51 +104,25 @@ export const englishArticleCatalog = [
       "Keep data access on the server while adding reusable UI and interactive controls.",
     section: "Guides",
     headings: [
-      {
-        id: "boundary",
-        title: "Decide where the behavior belongs",
-      },
-      {
-        id: "server",
-        title: "Extract a reusable server view",
-      },
-      {
-        id: "client-boundary",
-        title: "Add a control without moving the Page",
-      },
+      { id: "boundary", title: "Choose a component for the task" },
+      { id: "server", title: "Reuse server-rendered UI" },
+      { id: "client-boundary", title: "Add an interactive control" },
     ],
     source: "/guide/components",
   },
   {
     slug: "/guide/server-functions",
     title: "Server Functions",
-    description: "Build a form that validates input, calls a server service, and shows its result.",
+    description:
+      "Submit validated form data to a Server Function and display its result with useActionState.",
     section: "Guides",
     headings: [
-      {
-        id: "identity",
-        title: "Make the service available to the action",
-      },
-      {
-        id: "state",
-        title: "Return a greeting to the form",
-      },
-      {
-        id: "application",
-        title: "Run the complete round trip",
-      },
-      {
-        id: "forms",
-        title: "Use a direct action for side effects",
-      },
-      {
-        id: "input",
-        title: "Accept an object instead of FormData",
-      },
-      {
-        id: "refresh",
-        title: "Decide how updates and failures appear",
-      },
+      { id: "identity", title: "Share the application definition" },
+      { id: "state", title: "Return form state" },
+      { id: "application", title: "Render and submit the form" },
+      { id: "forms", title: "Submit without returning state" },
+      { id: "input", title: "Accept an object argument" },
+      { id: "refresh", title: "Handle updates and failures" },
     ],
     source: "/guide/server-functions",
   },
@@ -243,18 +133,9 @@ export const englishArticleCatalog = [
       "Supply a Page with a typed service, choose its implementation, and manage its request-scoped resources.",
     section: "Guides",
     headings: [
-      {
-        id: "service",
-        title: "Connect a dependency to a Page",
-      },
-      {
-        id: "lifetime",
-        title: "Extend usage while keeping request scope",
-      },
-      {
-        id: "missing-services",
-        title: "Resolve service wiring errors",
-      },
+      { id: "service", title: "Use a service in a Page" },
+      { id: "lifetime", title: "Choose the service scope" },
+      { id: "missing-services", title: "Fix missing-service errors" },
     ],
     source: "/guide/effect",
   },
@@ -264,26 +145,11 @@ export const englishArticleCatalog = [
     description: "Prepare request data and enforce checks for selected pages and Server Functions.",
     section: "Guides",
     headings: [
-      {
-        id: "reach",
-        title: "Choose which requests to cover",
-      },
-      {
-        id: "view",
-        title: "Prepare a service for downstream work",
-      },
-      {
-        id: "routes",
-        title: "Display the service value on a page",
-      },
-      {
-        id: "order",
-        title: "Stop a request before its handler runs",
-      },
-      {
-        id: "actions",
-        title: "Apply the behavior to form submissions",
-      },
+      { id: "reach", title: "Choose the request scope" },
+      { id: "view", title: "Provide a request service" },
+      { id: "routes", title: "Apply the service to a Page" },
+      { id: "order", title: "Return an early response" },
+      { id: "actions", title: "Apply checks to a Server Function" },
     ],
     source: "/guide/middleware",
   },
@@ -294,22 +160,10 @@ export const englishArticleCatalog = [
       "Add a JSON endpoint that shares your Page's services and apply headers across Page and API responses.",
     section: "Guides",
     headings: [
-      {
-        id: "router",
-        title: "Define the JSON endpoint",
-      },
-      {
-        id: "services",
-        title: "Register the endpoint and make a request",
-      },
-      {
-        id: "boundary",
-        title: "Keep service resources within the request",
-      },
-      {
-        id: "global",
-        title: "Add a header to Page and API responses",
-      },
+      { id: "router", title: "Define a JSON endpoint" },
+      { id: "services", title: "Register the route and its service" },
+      { id: "boundary", title: "Keep resources request-local" },
+      { id: "global", title: "Add a shared response header" },
     ],
     source: "/guide/http",
   },
@@ -320,22 +174,10 @@ export const englishArticleCatalog = [
       "Publish a Markdown article at a chosen URL, connect related content and assets, and customize parsing when needed.",
     section: "Guides",
     headings: [
-      {
-        id: "setup",
-        title: "Prepare your first article",
-      },
-      {
-        id: "collection",
-        title: "Make the article available to your Page",
-      },
-      {
-        id: "render",
-        title: "Publish the article and connect related pages",
-      },
-      {
-        id: "authoring",
-        title: "Keep the defaults or customize parsing",
-      },
+      { id: "setup", title: "Add an article" },
+      { id: "collection", title: "Load the collection" },
+      { id: "render", title: "Render the article at its URL" },
+      { id: "authoring", title: "Customize parsing or rendering" },
     ],
     source: "/guide/markdown",
   },
@@ -346,18 +188,9 @@ export const englishArticleCatalog = [
       "Start with Tailwind utilities, then add shared theme values or plugins when your design needs them.",
     section: "Guides",
     headings: [
-      {
-        id: "setup",
-        title: "Use Tailwind classes",
-      },
-      {
-        id: "stylesheet",
-        title: "Define shared theme values",
-      },
-      {
-        id: "scope",
-        title: "Extend styling with a plugin",
-      },
+      { id: "setup", title: "Add Tailwind utilities" },
+      { id: "stylesheet", title: "Define a theme in a stylesheet" },
+      { id: "scope", title: "Add an optional Tailwind plugin" },
     ],
     source: "/guide/styling",
   },
@@ -366,12 +199,7 @@ export const englishArticleCatalog = [
     title: "Runtime behavior",
     description: "Plan user feedback, navigation, and resource cleanup around asynchronous work.",
     section: "Guides",
-    headings: [
-      {
-        id: "chapters",
-        title: "Design around asynchronous work",
-      },
-    ],
+    headings: [{ id: "chapters", title: "Runtime contracts" }],
     source: "/advanced",
     group: "Runtime behavior",
   },
@@ -382,22 +210,10 @@ export const englishArticleCatalog = [
       "Keep request resources available during rendering and streaming, and release them when the response finishes or is interrupted.",
     section: "Guides",
     headings: [
-      {
-        id: "response-lifetime",
-        title: "Let the response body determine when cleanup runs",
-      },
-      {
-        id: "request-layer",
-        title: "Register acquisition and release in the application Layer",
-      },
-      {
-        id: "render-scope",
-        title: "Use request services in pages and Server Functions",
-      },
-      {
-        id: "resource-design",
-        title: "Customize response handling without closing resources early",
-      },
+      { id: "response-lifetime", title: "A Response can outlive its handler" },
+      { id: "request-layer", title: "Application services belong to each request" },
+      { id: "render-scope", title: "Delayed rendering uses the same services" },
+      { id: "resource-design", title: "Request-owned and host-owned resources" },
     ],
     source: "/advanced/request-runtime-and-lifetimes",
     group: "Runtime behavior",
@@ -409,22 +225,10 @@ export const englishArticleCatalog = [
       "Preserve shared UI state where client navigation is supported, and plan page animations, loading, and browser history behavior.",
     section: "Guides",
     headings: [
-      {
-        id: "native-navigation",
-        title: "Keep shared controls outside the Page",
-      },
-      {
-        id: "transition-scope",
-        title: "Choose an animation for the changing content",
-      },
-      {
-        id: "commit-and-stream",
-        title: "Plan for content that arrives after navigation",
-      },
-      {
-        id: "history-cache",
-        title: "Account for back, forward, and full-page loads",
-      },
+      { id: "native-navigation", title: "What persists between pages" },
+      { id: "transition-scope", title: "Page transitions and persistent Layouts" },
+      { id: "commit-and-stream", title: "Display, URL, and stream completion" },
+      { id: "history-cache", title: "History reuse and document loads" },
     ],
     source: "/advanced/client-navigation",
     group: "Runtime behavior",
@@ -436,22 +240,10 @@ export const englishArticleCatalog = [
       "Decide when to show a save result, protect server writes, and handle overlapping submissions and page refreshes.",
     section: "Guides",
     headings: [
-      {
-        id: "execution",
-        title: "Build a save-and-refresh flow",
-      },
-      {
-        id: "input-boundary",
-        title: "Protect the write before exposing the form",
-      },
-      {
-        id: "result-and-refresh",
-        title: "Give feedback without waiting for the whole page",
-      },
-      {
-        id: "concurrency",
-        title: "Handle repeated saves safely",
-      },
+      { id: "execution", title: "One call returns a result and a refreshed page" },
+      { id: "input-boundary", title: "Validation is not authorization" },
+      { id: "result-and-refresh", title: "The result can arrive before the view" },
+      { id: "concurrency", title: "Refresh ordering is not write ordering" },
     ],
     source: "/advanced/server-function-execution-and-refresh",
     group: "Runtime behavior",
@@ -463,22 +255,10 @@ export const englishArticleCatalog = [
       "Test a user journey, cover its business rules, and repeat the checks against your release build.",
     section: "Best practices",
     headings: [
-      {
-        id: "pages",
-        title: "Start with one user journey",
-      },
-      {
-        id: "services",
-        title: "Cover business rules without the browser",
-      },
-      {
-        id: "production",
-        title: "Check the release build in its target runtime",
-      },
-      {
-        id: "tools",
-        title: "Make the checks repeatable",
-      },
+      { id: "pages", title: "Test a persisted change in the browser" },
+      { id: "services", title: "Test rules below the Server Function" },
+      { id: "production", title: "Verify the release artifact" },
+      { id: "tools", title: "Isolate data and automate startup" },
     ],
     source: "/best-practices/testing",
   },
@@ -489,18 +269,9 @@ export const englishArticleCatalog = [
       "Find public import paths, application factory APIs, and compatible dependency versions.",
     section: "API reference",
     headings: [
-      {
-        id: "exports",
-        title: "Public API map",
-      },
-      {
-        id: "index",
-        title: "Application factory index",
-      },
-      {
-        id: "versions",
-        title: "Dependency matrix",
-      },
+      { id: "exports", title: "Public API map" },
+      { id: "index", title: "Application factory index" },
+      { id: "versions", title: "Dependency matrix" },
     ],
     source: "/api-reference",
   },
@@ -511,22 +282,10 @@ export const englishArticleCatalog = [
       "Assemble an application from pages, routes, and services, and check how to extend selected definitions with middleware.",
     section: "API reference",
     headings: [
-      {
-        id: "example",
-        title: "A one-route application",
-      },
-      {
-        id: "identity",
-        title: "Application.effront: create shared factories",
-      },
-      {
-        id: "make",
-        title: "EFFRONT.make: supply routes and services",
-      },
-      {
-        id: "middleware",
-        title: "EFFRONT.withMiddleware: extend selected definitions",
-      },
+      { id: "example", title: "Application definition example" },
+      { id: "identity", title: "Application.effront" },
+      { id: "make", title: "EFFRONT.make" },
+      { id: "middleware", title: "EFFRONT.withMiddleware" },
     ],
     source: "/api-reference/application",
   },
@@ -537,22 +296,10 @@ export const englishArticleCatalog = [
       "Choose rendering factories, add layouts and loading UI, and check URL parameter and page transition options.",
     section: "API reference",
     headings: [
-      {
-        id: "render",
-        title: "Choose a rendering factory",
-      },
-      {
-        id: "loading",
-        title: "Add a shared layout and loading UI",
-      },
-      {
-        id: "params",
-        title: "Decode URL parameters for a Page",
-      },
-      {
-        id: "view-transition",
-        title: "Configure page transitions",
-      },
+      { id: "render", title: "Rendering factories" },
+      { id: "loading", title: "Layout and Loading" },
+      { id: "params", title: "Page params" },
+      { id: "view-transition", title: "PageViewTransition" },
     ],
     source: "/api-reference/components",
   },
@@ -563,18 +310,9 @@ export const englishArticleCatalog = [
       "Compose route groups, match URL parameters, and apply Middleware to the requests a section handles.",
     section: "API reference",
     headings: [
-      {
-        id: "routes",
-        title: "Register and compose routes",
-      },
-      {
-        id: "paths",
-        title: "Match paths to Page parameters",
-      },
-      {
-        id: "middleware",
-        title: "Apply Middleware to a route group",
-      },
+      { id: "routes", title: "Routes" },
+      { id: "paths", title: "Route paths" },
+      { id: "middleware", title: "Middleware" },
     ],
     source: "/api-reference/routing",
   },
@@ -585,18 +323,9 @@ export const englishArticleCatalog = [
       "Check accepted inputs, handler signatures, and authorization requirements when exposing a server operation to React.",
     section: "API reference",
     headings: [
-      {
-        id: "make",
-        title: "Define a callable operation",
-      },
-      {
-        id: "arguments",
-        title: "Match the signature to the caller",
-      },
-      {
-        id: "execution",
-        title: "Protect and reuse the operation",
-      },
+      { id: "make", title: "ServerFn.make" },
+      { id: "arguments", title: "Argument shapes" },
+      { id: "execution", title: "Execution constraints" },
     ],
     source: "/api-reference/server-functions",
   },
@@ -607,22 +336,10 @@ export const englishArticleCatalog = [
       "Create a Fetch entry point and read the current request, environment bindings, and execution context from application Effects.",
     section: "API reference",
     headings: [
-      {
-        id: "fetch",
-        title: "Connect an application with createFetchHandler",
-      },
-      {
-        id: "readers",
-        title: "Choose a core reader for the values you need",
-      },
-      {
-        id: "cloudflare",
-        title: "Use Cloudflare readers with an Env type",
-      },
-      {
-        id: "context",
-        title: "Inspect the shared WorkersRequestContext",
-      },
+      { id: "fetch", title: "createFetchHandler" },
+      { id: "readers", title: "Core context readers" },
+      { id: "cloudflare", title: "Cloudflare context readers" },
+      { id: "context", title: "WorkersRequestContext" },
     ],
     source: "/api-reference/workers",
   },
@@ -633,18 +350,9 @@ export const englishArticleCatalog = [
       "Register Effront with Vite and look up entry-file options and Cloudflare Workers configuration.",
     section: "API reference",
     headings: [
-      {
-        id: "effront",
-        title: "Enable Effront in Vite",
-      },
-      {
-        id: "configuration",
-        title: "Choose entry files",
-      },
-      {
-        id: "cloudflare",
-        title: "Configure Cloudflare Workers",
-      },
+      { id: "effront", title: "effront" },
+      { id: "configuration", title: "EffrontViteOptions" },
+      { id: "cloudflare", title: "effrontCloudflare" },
     ],
     source: "/api-reference/vite",
   },
@@ -655,18 +363,9 @@ export const englishArticleCatalog = [
       "Connect your application to an Effect HTTP host and supply the services needed to handle and stream responses.",
     section: "API reference",
     headings: [
-      {
-        id: "fetch",
-        title: "Choose the host boundary",
-      },
-      {
-        id: "handler",
-        title: "Handle a request with toHttpEffect",
-      },
-      {
-        id: "capture",
-        title: "Capture host services with makeHttpEffect",
-      },
+      { id: "fetch", title: "HTTP boundaries" },
+      { id: "handler", title: "toHttpEffect" },
+      { id: "capture", title: "makeHttpEffect" },
     ],
     source: "/api-reference/http",
   },
@@ -677,18 +376,9 @@ export const englishArticleCatalog = [
       "Configure build entries, launch a production listener, and serve static files on Node.js or Bun.",
     section: "API reference",
     headings: [
-      {
-        id: "vite",
-        title: "Vite entries: effrontServer",
-      },
-      {
-        id: "serve",
-        title: "Production listener: serve",
-      },
-      {
-        id: "assets",
-        title: "Static files: withAssets",
-      },
+      { id: "vite", title: "effrontServer" },
+      { id: "serve", title: "serve" },
+      { id: "assets", title: "withAssets" },
     ],
     source: "/api-reference/server",
   },
@@ -699,18 +389,9 @@ export const englishArticleCatalog = [
       "Look up documents, configure Markdown parsing, and resolve links to articles and assets.",
     section: "API reference",
     headings: [
-      {
-        id: "collection",
-        title: "createMarkdownCollection: document lookup",
-      },
-      {
-        id: "parse",
-        title: "parseMarkdown: parsing and rendering",
-      },
-      {
-        id: "references",
-        title: "Resolving links and assets",
-      },
+      { id: "collection", title: "createMarkdownCollection" },
+      { id: "parse", title: "parseMarkdown" },
+      { id: "references", title: "Links, assets, and MarkdownError" },
     ],
     source: "/api-reference/markdown",
   },
@@ -721,14 +402,8 @@ export const englishArticleCatalog = [
       "Create an Alchemy Worker handler, supply application services, and configure its Vite build.",
     section: "API reference",
     headings: [
-      {
-        id: "http",
-        title: "Build a request handler",
-      },
-      {
-        id: "vite",
-        title: "Configure the Worker build",
-      },
+      { id: "http", title: "HTTP handlers" },
+      { id: "vite", title: "effrontAlchemy" },
     ],
     source: "/api-reference/alchemy",
   },
@@ -739,14 +414,8 @@ export const englishArticleCatalog = [
       "Enable Tailwind's default utilities and use the stylesheet option for custom themes or plugins.",
     section: "API reference",
     headings: [
-      {
-        id: "plugin",
-        title: "Enable Tailwind with effrontTailwind",
-      },
-      {
-        id: "stylesheet",
-        title: "Customize with stylesheet",
-      },
+      { id: "plugin", title: "effrontTailwind" },
+      { id: "stylesheet", title: "stylesheet" },
     ],
     source: "/api-reference/tailwind",
   },

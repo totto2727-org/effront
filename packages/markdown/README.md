@@ -1,6 +1,6 @@
 # @effront/markdown
 
-Turn Vite-loaded Markdown into linked pages and standard Comark documents, with file-relative asset URLs and typed Effect failures ready for React rendering.
+Parse Markdown for React rendering and resolve relative links and images to Vite-loaded documents and assets.
 
 ## Usage
 
@@ -29,10 +29,8 @@ if (entry) {
 }
 ```
 
-In a Vite application, supply the maps with eager `import.meta.glob` imports using `?raw` for documents and `?url` for assets.
-Pass the parsed document to `MarkdownDocument` from `@comark/react/components/MarkdownDocument` to render it.
 Use trusted authored Markdown and parser plugins; this integration does not sanitize untrusted submissions.
-See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) for the complete integration.
+See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) to load files with `import.meta.glob` and render them with Comark's `MarkdownDocument`.
 
 ## Key features
 

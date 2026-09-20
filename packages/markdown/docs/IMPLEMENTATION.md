@@ -2,21 +2,19 @@
 
 ## Purpose
 
-This document describes the repository's Markdown integration and its verification boundaries.
-For application setup, see [the package README](../README.md); for the public API, see [the guide](GUIDE.md).
-The runnable example is [`examples/markdown`](../../../examples/markdown).
+The collection separates source paths from public URLs: Vite loads files, the collection resolves their references, and Comark parses and renders their contents.
+For setup, use [the package README](../README.md), [the consumer guide](GUIDE.md), or [`examples/markdown`](../../../examples/markdown).
 
 ## Responsibilities
 
 Vite discovers documents with `import.meta.glob` and imports their contents with `?raw`.
-Set the same `base: "./content"` on the document and asset globs so their keys are relative to that directory.
-The collection receives these relative keys directly and has no separate `source` option.
+Using the same glob `base` gives document and asset keys a shared reference directory.
 Vite also resolves assets with `?url` and owns their development URLs, production emission, and hashing.
 The Markdown package consumes those maps rather than implementing a filesystem loader, asset copier, or bundler.
 
 The package maps source files to application URLs while preserving directory hierarchy.
 For example, the keys `./manual.md` and `./manual/guide/deep/details.md` map to `/manual` and `/manual/guide/deep/details` when `basePath` is `/`.
-A directory's page is its same-named sibling Markdown file: `guide.md` represents `guide/`, and every document URL is formed by removing only the `.md` extension.
+Removing only `.md` keeps directory and file names distinct: `guide.md` becomes `/guide`, while `guide/index.md` becomes `/guide/index`.
 Relative document links resolve from their containing source file and retain queries and fragments.
 Asset references use URLs supplied by Vite.
 Source-relative path operations use Effect's [`NodePath.layerPosix`](https://effect.website/docs/v4/api/platform-node-shared/NodePath), keeping Vite's slash-separated paths consistent across hosts.
@@ -25,7 +23,6 @@ The runtime must support `node:path` and `node:url`; the Workers example enables
 `createMarkdownCollection`, `parseMarkdown`, and URL resolvers expose expected failures through `MarkdownError` in Effect's error channel.
 Collection entries and `get` remain ordinary values and lookup operations.
 A missing document is a lookup miss, allowing the application's catch-all middleware to return 404 before streaming.
-Core delegates URL matching and decoding to Effect HTTP and only translates the named catch-all capture.
 Collection lookup preserves segment boundaries and decodes each URL segment once, including literal percent filenames.
 
 ## collection.ts の処理フロー

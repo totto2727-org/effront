@@ -65,19 +65,23 @@ test("styling distinguishes default setup from optional theme and plugin configu
   for (const id of ["setup", "stylesheet", "scope"]) {
     await expect(article.locator(`h2#${id}`)).toBeVisible();
   }
-  await expect(article).toContainText(
-    "CSS ファイルの作成やコンポーネントからの CSS import は不要です",
-  );
-  await expect(
-    article.locator("pre code").filter({ hasText: "plugins: [effrontTailwind()" }),
-  ).toBeVisible();
+  await expect(article).toContainText(/スタイルシート[^。]*CSS import[^。]*不要/);
+  const defaults = article.locator("pre code").filter({ hasText: "effrontTailwind()" });
+  await expect(defaults).toContainText(/^\s*const\s+\w+\s*=\s*\[effrontTailwind\(\)\]/m);
+  await expect(defaults).not.toContainText("stylesheet:");
   await expect(article.locator("pre code").filter({ hasText: "--color-brand" })).toBeVisible();
-  await expect(article).toContainText(/Typography は[^。]*一例/);
+  await expect(article.locator("h2#scope")).toHaveText(/必要に応じて/);
+  await expect(
+    article.locator("pre code").filter({ hasText: '@plugin "@tailwindcss/typography"' }),
+  ).toBeVisible();
   await expect(article).toContainText(/Typography は[^。]*Markdown[^。]*必須ではありません/);
   await article.getByRole("link", { name: "Tailwind API", exact: true }).click();
   await expect(page).toHaveURL(/\/api-reference\/tailwind$/);
-  await expect(page.locator("article")).toContainText("省略可能なオプション");
-  await expect(page.locator("article")).toContainText(/標準設定では CSS ファイルは不要/);
+  await expect(page.locator("article h2#stylesheet")).toHaveText("stylesheet");
+  await expect(
+    page.locator("article").getByRole("row").filter({ hasText: "undefined" }),
+  ).toContainText(/既定[^。]*生成/);
+  await expect(page.locator("article")).toContainText(/CSS ファイル[^。]*不要/);
 });
 
 test("Markdown readers can reach the default configuration and find the extension contract", async ({
@@ -86,13 +90,18 @@ test("Markdown readers can reach the default configuration and find the extensio
   await page.goto("/guide/markdown#authoring");
   const article = page.locator("article");
   await expect(article.locator("#authoring")).toBeInViewport();
-  await expect(article.locator("pre code").filter({ hasText: "linkify: false" })).toBeVisible();
+  await expect(article.locator("code").filter({ hasText: "linkify: false" })).toBeVisible();
   await expect(article.locator("pre code").filter({ hasText: "plugins: [toc()]" })).toBeVisible();
   await article.locator('a[href="/api-reference/markdown#parse"]').click();
   await expect(page).toHaveURL(/\/api-reference\/markdown#parse$/);
   await expect(page.locator("article #parse")).toBeInViewport();
-  await expect(page.locator("article")).toContainText(
-    /プラグインを削除・置き換え[^。]*オプションはありません/,
+  const reference = page.locator("article");
+  await expect(reference.locator("p").filter({ hasText: "options.plugins" })).toContainText(
+    /後に追加[^。]*置き換えにはなりません/,
+  );
+  await expect(reference).toContainText(/プラグインを削除[^。]*オプションはありません/);
+  await expect(reference.locator("p").filter({ hasText: "sanitizer" })).toContainText(
+    /sanitizer ではありません/,
   );
   await expect(page.locator('article a[href="https://comark.dev"]')).toBeVisible();
 });
@@ -209,7 +218,7 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
   await expect(page).toHaveURL(/#authoring$/);
   await expect(finalSection).toBeInViewport();
   await expect(page.locator("article")).toContainText(
-    "指定したプラグインは Effront の既定プラグインの後に追加され",
+    /追加プラグイン[^。]*標準プラグインの後[^。]*置き換えるものではありません/,
   );
   await page.screenshot({ path: "tmp/docs-mobile-authoring.png" });
   await page.screenshot({ path: "tmp/docs-mobile.png", fullPage: true });

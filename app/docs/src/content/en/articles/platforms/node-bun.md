@@ -1,26 +1,18 @@
-Use `@effront/server` when you want to run an Effront application as a Node.js or Bun HTTP server.
-You will first get the application working in Vite, then build a standalone server that serves both pages and their browser assets.
-The production example starts on localhost so you can check it before exposing it to other machines.
-
 ## Install the server integration {#setup}
 
-Start with the application defined in `src/entry.effront.tsx` in [Getting started](../guide/getting-started.md#application).
-For VitePlus tooling, use Node.js 22.18 or newer within the 22.x release line, or Node.js 24.11 or newer.
-Align React and Effect with the [supported package versions](../api-reference.md#versions).
-Add the server adapter and Vite integration to that application:
+Use the dependencies and `src/entry.effront.tsx` application from [Getting started](../guide/getting-started.md#application).
+For VitePlus tooling, use Node.js 22.18 or newer within 22.x, or Node.js 24.11 or newer.
+Keep React and Effect aligned with the [supported package versions](../api-reference.md#versions).
 
 ```bash
 vp add @effront/server@0.1.4 @effect/platform-node@4.0.0-rc.112
-vp add -D @effront/vite@0.1.4 @vitejs/plugin-rsc
 ```
 
-Both production choices use the same development setup, which requires `@effect/platform-node` even when you will deploy with Bun.
-The [Bun startup step](#bun) adds the Bun-specific dependency.
+Development requires `@effect/platform-node` even if you use [Bun for production](#bun).
 
 ## Verify the application in Vite {#entries}
 
-Create `src/entry.rsc.ts` to expose your application as the named HTTP `handler` that the adapter loads.
-Keep the HMR statement so this entry accepts updates during development.
+Create `src/entry.rsc.ts` with a named `handler` export and the HMR acceptance statement:
 
 ```typescript
 import { toHttpEffect } from "@effront/core/http";
@@ -30,7 +22,7 @@ export const handler = toHttpEffect(application);
 if (import.meta.hot) import.meta.hot.accept();
 ```
 
-Register the server adapter after `effront()` in `vite.config.ts`:
+Create `vite.config.ts`, registering `effrontServer()` after `effront()`:
 
 ```typescript
 import { effront } from "@effront/vite";
@@ -46,33 +38,31 @@ export default defineConfig({
 vp dev
 ```
 
-Open the URL printed by Vite, check that the page renders, and edit a page to check that updates appear.
-Vite owns the port and serves development assets, so the production port and asset mounts configured below do not affect this step.
+Open the printed URL and check the homepage.
+Edit its heading and save to check development updates.
+Vite serves the development assets and owns the port, independently of the production settings below.
 
 ## Prepare the production asset layout {#assets}
 
-For pages to load and become interactive, their JavaScript and CSS must be reachable as well as the page responses.
-The next example uses the default build layout: the server entry is `dist/rsc/server.js`, browser assets are in `dist/client/assets`, and public files are served from `dist/client`.
-Its asset paths are relative to the built server module rather than the directory from which you run the command.
+The startup example below uses these default output paths:
 
-Keep the following settings together when you choose where to put the build:
+| File or directory    | Purpose                                               |
+| -------------------- | ----------------------------------------------------- |
+| `dist/rsc/server.js` | Server startup                                        |
+| `dist/client/assets` | Generated JavaScript and CSS, served under `/assets/` |
+| `dist/client`        | Public files, served by exact file match              |
 
-- `assets.client.root` points to the generated browser assets, and `assets.client.prefix` gives them a dedicated URL namespace such as `/assets/`.
-  If a file is missing in that namespace, the server returns 404 instead of trying an application route.
-- `assets.public.root` supplies other public files by exact file match.
-  It does not look up directory indexes or fall back to an SPA HTML file.
-- The example's `immutable` cache setting is for generated assets with hashed filenames.
-  Do not apply it to files that change at an unchanged URL.
+If you change Vite's output directories or `base`, update the asset roots and client prefix to match.
+A missing file under the client prefix returns 404.
+Public files have no directory-index or SPA fallback.
+Apply `immutable` caching only to generated assets with hashed filenames.
 
-If you change Vite's output directories or `base`, update these roots and the client prefix to match.
-When transferring a build, include the complete output, including SSR modules and browser assets, rather than copying `server.js` alone.
-Serve only trusted build output and public files.
-Check their contents, including symlink targets, to avoid publishing unintended files.
+When moving a build, include all output, including SSR modules and browser assets.
+Serve only trusted build and public directories, and check symlink targets to avoid exposing unintended files.
 
 ## Build and launch a Node.js server {#node}
 
-Create `src/entry.server.ts` with the listener and asset mounts below.
-It imports the same `handler` used during development and launches the native Node.js server through Effect's runtime.
+Create `src/entry.server.ts`:
 
 ```typescript
 import { NodeRuntime } from "@effect/platform-node";
@@ -95,30 +85,31 @@ serve(handler, {
 }).pipe(Layer.launch, NodeRuntime.runMain);
 ```
 
-If you use different source entry filenames, set `rsc` and `server` in `effrontServer({ rsc, server })` to their paths.
-The defaults are `src/entry.rsc.ts` and `src/entry.server.ts`.
-Build the application, then start the emitted server directly:
+The asset paths are relative to the emitted `dist/rsc/server.js`, not the command's working directory.
+If you rename the source entries, set their paths in `effrontServer({ rsc, server })`.
 
 ```bash
 vp build
 node dist/rsc/server.js
 ```
 
-Open `http://127.0.0.1:3000` and verify page rendering, client-side interactions, and navigation.
-Also check that JavaScript and CSS load successfully.
-For missing assets, compare the requested URL with the configured prefix and the files under the corresponding root.
+Open `http://127.0.0.1:3000` and check page rendering, JavaScript and CSS loading, client-side controls, and navigation.
+For missing assets, compare the requested URL with the configured prefix and root directory.
 
-The explicit `127.0.0.1` binding limits access to the local machine.
-If the server must accept external connections, review the intended network exposure before changing `hostname` to a value such as `"0.0.0.0"`.
-Use the [built-application acceptance checks](../best-practices/testing.md#production) to verify the application before release, and the [serve and withAssets reference](../api-reference/server.md) for additional API details.
+The `127.0.0.1` binding accepts local connections only.
+Before changing `hostname` to `"0.0.0.0"`, review the intended network exposure.
+See [built-application checks](../best-practices/testing.md#production) before release and the [server API reference](../api-reference/server.md) for other options.
 
 ## Use Bun for the production server {#bun}
 
-To run the same application on Bun, keep the handler and asset mounts and change the production runtime.
 Bun 1.4.2 or later is required.
+In `src/entry.server.ts`, keep the handler and asset mounts, then:
 
-In `src/entry.server.ts`, replace `NodeRuntime` with `BunRuntime` imported from `@effect/platform-bun`, import `serve` from `@effront/server/bun`, and end the pipeline with `Layer.launch, BunRuntime.runMain`.
-Then add the Bun platform package and rebuild:
+1. Replace the `NodeRuntime` import with `import { BunRuntime } from "@effect/platform-bun"`.
+2. Import `serve` from `"@effront/server/bun"` instead of `"@effront/server/node"`.
+3. End the pipeline with `.pipe(Layer.launch, BunRuntime.runMain)`.
+
+Install the Bun platform package, rebuild, and start the server:
 
 ```bash
 vp add @effect/platform-bun@4.0.0-rc.112
@@ -126,7 +117,5 @@ vp build
 bun dist/rsc/server.js
 ```
 
-Check the application at the same localhost URL, this time using the server started by Bun.
-`vp dev` and `vp preview` run through Node-compatible Vite middleware, not the Bun production server.
-For any behavior that uses Bun-specific APIs, send requests to the built entry running under `bun dist/rsc/server.js`.
-A successful development or preview session does not replace this actual-runtime check.
+Check the same localhost URL using the Bun server.
+`vp dev` and `vp preview` use Node-compatible Vite middleware, so test Bun-specific behavior against the built entry running under Bun.

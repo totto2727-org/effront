@@ -176,19 +176,20 @@ describe("documentation catalog", () => {
     for (const required of [
       "vp add @effront/core@0.1.4",
       "effect@4.0.0-rc.112",
-      "effrontCloudflare()",
-      "createFetchHandler(application)",
-      "nodejs_compat",
-      "entry.workers.ts",
-      "dist/rsc/wrangler.json",
       "Application.effront()",
       "EFFRONT.Page.make",
-      "ASSETS",
+      "EFFRONT.Layout.make",
+      "EFFRONT.Routes.make",
       "Hello, Effront",
     ]) {
       expect(start).toContain(required);
     }
     expect(start).not.toMatch(/vp install|チェックアウト|workspace依存/);
+    const startHtml = await render("/guide/getting-started");
+    for (const host of ["cloudflare", "node-bun", "alchemy"]) {
+      expect(startHtml).toContain(`href="/platforms/${host}#setup"`);
+    }
+    expect(start).not.toContain("wrangler.json");
     expect(await text("/best-practices/testing")).toContain("フォーム送信");
     const effect = await render("/guide/effect");
     for (const contract of ["Context.Service", "Layer", "Application.effront"]) {
@@ -282,7 +283,10 @@ describe("documentation catalog", () => {
     expect(html).toContain("MarkdownError");
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
-    expect(englishReference).toMatch(/\b(?:not|cannot)\b[^.]*Math[^.]*Mermaid[^.]*SSR/i);
+    expect(englishReference).toMatch(
+      /does not automatically register Math\/Mermaid React components/i,
+    );
+    expect(englishReference).toMatch(/does not establish full SSR rendering/i);
   });
 
   it("retains all seven authored architecture chapters under their implementation group", () => {

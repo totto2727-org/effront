@@ -1,9 +1,6 @@
-このページでは、Effront でレイアウトとページを作成し、ルートを登録する方法を説明します。
+## Page を登録する {#pages}
 
-## URL からページを開けるようにする {#pages}
-
-Page は表示する内容を返し、最上位の Layout はそれを包む HTML 文書を返します。
-同じ `EFFRONT` から両方を作り、`.page()` で Page を登録して、アプリケーション定義を export します。
+`src/entry.effront.tsx` で Page とルート Layout を作り、Page の URL を登録します。
 
 ```tsx
 import { Application } from "@effront/core";
@@ -14,14 +11,14 @@ const EFFRONT = Application.effront();
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.succeed(
-      <html lang="ja">
+      <html lang="en">
         <body>{children}</body>
       </html>,
     ),
 });
 
 const HomePage = EFFRONT.Page.make({
-  render: () => Effect.succeed(<h1>ホーム</h1>),
+  render: () => Effect.succeed(<h1>Home</h1>),
 });
 
 const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
@@ -29,42 +26,24 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes });
 ```
 
-`/` を開くと、RootLayout が返す文書の中に「ホーム」が表示されます。
-選ばれた Page の表示位置は `children` で決まります。
-ルートを増やす場合も、`EFFRONT.make` に渡す最上位の Routes には Layout が必要です。
+`/` を開くと、RootLayout の `children` の位置に `Home` と表示されます。
+ルート Routes には Layout と少なくとも一つの Page が必要です。
+以降の例で `routes` を置き換える際も、default export は残します。
+`.page()` と `.mount()` は新しい定義を返すため、その戻り値を使ってください。
 
-アプリケーションを広げるときは `.page()` や `.mount()` をつなぎ、その結果を `EFFRONT.make` に渡します。
-これらのメソッドは既存の Routes を変更せず、新しい定義を返します。
-以降の例では上の `routes` 宣言を置き換え、default export はそのまま使います。
+## URL パラメーターを受け取る {#matching}
 
-## URL のパターンと受け付ける値を決める {#matching}
-
-ページが URL のどの部分を必要とするかに合わせて、パターンを選びます。
-
-| パターン          | 用途               | 受け取る値                    |
-| ----------------- | ------------------ | ----------------------------- |
-| `/`               | 固定のホームページ | なし                          |
-| `/articles/:slug` | 記事1件の識別子    | `hello` などの `slug`         |
-| `/manual/*path`   | 深さが変わるパス   | `setup/install` などの `path` |
-
-パラメーターを持つどちらのパターンでも、Page の Schema にルートパラメーターと同じ名前のキーを宣言します。
-Schema は URL デコード済みの文字列を受け取り、検証・変換した結果を `render` に渡します。
-`effect` の import に `Schema` を加え、2つの Page を `routes` より前に定義して、`routes` を次のように置き換えます。
+`effect` の import に `Schema` を追加し、ルートパターンと同じ名前のパラメーターを持つ Page を定義します。
 
 ```tsx
 const ArticlePage = EFFRONT.Page.make({
   params: Schema.Struct({ slug: Schema.NonEmptyString }),
-  render: ({ params }) =>
-    Effect.succeed(
-      <article>
-        <h1>{params.slug}</h1>
-      </article>,
-    ),
+  render: ({ params }) => Effect.succeed(<h1>{params.slug}</h1>),
 });
 
 const ManualPage = EFFRONT.Page.make({
   params: Schema.Struct({ path: Schema.String }),
-  render: ({ params }) => Effect.succeed(<article>{params.path}</article>),
+  render: ({ params }) => Effect.succeed(<article>{params.path || "Manual"}</article>),
 });
 
 const routes = EFFRONT.Routes.make({ layout: RootLayout })
@@ -73,50 +52,43 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/manual/*path", ManualPage);
 ```
 
-これで `/articles/hello` には「hello」、`/manual/setup/install` には「setup/install」が表示されます。
-末尾の `*path` は catch-all で、パスの残りすべてを受け取り、`/manual` と `/manual/` では空文字列になります。
-マニュアルでは、この2つの入口 URL も受け付けるために `Schema.String` を使っています。
-入口にマニュアルの案内を表示したい場合は、ManualPage で空文字列を扱ってください。
-catch-all はパターンの末尾にだけ置くことができ、入口の URL も含むため、`/manual` を別の Page として同時に登録することはできません。
+- `/articles/hello` は `hello` と表示します。
+- `/manual/setup/install` は `setup/install` と表示します。
+- `/manual` と `/manual/` では `path` が空文字列になり、`Manual` と表示します。
 
-**ページが受け付ける値を検証する**
+名前付きパラメーターは一つのセグメントを受け取ります。
+catch-all は空文字列を含む残りのパスを受け取り、パターンの末尾にしか置けません。
+`/manual/*path` が `/manual` も扱うため、`/manual` を別に登録しないでください。
+`/manual/about` や `/manual/:section` のように具体的なパスは、catch-all より優先されます。
+パラメーター名を変えても別のルートにはならず、`/articles/:slug` と `/articles/:id` は競合します。
+`/_effront` と、それに一致しうるパターンは予約領域として残してください。
 
-Page の Schema を使うと、ページに適さない値を拒否したり、文字列を描画処理で必要な型に変換したりできます。
-定義方法は [Effect Schema のドキュメント](https://effect.website/docs/schema/introduction/) を参照してください。
-GET と HEAD では、Effront は描画前に Schema でパラメーターを一度だけ検証・変換します。
-失敗した場合は 404 を返し、Page の `render` は呼び出されません。
-ページ遷移の Flight リクエストも同様で、拒否された場合は空の 404 レスポンスになります。
-Schema の処理でサービスが必要な場合は、そのルートの Middleware が提供するサービスを利用できます。
+Schema は URL デコード済みの文字列を受け取り、デコードした値を `render` に渡します。
+検証や変換には [Effect Schema](https://effect.website/docs/schema/introduction/) を使います。
+GET と HEAD でデコードに失敗すると、クライアントナビゲーション中も描画前に 404 を返します。
+未登録の URL も 404 になります。
+パラメーターの Schema は、ルートの Middleware が提供するサービスを使えます。
 
-Server Function による再表示では失敗時の扱いが異なり、POST 後の描画でパラメーターの検証・変換に失敗しても、完了した操作の結果は保持され、ページ側は React のレンダリングエラーとして扱われます。
-この描画の失敗を、操作が実行されなかった証拠として扱わないでください。
+Server Function の POST 後のページ更新中にパラメーターのデコードが失敗した場合は、アクションの結果を保持したまま、React のエラー処理で描画が失敗します。
+更新後のページが表示できなかったことだけを理由に、変更操作を再実行しないでください。
 
-**競合するルートの登録を避ける**
+## セクションの Layout と読み込み表示を追加する {#mount}
 
-パラメーター名だけが異なるパターンは別ルートにはならず、`/articles/:slug` と `/articles/:id` は競合します。
-一方、より具体的なルートは catch-all と併用でき、`/manual/about` や `/manual/:section` は `/manual/*path` より先に照合されます。
-`/_effront` 名前空間と、それに一致する可能性のあるパターンは、フレームワークのために予約されています。
-登録されていない URL は 404 になります。
-
-## 共通の UI を持つページをまとめる {#mount}
-
-同じセクションに属するページが増えたら、子 Routes にまとめて共通のレイアウトと読み込み中の表示を設定します。
-記事のセクションでは、`/:slug` の登録を子 Routes に移し、そのグループを `/articles` にマウントします。
-次の定義を `routes` より前に追加し、`routes` を例のとおりに置き換えます。
+子 Routes グループを定義し、固定プレフィックスに mount します。
 
 ```tsx
 const ArticleLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.succeed(
       <section>
-        <h1>記事</h1>
+        <h1>Articles</h1>
         {children}
       </section>,
     ),
 });
 
 const ArticleLoading = EFFRONT.Loading.make({
-  render: () => <p>記事を読み込み中…</p>,
+  render: () => <p>Loading article…</p>,
 });
 
 const articles = EFFRONT.Routes.make({
@@ -130,20 +102,16 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .mount("/articles", articles);
 ```
 
-`/articles/hello` は引き続き ArticlePage に対応しますが、今度は ArticleLayout、さらにその外側の RootLayout に包まれます。
-ホームページとマニュアルは ArticleLayout の外側に置かれたままです。
-記事のルートはマウントによる登録だけにし、親の `.page("/articles/:slug", ArticlePage)` は残さないでください。
+`/articles/hello` では、ArticlePage が ArticleLayout、RootLayout の内側に表示されます。
+親にあった `.page("/articles/:slug", ArticlePage)` の登録は残さないでください。
+記事の内容が suspend している間は、ArticleLayout の内側に ArticleLoading が表示されます。
+Loading の `render` は Effect ではなく同期的な ReactNode を返し、すぐに応答が完成する場合は読み込み表示が見えないこともあります。
 
-ArticleLoading は記事の内容に対する Suspense の待機表示で、内容の描画が待機状態になると ArticleLayout の内側に表示されます。
-この例はすぐに内容を返すため、待機表示が見える前に描画が終わる場合があります。
-Loading は同期的な ReactNode を返し、Effect を返す Page や Layout とは異なります。
+子の `layout` と `loading` は省略できます。
+mount するグループには Page が必要で、プレフィックスは固定にします。
+動的パラメーターは子の `.page()` パターンで宣言してください。
+定義を複数のモジュールに分ける場合は、一つの `EFFRONT` を export して再利用します。
+別々の `Application.effront()` から作った定義は組み合わせられません。
 
-子 Routes の `layout` や `loading` は、その設定が不要なら省略できます。
-ページを登録した子 Routes を、`/articles` のような固定の接頭辞にマウントしてください。
-動的なパラメーターは、子 Routes の `.page()` のパターンに記述します。
-グループやページを別のモジュールへ移す場合は、共有する1つの `EFFRONT` を export し、各定義を作る場所で import します。
-別々の `Application.effront()` 呼び出しから作った値を、同じアプリケーションで組み合わせることはできません。
-
-ルートを用意したら、通常のリンクでページ間を移動できます。
-ページ遷移は既定でクロスフェードします。
-変更や無効化の方法は [PageViewTransition の設定](/advanced/client-navigation#transition-scope) を参照してください。
+ナビゲーションには通常のリンクを使います。
+標準のクロスフェードを変更するには、[PageViewTransition の設定](/advanced/client-navigation#transition-scope)を参照してください。

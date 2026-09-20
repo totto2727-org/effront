@@ -1,73 +1,40 @@
-`@effront/vite` で Vite 設定に Effront を追加し、アプリケーションを実行するホストのアダプターを組み合わせます。
-Cloudflare Workers では `@effront/cloudflare` を使います。
-まずは次の既定の構成で登録し、エントリーファイルや Cloudflare の設定を変える場合にだけオプションを指定してください。
+## effront {#effront}
 
-## Vite に Effront を登録する {#effront}
-
-`effront(options?: EffrontViteOptions): PluginOption[]` は、Effront の開発・ビルド用プラグインを返します。
-戻り値をホストのアダプターとともに Vite の `plugins` 配列へ登録します。
-Cloudflare Workers 向けの既定の構成は次のとおりです。
+`@effront/vite` の `effront(options?: EffrontViteOptions): PluginOption[]` は、アプリケーションの開発・ビルド用プラグインを設定します。
+React Compiler、React、RSC プラグインを含みます。
+これらを重複登録しないでください。
+ホストアダプターは別に登録します。
 
 ```typescript
-import { defineConfig } from "vite-plus";
 import { effront } from "@effront/vite";
 import { effrontCloudflare } from "@effront/cloudflare";
+import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   plugins: [effront(), effrontCloudflare()],
 });
 ```
 
-`effront()` は React Compiler を有効にし、React プラグインと RSC プラグインを登録します。
-これらのプラグインを同じ設定に重複登録しないでください。
-この例を動かすためのアプリケーションファイルと Wrangler 設定は、[はじめる](/guide/getting-started) の手順で用意できます。
+この設定に対応するアプリケーションと Wrangler のファイルは [はじめに](/ja/guide/getting-started) を参照してください。
 
-## エントリーファイルを指定する {#configuration}
+## EffrontViteOptions {#configuration}
 
-`effront()` の 2 つのオプションで、アプリケーションを定義するファイルとリクエストを受け付けるファイルを指定できます。
-既定のファイル配置を使う場合は、どちらも省略できます。
+| オプション    | 型       | 既定値                    | 契約                                                                             |
+| ------------- | -------- | ------------------------- | -------------------------------------------------------------------------------- |
+| `application` | `string` | `./src/entry.effront.tsx` | アプリケーション定義を default export するモジュール。Vite root を基準に解決する |
+| `rsc`         | `string` | `./src/entry.workers.ts`  | 既定の Workers 連携で `{ fetch }` を公開するリクエストエントリー                 |
 
-```typescript
-export type EffrontViteOptions = {
-  readonly rsc?: string;
-  readonly application?: string;
-};
-```
-
-| オプション    | 既定値                    | 用途                                                                                               |
-| ------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
-| `application` | `./src/entry.effront.tsx` | アプリケーション定義を公開するモジュールを指定します。パスは Vite の `root` を基準に解決されます。 |
-| `rsc`         | `./src/entry.workers.ts`  | `{ fetch }` ハンドラーを公開する、リクエスト処理用のエントリーを指定します。                       |
-
-次の例では、両方の既定値を明示しています。
-ファイルを移動したり名前を変えたりした場合は、対応するパスに置き換えてください。
-
-```typescript
-import { defineConfig } from "vite-plus";
-import { effront } from "@effront/vite";
-import { effrontCloudflare } from "@effront/cloudflare";
-
-export default defineConfig({
-  plugins: [
-    effront({
-      rsc: "./src/entry.workers.ts",
-      application: "./src/entry.effront.tsx",
-    }),
-    effrontCloudflare(),
-  ],
-});
-```
-
-`application` が指すのはアプリケーション定義であり、ブラウザーのエントリーではありません。
 ブラウザーの起動コードは Effront が提供します。
-`@effront/core/application-entry` の import は、Vite alias を通じて指定したアプリケーションモジュールを参照します。
-この alias は `@effront/core` の独立した公開 subpath ではありません。
+`application` が選ぶのは、ブラウザーエントリーではなくアプリケーション定義です。
+`@effront/core/application-entry` は Vite のエイリアスでそのモジュールに解決され、独立した公開パッケージサブパスではありません。
+`effrontServer` や `effrontAlchemy` などのホストアダプターは、それぞれのリクエストエントリーを設定します。
 
-## Cloudflare Workers を設定する {#cloudflare}
+## effrontCloudflare {#cloudflare}
 
-`effrontCloudflare(options?: EffrontCloudflareOptions): PluginOption[]` は、`effront()` と組み合わせる Workers 向けのプラグインを返します。
-Cloudflare Vite プラグインのオプションは、`cloudflare` プロパティで囲まずに、この関数へ直接渡してください。
-受け付ける型は次のとおりです。
+`@effront/cloudflare` の `effrontCloudflare(options?: EffrontCloudflareOptions): PluginOption[]` は Cloudflare Workers の開発・ビルド連携を追加します。
+`effront()` の登録は別途必要です。
+
+`EffrontCloudflareOptions` は、`viteEnvironment` を除く `@cloudflare/vite-plugin` のオプションを受け付けます。
 
 ```typescript
 import { cloudflare } from "@cloudflare/vite-plugin";
@@ -78,22 +45,17 @@ export type EffrontCloudflareOptions = Omit<
 >;
 ```
 
-受け付けたオプションはすべて `@cloudflare/vite-plugin` へそのまま転送されます。
-`viteEnvironment` は Effront が設定するため、指定できるオプションから除外されています。
-実行時に `env` を読む場合は、このビルド用エントリーではなく `@effront/cloudflare/workers` を使います。
+オプションは `cloudflare` プロパティで囲まずに直接渡し、そのまま転送されます。
+Effront は `viteEnvironment` を、SSR を子に持つ RSC 環境に固定します。
+実行時のバインディングは、このビルド用エントリーではなく `@effront/cloudflare/workers` から読み取ります。
 
-**出力ディレクトリー**
+| Vite 設定                       | SSR 出力先を明示しない場合の既定値       |
+| ------------------------------- | ---------------------------------------- |
+| 出力先の上書きなし              | `dist/rsc/ssr`                           |
+| `build.outDir`                  | `<outDir>/rsc/ssr`                       |
+| `environments.rsc.build.outDir` | `<rsc outDir>/ssr`。ルートの設定より優先 |
 
-ビルド成果物の保存先を変える必要がなければ、既定の出力配置を使ってください。
-既定では、Wrangler が SSR モジュールを Worker に取り込めるように `dist/rsc/ssr` へ出力します。
-出力先を変える場合は、`effrontCloudflare()` のオプションではなく Vite 設定で指定します。
-
-| Vite 設定                       | SSR の出力先を明示していない場合の動作                                                                                        |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `build.outDir`                  | このディレクトリー内の `rsc/ssr` に出力します。ただし、`environments.rsc.build.outDir` も指定した場合はそちらが優先されます。 |
-| `environments.rsc.build.outDir` | このディレクトリー内の `ssr` に出力します。                                                                                   |
-
-`environments.ssr.build.outDir` を明示すると、上記のどちらよりも優先されます。
-Effront はその値を維持するため、変更後の場所でも Wrangler が SSR モジュールを取り込める構成にしてください。
-ビルド後のローカル実行には、生成された Wrangler 設定を使います。
-開発と本番実行のコマンドは [Cloudflare Workers](/platforms/cloudflare) を参照してください。
+明示した `environments.ssr.build.outDir` が最優先され、その値は保持されます。
+指定先は、Wrangler が Worker モジュールとしてバンドルできる場所である必要があります。
+ビルド済み Worker には、生成された Wrangler 設定を使います。
+ホストのコマンドは [Cloudflare Workers](/ja/platforms/cloudflare) を参照してください。

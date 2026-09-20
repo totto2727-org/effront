@@ -115,148 +115,133 @@ export const coreModelPages: readonly DocPage[] = [
     content: () => (
       <>
         <p>
-          Pageがブラウザーのドキュメントになる仕組みを理解したいときは、coreの全モジュールを読むよりも、一度のページ表示を追うところから始めます。
-          この章では <code>packages/core/src</code>{" "}
-          をたどり、再利用するアプリケーション定義が、リクエストに属するサービスとストリーム応答へつながる道筋を示します。
-          詳細な章へ進む前に、この見取り図でルーティング、描画、ブラウザーの動作を担当するコードを見つけてください。
+          ページ表示には、再利用するアプリケーション定義、リクエストが所有するサービス、ブラウザーへ送るデータが関わります。
+          それぞれの寿命は異なります。Routesのコンパイルはサービスを取得せず、Flightの描画はサーバーのContextをクライアントへ引き渡しません。
         </p>
         <h2 id="entries">定義・リクエスト・ブラウザーの入口を見つける</h2>
-        <p>
-          一度のページ表示には、役割の異なる3つの入口が関わります。
-          どの入口を読んでいるかを確かめると、アプリケーションの組み立てを、リクエストの実行やブラウザーの起動と取り違えずに済みます。
-        </p>
         <ol>
           <li>
-            <strong>アプリケーション定義。</strong> 既定の <code>src/entry.effront.tsx</code>{" "}
-            はアプリケーションをexportします。 Viteはこれを{" "}
-            <code>@effront/core/application-entry</code> から参照できるようにします。
+            <strong>定義：</strong>既定の <code>src/entry.effront.tsx</code>{" "}
+            がアプリケーションをdefault exportします。 Viteはこれを{" "}
+            <code>@effront/core/application-entry</code> として公開します。
             <code>application/definition.tsx</code> の <code>makeApplication</code>{" "}
-            はRoutesをコンパイルし、サービスのLayerを保持しますが、そのサービスを獲得するわけではありません。
+            はRoutesをコンパイルし、サービスのLayerを構築せずに保持します。
           </li>
           <li>
-            <strong>リクエスト処理。</strong> ホストのエントリは、この定義をHTTPへ接続します。
-            ネイティブの入口は <code>@effront/core/http</code> で、<code>workers.ts</code>{" "}
-            はそれをWorkers互換のFetchハンドラーへ変換します。
-            ホスト共通のVite統合ではRSCエントリの既定値が <code>src/entry.workers.ts</code>{" "}
-            ですが、ホストの統合は別のエントリを選択できます。
+            <strong>リクエスト：</strong>ホストが定義を <code>@effront/core/http</code>{" "}
+            へ接続します。
+            <code>workers.ts</code> は、このネイティブなEffect HTTPの境界をFetchに適合させます。
+            ホスト共通のVite統合では、ホスト側が別の入口を選ばなければ、RSCエントリに{" "}
+            <code>src/entry.workers.ts</code> を使います。
           </li>
           <li>
-            <strong>ブラウザーの起動。</strong> coreの <code>client/entry.ts</code> は{" "}
-            <code>BrowserRuntime.runMain</code> を通じて <code>browserMain</code> を実行します。
-            ここで行うのは描画済みドキュメントに対するブラウザー側の処理の開始であり、アプリケーション定義を読み込んでサーバーのサービスをブラウザーで動かすことではありません。
+            <strong>ブラウザー：</strong>
+            <code>client/entry.ts</code> が <code>BrowserRuntime.runMain</code> を通じて{" "}
+            <code>browserMain</code> を実行します。
+            アプリケーションのサーバーサービスをimportするのではなく、Flightからドキュメントをhydrateします。
           </li>
         </ol>
         <h2 id="request-flow">リクエストからドキュメントの表示まで追う</h2>
         <p>
-          小さく具体的な出発点として、Fetchアダプターを読みます。 次の{" "}
-          <code>createFetchHandler</code>{" "}
-          の抜粋では、再利用するWebハンドラーに、呼び出しごとに新しい{" "}
-          <code>WorkersRequestContext</code> を渡しています。 このContextに入るのは、その呼び出しの{" "}
-          <code>env</code>、<code>executionContext</code>、<code>request</code> です。
+          <code>createFetchHandler</code> はWebハンドラーを再利用し、呼び出しごとに新しい{" "}
+          <code>WorkersRequestContext</code> を渡します。
         </p>
         <SourceExcerpt source={coreModelSources.fetchBoundary} />
         <p>
-          ハンドラーを再利用しても、アプリケーションのサービスをリクエスト間で共有することにはなりません。
           <code>http.ts</code> の <code>toHttpEffect</code> は評価ごとに新しいLayerのmemo
           mapを作り、現在のリクエストContextで <code>ServerApplication.httpLayer(application)</code>{" "}
-          を構築します。
-          そのため、アプリケーションのLayerはサービスの獲得中にホストの値を参照できます。
-          Effrontがそれらのホストの値を暗黙にFlightやHTMLへ追加することはありません。
+          を構築します。 アプリケーションのLayerは、取得中にそのリクエストのホスト値を参照できます。
+          ハンドラーを再利用しても、アプリケーションサービスのインスタンスをリクエスト間で共有することにはなりません。
         </p>
         <ol>
           <li>
-            <strong>描画先を照合する。</strong> <code>server/application.ts</code>{" "}
-            はコンパイル済みのルートパターンをEffect
-            HTTPへ登録し、アプリケーションのサービスとルートのmiddlewareに結び付けます。
+            <strong>照合：</strong>
+            <code>server/application.ts</code> がコンパイル済みの描画先をEffect
+            HTTPへ登録し、サービスとmiddlewareを結び付けます。
           </li>
           <li>
-            <strong>Pageを準備する。</strong>{" "}
-            パラメーターのSchemaがあるGETでは、ハンドラーが照合結果のパラメーターをデコードしてから描画します。
-            デコードに失敗すると404を返します。 POSTはこのGETの経路ではなく、Server
-            Functionの準備と実行を行う別の経路を通ります。
+            <strong>検証：</strong>
+            パラメーター付きPageへのGETでは、照合したパラメーターを描画前にデコードします。
+            Schemaのデコード失敗は404になります。 POSTでは代わりにServer
+            Functionを準備して実行します。
           </li>
           <li>
-            <strong>Flightを描画する。</strong> <code>renderRouteTree</code> がルートツリーを作り、
-            <code>FlightRenderer</code> がそれをReactのFlightとして描画します。
+            <strong>描画：</strong>
+            <code>renderRouteTree</code> がルートツリーを作り、<code>FlightRenderer</code>{" "}
+            がReactのFlightストリームを生成します。
           </li>
           <li>
-            <strong>応答を選ぶ。</strong> <code>Accept</code> ヘッダーが{" "}
-            <code>FlightMediaType</code> と完全に一致すれば、Flightストリームを返します。
-            それ以外では、<code>HtmlRenderer</code>{" "}
-            がSSRエントリを読み込み、そのFlightストリームをHTMLへ変換します。
+            <strong>応答：</strong>
+            <code>Accept</code> ヘッダーが <code>FlightMediaType</code>{" "}
+            と完全に一致すればFlightを選びます。 それ以外では <code>HtmlRenderer</code>{" "}
+            がSSRエントリを読み込み、同じストリームをHTMLへ変換します。
           </li>
           <li>
-            <strong>ドキュメント上の処理を開始する。</strong> <code>client/application.ts</code>{" "}
-            では、ブラウザーが初期Flightペイロードを読み込み、ドキュメントをhydrateし、refreshとServer
-            Functionの処理を導入します。 クライアントルーターを導入するのは、
+            <strong>hydration：</strong>
+            <code>client/application.ts</code>{" "}
+            が初期Flightペイロードを読み込み、ドキュメントをhydrateし、refreshとServer
+            Functionの処理を登録します。 クライアントルーターを登録するのは、
             <code>navigationMode</code> が <code>"Client"</code> の場合だけです。
           </li>
         </ol>
         <p>
-          応答ヘッダーを返しても、描画が終わったとは限りません。
-          ホストは、ストリーム本文が終端・エラー・キャンセルに達するまで、リクエストのScopeを保持する必要があります。
-          Effect
-          HTTPのWebハンドラーがこの寿命の引き継ぎを管理し、coreはHEADの本文を取り除くことで、読まれないストリームがScopeを保持し続けないようにします。
+          描画が終わる前に応答ヘッダーが届くことがあります。 Effect
+          HTTPのWebハンドラーは、ストリーム本文の完了・失敗・キャンセルまでリクエストのScopeを維持します。
+          coreはその移譲前にHEADの本文を取り除き、読まれないストリームがScopeを保持し続けることを防ぎます。
           <code>makeHttpEffect</code>{" "}
-          で外部サービスの参照を捕捉する場合は、その所有者も、サービスを使う応答本文の処理が終わるまでサービスを生存させる必要があります。
-          参照の捕捉はサービスの寿命を延ばすものではなく、アプリケーションのLayerをリクエストごとに構築する仕組みも変えません。
-          この境界の詳細は <a href="/ja/architecture/implementation/request">リクエスト処理</a>{" "}
-          を参照してください。
+          で借りたサービスはホストの所有物のままであり、ホストはそれを使うすべての応答本文が終わるまで維持する必要があります。
+          この所有権の境界は <a href="/ja/architecture/implementation/request">リクエスト処理</a>{" "}
+          で説明します。
         </p>
         <h2 id="responsibilities">各段階を担当するコードを見つける</h2>
         <p>
-          ページ表示の道筋が見えたら、理解したい段階に合わせてソースのディレクトリを選びます。
-          以下のパスは、パッケージを明記したものを除き、<code>packages/core/src</code>{" "}
-          からの相対パスです。
+          以下は <code>packages/core/src</code> からの相対パスです。
         </p>
         <ul>
           <li>
-            <strong>このアプリケーションは何を提供できるか。</strong>{" "}
-            定義のidentity、サービスの契約、Routesから描画先へのコンパイルは{" "}
-            <code>application/</code> を読みます。
+            <code>application/</code>：定義のidentity、サービスの契約、ルートのコンパイル。
           </li>
           <li>
-            <strong>このリクエストで何が動くか。</strong>{" "}
-            Layerの構築、HTTPの振り分け、middleware、応答の選択は <code>http.ts</code> と{" "}
-            <code>server/application.ts</code> を読みます。
+            <code>http.ts</code> と <code>server/application.ts</code>
+            ：リクエストごとの取得、HTTPの振り分け、middleware、応答の選択。
           </li>
           <li>
-            <strong>何が描画用のデータになるか。</strong> ルートツリーとFlightの契約は{" "}
-            <code>rsc/</code> を読み、FlightとHTMLの生成は <code>server/</code>{" "}
-            のレンダラーへ進みます。
+            <code>rsc/</code> と <code>server/</code>{" "}
+            のレンダラー：ルートツリーの契約、Flightの生成、HTMLの描画。
           </li>
           <li>
-            <strong>ドキュメントが届いた後は何が起こるか。</strong>{" "}
-            hydration、ナビゲーション、refresh、Server Functionの呼び出しは <code>client/</code>{" "}
-            を読みます。
+            <code>client/</code>：hydration、遷移、refresh、Server Functionの呼び出し。
           </li>
         </ul>
         <p>
-          これらのモジュールがどこで実行されるかを知りたい場合は、統合パッケージへ進みます。
+          実行環境は統合パッケージが担当します。
           <code>packages/vite/src/index.ts</code>{" "}
           はReact/RSCプラグイン、アプリケーションのalias、ブラウザー・RSC・SSRのエントリを設定します。
-          CloudflareアダプターはRSCとその子SSR環境をworkerdへ接続し、<code>@effront/server</code>{" "}
-          はRSCとSSRのグラフを分離したNode.jsとBunのネイティブホスティングを提供します。
-          これらの統合が担当するのはモジュールの実行環境とホストへの接続であり、ここまで追ってきたPageの描画処理の定義ではありません。
+          CloudflareアダプターはRSCとその子SSR環境をworkerdで実行します。
+          <code>@effront/server</code>{" "}
+          は、分離したRSCとSSRのグラフをNode.jsまたはBunでホストします。
         </p>
         <h2 id="reading-order">次に追う処理を選ぶ</h2>
-        <p>
-          実装を入力側から追うなら、
-          <a href="/ja/architecture/implementation/application">アプリケーション定義</a> と{" "}
-          <a href="/ja/architecture/implementation/routing">ルートの組み立て</a> へ進みます。
-          この2章では、リクエスト処理が受け取る再利用可能な定義を説明します。 続いて{" "}
-          <a href="/ja/architecture/implementation/request">リクエスト処理</a> と{" "}
-          <a href="/ja/architecture/implementation/rendering">描画</a>{" "}
-          を読み、サービスの獲得から応答の生成までを追います。
-        </p>
-        <p>
-          初回のドキュメント表示には問題がなく、その後の操作を調べているなら、
-          <a href="/ja/architecture/implementation/navigation">ナビゲーション</a> または{" "}
-          <a href="/ja/architecture/implementation/server-functions">Server Functions</a>{" "}
-          から始めます。
-          どの章でも、再利用する定義、リクエストが所有するサービス、ブラウザーへ送るデータの3つを区別してください。
-          そうすれば、描画の境界を越えたからといって寿命やサーバーの依存関係まで引き継がれると考えずに、値の行方を追えます。
-        </p>
+        <ul>
+          <li>
+            <strong>リクエストの前：</strong>
+            <a href="/ja/architecture/implementation/application">アプリケーション定義</a> と{" "}
+            <a href="/ja/architecture/implementation/routing">ルートの組み立て</a>{" "}
+            は、再利用する定義が保持する内容を説明します。
+          </li>
+          <li>
+            <strong>リクエストの処理中：</strong>
+            <a href="/ja/architecture/implementation/request">リクエスト処理</a> と{" "}
+            <a href="/ja/architecture/implementation/rendering">描画</a>{" "}
+            は、サービスの取得から応答本文までを結び付けます。
+          </li>
+          <li>
+            <strong>hydrationの後：</strong>
+            <a href="/ja/architecture/implementation/navigation">ナビゲーション</a> と{" "}
+            <a href="/ja/architecture/implementation/server-functions">Server Functions</a>{" "}
+            は、新しいFlightデータと表示中のUIを調整します。
+          </li>
+        </ul>
       </>
     ),
   },
@@ -276,142 +261,114 @@ export const coreModelPages: readonly DocPage[] = [
     content: () => (
       <>
         <p>
-          Pageには、リクエストが届くより前に、アプリケーションのサービスを使うEffectを宣言できます。
-          そのEffectが実行されるまでを理解するには、依存関係の定義と、実際の値の獲得を分けて考える必要があります。
-          この章ではcoreの実装を読み、Pageの型が要求するサービスが、リクエスト時にどこから提供されるのかを追います。
+          アプリケーション定義は、Pageが使えるサービスを取得せずに記述します。
+          Layerとmiddlewareがリクエスト時にサービスを供給し、共通のアプリケーションidentityが定義と描画runtimeを結び付けます。
         </p>
         <h2 id="service-contract">サービスを獲得する前に契約を定義する</h2>
         <p>
-          出発点は <code>application/effront.ts</code> の{" "}
-          <code>Application.effront&lt;Services&gt;()</code> です。
-          この関数はサービスやHTTPサーバーを起動せず、Page、Layout、Routesなどの定義を作るfactory群を返します。
-          サービスの型は各定義が要求できるものを表し、実際の提供元は後で <code>EFFRONT.make</code>{" "}
-          にLayerとして渡します。
-        </p>
-        <p>
+          <code>application/effront.ts</code> の <code>Application.effront&lt;Services&gt;()</code>{" "}
+          は、Page、Layout、Routesなどのfactoryを返します。 サービスやHTTPサーバーは起動しません。
           返り値の <code>EFFRONT&lt;ApplicationServices, AvailableServices&gt;</code>{" "}
-          がサービスの型を2つに分けているのは、すべてのPageが同じ依存関係を必要とするわけではないためです。
-          初期状態では両者は同じですが、middlewareを使うと、アプリケーションの基礎の契約を変えずに一つの枝で使えるサービスを増やせます。
+          は、二つの契約を分けています。
         </p>
         <ul>
           <li>
-            <code>ApplicationServices</code>{" "}
-            は、アプリケーションのLayerが提供する基礎のサービスを表します。
+            <code>ApplicationServices</code> はアプリケーションのLayerが供給するサービスです。
           </li>
           <li>
-            <code>AvailableServices</code> は、そのfactoryから作る定義が使えるサービスを表します。
-            <code>PageFactory</code>{" "}
-            では、描画のEffectと、パラメーターSchemaのデコードに必要なサービスの両方がこの範囲に含まれます。
+            <code>AvailableServices</code>{" "}
+            は、そのfactoryから作った定義が使えるサービスです。Pageの描画とパラメーターSchemaのデコードも対象です。
+            初期状態ではApplicationServicesと同じですが、middlewareで一つの枝だけを拡張できます。
           </li>
         </ul>
         <p>
           <code>application/definition.tsx</code> の <code>ApplicationLayerOptions</code>{" "}
           は、Servicesが <code>never</code> でなければLayerを必須にします。
-          <code>never</code> ならLayerは省略でき、省略時には <code>Layer.empty</code> が使われます。
-          ここで行うのは、宣言したサービスの契約に提供元を結び付けることであり、サービスの獲得ではありません。
+          省略可能なLayerを渡さなければ <code>Layer.empty</code> を使います。
+          <code>EFFRONT.make</code> は、この提供元とコンパイル済みRoutesを保持します。
+          rootはアプリケーションのidentityを共有し、Layoutと少なくとも一つのPageを持ち、予約済みのパスを避ける必要があります。
         </p>
         <p>
-          提供元自身が別のサービスに依存することもあります。
-          <code>ApplicationDefinition&lt;Services, ApplicationError, Requirements&gt;</code>{" "}
-          は、その入力をRequirementsとして、Layerの構築時のエラー型をApplicationErrorとして保持します。
-          Requirementsが、そのままPageで使えるサービスに加わるわけではありません。
-          外部のServiceをPageに公開するには、たとえば <code>Layer.effect(Service, Service)</code>{" "}
-          で既存のインスタンスを渡すように、アプリケーションのLayerから明示的に提供する必要があります。
-        </p>
-        <p>
-          <code>EFFRONT.make</code> は、このLayerとrootのRoutesをまとめます。
-          rootの契約は、Layoutがあること、Pageへのパスが少なくとも一つあること、予約済みのパスを使わないことを要求します。
-          <code>makeApplication</code> はrootのidentityを確認し、<code>compileRouteGraph</code>{" "}
-          を呼び、コンパイル済みのroutesをLayerとともに保存します。
-          こうして、何を配信し、そのサービスをどう獲得するかを表す定義が、リクエスト処理に渡せる形でそろいます。
+          提供元自身の依存関係は、
+          <code>ApplicationDefinition&lt;Services, ApplicationError, Requirements&gt;</code> の{" "}
+          <code>Requirements</code> に残り、構築時の失敗はApplicationErrorに残ります。
+          RequirementsをPageが自動で使えるわけではありません。 外部のServiceを公開するには、たとえば{" "}
+          <code>Layer.effect(Service, Service)</code>{" "}
+          で既存のインスタンスを渡すなど、アプリケーションのLayerから提供する必要があります。
         </p>
         <h2 id="middleware-context">middlewareで一つの枝を拡張する</h2>
         <p>
-          認証用middlewareが提供するサービスを、認証が必要な部分だけで使う場合を考えます。
-          そのサービスを加える先は、基礎のApplicationServicesではなく、その枝のAvailableServicesです。
+          認証済みの枝だけが使うサービスは、その枝のAvailableServicesに加えます。
           <code>withMiddleware</code>{" "}
-          は、その枝のfactory群を作り、追加のサービス型と、それを提供する必要があるmiddlewareを記録します。
+          は、追加するサービス型と提供を担当するmiddlewareを記録した新しいfactoryを作ります。
         </p>
         <SourceExcerpt source={coreModelSources.middlewareScope} />
         <p>
-          型のシグネチャーは、登録順に沿った依存関係の検査として読めます。
           <code>ApplicableMiddleware</code>{" "}
-          は、次に追加するmiddlewareの要求が、すでにAvailableServicesで満たされている場合だけ登録を許します。
-          返されるfactoryは、その利用可能な範囲に <code>MiddlewareProvidedServices</code>{" "}
-          を加えます。
-          実行時には、種別、identity、同じスコープ内に重複がないことを確認してから、新しいmiddleware配列とfactory群を返します。
-          元のEFFRONT値は変わらないので、middlewareを持つ枝と持たない枝を共存させられます。
+          は、次のmiddlewareが要求するサービスをすでに利用できることを確認します。
+          返されるfactoryは、その集合に <code>MiddlewareProvidedServices</code> を加えます。
+          実行時には、不正なmemberの種別、別のアプリケーションidentity、同じスコープ内の重複を拒否します。
+          元のfactoryは変わらないため、スコープ付きの枝とそうでない枝を共存させられます。
         </p>
         <p>
-          登録は実行ではなく、<code>withMiddleware</code> も <code>provides</code>{" "}
-          の型宣言も、Contextへサービスを注入しません。
+          登録も <code>provides</code> の型宣言も、サービスを注入しません。
           <code>application/middleware.ts</code>{" "}
-          を通じて定義するhandlerが、包み込むHTTP応答のEffectに対して実際にサービスを提供する必要があります。
-          拡張したfactoryから作られる定義は、リクエスト時に使うmiddlewareの鎖を保持します。
+          のhandlerが、包むHTTP応答のEffectへサービスを提供する必要があります。
+          拡張したfactoryの定義は、リクエスト時に実行するmiddlewareの鎖を保持します。
         </p>
-        <p>
-          この鎖には2つの実行経路があるため、middlewareの状態は <code>httpMiddleware</code> と{" "}
-          <code>handler</code> の両方を保持します。 PageのGET／HEADではEffect
-          HTTPのネイティブなmiddlewareを組み合わせ、HEADフォールバックなどのルーティング動作を保ちます。
-          Server FunctionのPOSTでは、Reactが呼び出す参照をデコードして初めてスコープが分かるため、
-          <code>applyMiddleware</code> が <code>reduceRight</code> でEffectをhandlerに包みます。
-          先に登録したmiddlewareが外側になり、後のmiddlewareが必要とするサービスを提供できる順序です。
-        </p>
+        <ul>
+          <li>
+            <strong>PageのGET／HEAD：</strong>Effect HTTPのネイティブなmiddleware
+            descriptorを使い、HEADフォールバックなどのルーティング動作を保ちます。
+          </li>
+          <li>
+            <strong>Server FunctionのPOST：</strong>Reactのデコードで関数のスコープを特定してから、
+            <code>applyMiddleware</code> がEffectをhandlerで包みます。
+            <code>reduceRight</code>{" "}
+            により先の登録が外側になり、後のmiddlewareへサービスを供給できます。
+          </li>
+        </ul>
         <h2 id="identity">関連する定義を同じアプリケーションに保つ</h2>
         <p>
-          AvailableServicesを拡張しても、新しいアプリケーションが生まれるわけではありません。
-          拡張した枝も元の枝も、同じRoutesにまとめ、同じアプリケーションの描画の仕組みを通じて実行できる必要があります。
-          このつながりを保つため、一度の <code>Application.effront</code>{" "}
-          呼び出しから派生するfactoryは、すべて同じidentityオブジェクトを共有します。
+          一度の <code>Application.effront</code>{" "}
+          呼び出しから派生したfactoryは、identity、ルートスコープのID割り当て関数、<code>make</code>{" "}
+          関数を共有します。
+          <code>withMiddleware</code> は別のアプリケーションを作らず、これらを引き継ぎます。
         </p>
         <SourceExcerpt source={coreModelSources.applicationIdentity} />
         <p>
-          抜粋では、<code>make</code> がidentityをクロージャーに保持し、<code>makeEFFRONT</code>{" "}
-          が各factoryへ渡しています。
-          <code>allocateRouteScopeId</code>{" "}
-          のカウンターも共有され、新しいRoutesのスコープごとに、アプリケーション内の番号を割り当てます。
-          先ほどの <code>withMiddleware</code>{" "}
-          の抜粋と比べると、新しいアプリケーションを作るのではなく、既存のidentity、番号を割り当てる関数、make関数を新しいfactory群へ渡していることが分かります。
-        </p>
-        <p>
-          サービスの型が一致するだけでは、この関係は成立しません。
-          <code>Application.effront</code>{" "}
-          を別々に呼ぶと、Servicesの型が同じでもidentityは別々になります。
+          呼び出しが別なら、Servicesの型が同じでもidentityは別です。
           <code>Routes.page</code>、<code>Routes.mount</code>、<code>makeApplication</code>{" "}
-          などは、異なるidentityの混在をTypeErrorとして拒否します。
-          これはリクエストの入力ではなく、定義同士の不正な接続を検出する検査です。
+          はidentityの混在を <code>TypeError</code> で拒否します。
+          これは定義の接続ミスであり、リクエスト入力の不正ではありません。
         </p>
         <p>
-          <code>application/effront-identity.ts</code> では、<code>EFFRONTMember</code>{" "}
-          がidentityと種別のsymbolキーを持ち、定義の所属を表します。
-          identityには、Servicesを不変に扱う型の印と、そのアプリケーションの{" "}
-          <code>renderRuntime</code> があります。
-          このruntimeが、ここまでで組み立てた定義と、次に見るリクエスト時の実行を結び付けます。
+          <code>application/effront-identity.ts</code> は、identityとmember種別を表す{" "}
+          <code>EFFRONTMember</code> のsymbolで所属を記録します。
+          identityはServicesを不変に扱う型の印と専用の <code>renderRuntime</code>{" "}
+          を持ち、定義時の契約をリクエスト時の実行へ結び付けます。
         </p>
         <h2 id="runtime-boundary">リクエストの中で定義を実行する</h2>
         <p>
-          リクエストを処理するとき、<code>server/application.ts</code>{" "}
-          はアプリケーションのLayerとrendererのLayerを一緒に構築します。
-          <code>RequestContextMiddleware</code>{" "}
-          が、獲得したサービスをHTTPリクエストのContextへ合流させます。
-          保存していた提供元から実際のサービスの値が得られ、さらにスコープ付きmiddlewareが、選ばれた定義に必要なサービスを追加できます。
+          <code>server/application.ts</code>{" "}
+          は、リクエスト用にアプリケーションとレンダラーのLayerを構築します。
+          <code>RequestContextMiddleware</code> が取得済みサービスをHTTP
+          Contextへ合流させ、スコープ付きmiddlewareが選択された定義の要求するサービスを追加できます。
         </p>
         <p>
-          PageとLayoutはReactから呼ばれるため、このEffectの実行Contextへ接続する仕組みが必要です。
-          <code>application/render-runtime.ts</code> では、<code>bind</code>{" "}
-          がEffectの実行関数と有効なmiddlewareをAsyncLocalStorageに結び付けます。 定義側から呼ぶ{" "}
-          <code>run</code> は、その情報を取り出して実行関数へEffectを渡します。
-          runtimeが束縛されていない場合や、定義が要求するmiddlewareのどれかが有効でない場合は、TypeErrorを投げます。
-          サービスの型が正しいことは契約の一部であり、描画にはアプリケーションのリクエスト用runtimeと必要なmiddlewareのスコープも欠かせません。
+          ReactはEffectの呼び出しスタックの外からPageやLayoutを呼びます。
+          <code>application/render-runtime.ts</code> は、<code>bind</code>{" "}
+          でEffectの実行関数と有効なmiddlewareをAsyncLocalStorageに保持し、<code>run</code>{" "}
+          で描画Effectをその実行関数へ渡します。
+          runtimeの束縛がない場合や必要なmiddlewareが無効な場合は <code>TypeError</code>{" "}
+          になります。 正しいサービス型だけでは、これらの実行時スコープ検査を代替できません。
         </p>
         <p>
-          ここまでで、factoryがサービスの要求を表し、Layerとmiddlewareが値を提供し、identityが定義を結び付け、render
-          runtimeがReactの呼び出しをEffectの実行へ接続する、という全体のつながりを追えました。 続く{" "}
-          <a href="/ja/architecture/implementation/routing">03. ルートの組み立て</a>{" "}
-          では、HTTP側が使うmiddlewareと描画先をRoutesがどうまとめるかを見ます。
+          <a href="/ja/architecture/implementation/routing">ルートの組み立て</a>{" "}
+          は定義を描画先へ接続します。
           <a href="/ja/architecture/implementation/request">リクエスト処理</a>{" "}
-          ではサービスの寿命を、<a href="/ja/architecture/implementation/rendering">描画</a>{" "}
-          ではReactとの境界の続きを追います。
+          はサービスの所有権を説明し、<a href="/ja/architecture/implementation/rendering">描画</a>{" "}
+          はReactとの境界を追います。
         </p>
       </>
     ),
@@ -432,150 +389,135 @@ export const coreModelPages: readonly DocPage[] = [
     content: () => (
       <>
         <p>
-          <code>/items/42</code>{" "}
-          へのリクエストを処理するには、一致するPageだけでなく、そのPageを囲むLayoutやmiddlewareも必要です。
-          Effrontは、リクエストを受け付ける前に、これらを1つの描画先にまとめます。
-          この章では、その描画先からルート定義をさかのぼり、続いてリクエスト時のパラメーター検証までを追います。
-          アプリケーション定義の誤りと、404を返すべきリクエストを区別できるようになることが目的です。
+          描画先はPage、完全なパス、middleware、周囲のLayout／Loadingスコープをまとめたものです。
+          Effrontはリクエストを受け付ける前に描画先を組み立て、不正な宣言と、ルートには一致してもPageのパラメーター検証に失敗するURLを区別します。
         </p>
         <h2 id="compilation">サーバーが受け取る描画先から読む</h2>
         <p>
-          <code>Routes</code>{" "}
-          はPageとマウントした子Routesの木を表す宣言であり、HTTPリクエストを照合する仕組みそのものではありません。
+          <code>Routes</code> はPageとマウントした子Routesの木であり、動作中のHTTP
+          matcherではありません。
           <code>EFFRONT.make</code> の実行時に、<code>application/route-graph.ts</code> の{" "}
-          <code>compileRouteGraph</code> がこの木を次の描画先の配列に変換します。
-          各描画先は、完全なパスパターン、Pageの内部状態、ルートのmiddlewareの鎖、UIを組み立てるためのLayout／Loadingのスコープを保持します。
+          <code>compileRouteGraph</code> がこれを描画先の配列に変換します。
         </p>
         <SourceExcerpt source={coreModelSources.compiledDestination} />
         <p>
-          たとえば、<code>/:id</code> にPageを宣言した子Routesを <code>/items</code>{" "}
-          の下にマウントすると、パターンは <code>/items/:id</code> になります。
-          走査では親のスコープを子へ引き継ぎ、子RoutesにLayoutかLoadingがある場合にだけスコープを追加します。
-          パスをまとめるためだけのRoutesは、描画の境界を増やしません。 追加するスコープのIDは宣言の{" "}
-          <code>scopeId</code>{" "}
-          とマウント先の接頭辞を組み合わせるため、同じ宣言を別のパスにマウントした場合も区別できます。
+          <code>/:id</code> にある子Pageを <code>/items</code> の下にマウントすると、
+          <code>/items/:id</code> になります。
+          走査では親のスコープを引き継ぎ、子RoutesにLayoutかLoadingがある場合だけ新しいスコープを加えます。
+          パスをまとめるだけでは描画の境界は増えません。 スコープIDは宣言の <code>scopeId</code>{" "}
+          とマウント先の接頭辞を組み合わせ、同じ宣言の複数回のマウントを区別します。
         </p>
         <SourceExcerpt source={coreModelSources.routeTraversal} />
         <p>
-          このループは照合の優先順位ではなく、走査の順序として読んでください。
-          現在のRoutesのPageを登録順に追加してから、マウント先を登録順にたどります。
-          Pageとマウントは別々の配列に入るため、<code>page</code> と <code>mount</code>{" "}
-          の呼び出しを交互に書いても、その全体の呼び出し順がグラフに残るわけではありません。
-          ここで静的パスと動的パスを並べ替える処理もなく、HTTPの照合はEffect HTTPが担います。
+          ループは現在のノードのPage、次にマウント先を、それぞれの登録順でたどります。
+          <code>page</code> と <code>mount</code> を交互に呼んでも、全体の呼び出し順は残りません。
+          これは照合の優先順位ではなく走査順です。照合はEffect
+          HTTPが担当し、このコンパイラーは静的パスと動的パスを並べ替えません。
         </p>
         <p>
-          走査ではルートのmiddlewareも解決します。
           <code>resolveRouteMiddleware</code>{" "}
-          は継承した鎖を保持し、現在の宣言との共通接頭辞を除いた残りを追加します。
-          解決後の鎖に同じmiddlewareが重複していれば <code>TypeError</code> です。
-          また、rootにはLayoutが必要で、完成したグラフには少なくとも1つのPageが必要です。
-          検査を通過すると、コンパイラーは空でない描画先の配列をfreezeして返します。
-          サーバーは、リクエストごとにRoutesの木をたどり直さずに、この配列を利用できます。
+          は継承した鎖を残し、共通接頭辞を除いた現在の宣言の残りを加えます。 重複が残れば{" "}
+          <code>TypeError</code> になります。
+          コンパイラーはrootのLayoutと少なくとも一つのPageも要求し、空でない描画先の配列をfreezeして返します。
+          リクエストはRoutesを再走査せず、この配列を使います。
         </p>
         <h2 id="route-contract">URLから取り出した値をPageの入力につなぐ</h2>
         <p>
-          グラフにどのような定義を渡せるかは、<code>application/routes.ts</code> で確認できます。
-          <code>page</code> と <code>mount</code>{" "}
-          は、呼び出すたびに新しいRoutes定義を返し、元の定義を書き換えません。
+          <code>application/routes.ts</code> の <code>page</code> と <code>mount</code>{" "}
+          は、既存の定義を変更せずに新しい定義を返します。
           <code>RoutesDefinition</code>{" "}
-          はLayoutの有無、登録済みのパス、照合上の形を型として保持します。
-          後続の呼び出しは、それまでに組み立てた定義と照らし合わせて追加内容を検査できます。
+          はLayoutの有無、登録済みパス、照合上の形を保持し、後の追加を先の定義と照らし合わせて検査します。
         </p>
         <p>
-          <code>/items/:id</code> では、<code>MatchingPageParams</code> が、Schemaのエンコード側に{" "}
-          <code>id</code> キーを持つパラメーター付きPageを要求します。
-          パスの名前が対応するのはSchemaの <code>Encoded</code>{" "}
-          側のキーであり、Pageの描画が受け取るのはデコード後の <code>Type</code> 側です。
-          そのため、Schemaで取得した値を変換したり出力のキー名を変えたりしても、URLのパラメーター名は変わりません。
-          静的パスには、パラメーターSchemaを持たないPageが必要です。
+          <code>MatchingPageParams</code> はURLのパラメーター名とPage Schemaの <code>Encoded</code>{" "}
+          側のキーを比較します。
+          <code>/items/:id</code> ではエンコード側のキーが <code>id</code>{" "}
+          と過不足なく一致する必要があり、描画にはデコード後の <code>Type</code> を渡します。
+          変換で値や出力キーを変えても、URLのパラメーター名は変わりません。
+          静的パスにはパラメーターSchemaのないPageを使います。
         </p>
         <p>
-          型の検査と実行時の検査は、同じ処理を繰り返すのではなく、互いを補います。
-          実行時の登録処理は、パスの文法、Pageが同じEFFRONTインスタンスに属すること、ルートパラメーターとSchemaの有無が対応することを確認します。
-          パラメーター名とSchemaのエンコード側のキーをすべて比較する型レベルの検査までは、繰り返しません。
+          実行時の登録処理は、文法、アプリケーションidentity、パラメーターとSchemaの有無の対応を検査します。
+          エンコード側の全キーを比べる型レベルの検査までは繰り返しません。
         </p>
         <p>
-          パスの文法は、<code>application/route-path.ts</code> の <code>ValidRoutePath</code> と{" "}
-          <code>analyzeRoutePath</code> で型と実行時を対にして定めています。 宣言は <code>/</code>{" "}
-          で始まり、名前付きセグメントに <code>:id</code> を使い、末尾には <code>*path</code>{" "}
-          のような名前付きcatch-allを置けます。 rootの <code>/</code>{" "}
-          を除き、空セグメントや末尾のスラッシュは使えません。
-          ドットセグメント、パラメーター名の重複、クエリー文字列、末尾のcatch-all以外のワイルドカードも無効です。
-          マウントの接頭辞は静的である必要があり、子Routesは空でなく、同じEFFRONTインスタンスに属していなければなりません。
-        </p>
-        <h2 id="collisions">アプリケーションの組み立て時の失敗を見分ける</h2>
-        <p>
-          文法が正しいパスでも、登録済みのパスと衝突することがあります。
-          Effrontは、静的セグメントを小文字にし、パラメーター名を取り除いた「照合上の形」を比較します。
-          次の例のように形が重複するものを拒否しますが、パターンの一致範囲が重なる組み合わせをすべて禁止するわけではありません。
+          <code>application/route-path.ts</code> の <code>ValidRoutePath</code> と{" "}
+          <code>analyzeRoutePath</code> が、型と実行時の文法検査を対にします。
         </p>
         <ul>
           <li>
-            <code>/items/:id</code> と <code>/items/:slug</code>{" "}
-            は、パラメーター名を変えても形が変わらないため衝突します。
+            パスは <code>/</code> で始め、<code>:id</code>{" "}
+            のような名前付きセグメントを使います。末尾には <code>*path</code>{" "}
+            のような名前付きcatch-allを置けます。
           </li>
           <li>
-            <code>/About</code> と <code>/about</code>{" "}
-            は、形の比較で大文字小文字を区別しないため衝突します。
+            rootの <code>/</code>{" "}
+            を除き、空セグメントと末尾のスラッシュは無効です。ドットセグメント、パラメーター名の重複、クエリー文字列、その他のワイルドカード形式も無効です。
           </li>
           <li>
-            <code>/manual/*path</code> は、catch-allが空文字列を取得できる <code>/manual</code>{" "}
-            も予約します。
+            マウントの接頭辞は静的である必要があります。子Routesは空でなく、アプリケーションidentityを共有する必要があります。
+          </li>
+        </ul>
+        <h2 id="collisions">アプリケーションの組み立て時の失敗を見分ける</h2>
+        <p>
+          衝突検査は静的セグメントを小文字にし、パラメーター名を除いて照合上の形を比較します。
+          拒否するのは同じ形であり、一致範囲が重なるすべての組み合わせではありません。
+        </p>
+        <ul>
+          <li>
+            <code>/items/:id</code> と <code>/items/:slug</code> は衝突します。
           </li>
           <li>
-            <code>/items/new</code> と <code>/items/:id</code>{" "}
-            は形が異なるため、この検査では共存できます。
+            <code>/About</code> と <code>/about</code> は衝突します。
+          </li>
+          <li>
+            <code>/manual/*path</code> は、取得値が空になる <code>/manual</code> も予約します。
+          </li>
+          <li>
+            <code>/items/new</code> と <code>/items/:id</code> は形が異なるため共存できます。
           </li>
         </ul>
         <p>
-          マウント時には、子のパスと接頭辞を結合してから検査します。
-          そのため、マウント先のPageと親に直接登録したPageの衝突も検出できます。
-          <code>joinRoutePaths</code> は <code>/</code>{" "}
-          を特別扱いし、余分なスラッシュを追加しません。 型レベルの形の検査には、
-          <code>TypeError</code> を投げる実行時の検査も対応しています。
+          マウントは接頭辞を結合した子のパスを検査するため、親に直接登録したPageとの衝突も検出します。
+          <code>joinRoutePaths</code> は <code>/</code> を特別扱いし、余分なスラッシュを防ぎます。
+          型の検査に加え、実行時の衝突検査も <code>TypeError</code> を投げます。
         </p>
         <p>
-          続いてコンパイラーは、結合後の最終的なパスを <code>validateUnreservedPath</code>{" "}
-          で検査し、<code>/_effront</code> を保護します。 大文字小文字を問わず先頭セグメントが{" "}
-          <code>_effront</code>{" "}
-          のパスに加え、その名前空間を取得できる動的な先頭セグメントも拒否します。 したがって、
-          <code>/:slug</code> はアプリケーションの最終的なパスにはできませんが、
-          <code>/items/:slug</code> はこの予約領域の検査を通過します。
-          これらはアプリケーションを組み立てるときのエラーであり、リクエストURLへのHTTP応答ではありません。
+          <code>validateUnreservedPath</code> は結合後の最終パスを検査し、<code>/_effront</code>{" "}
+          を保護します。 大文字小文字を問わず先頭セグメントが <code>_effront</code>{" "}
+          の場合と、その値を取得できる動的な先頭セグメントを拒否します。 したがって最終パスの{" "}
+          <code>/:slug</code> は無効ですが、<code>/items/:slug</code> はこの検査を通ります。
+          失敗は組み立て時に起き、リクエストURLの照合より前です。
         </p>
         <h2 id="schema-and-http">ルートの照合とパラメーターの検証を分ける</h2>
         <p>
-          組み立てが成功すると、<code>server/application.ts</code> の <code>makeRouteLayer</code>{" "}
-          が、描画先ごとにGETとPOSTのハンドラーを <code>HttpRouter.add</code> で登録します。
-          URLの照合と取得した値のデコードはEffect HTTPが担います。
-          catch-allに対してEffrontが行うのは、ルーターの <code>*</code>{" "}
-          の値を宣言したパラメーター名へ移し、値がない場合は空文字列を補うことだけです。
-          描画処理は、PageのSchemaを適用する前に <code>HttpRouter.params</code>{" "}
-          からこれらの値を読みます。
+          <code>server/application.ts</code> の <code>makeRouteLayer</code> が、
+          <code>HttpRouter.add</code> でGETとPOSTのhandlerを登録します。
+          URLの照合と取得値のデコードはEffect HTTPが担当します。 Effrontは <code>*</code>{" "}
+          の取得値を宣言したcatch-all名へ移し、値がなければ空文字列を使います。 描画処理は{" "}
+          <code>HttpRouter.params</code> を読み、PageのSchemaを適用します。
         </p>
         <SourceExcerpt source={coreModelSources.parameterValidation} />
         <p>
-          パラメーター付きPageへの非POSTリクエストでは、Schemaのデコードの型付き失敗を本文なしの404に変換し、キャッシュ制御に{" "}
-          <code>private, no-store</code> を付けます。 デコードが成功した場合は <code>Decoded</code>{" "}
-          タグを渡すため、Pageコンポーネントは再デコードせずに値を描画関数へ渡せます。 たとえば{" "}
+          非POSTリクエストでは、Schemaデコードの型付き失敗を、<code>private, no-store</code>{" "}
+          が付いた本文なしの404に変換します。 成功時は <code>Decoded</code>{" "}
+          パラメーターを渡し、Pageでの二重デコードを防ぎます。 たとえば{" "}
           <code>/items/not-a-number</code> は <code>/items/:id</code>{" "}
-          に一致しても、PageのSchemaが数値にデコードできるIDを要求していれば、この404になります。
+          に一致しても、IDを数値にデコードするSchemaには失敗します。
         </p>
         <p>
-          この結果は、ルートに一致しない場合やURLの値を読み取る段階での失敗とは区別してください。
-          それらは、このSchema失敗の処理の外で起きます。 POSTにも同じ事前検証は適用しません。
-          POSTが描画に進む場合は <code>Encoded</code>{" "}
-          のパラメーターを渡し、Pageコンポーネントが必要なデコードを行います。 Server
-          Functionの入力や再描画のエラーは、GETのSchema失敗を404にする規則とは分けて追う必要があります。
+          ルートの不一致やURL取得値の読み取り失敗は、このSchema handlerの外で起きます。
+          POSTもここを通らず、描画に <code>Encoded</code>{" "}
+          パラメーターを渡し、Pageコンポーネントでデコードします。
+          そのため、GETのSchema失敗を404にする規則は、Server
+          Functionの入力やrefreshの失敗には当てはまりません。
         </p>
         <p>
-          ここまでで、ルーティングの問題を宣言、グラフの組み立て、HTTPの照合、Pageのパラメーター検証のどの段階で調べるかを整理できました。
-          リクエストのContextと寿命は{" "}
-          <a href="/ja/architecture/implementation/request">リクエスト処理</a>
-          、描画先のスコープがUIになる過程は{" "}
-          <a href="/ja/architecture/implementation/rendering">描画</a> で追えます。
+          <a href="/ja/architecture/implementation/request">リクエスト処理</a>{" "}
+          は選ばれた描画先のContextと寿命を追います。
+          <a href="/ja/architecture/implementation/rendering">描画</a> はスコープをUIに変換し、
           <a href="/ja/architecture/implementation/server-functions">Server Functions</a>{" "}
-          の章では、POST固有の処理を読み進めます。
+          はPOST経路を追います。
         </p>
       </>
     ),

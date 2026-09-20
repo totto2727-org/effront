@@ -1,16 +1,122 @@
 # SSR documentation site
 
-`app/docs` serves English documentation at `/en` and Japanese documentation at `/ja`, rendered on each request by Effront and hosted by Alchemy's native Cloudflare integration.
-The unprefixed Japanese URLs remain available for existing bookmarks.
-Each language has its own authored catalog and articles; there is no automatic translation or fallback to the other language.
-Its consumer navigation is Getting started, Platforms, Guides, Best practices, API reference, and Architecture (アーキテクチャ in Japanese).
-Guides nests application-facing runtime contracts under 実行時の契約; Architecture nests the seven source-based chapters under 実装解説.
-Best practices contains application-development recommendations rather than framework features.
-When a canonical article URL changes, preserve bookmarks through a permanent redirect.
-The retired `/advanced/production-startup` article redirects permanently to `/platforms` through native global HTTP middleware, for both HTML and Flight requests, and is absent from the catalog/navigation.
-The former `/guide/testing` URL similarly redirects to `/best-practices/testing`; only the latter appears in the catalog.
-Both redirects also preserve the `/en` or `/ja` prefix and query string.
-The language switch links to the same article in the other language; article links, search results, and previous/next navigation stay within the selected language.
+Author English articles at `/en` and Japanese translations at `/ja`.
+The site renders each request through Effront and Alchemy's native Cloudflare integration.
+Unprefixed Japanese URLs remain available for existing bookmarks.
+
+## Author or change an article
+
+For Markdown articles:
+
+1. Identify the reader's task and verify the public API or implementation it needs.
+2. Write the English article in `src/content/en/articles/`, using steps and observable results for a how-to guide or API contracts for reference.
+3. Review the English article, then translate it into Japanese under `src/content/articles/`. Keep the examples and API contracts equivalent.
+4. Update `src/content/en/catalog.ts` and `src/content/catalog.ts` with the title, description, document path, and exact heading ID/title order. Keep IDs aligned, such as `## Setup {#setup}` and `## セットアップ {#setup}`.
+5. Register explicit `/en` and `/ja` routes in `src/entry.effront.tsx`. Preserve existing unprefixed compatibility routes.
+6. Run content tests and built-site browser acceptance in both languages, including article links and the language switch.
+
+For Architecture chapters, edit the English JSX in `src/content/en/architecture/` and the Japanese JSX in `src/content/core-model.tsx` or `src/content/core-runtime.tsx`.
+Update each chapter's page metadata with its content and follow the [architecture source baseline](#architecture-source-baseline) rules for exact excerpts.
+
+Use fenced code blocks with an explicit language.
+Keep articles Effront-specific and link general React, Effect, Tailwind, and Comark concepts to official documentation.
+Each locale has authored articles and a catalog, with no automatic translation or fallback to the other language.
+
+### Place the article
+
+| Section                       | Content                                                    |
+| ----------------------------- | ---------------------------------------------------------- |
+| Getting started               | Initial application setup                                  |
+| Platforms                     | Standalone Workers, Alchemy, and native Node.js/Bun setup  |
+| Guides                        | Feature tasks and application-facing runtime contracts     |
+| Best practices                | Application-development recommendations, including testing |
+| API reference                 | Public exports and contracts                               |
+| Architecture / アーキテクチャ | Seven source-based implementation chapters                 |
+
+Runtime contracts remain grouped under 実行時の契約, and Architecture chapters under 実装解説.
+Keep contributor commands and framework test implementation out of the consumer testing article.
+
+### Preserve URLs and heading links
+
+Catalog paths omit locale prefixes; `src/content/locale.ts` owns the locale/path helpers.
+The language switch links to the same article in the other language.
+Article links, search results, and previous/next navigation stay in the selected language.
+
+The collection strips `.md` but does not turn `index.md` into `/`.
+The catalog maps public `/` to document `/index`, which has no public route of its own.
+Link to `/en` or `/ja` for a localized home page, not `./index.md`.
+Other relative `.md` links resolve through the collection with fragments preserved.
+
+Keep published URLs and heading IDs when moving sidebar groups.
+If a canonical URL changes, retain a compatibility route or permanent redirect.
+Global HTTP middleware already redirects these retired paths for HTML and Flight, preserving the locale prefix and query string:
+
+| Retired path                   | Destination               |
+| ------------------------------ | ------------------------- |
+| `/advanced/production-startup` | `/platforms`              |
+| `/guide/testing`               | `/best-practices/testing` |
+
+Only the destinations appear in the catalog and navigation.
+Content tests check catalog coverage, declared headings, and rendered internal article links.
+
+## Content ownership and rendering
+
+| Source                                                       | Responsibility                                                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `src/content/en/articles/`, `src/content/articles/`          | English consumer Markdown and Japanese translations                                                    |
+| `src/content/en/catalog.ts`, `src/content/catalog.ts`        | Navigation, descriptions, document lookup paths, and table of contents                                 |
+| `src/content/markdown.tsx`                                   | Vite raw imports, `createMarkdownCollection`, `parseMarkdown`, and Comark `MarkdownDocument` rendering |
+| `src/content/en/architecture/`                               | English implementation explanations                                                                    |
+| `src/content/core-model.tsx`, `src/content/core-runtime.tsx` | Japanese implementation explanations and shared exact source selections                                |
+| `src/entry.effront.tsx`                                      | Explicit routes and the persistent RootLayout                                                          |
+
+Vite imports Markdown at build/development time.
+Parsing runs in the Page Effect with `MarkdownError` in the error channel.
+The application does not use a custom parser, runtime filesystem loader, Git execution, or network content loading.
+Only rendered content and navigation metadata cross the client boundary, not the collection or highlighter.
+
+Markdown permits HTML, attributes, and components; it is not a sanitizer for untrusted submissions.
+Comark's standard renderer does not automatically register Math or Mermaid components, so do not promise their complete React SSR support.
+See the [Markdown collection guide](../../../packages/markdown/docs/GUIDE.md) for reference resolution and renderer limitations.
+
+### Code and shell rendering
+
+The document starts in dark mode regardless of system preference.
+Tailwind Typography styles articles, and Comark's Shiki output supplies server-rendered Markdown code tokens.
+The `ProsePre` component mapping adds keyboard focus and code-block attributes without replacing Comark or reinterpreting its AST.
+The `.docs-markdown` dark-theme CSS affects only Markdown tokens.
+Architecture excerpts keep the exact-text `CodeBlock` renderer and locally imported Shiki grammars.
+Neither renderer has a copy button; code remains selectable text.
+
+Keep DocsShell in RootLayout so sidebar, search, header, table of contents, and sidebar scrolling survive route changes.
+Only the Page article participates in the named page transition.
+Do not add a route key to the shell or move its state into the Page.
+Document scrolling and heading links use native navigation.
+The deployment stylesheet remains explicitly selected through `effrontTailwind`, without a manual CSS import or extra runtime plugin.
+
+## Consumer compatibility and public packages
+
+The API index must match the Effront manifest version and compatible React, Effect, Alchemy, and Comark versions.
+Content tests compare it with every public manifest export and version, excluding internal build-only entries.
+Do not bump library versions for private documentation-only changes.
+
+All seven `0.1.3` packages were checked with read-only `vp view @effront/<package>@0.1.3 version --json` on 2026-09-18.
+The `0.1.4` instructions target the next release, not a verified publication.
+Check the registry before changing publication claims: a manifest does not establish publication.
+
+Keep Bun production separate from Vite's Node-compatible dev/preview middleware when describing host support.
+Vercel and AWS adapters remain deferred.
+
+## Architecture source baseline
+
+Keep implementation excerpts in JSX with their exact-string and historical-baseline contract.
+The source of truth is `src/content/architecture-baseline.ts`: core version `0.1.1`, commit `8744ecb236cb4c815c3a0c208e02200f4eeeb3f8`, reviewed `2026-09-16`.
+This identifies the source selections, not the latest documentation commit or current npm release.
+
+`core.test.tsx` compares every selection with both the current source and the historical Git object, including the baseline package version.
+Browser tests check the rendered excerpt text and displayed baseline metadata.
+After deliberately reviewing an implementation change, update the explanations, source selections, and baseline metadata together.
+A Markdown migration does not change this historical contract.
 
 ## Run locally
 
@@ -21,6 +127,37 @@ The pinned Alchemy beta.77 requires a configured Cloudflare profile even for loc
 Do not force automated acceptance through this user-controlled prerequisite or supply fake credentials.
 See [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for official CLI setup and compatibility boundaries.
 The separate built-site acceptance command below requires no Cloudflare authentication and performs no deployment.
+
+## Validation
+
+From the repository root, run `vp run check` and `vp run test` after the initial package bootstrap.
+Site-owned unit tests cover catalogs, headings, internal links, public package coverage, Markdown rendering, persistent shell metadata, source baselines, and exact highlighted code text.
+
+If ignored `tmp/` contains another checkout, use `vp test run --exclude '**/tmp/**'` for the full current-repository suite.
+For a focused site run, use `vp test run app/docs/src --exclude '**/tmp/**'`.
+Default discovery otherwise includes that checkout; the exclusion leaves unrelated worktrees unchanged.
+
+From `app/docs`, run:
+
+```sh
+vp run test:browser
+```
+
+`tests/vite.config.ts` reuses the production config, Worker entry, styles, routes, and content, adding the local host pattern used by `tests/e2e-alchemy`.
+It never evaluates `alchemy.run.ts`, invokes Alchemy planning, accesses cloud state, or deploys.
+Playwright builds the site and runs the built Worker through preview on port `4394`, without server reuse.
+This checks the built site's runtime behavior, not official CLI authentication or remote deployment.
+Failure traces and screenshots stay under ignored `app/docs/tmp/`.
+
+Browser acceptance covers:
+
+- Routes without JavaScript, metadata, stable headings, and architecture excerpts.
+- Initial CSS, dark highlighting, keyboard-reachable code, and mobile navigation/overflow.
+- Unknown-route HTML/Flight 404 responses and the retired startup URL's HTML/Flight redirect and navigation absence.
+- Persistent sidebar DOM, search, and scroll through sidebar, article, previous/next, and Back/Forward navigation.
+
+Keep framework build and HMR acceptance in the independent fixtures described in [test boundaries](../../../docs/TESTING.md).
+A successful build, source inspection, or mocked parser does not replace real site acceptance.
 
 ## Production deployment and state
 
@@ -52,102 +189,6 @@ No cloud deployment or credential/permission validation is implied by local chec
 
 References: [Alchemy state stores](https://alchemy.run/state-store), [Cloudflare state implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/StateStore/State.ts), and [Cloudflare authentication implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Auth/AuthProvider.ts).
 API and CI behavior were checked against the installed `alchemy@2.0.0-beta.77`; the source URLs track upstream main.
-
-## Content ownership and rendering
-
-- `src/content/en/articles/` contains original English consumer articles and `src/content/articles/` contains their Japanese translations: onboarding, platforms, feature guides, runtime contracts, and public API reference.
-- `src/content/en/catalog.ts` and `src/content/catalog.ts` own the corresponding typed navigation metadata, descriptions, source-document lookup paths, and table-of-contents entries.
-- `src/content/locale.ts` owns the small site-specific locale/path helpers. The catalogs keep canonical paths without locale prefixes.
-- `src/content/markdown.tsx` uses Vite raw globs, `createMarkdownCollection`, `parseMarkdown`, and Comark's standard `MarkdownDocument` renderer in the server graph.
-- `src/content/en/architecture/` contains the English architecture chapters. `src/content/core-model.tsx` and `core-runtime.tsx` contain their Japanese translations and the shared exact source selections.
-- `src/entry.effront.tsx` owns explicit routes and the persistent shared RootLayout.
-
-Markdown is appropriate for the prose and code examples, but source excerpts retain their exact-string and historical-baseline contract in JSX.
-There is no custom Markdown parser, runtime filesystem loader, Git execution, or network content loading in the application.
-Vite loads Markdown at build/development time; parsing occurs in the Page Effect, with `MarkdownError` retained in the error channel.
-Only rendered content and navigation metadata cross the client boundary, not the collection or highlighter.
-
-The document starts in dark mode regardless of system preference.
-Tailwind Typography styles articles; Comark's standard Shiki output supplies server-rendered code tokens for Markdown.
-A standard `ProsePre` component mapping adds keyboard focus and existing code-block attributes without replacing Comark or reinterpreting its AST.
-The `.docs-markdown` dark-theme CSS applies only to Markdown tokens.
-Architecture excerpts retain the site's exact-text `CodeBlock` and its locally imported Shiki grammars.
-Neither renderer currently provides a copy button; code remains selectable text.
-
-The RootLayout owns DocsShell, including sidebar, search, header, table of contents, and sidebar scrolling.
-Only the Page article participates in the named page transition.
-Do not put a route key on the shell or move shell state into the Page when changing article rendering.
-Document scrolling and heading links remain native navigation behavior.
-The deployment stylesheet remains explicitly selected through `effrontTailwind`, without a manual CSS import or extra runtime plugin.
-
-## Author or change an article
-
-1. Establish the reader's task and verify the relevant public API or source before outlining the English article.
-2. Write the original English article under `src/content/en/articles/`. Organize it around decisions, steps, and observable outcomes rather than implementation facts.
-3. Review the English article for technical correctness and usability, then write its Japanese translation under `src/content/articles/`. Keep examples and API contracts equivalent.
-4. Update both catalogs, including the translated title/description and the exact heading ID/title order. Preserve stable IDs across languages, such as `## Setup {#setup}` and `## セットアップ {#setup}`.
-5. Add explicit `/en` and `/ja` routes in `src/entry.effront.tsx`. Keep existing unprefixed compatibility routes when revising an established article.
-6. Run content tests and built-site browser acceptance for both languages, including the language switch and links to other articles.
-
-The collection strips only `.md`; it does not turn `index.md` into `/`.
-The catalog deliberately maps public `/` to document `/index`, without exposing `/index` as another route.
-Use `/en` or `/ja` when linking to the localized home page, not `./index.md`, which resolves to an intentionally unregistered index route.
-Other relative `.md` links are resolved by the existing collection, with fragments preserved.
-Keep published URLs and heading IDs when moving sidebar groups; if a URL must change, supply an intentional compatibility route or redirect rather than silently dropping it.
-Tests check every Markdown file has catalog metadata, every declared heading exists, and all rendered internal article links resolve.
-
-Use fenced code blocks with an explicit language.
-Keep articles Effront-specific and link general React, Effect, Tailwind, and Comark concepts to their official documentation.
-Markdown allows HTML, attributes, and components and is not a sanitizer for untrusted submissions.
-Do not imply complete Math or Mermaid React SSR: the standard Comark renderer does not automatically register those components.
-See [Markdown collection guide](../../../packages/markdown/docs/GUIDE.md) for reference resolution and renderer limitations.
-
-## Consumer compatibility and public packages
-
-The API index documents the matching Effront manifest version and compatible React, Effect, Alchemy, and Comark versions.
-The preceding `0.1.3` release was checked with read-only `vp view @effront/<package>@0.1.3 version --json` for all seven public packages on 2026-09-18.
-The `0.1.4` instructions target the next release and do not claim it has already been published.
-A manifest alone does not prove registry publication; check the registry before changing publication claims.
-The content test compares the index with every public manifest export and version, excluding internal build-only entries.
-Do not bump library versions for private documentation-only changes.
-
-Platforms owns standalone Workers, Alchemy, and native Node.js/Bun setup.
-Bun production and Vite's Node-compatible dev/preview middleware are separate execution paths.
-Vercel and AWS adapters remain deferred rather than advertised as supported.
-The consumer testing article describes application behavior, not contributor commands or framework test implementation.
-
-## Architecture source baseline
-
-The architecture source of truth is `src/content/architecture-baseline.ts`: core version `0.1.1`, commit `8744ecb236cb4c815c3a0c208e02200f4eeeb3f8`, reviewed `2026-09-16`.
-This describes the implementation selections, not the latest documentation commit or current npm release.
-`core.test.tsx` compares every exact source selection against both the current source and that historical Git object, and checks the baseline package version.
-The browser tests verify the rendered excerpt text and displayed baseline metadata as well.
-Update explanations, source selections, and baseline metadata together only after deliberately reviewing an implementation change.
-The Markdown migration does not update or reinterpret this historical contract.
-
-## Validation
-
-From the repository root, run `vp run check` and `vp run test` after the initial package bootstrap.
-Site-owned unit tests cover the catalog, all article headings and internal links, public package coverage, Markdown rendering, persistent shell metadata, source baselines, and exact highlighted code text.
-If ignored `tmp/` contains another checkout, run the full current-repository suite with `vp test run --exclude '**/tmp/**'`; the default test discovery otherwise includes that checkout.
-For a focused site run, use `vp test run app/docs/src --exclude '**/tmp/**'`.
-The exclusion avoids discovering unrelated old worktrees under ignored `tmp/` without changing or deleting them.
-
-From `app/docs`, run:
-
-```sh
-vp run test:browser
-```
-
-`tests/vite.config.ts` reuses the production application config, Worker entry, styles, routes, and content, adding only the local runtime host pattern already used by `tests/e2e-alchemy`.
-It never evaluates `alchemy.run.ts`, invokes Alchemy planning, accesses cloud state, or deploys.
-Playwright builds the actual site and runs the built Worker through preview on fixed port `4394`, with no server reuse.
-This is built-site runtime evidence, not evidence about official CLI authentication or remote deployment.
-Failure traces and screenshots stay under ignored `app/docs/tmp/`.
-
-Browser acceptance covers all routes without JavaScript, metadata, stable headings, architecture excerpts, initial CSS, dark highlighting, keyboard-reachable code, mobile navigation/overflow, unknown-route HTML/Flight 404 responses, the retired startup URL’s HTML/Flight redirect and navigation absence, and persistent sidebar DOM/search/scroll through sidebar, article, previous/next and Back/Forward navigation.
-Framework-only build and HMR suites retain their independent fixtures and commands described in [test boundaries](../../../docs/TESTING.md).
-Do not substitute a successful build, source inspection, or mocked parser for the real site acceptance workflow.
 
 ## Sources and licenses
 

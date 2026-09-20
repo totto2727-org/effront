@@ -1,10 +1,17 @@
 # Effront roadmap
 
-This document records planned work and explicitly marked completed milestones; planned entries are not available APIs or supported-host guarantees.
+| Area                                                                         | Status                                                                                 |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [HTML and Flight static generation](#static-site-generation-html-and-flight) | Planned, with no SSG or static-host guarantee                                          |
+| [Markdown collections](#markdown-rendering-and-content-collections)          | Initial collections and SSR implemented; typed metadata and extensible loaders planned |
+| [Page View Transitions](#page-view-transitions)                              | Implemented                                                                            |
+| [Server runtime adapters](#server-runtime-adapters)                          | Node and Bun implemented; AWS and Vercel deferred                                      |
+
+Planned designs below are not public APIs or compatibility guarantees.
 
 ## Static site generation: HTML and Flight
 
-Status: planned by user request on 2026-09-12; no SSG implementation or static-host compatibility is claimed yet.
+Status: planned on 2026-09-12, not implemented.
 
 ### Goal
 
@@ -51,7 +58,6 @@ Status: initial glob-based collections and SSR rendering implemented in `@effron
 
 The initial package maps a source directory to a public prefix, preserves nested paths, resolves file-relative links and images, and uses standard comark React rendering with the mdts plugin defaults.
 See [the package API and example](../packages/markdown/README.md).
-These milestones are tracked here, as requested, until they are selected for implementation.
 
 ### Standard rendering and deferred rich SSR
 
@@ -94,7 +100,7 @@ References: [Astro Content Collections](https://docs.astro.build/en/guides/conte
 
 ## Page View Transitions
 
-Status: implemented after the user's 2026-09-12 request to enable page transitions by default.
+Status: implemented, following the 2026-09-12 proposal to enable page transitions by default.
 
 - Core wraps each routed Page in a React ViewTransition client boundary; shared Layouts remain outside it.
 - `PageViewTransition` from `@effront/core` is a defaulted Effect reference configurable with `Layer.succeed(PageViewTransition, config)`.

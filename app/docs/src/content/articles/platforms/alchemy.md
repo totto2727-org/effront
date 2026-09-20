@@ -1,23 +1,18 @@
 ## 既存の Effront アプリケーションを準備する {#setup}
 
-Alchemy を使うと、アプリケーションを動かす Cloudflare Worker と、KV の名前空間などの利用するリソースを一緒にコードで定義できます。
-このガイドでは、既存の Effront アプリケーションを Alchemy でローカル起動し、必要なリソースを接続する手順を説明します。
-設定を終えると、ローカル URL を開いてアプリケーションのページを確認できます。
-
-この手順では、ページとルートを含むアプリケーションを `src/entry.effront.tsx` から default export しており、[共通の React・Effect の依存関係](../api-reference.md#versions) がインストール済みであることを前提とします。
-アダプターとビルド用の連携パッケージを追加します。
+[はじめる](../guide/getting-started.md)で用意した依存パッケージと `src/entry.effront.tsx` のアプリケーションに、Alchemy を追加します。
 
 ```bash
 vp add @effront/alchemy@0.1.4 alchemy@2.0.0-beta.77
-vp add -D @effront/vite@0.1.4 @vitejs/plugin-rsc
 ```
 
-Alchemy と Cloudflare runtime は `2.0.0-beta.77`、Effect 関連パッケージは `4.0.0-rc.112` に揃えてください。
+Alchemy と Cloudflare runtime は `2.0.0-beta.77`、[Effect 関連パッケージ](../api-reference.md#versions)は `4.0.0-rc.112` に揃えてください。
+Alchemy CLI はローカル開発でも、設定済みの Cloudflare profile を必要とします。
+アプリケーションを起動する前に、[Alchemy のドキュメント](https://alchemy.run/docs)に従って profile を設定してください。
 
 ## Alchemy で動かすアプリケーションを定義する {#worker}
 
-まず `src/entry.workers.ts` を作成し、HTTP ハンドラーでアプリケーションを実行する Worker を定義します。
-`makeApplicationHttpEffect` には、アプリケーションの default export を読み込む関数を渡します。
+`src/entry.workers.ts` を作成します。
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
@@ -40,14 +35,11 @@ export default Cloudflare.Worker(
 );
 ```
 
-動的 import は読み込み用の関数の中に保ってください。
-Alchemy はリクエストを処理する前のリソース準備時にも Worker の定義を評価するため、ファイルのトップレベルで import するとアプリケーションを早すぎる段階で読み込んでしまいます。
-関数を渡すことで、リクエストが届くまで読み込みを遅らせます。
-この例では、Worker の HTTP 境界で `Effect.orDie` を使い、残っているアプリケーションの失敗を defect に変換しています。
-アプリケーションに応じたエラーレスポンスが必要な場合は、この箇所で明示的に方針を決めて処理してください。
+Alchemy によるリソースの準備時ではなくリクエスト中に読み込むため、アプリケーションの import はローダー関数内に保ってください。
+`Effect.orDie` は、処理されずに残ったアプリケーションの失敗を Worker の HTTP 境界で defect に変換します。
+特定のエラーレスポンスを返す場合は、この変換より前に失敗を処理してください。
 
-次に、プロジェクトのルートに `alchemy.run.ts` を作成し、Worker を Stack に含めます。
-これにより、Alchemy が管理するアプリケーションを指定し、Worker の URL を Stack の出力として公開します。
+プロジェクトのルートに `alchemy.run.ts` を作成します。
 
 ```typescript
 import { localState, Stack } from "alchemy";
@@ -65,12 +57,11 @@ export default Stack(
 );
 ```
 
-この例では、新しいアプリケーションの管理状態を `localState()` でローカルに保存します。
+この Stack は管理状態をローカルに保存し、Worker の URL を出力します。
 
 ## 開発環境を起動してページを開く {#stack}
 
-Alchemy を起動する前に、アプリケーションと Worker を一緒にビルドするよう Vite を設定します。
-`vite.config.ts` に両方のプラグインを追加し、`effront()` を `effrontAlchemy()` より前に置いてください。
+`vite.config.ts` を作り、`effront()` を `effrontAlchemy()` より前に登録します。
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
@@ -82,23 +73,18 @@ export default defineConfig({
 });
 ```
 
-`2.0.0-beta.77` の CLI は、ローカル開発でもリソースを準備する前に設定済みの Cloudflare profile を必要とします。
-profile が未設定の場合は、先に [Alchemy の公式ドキュメント](https://alchemy.run/docs) に従って認証設定を済ませてください。
-
-`package.json` の scripts に `"dev": "alchemy dev"` を追加し、プロジェクトのルートで実行します。
+`package.json` の scripts に `"dev": "alchemy dev"` を追加して実行します。
 
 ```bash
 vp run dev
 ```
 
 `vp dev` だけでは Alchemy の実行環境が起動しないため、このスクリプトを使ってください。
-Worker の準備ができたら、CLI に表示されるローカル URL を開き、`entry.effront.tsx` に定義したルートへアクセスします。
-ページが表示されれば、Worker、アプリケーション、開発用の実行環境が接続できたことを確認できます。
+CLI に表示されたローカル URL を開き、アプリケーションに定義したルートにアクセスします。
+「はじめる」のトップページなら、`Hello, Effront` が表示されます。
 
 ## バインディングを追加する {#capabilities}
 
-アプリケーションで利用するリソースは、Alchemy で定義して Worker にバインドします。
-リソースごとの設定方法は [Alchemy の公式ドキュメント](https://alchemy.run/docs) を参照してください。
-
-バインディングから取得したクライアントを Effront のサービスとして渡す方法は、[Alchemy API](../api-reference/alchemy.md) で説明しています。
-[連携サンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) では、KV を一例としてこの接続方法を確認できます。
+[Alchemy のリソース API](https://alchemy.run/docs) でリソースを定義し、Worker にバインドします。
+取得したクライアントをアプリケーションのサービスとして渡すには、[Alchemy API リファレンス](../api-reference/alchemy.md)を参照してください。
+[連携サンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy)では、KV を使ってこの接続を示しています。

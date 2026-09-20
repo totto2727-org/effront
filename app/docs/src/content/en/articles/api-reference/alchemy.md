@@ -1,14 +1,27 @@
-Use `@effront/alchemy` to connect an Effront application to a native Alchemy Worker and make application services available while requests are handled.
-The main entry point is `makeApplicationHttpEffect`: run it during Worker construction, then return the resulting HTTP Effect as `fetch`.
-This reference covers that handler, its service requirements, and the Vite plugin options.
-For a complete Worker declaration and Stack, follow the [Alchemy setup guide](../platforms/alchemy.md).
+`@effront/alchemy/cloudflare` connects an application to an Alchemy native HTTP Worker without evaluating the application during infrastructure construction.
 
-## Build a request handler {#http}
+## HTTP handlers {#http}
 
-**Start with `makeApplicationHttpEffect`**
+| API                                          | Input                                                            | Result                                                                                |
+| -------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `applicationHttpEffect(load, { context? }?)` | Deferred application loader and optional captured Effect Context | Native HTTP handler Effect                                                            |
+| `makeApplicationHttpEffect(load)`            | Deferred application loader                                      | Construction Effect that captures available external services and returns the handler |
 
-Import `makeApplicationHttpEffect` from `@effront/alchemy/cloudflare` and call it inside the Effect that constructs your Worker.
-The following `construct` is suitable for the third argument to `Cloudflare.Worker` when your application needs no additional construction-time services:
+Both accept the exported `ApplicationLoader<Services, ApplicationError, Requirements>` type:
+
+```typescript
+import type { ApplicationDefinition } from "@effront/core";
+
+export type ApplicationLoader<Services, ApplicationError, Requirements> = () => Promise<
+  ApplicationDefinition<Services, ApplicationError, Requirements>
+>;
+```
+
+The loader runs during request handling.
+Keep the dynamic import inside it.
+A static application import in the Worker module would evaluate the application during infrastructure construction.
+
+This construction Effect is suitable for the third argument of `Cloudflare.Worker` when no additional construction services are needed:
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
@@ -22,67 +35,26 @@ const construct = Effect.gen(function* () {
 });
 ```
 
-There are two stages here: `yield* makeApplicationHttpEffect(...)` creates a reusable handler during construction, and Alchemy runs that handler for incoming requests.
-Only the second stage loads the application and produces a native HTTP response.
-The example's `Effect.orDie` is an error-boundary choice, explained below, not a requirement to use that error policy.
+The handler succeeds with a native `HttpServerResponse` and retains the [native HTTP](./http.md) error channel.
+Alchemy's accepted error union is narrower, so handle or map remaining application failures before returning `fetch`.
+`Effect.orDie` is one policy, not a requirement.
 
-**Keep the application import inside its loader**
+**Captured services**
 
-Both handler APIs accept an `ApplicationLoader<Services, ApplicationError, Requirements>` from `@effront/alchemy/cloudflare`.
-Its type is `() => Promise<ApplicationDefinition<Services, ApplicationError, Requirements>>`, so a loader can be written separately as:
+`makeApplicationHttpEffect` captures service references from its construction Context.
+`applicationHttpEffect` uses the explicit `context` option, which defaults to an empty Context.
+The [Alchemy example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) demonstrates capturing an application service backed by a KV client.
 
-```typescript
-const load = () => import("./entry.effront").then((module) => module.default);
-```
+- Live request values override captured services with the same key.
+- Capture excludes HTTP services, Scope, Layer memoization state, Alchemy `RuntimeContext`, Worker self, generic `Self`, Cloudflare environment, raw Request, Worker environment, and execution context.
+- Capturing a reference does not acquire the service or extend its lifetime. Its owner must retain it through every response that uses it.
+- The application Layer is acquired per request. Alchemy retains the request Scope through streaming completion, failure, or cancellation.
 
-Do not replace this with a static import at the top of the Worker module.
-Alchemy evaluates the Worker definition while preparing infrastructure, whereas the application belongs to the request-time RSC graph.
-Keeping the dynamic import inside the loader prevents application evaluation during infrastructure construction.
+For Worker and Stack declarations, see [Alchemy setup](../platforms/alchemy.md).
 
-**Choose how to supply application services**
+## effrontAlchemy {#vite}
 
-If your application needs a client created during Worker construction, provide that service to `makeApplicationHttpEffect(load)` before running the construction Effect.
-For example, `makeApplicationHttpEffect(load).pipe(Effect.provideService(CacheClient, kv))` captures the `kv` reference for the application's `CacheClient` service.
-`CacheClient` is defined by the application, and `kv` must already have been obtained from Alchemy.
-The [Alchemy example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) shows the service definition and KV client setup together.
-
-Use `applicationHttpEffect(load, { context? }?)` instead when you want to pass an explicit Effect Context rather than capture the construction Effect's context.
-It returns the HTTP handler Effect directly, so there is no outer construction Effect to `yield*`.
-For a previously obtained `kv` client:
-
-```typescript
-import { applicationHttpEffect } from "@effront/alchemy/cloudflare";
-import { Context } from "effect";
-import { CacheClient } from "./features/greeting/services";
-
-const fetch = applicationHttpEffect(
-  () => import("./entry.effront").then((module) => module.default),
-  { context: Context.make(CacheClient, kv) },
-);
-```
-
-`context` is optional when no captured services are needed.
-For either API, the live request's service wins if it has the same key as a captured service.
-Construction-time HTTP services, Scope, the Layer memo map, Alchemy `RuntimeContext`, Worker self, generic `Self`, Cloudflare environment, raw Request, Worker environment, and execution context are excluded from capture.
-Those host services must come from the live request, not a saved construction context.
-
-**Keep ownership with the service provider**
-
-Neither API acquires the services it captures or extends their lifetimes.
-The owner of a captured client must keep it available until every response using it has completed, failed, or been cancelled.
-Acquire resources that need request-level cleanup in the application Layer rather than during Worker construction.
-That Layer is acquired for each request, and Alchemy retains its request Scope through streaming response completion, failure, or cancellation.
-
-**Handle application failures before returning `fetch`**
-
-Both APIs preserve typed application failures, while Alchemy's native handler accepts a narrower error union.
-Handle or map any remaining application errors before returning the handler as `fetch`.
-The first example converts them to defects with `Effect.orDie`.
-You can instead implement an application-specific error response policy.
-
-## Configure the Worker build {#vite}
-
-Register `effrontAlchemy(options?)` from `@effront/alchemy/cloudflare/vite` after `effront()` so Vite can build the native Worker connection alongside your application:
+`effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` from `@effront/alchemy/cloudflare/vite` must follow `effront()`:
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
@@ -94,16 +66,14 @@ export default defineConfig({
 });
 ```
 
-`EffrontAlchemyOptions` contains one option, `worker?: string`.
-It selects a module that default-exports the Alchemy Worker, resolves relative to the Vite root, and defaults to `./src/entry.workers.ts`.
-An empty string throws `TypeError`.
-To move the application entry, use `effront({ application })` instead and update the Worker's dynamic import to match.
-The Alchemy plugin does not accept an `application` option or register `effront()` for you.
+| Option   | Type     | Default                  | Contract                                                                                                 |
+| -------- | -------- | ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `worker` | `string` | `./src/entry.workers.ts` | Module default-exporting the Alchemy Worker, relative to the Vite root. Empty string throws `TypeError`. |
 
-In the Worker declaration, set `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
-Do not also set `vite.main`, because the adapter supplies that entry.
+The adapter has no `application` option and does not register `effront()`.
+Application entry changes belong in `effront({ application })` and the Worker's loader import.
 
-Start the development host with `alchemy dev`, not Vite alone.
-Alchemy supplies the Cloudflare runtime plugin and bindings, so do not add a second runtime plugin or Wrangler configuration.
-Alchemy `2.0.0-beta.77` requires a configured Cloudflare profile even for local development.
-See [local startup](../platforms/alchemy.md#stack) for the corresponding command and authentication setup.
+The Worker declaration requires `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
+Do not set `vite.main` or add a second runtime plugin or Wrangler configuration.
+Alchemy supplies the host plugin and bindings through `alchemy dev`, not Vite alone.
+Alchemy `2.0.0-beta.77` requires a configured Cloudflare profile even for [local startup](../platforms/alchemy.md#stack).

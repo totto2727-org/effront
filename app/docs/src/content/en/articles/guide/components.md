@@ -1,31 +1,20 @@
-You can add interactive controls to an Effront page without moving its data access into the browser.
-Keep server-side work in the Page or a reusable Server Component, then render Client Components wherever the user needs to interact.
-The examples below assume you already have an application with a routed Page and a shared `EFFRONT` definition.
+## Choose a component for the task {#boundary}
 
-## Decide where the behavior belongs {#boundary}
+| Task                                 | Use                                             |
+| ------------------------------------ | ----------------------------------------------- |
+| Read services and render data        | A Page or `EFFRONT.Component`                   |
+| Handle clicks, input, or local state | A Client Component                              |
+| Submit data to the server            | A [Server Function](/en/guide/server-functions) |
 
-Choose a component's role by the work it needs to do, rather than making the whole page server-only or client-only.
+Keep data access on the server and add Client Components only where interaction is needed.
 
-| What you need                                             | Where it belongs                                                    |
-| --------------------------------------------------------- | ------------------------------------------------------------------- |
-| Read an application service and turn its data into UI     | A Page or Server Component                                          |
-| Respond to a click, track input, or update local UI state | A Client Component                                                  |
-| Validate submitted input and update data on the server    | A [Server Function](/en/guide/server-functions), called from the UI |
+## Reuse server-rendered UI {#server}
 
-For example, a page can display a greeting prepared on the server next to a counter managed in the browser.
-The greeting needs no browser state, and incrementing the counter needs no server update.
-Start with those two independent responsibilities, then compose their components in the Page.
-
-## Extract a reusable server view {#server}
-
-In `src/entry.effront.tsx`, use the application's existing `EFFRONT` value to define a shared server view with `Component.make`.
-This example extracts the greeting into `Welcome` so other Pages can render it with different names.
+In the application entry from [Routes](./routes.md#pages), define `Welcome` and replace `HomePage` with:
 
 ```tsx
-import { Effect } from "effect";
-
 const Welcome = EFFRONT.Component.make({
-  render: ({ name }: { readonly name: string }) => Effect.succeed(<p>こんにちは、{name} さん。</p>),
+  render: ({ name }: { readonly name: string }) => Effect.succeed(<p>Hello, {name}.</p>),
 });
 
 const HomePage = EFFRONT.Page.make({
@@ -33,16 +22,13 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Use `HomePage` as your route's Page to display “こんにちは、Ada さん。”
-The Page supplies `name` as a prop, and the component's `render` callback returns the greeting inside an Effect.
-`Effect.succeed` is enough for this fixed text.
-When a view needs service data, perform that work in the Effect returned by `render` and return the UI built from the result.
-Components created from the same application's `EFFRONT` can use its application services, just as Pages can.
+Keep the entry's `Effect` import, `EFFRONT`, RootLayout, and route registration.
+Opening `/` displays `Hello, Ada.`
+For data-backed UI, read [application services](./effect.md) inside the Effect returned by `render`.
 
-## Add a control without moving the Page {#client-boundary}
+## Add an interactive control {#client-boundary}
 
-Put the interactive component in its own file, `src/components/counter.tsx`, with `"use client"` as the first statement.
-Use React state and event handlers there, rather than adding them to the server-side `render` callback.
+Create `src/components/counter.tsx` with `"use client"` as its first statement:
 
 ```tsx
 "use client";
@@ -55,11 +41,7 @@ export function Counter() {
 }
 ```
 
-Keep server-only service imports out of this file: `"use client"` also affects the modules it imports.
-The [React reference](https://react.dev/reference/rsc/use-client) explains this boundary in more detail.
-
-Back in `src/entry.effront.tsx`, import `Counter` and replace the earlier `HomePage` definition with the following one.
-Keep `Welcome` and the existing `Effect` import in that file.
+Import it in `src/entry.effront.tsx` and replace `HomePage` again:
 
 ```tsx
 import { Counter } from "./components/counter";
@@ -75,15 +57,13 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open the route: the greeting appears alongside a button labelled `Count: 0`.
-Each click increments the button's count while the Page keeps its server-side data access.
+Open `/` and click `Count: 0` to increment the counter.
+The greeting remains server-rendered.
 
-If a Client Component also needs data from the server, pass only the values it will display or use.
-For example, pass a display name rather than the service that fetched it.
-Props sent from the server to a Client Component must be [serializable by React](https://react.dev/reference/rsc/use-client#serializable-types-returned-by-server-components) and safe to disclose to the viewer.
-Do not pass environment variables, a Request, or Effect services directly.
-For a control that saves data on the server instead of only updating local state, use a Server Function as described above.
+Keep server-only service imports out of Client Components and the modules they import.
+Pass display values, not services, Requests, or environment objects, as props.
+Those values must be [serializable by React](https://react.dev/reference/rsc/use-client#serializable-types-returned-by-server-components) and safe to disclose to the viewer.
+See React's [`"use client"` reference](https://react.dev/reference/rsc/use-client) for the boundary rules.
 
-To add styles, follow the [Tailwind CSS guide](/en/guide/styling).
-If you choose to load global CSS manually instead of using `effrontTailwind()`, import it from an exported Client Component that the Layout actually renders.
-Importing CSS only from the application definition object may leave it out of the page.
+For styles, use the [Tailwind integration](/en/guide/styling).
+If you load global CSS manually instead, import it from an exported Client Component that the Layout renders, not only from the application definition module.

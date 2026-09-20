@@ -1,14 +1,21 @@
 # Core API
 
-This guide describes the application-facing exports of `@effront/core` and its explicit HTTP and Workers subpaths.
-Use the [README Usage](../README.md#usage) for a complete minimal page and Fetch entry.
+Import application factories from `@effront/core`, native HTTP handlers from `@effront/core/http`, and Fetch handlers from `@effront/core/workers`.
+For a minimal page and host entry, see [Usage](../README.md#usage).
 
 ## Application identity and definition
 
 `Application.effront<Services = never>()` creates an identity and its `Component`, `Page`, `Layout`, `Loading`, `Routes`, `Middleware`, and `ServerFn` factories.
-Share that value between application modules.
+Create it once in a shared module and import it wherever you define routes, components, or Server Functions.
 `withMiddleware(middleware)` returns another factory set with the same identity and an extended middleware chain; it does not mutate the original.
 Mixing identities, repeating middleware in one scope, or supplying invalid route wiring throws `TypeError`.
+
+```ts
+// src/effront.ts
+import { Application } from "@effront/core";
+
+export const EFFRONT = Application.effront();
+```
 
 `EFFRONT.make({ routes, layer? })` produces an `ApplicationDefinition<Services, ApplicationError, Requirements>` rather than starting a server.
 The root Routes must have its own Layout and at least one page.
@@ -45,10 +52,9 @@ Render callbacks for Page, Component, and Layout return an Effect containing a R
 For example, render a greeting using a decoded route parameter and a reusable component:
 
 ```tsx
-import { Application } from "@effront/core";
 import { Effect, Schema } from "effect";
+import { EFFRONT } from "./effront";
 
-const EFFRONT = Application.effront();
 const Greeting = EFFRONT.Component.make({
   render: ({ name }: { name: string }) => Effect.succeed(<h1>Hello, {name}!</h1>),
 });
@@ -98,14 +104,20 @@ The handler preserves downstream errors and can inspect or modify the HTTP respo
 ```ts
 import { Effect } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
+import { EFFRONT } from "./effront";
 
 const Header = EFFRONT.Middleware.make((response) =>
   response.pipe(Effect.map(HttpServerResponse.setHeader("x-app", "greeting"))),
 );
 const Scoped = EFFRONT.withMiddleware(Header);
+const Home = Scoped.Page.make({
+  render: () => Effect.succeed("Hello, world!"),
+});
+const routes = Scoped.Routes.make({ layout: Document }).page("/", Home);
 ```
 
-Pages created with `Scoped.Page` run under this middleware and return the `x-app: greeting` header.
+The scoped `Routes` activate the middleware, so requests to `Home` return the `x-app: greeting` header.
+Creating a Page with `Scoped.Page` requires that scope but does not activate it.
 
 ## Server Functions
 
@@ -128,6 +140,8 @@ export const greet = EFFRONT.ServerFn.make({
 ```
 
 Calling the transformed client reference with `await greet("Ada")` returns `Hello, Ada!` through React's Server Function transport.
+Input validation does not authorize a request.
+Enforce access checks in the handler or create the function with a middleware-scoped `ServerFn` factory; a Page's middleware does not automatically protect a separately created function.
 A direct call in the server graph is a wiring error and rejects with `TypeError`; share an ordinary Effect function separately if server code also needs the operation.
 Input and handler failures flow through the framework's Server Function response handling.
 
@@ -178,7 +192,7 @@ Do not wrap response production alone in `Effect.scoped`, because producing head
 
 A declared `Content-Length` that is invalid or exceeds 10 MiB receives a 413 response.
 HEAD returns an empty body while retaining response metadata.
-The [experimental Alchemy adapter](../../alchemy/README.md#usage) provides a concrete native host with deferred RSC application loading.
+The [Alchemy adapter](../../alchemy/README.md#usage) defers application loading until a native Worker request.
 
 ## Fetch and request context
 

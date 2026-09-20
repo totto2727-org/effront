@@ -6,7 +6,8 @@ The upstream history is preserved from `ed886996d1d3780b94166af4f798c53416d547c8
 
 ## Current naming note
 
-This is a historical validation record from before the Effront rename. Its observed commands, paths, API names, and results remain accurate for that execution and are intentionally unchanged.
+The migration checks below predate the Effront rename, with later sections recording subsequent milestones.
+Commands, paths, API names, and results describe their respective executions, not the current checkout.
 Current code uses `@effront/core/*`, `Application.effront()`, and separate `effront()` from `@effront/vite` plus `effrontCloudflare()` from `@effront/cloudflare`; the latter direct options replaced the historical nested `cloudflare` options.
 
 ## Requirement-to-evidence mapping

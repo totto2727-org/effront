@@ -1,77 +1,40 @@
-A menu's open state and a search field's value can stay in place as users move between pages.
-With Effront, you can keep those controls in a shared Layout, navigate with ordinary links, and animate the Page content separately.
-Start with that structure, then choose the animation and loading behavior your interface needs.
+Client navigation replaces the Page while preserving shared Layouts.
+The destination can appear before its response finishes, so a completed navigation is not the same as completed loading.
 
-## Keep shared controls outside the Page {#native-navigation}
+## What persists between pages {#native-navigation}
 
-Put controls whose state should survive navigation in a Layout shared by the relevant routes.
-Keep the content that changes between those routes in their Pages.
-A link to a destination is a regular anchor:
+Ordinary anchors participate in client navigation:
 
 ```tsx
 <a href="/settings">Open settings</a>
 ```
 
-During client navigation, Effront updates the Page while retaining the shared Layout.
-A search input in that Layout can therefore keep its value as the user follows the link.
-Do not give the persistent component a `key` that changes with the URL or recreate it inside each Page, because remounting it resets its state.
+A search input or menu in a Layout shared by both routes can retain its state while the Page changes.
+Moving that control into each Page, or giving it a `key` that changes with the URL, remounts it and resets its state.
 
-This behavior requires a browser with both `window.navigation` and `NavigationPrecommitController`.
-In other browsers, the same link loads a new document, so in-memory client state does not persist across pages.
-Client Components and Server Functions remain available when JavaScript is enabled.
-Without JavaScript, users can still follow server-rendered links and use native form submission.
+Client navigation requires both `window.navigation` and `NavigationPrecommitController`.
+Without them, links load a new document and in-memory state does not persist between pages.
+Client Components and Server Functions still work with JavaScript enabled.
+Without JavaScript, server-rendered links and native form submissions remain available.
 
-Effront leaves hash-only moves, downloads, form submissions, and reloads to the browser rather than treating them as client page transitions.
-It also leaves navigation alone when the browser does not allow interception.
-See [MDN's Navigation API documentation](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API) for the underlying browser API.
+Hash-only moves, downloads, form submissions, reloads, and navigation the browser does not allow Effront to intercept remain browser-managed.
+See [MDN's Navigation API documentation](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API) for the browser API.
 
-## Choose an animation for the changing content {#transition-scope}
+## Page transitions and persistent Layouts {#transition-scope}
 
-With shared controls in a Layout, the default animation already has the right scope: in supported browsers, the Page crossfades while shared Layouts remain outside the animation.
-No configuration is required for that default.
-The operating system's reduced-motion preference suppresses Page animations, including when the preference changes while a page is open, without losing input values or focus.
+In supported browsers, the Page crossfades by default while shared Layouts remain outside the animation.
+The operating system's reduced-motion preference suppresses Page animations, including when changed while a page is open, without resetting input state or focus.
 
-Choose an override only where the default does not fit:
+`Page.make({ viewTransition: false, render })` removes that Page's transition boundary.
+Application-wide settings come from `Layer.succeed(PageViewTransition, config)` passed through the `layer` option of `EFFRONT.make`.
+With `{ enabled: false }` at application scope, a Page can opt back in with `viewTransition: { enabled: true }`.
+See the [transition configuration reference](/en/api-reference/components#view-transition) for imports and available properties.
 
-- To disable a single Page's animation, set `viewTransition: false` in `Page.make`.
-- To disable Page animations application-wide, provide `Layer.succeed(PageViewTransition, { enabled: false })` through the `layer` option of `EFFRONT.make`.
-- To opt a Page back in after that application-wide opt-out, give it `viewTransition: { enabled: true }`.
+Each Page retains its own settings, so navigating to a disabled Page can still show the outgoing Page's exit animation.
+Changing `enabled` on an already mounted Page can reset its state, unlike a reduced-motion preference change.
 
-Each Page retains its own settings, so moving from an animated Page to a disabled one can still show the outgoing Page's exit animation.
-Changing `enabled` on an already mounted Page can reset state inside it, unlike changing the operating system's reduced-motion preference.
-
-For a custom effect, use `PageViewTransition` to associate a transition type with a CSS class.
-For example, a photo sequence can use `photo-next` to select `photo-fade` while keeping ordinary navigation on the default animation.
-Pass the `transitions` Layer below through `EFFRONT.make({ routes, layer: transitions })`, merging it with any other application Layers you need.
-The separate `QuietPage` example shows the per-page opt-out.
-
-```tsx
-import { Effect, Layer } from "effect";
-import { PageViewTransition } from "@effront/core";
-
-// Pass this configuration through the layer option of EFFRONT.make
-const transitions = Layer.succeed(PageViewTransition, {
-  default: {
-    default: "auto",
-    "hmr-refresh": "none",
-    "navigation-ua-visual-transition": "none",
-    "photo-next": "photo-fade",
-  },
-});
-
-// Disable transitions for this Page only
-const QuietPage = EFFRONT.Page.make({
-  viewTransition: false,
-  render: () => Effect.succeed(<h1>Quiet page</h1>),
-});
-```
-
-Provide the `photo-fade` View Transition pseudo-element styles in your application's CSS.
-The mapping selects a class, not a built-in photo animation.
-Type-to-class maps are replaced rather than merged, which is why the example repeats the default `none` mappings for HMR and browser-provided visual transitions.
-A Page's `viewTransition` configuration overrides application settings property by property, with the same map-replacement rule.
-
-Select the custom type on a link with `data-effront-transition-types`:
+Transition types select CSS classes, not built-in custom animations.
+For example, this link adds the application's `photo-next` type:
 
 ```tsx
 <a href="/photos/2" data-effront-transition-types="photo-next">
@@ -79,40 +42,39 @@ Select the custom type on a link with `data-effront-transition-types`:
 </a>
 ```
 
-The link attribute adds the type for push or replace navigation only.
-It does not replay that type when the user later goes back or forward.
-Use your own type names rather than the reserved `navigation`, `navigation-*`, `server-function`, and `hmr-refresh` names.
+A `PageViewTransition` class mapping can associate `photo-next` with `photo-fade`.
+The application must supply the matching View Transition pseudo-element styles.
+Page settings override application settings property by property, but type-to-class maps are replaced, not merged.
+A replacement `default` map must include `default: "auto"`, `"hmr-refresh": "none"`, and `"navigation-ua-visual-transition": "none"` to retain those defaults.
 
-This animation covers the Page change, not every later update within it.
-If content revealed by Suspense needs its own animation, add a React ViewTransition boundary around that content.
-See [React's ViewTransition reference](https://react.dev/reference/react/ViewTransition) for transition classes, types, and styling.
+The link attribute adds types only for push or replace navigation, not later Back or Forward traversal.
+`navigation`, `navigation-*`, `server-function`, and `hmr-refresh` are reserved type names.
+The Page animation does not cover every later Suspense reveal.
+That content needs its own [React ViewTransition boundary](https://react.dev/reference/react/ViewTransition) if it should animate separately.
 
-## Plan for content that arrives after navigation {#commit-and-stream}
+## Display, URL, and stream completion {#commit-and-stream}
 
-A destination can appear with Suspense fallbacks before all its content has loaded.
-Give those fallbacks useful loading UI, and place a React Error Boundary around content that can fail as the remaining stream arrives.
-The first view of a page is not a guarantee that every part of its response has finished successfully.
+The current page stays visible until the destination can be displayed.
+For cancelable navigation, the URL and history commit when the destination first appears, followed by the browser's standard focus and scroll handling.
+Some Back and Forward traversals are noncancelable, so their URL can change before the screen does.
 
-Until the destination can be displayed, the current page stays visible.
-For an ordinary cancelable navigation, the URL and history are committed when the destination first appears, and the browser proceeds with its standard focus and scroll handling.
-Some back and forward navigations are noncancelable, so their URL can change before the screen does.
+The first display can contain Suspense fallbacks while the rest of the response streams in.
+Loading UI therefore needs to remain useful after navigation completes, and content that can fail during streaming needs a React Error Boundary.
 
-If the user chooses another destination before the pending one appears, Effront discards the pending destination and ends its request.
-The page that is still visible can continue receiving content until its stream finishes or a new page replaces it.
-Once a page has appeared, the browser's Stop action does not cancel that page's remaining stream, so provide an error UI rather than relying on navigation cancellation to handle later failures.
+Choosing another destination before the pending one appears discards the pending destination and ends its request.
+The still-visible page can continue receiving content until its stream finishes or another page replaces it.
+Once a destination appears, the browser's Stop action does not cancel its remaining stream.
 
-## Account for back, forward, and full-page loads {#history-cache}
+## History reuse and document loads {#history-cache}
 
-Back and forward navigation can reuse content whose previous load completed for that exact history entry.
-This is not a shared cache for every visit to the same URL: pushing or replacing an entry fetches the destination again.
-A history entry without saved content also requires a new fetch.
-Design the page to work whether the user returns to saved content or waits for it to load again.
+Back and Forward can reuse content whose load completed for that exact history entry.
+This is not a URL-wide cache: push, replace, or traversal without saved content fetches the destination again.
 
 Scroll restoration and focus remain browser behavior.
-When Suspense adds content after the initial display, the browser may restore a position recorded while the fallback was visible.
-Effront does not wait for all streamed content and then restore the position again.
+If Suspense adds content after the initial display, the browser may restore a position recorded while the fallback was visible.
+Effront does not wait for the remaining content and restore the position again.
 
-Ordinary same-origin redirects can continue as client navigation.
-Cross-origin redirects, redirects that change the URL during history traversal, and other cases that cannot continue as client navigation load a document instead.
-A non-success HTTP response or a response outside the Flight format used for page updates also falls back to document navigation.
-Those full-document loads do not retain the shared Layout's in-memory client state, so do not use Layout persistence as durable storage for data the user must keep.
+Same-origin redirects can continue as client navigation when the browser allows it.
+Cross-origin redirects, URL-changing redirects during history traversal, and other redirects that cannot continue as client navigation load a document instead.
+Non-success HTTP responses and responses outside the Flight format used for page updates also fall back to document navigation.
+Those document loads discard shared Layout state, so Layout persistence is not durable storage for unsaved user data.

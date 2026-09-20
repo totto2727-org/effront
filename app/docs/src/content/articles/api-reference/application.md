@@ -1,20 +1,16 @@
-`@effront/core` の `Application` を使うと、ルートツリーとアプリケーションのサービスを、ホストで実行する一つのアプリケーション定義にまとめられます。
-まず次の完全な例で構成を確認し、必要なオプションの確認やサービス・ミドルウェアの追加には、各 API の説明を参照してください。
+`@effront/core` の `Application` は、アプリケーションのファクトリー、ルート、サービス Layer を定義します。
 
-## ルートが一つのアプリケーション {#example}
-
-最小のアプリケーションには、Page と、ルートとなる Routes に指定した Layout が必要です。
-次の定義は `/` を `Home` に対応付け、その内容を HTML ドキュメントで囲みます。
+## アプリケーション定義の例 {#example}
 
 ```tsx
-import { Effect } from "effect";
 import { Application } from "@effront/core";
+import { Effect } from "effect";
 
 const EFFRONT = Application.effront();
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.succeed(
-      <html lang="ja">
+      <html lang="en">
         <head>
           <title>Example</title>
         </head>
@@ -31,68 +27,58 @@ export default EFFRONT.make({
 });
 ```
 
-この default export はアプリケーション定義であり、起動済みのサーバーではありません。
-ページを配信するには、利用する [プラットフォームのガイド](../platforms.md) に従ってホストへ接続します。
-この例ではアプリケーションのサービスを宣言していないため、`layer` オプションは不要です。
+この定義は `/` を `Home` に対応させますが、サーバーは起動しません。
+[ホストアダプター](../platforms.md) が定義を受け取って配信します。
 
-## Application.effront: 共通のファクトリーを作る {#identity}
+## Application.effront {#identity}
 
-`Application.effront<Services = never>()` は実行時の引数を取らず、アプリケーションの定義に使うファクトリーを返します。
-`Services` には `make` の `layer` オプションで提供するサービスの型を指定し、サービスがなければ既定値の `never` のままにします。
+`Application.effront<Services = never>()` は実行時の引数を取らず、`EFFRONT` ファクトリーを返します。
+`Services` はアプリケーション Layer が提供するサービスを宣言します。
+
+定義を複数のモジュールに分ける場合は、共有するファクトリーを一つ公開します。
 
 ```typescript
 import { Application } from "@effront/core";
 
-const EFFRONT = Application.effront();
-// サービスが必要な場合: Application.effront<MyService>()
+export const EFFRONT = Application.effront();
 ```
 
-この値を使って、[ページとレイアウト](./components.md)、[ルートとミドルウェア](./routing.md)、[サーバー関数](./server-functions.md) を定義します。
-定義を複数のファイルに分ける場合は、`Application.effront()` を再び呼ぶのではなく、共有モジュールから `EFFRONT` を export して各ファイルで import してください。
-呼び出しごとに新しい identity が作られるため、サービスの型が一致していても、別の呼び出しで作った値を同じものとして扱うことはできません。
-異なる identity の Page・Routes・Layout・Loading・Middleware を組み合わせると `TypeError` になります。
+サービスの型が同じでも、呼び出しごとに異なる ID が作られます。
+異なる ID の Routes、Page、Layout、Loading、Middleware を混在させると `TypeError` が発生します。
+ファクトリーには、[描画用ファクトリー](./components.md)、[Routes と Middleware](./routing.md)、[ServerFn](./server-functions.md) があります。
 
-## EFFRONT.make: ルートとサービスを渡す {#make}
+## EFFRONT.make {#make}
 
-配信するルートツリーができたら、`EFFRONT.make({ routes, layer? })` を呼びます。
+`EFFRONT.make({ routes, layer? })` は `ApplicationDefinition<Services, ApplicationError, Requirements>` を返します。
 
-| オプション | 必要な値                                                                                                         |
-| ---------- | ---------------------------------------------------------------------------------------------------------------- |
-| `routes`   | 同じ identity に属する Routes で、その値自体に `layout` が指定され、ツリー内に少なくとも一つの Page があるもの。 |
-| `layer`    | `Services` を提供する Effect Layer で、`Services` が `never` の場合を除き必須です。                              |
+| オプション | 契約                                                                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `routes`   | 同じ ID の Routes。ルート直下に Layout があり、ツリーに Page が一つ以上必要。子の Layout だけでは不十分。                                        |
+| `layer`    | `Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter \| Requirements>`。`Services` が `never` でない限り必須。省略時は `Layer.empty`。 |
 
-ネストした Routes だけに Layout を指定しても、ルートの Layout の要件は満たせません。
-`Services` が `never` の場合に `layer` を省略すると、`Layer.empty` が使われます。
-この場合も Layer を渡すことはでき、たとえばアプリケーションのサービスを提供せずに独自の HTTP ルートを登録できます。
+`ApplicationError` は Layer 構築時のエラー型です。
+`Requirements` は外部サービスの要件を保持します。
+HTTP ハンドラーが `HttpRouter.HttpRouter` を提供するため、`Services` が `never` でも Layer で独自 HTTP ルートを登録できます。
 
-**Layer の依存関係。**
-受け取る型は `Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>` です。
-`Services` は Layer がアプリケーションへ提供するサービスであり、`Requirements` はその Layer を構築するために外部から提供する必要があるサービスです。
-`ApplicationError` は構築時のエラー型です。
-`effect/unstable/http` の `HttpRouter.HttpRouter` は HTTP ハンドラーから提供され、Layer はこれを使って HTTP ルートを登録できます。
+Layer の取得は `make` の呼び出し時ではなく、リクエストごとに行います。
+ホストはレスポンス本文の完了、失敗、キャンセルまでリクエスト Scope を保持する必要があります。
 
-**戻り値。**
-`make` は `ApplicationDefinition<Services, ApplicationError, Requirements>` を返し、Layer のエラー型と外部サービスの要件をホストへの接続時にも保持します。
-その要件を満たせる接続方法を選んでください。
+[ネイティブ HTTP](./http.md) は、ホストが提供する外部サービスの要件を保持します。
+[Workers Fetch](./workers.md) は、`HttpRouter` と `HttpServerRequest` で満たせる要件だけを受け付けます。
+`makeHttpEffect` と [Alchemy アダプター](./alchemy.md) は、ホスト所有のサービス参照を捕捉できますが、サービスの寿命は延長しません。
 
-- [native HTTP](./http.md) は外部要件を保持するため、ホストから必要なサービスを提供できます。
-- [Workers の `createFetchHandler`](./workers.md) が受け取れるのは、Layer の要件を `HttpRouter.HttpRouter` と `HttpServerRequest.HttpServerRequest` で満たせるアプリケーションであり、任意の外部サービスを提供するわけではありません。
-- ホストの構築時に利用できるサービスは、`makeHttpEffect` や [Alchemy 連携](./alchemy.md) で参照を捕捉し、ハンドラーから利用できます。
+## EFFRONT.withMiddleware {#middleware}
 
-**サービスの寿命。**
-アプリケーションの Layer は `make` の呼び出し時に一度だけ構築されるのではなく、リクエストごとに構築されます。
-native HTTP ホストを自作する場合は、レスポンス body の完了・エラー・キャンセルまでリクエストのスコープを維持してください。
-サービスの参照を捕捉しても寿命は延長されないため、その所有者は、そのサービスを使うすべてのレスポンス body の処理が終わるまでサービスを利用可能にしておく必要があります。
+`EFFRONT.withMiddleware(middleware)` は、元と同じ ID と `make` 関数を持つ派生ファクトリーを返します。
+元のファクトリーは変更しません。
+派生ファクトリーでは、ミドルウェアが提供するサービスも利用できます。
 
-## EFFRONT.withMiddleware: 対象の定義にミドルウェアを追加する {#middleware}
+| 派生ファクトリーで作る定義    | ミドルウェアの動作                                             |
+| ----------------------------- | -------------------------------------------------------------- |
+| `Routes`                      | ルートグループでミドルウェアを有効にする。                     |
+| `Page`、`Layout`、`Component` | 有効なミドルウェアスコープを必要とする。自身では有効にしない。 |
+| `ServerFn`                    | 呼び出し時に保持したミドルウェアチェーンを適用する。           |
 
-`EFFRONT.withMiddleware(middleware)` を使うと、元の `EFFRONT` のファクトリーを変更せずに、ミドルウェアのスコープ用のファクトリーを派生させられます。
-ミドルウェアを有効にするには、戻り値の `Routes.make()` ファクトリーでルートのグループを作ります。
-派生ファクトリーで作った Page・Layout・Component は、そのスコープが有効になっている必要があり、自身でスコープを有効にするわけではありません。
-派生ファクトリーで作った Server Function は、呼び出し時に自身のミドルウェアチェーンを適用します。
-戻り値は元の identity と `make` 関数を共有するため、両方で作った定義を同じアプリケーションで使えます。
-
-ミドルウェアは同じ identity に属し、追加先のファクトリーでは、そのミドルウェアが必要とするすべてのサービスを利用できる必要があります。
-戻り値のファクトリーで作る定義では、ミドルウェアが提供するサービスも利用できます。
-異なる identity のミドルウェアを追加した場合や、同じミドルウェアを同じスコープへ二度追加した場合は `TypeError` になります。
-ミドルウェアの定義方法と配置の選択肢は、[Routes と Middleware](./routing.md) を参照してください。
+ミドルウェアは同じ ID を持ち、その依存サービスがファクトリーから利用可能である必要があります。
+別の ID のミドルウェアや、同じチェーンでの重複は `TypeError` になります。
+ハンドラーの入力と実行順序は [Routes と Middleware](./routing.md) を参照してください。

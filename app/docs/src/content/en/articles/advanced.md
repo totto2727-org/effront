@@ -1,20 +1,9 @@
-## Design around asynchronous work {#chapters}
+## Runtime contracts {#chapters}
 
-A page needs to behave sensibly while data is loading, a save is in progress, or the user is moving elsewhere.
-These guides explain Effront's runtime behavior so you can decide what your interface should show and how long its server-side resources need to remain available.
+- [Server Function execution and refresh](/en/advanced/server-function-execution-and-refresh): why a function result can arrive before the updated page, and why refresh ordering does not protect database writes.
+- [Client navigation](/en/advanced/client-navigation): what persists between pages, when the URL changes, and how streaming and history affect navigation.
+- [Request runtime and lifetimes](/en/advanced/request-runtime-and-lifetimes): why request services remain available after a handler returns, and when their resources are released.
 
-**When can I show the result of a save?**
-[Server Function execution and refresh](/en/advanced/server-function-execution-and-refresh) explains why receiving a function's result and displaying the refreshed page are separate events.
-It also covers how overlapping calls and navigation affect which update reaches the screen, and where your application must check authorization and account for input limits.
-
-**What happens when the user leaves a page that is still loading?**
-[Client navigation](/en/advanced/client-navigation) explains the relationship between the visible page, the URL, and the response stream during a transition.
-It covers cancellation, back and forward navigation, and page transition animations, helping you reason about what users see without assuming that every page has finished loading before they move on.
-
-**When is it safe to release a request's resources?**
-[Request runtime and lifetimes](/en/advanced/request-runtime-and-lifetimes) explains how request-scoped services remain available during rendering and response streaming.
-It covers cleanup when work completes, fails, or is cancelled, helping you avoid releasing resources while a response still needs them.
-
-These guides focus on behavior during a request or user interaction.
-The basic page-building workflow is in [Getting started](/en/guide/getting-started), and host-specific development and startup configuration is in [Platforms](/en/platforms).
-[Application testing](/en/best-practices/testing#production) covers checking behavior in your application, while [Architecture](/en/architecture/implementation/overview) explains the implementation behind these contracts.
+For application setup, use [Getting started](/en/guide/getting-started) and [Platforms](/en/platforms).
+For verification, see [Application testing](/en/best-practices/testing#production).
+The [Architecture chapters](/en/architecture/implementation/overview) explain the implementation behind these contracts.

@@ -1,15 +1,8 @@
-Use a custom HTTP route when a caller needs data rather than a rendered Page.
-You can expose application services through a JSON endpoint while keeping the Pages that already use those services.
+Add `GET /api/greeting` to the application from the [services guide](/en/guide/effect) while keeping its existing Page.
 
-The example below extends the application from the [services guide](/en/guide/effect): `/` continues to display a greeting, and `GET /api/greeting` returns that greeting as JSON.
-First define the endpoint, then include its registration in the application's Layer and check the response.
-After that, you can add a response header across both kinds of route.
+## Define a JSON endpoint {#router}
 
-## Define the JSON endpoint {#router}
-
-Create `src/http.ts` with the following route registration.
-`HttpRouter.use` gives the registration access to the router, and `router.add` associates a method and path with the Effect that produces the response.
-Here, the handler calls `message("Ada")` on the `Greeting` service and wraps the result in an object with a `message` field.
+Create `src/http.ts`:
 
 ```typescript
 import { Effect } from "effect";
@@ -28,56 +21,43 @@ export const GreetingApi = HttpRouter.use(
 );
 ```
 
-When choosing your own endpoint path, keep it distinct from Page and Server Function URLs and leave the reserved `/_effront` namespace unused.
-`HttpServerResponse.jsonUnsafe` is appropriate here because the object contains a string known to be JSON-serializable.
-For an endpoint that accepts external input, validate that input and decide how processing failures should become HTTP responses.
+Choose a path that does not overlap Page or Server Function URLs, and leave `/_effront` reserved.
+Use `jsonUnsafe` only when the value is known to be JSON-serializable, as this string-valued object is.
+For endpoints that accept external input, validate it and handle failures as HTTP responses.
 
-## Register the endpoint and make a request {#services}
+## Register the route and its service {#services}
 
-Exporting `GreetingApi` alone does not connect it to the application.
-In `src/entry.effront.tsx`, combine it with `Greeting.layer` and pass the result to `EFFRONT.make` in place of the existing `layer: Greeting.layer`.
-Keep the `EFFRONT` and `routes` definitions from the services guide.
+In `src/entry.effront.tsx`, add `Layer` to the `effect` import and import `GreetingApi`.
+Keep `EFFRONT`, `Greeting`, and `routes` from the services example, then replace the default export:
 
 ```typescript
 import { Layer } from "effect";
-import { Greeting } from "./greeting";
 import { GreetingApi } from "./http";
 
 const ApplicationLayer = GreetingApi.pipe(Layer.provideMerge(Greeting.layer));
 
-// Keep the EFFRONT and routes definitions from the services guide.
 export default EFFRONT.make({ routes, layer: ApplicationLayer });
 ```
 
-`Layer.provideMerge` does two jobs here: it supplies the service needed to register the HTTP route, and it retains that service in the output for the Page to use.
-This lets the API and Page depend on the same service contract without duplicating its implementation.
-
-With the development application running, open `/api/greeting` on its origin and inspect the request in your browser's Network panel.
-Expect status `200`, a `Content-Type` containing `application/json`, and this response body:
+`Layer.provideMerge` supplies `Greeting` to the route registration and retains it for the Page.
+Request `/api/greeting` on your application's origin.
+Expect status `200`, content type `application/json`, and:
 
 ```json
-{ "message": "こんにちは、Ada さん。" }
+{ "message": "Hello, Ada." }
 ```
 
-Open `/` as well to confirm that the existing Page still displays the greeting.
-The Japanese text comes from the sample service and is the same in both responses.
-If your endpoint needs another status, set it on the response, as in `HttpServerResponse.jsonUnsafe({ accepted: true }, { status: 202 })`.
+The existing `/` Page still displays the greeting.
 
-## Keep service resources within the request {#boundary}
+## Keep resources request-local {#boundary}
 
-Sharing a service between route definitions does not make it a server-wide singleton.
-Effront builds the application Layer for each request.
-If you replace the greeting implementation with one that acquires a connection or another scoped resource, use that resource only within its request lifetime.
-The request scope is retained through response-body completion, failure, or cancellation, so producing response headers is not the end of that lifetime.
-Do not cache request-specific service instances in module-level variables for later requests.
+The application Layer is built for each request, including custom HTTP requests.
+Keep connections and other scoped resources within that request, whose scope lasts through response-body completion, failure, or cancellation.
+Do not save request-specific services in module-level variables for later requests.
 
-## Add a header to Page and API responses {#global}
+## Add a shared response header {#global}
 
-Once the endpoint works, you can apply a common response policy without adding code to each handler.
-For example, the following global middleware adds `x-content-type-options: nosniff` to successful responses from Effront's router.
-
-Put this combined Layer in `src/application-layer.ts`.
-In `src/entry.effront.tsx`, replace the local `ApplicationLayer` definition with an import from `./application-layer` and continue passing it to `EFFRONT.make`.
+Create `src/application-layer.ts`:
 
 ```typescript
 import { Effect, Layer } from "effect";
@@ -96,15 +76,14 @@ export const ApplicationLayer = Layer.mergeAll(GreetingApi, GlobalHeaders).pipe(
 );
 ```
 
-Request `/api/greeting` and `/` again and check that both responses include the new header.
-The `global: true` option applies middleware to the whole router, including Pages, Server Functions, custom HTTP routes, and unmatched requests.
-If the policy belongs only to a particular Routes scope, use [scoped Middleware](/en/guide/middleware) instead.
+In the entry module, replace the local `ApplicationLayer` definition with `import { ApplicationLayer } from "./application-layer"` and continue passing it to `EFFRONT.make`.
+Remove the now-unused `Layer` and `GreetingApi` imports from the entry module.
+Both `/` and `/api/greeting` now include `x-content-type-options: nosniff`.
 
-The scope of the middleware and the responses changed by this example are different questions:
+`global: true` covers Pages, Server Functions, custom routes, and unmatched requests.
+Use [scoped Middleware](/en/guide/middleware) for a policy limited to one Routes group.
 
-- `Effect.map` changes only a response returned successfully by the downstream Effect.
-  An unmatched request fails with `RouteNotFound`, so the final 404 does not get this header.
-  To change an error response too, handle the relevant HTTP error and convert it into a response.
-- Responses sent before the router runs bypass this middleware.
-  This includes static assets served directly by the host and the runtime's early 413 response for an oversized request.
-  Set asset headers on the host that serves those assets.
+This example maps only successful downstream responses.
+An unmatched request fails with `RouteNotFound`, so its final 404 does not receive the header unless you handle that error and return a response.
+Host-served static assets and the runtime's early oversized-request 413 response bypass the router entirely.
+Configure asset headers on the host.

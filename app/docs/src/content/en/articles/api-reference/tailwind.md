@@ -1,86 +1,42 @@
-Add Tailwind CSS 4 to an Effront application with `effrontTailwind()` and start using utility classes in your components.
-The default configuration needs no CSS file.
-When your application needs its own theme or additional Tailwind plugins, select a stylesheet to hold that configuration.
+## effrontTailwind {#plugin}
 
-## Enable Tailwind with effrontTailwind {#plugin}
-
-Import `effrontTailwind` from `@effront/tailwind` in your Vite configuration and add `effrontTailwind()` to its `plugins` array.
-Keep the application's existing Effront integration and host adapter.
-
-**Vite configuration excerpt: insert into the existing `plugins` array**
+`effrontTailwind(options?: EffrontTailwindOptions): PluginOption[]` from `@effront/tailwind` includes `@tailwindcss/vite` and automatically loads one Tailwind CSS 4 stylesheet.
+Register it once alongside the application's Effront plugin and host adapter:
 
 ```typescript
-plugins: [
-  // Keep your existing Effront integration and host adapter here.
-  effrontTailwind(),
-],
+import { effront } from "@effront/vite";
+import { effrontCloudflare } from "@effront/cloudflare";
+import { effrontTailwind } from "@effront/tailwind";
+import { defineConfig } from "vite-plus";
+
+export default defineConfig({
+  plugins: [effront(), effrontCloudflare(), effrontTailwind()],
+});
 ```
 
-This generates and automatically loads Tailwind's default stylesheet, so utilities such as `p-4` and `text-xl` are ready to use in `className`.
-You do not need to create a stylesheet or import CSS from a component.
-For installation and a complete walkthrough, see [Styling](../guide/styling.md).
+Do not register `@tailwindcss/vite` separately.
+With no options, the plugin generates Tailwind's default stylesheet.
+No CSS file or component-level CSS import is needed.
+Class and stylesheet changes use HMR during development.
+See [Styling](../guide/styling.md) for installation and application examples.
 
-**Function contract**
+## stylesheet {#stylesheet}
 
-`effrontTailwind(options?: EffrontTailwindOptions)` accepts an optional options object and returns `PluginOption[]` for Vite.
-The returned plugins include `@tailwindcss/vite` as well as Effront's stylesheet integration.
-Register `effrontTailwind()` once, replacing any separate `@tailwindcss/vite` registration rather than adding both.
+`EffrontTailwindOptions.stylesheet?: string` selects a CSS entry instead of the generated stylesheet.
 
-## Customize with stylesheet {#stylesheet}
+| Value                  | Behavior                                                    |
+| ---------------------- | ----------------------------------------------------------- |
+| Omitted or `undefined` | Generate and load the default stylesheet                    |
+| Nonempty string        | Resolve from the Vite root and load that file automatically |
+| `""`                   | Throw `TypeError` when `effrontTailwind` is called          |
 
-Use `EffrontTailwindOptions.stylesheet` when you want to define a theme or configure a Tailwind plugin.
-It selects your CSS file instead of the generated default stylesheet.
-Before using a custom stylesheet, install Tailwind in the application so that its `@import "tailwindcss"` can resolve:
-
-```bash
-vp add -D tailwindcss@4.3.3
-```
-
-For example, this call selects `src/styles.css` relative to the Vite root:
-
-```typescript
-effrontTailwind({ stylesheet: "./src/styles.css" });
-```
-
-| `stylesheet` value     | Behavior                                                              |
-| ---------------------- | --------------------------------------------------------------------- |
-| Omitted or `undefined` | Generate and load Tailwind's default stylesheet.                      |
-| A non-empty `string`   | Resolve the path from the Vite root and automatically load that file. |
-| `""`                   | Throw a `TypeError` when `effrontTailwind` is called.                 |
-
-The selected file is your CSS entry, not an addition to the default entry.
-Keep `@import "tailwindcss";` in it to include Tailwind, followed by your custom configuration.
-You do not need a component import for this file either.
-
-**Define a theme**
-
-To make a brand color available as a utility, put the following in `src/styles.css`:
+For `effrontTailwind({ stylesheet: "./src/styles.css" })`, `src/styles.css` must include Tailwind itself:
 
 ```css
 @import "tailwindcss";
-
-@theme {
-  --color-brand: #2563eb;
-}
 ```
 
-You can now use `text-brand` for text or `bg-brand` for backgrounds.
-During development, changes to Tailwind classes and the selected stylesheet are reflected through HMR.
-See Tailwind's [theme documentation](https://tailwindcss.com/docs/theme) for other theme settings.
-
-**Add a plugin when you need it**
-
-Tailwind plugins extend the styles available to your application.
-Install the plugin you choose and configure it in the selected stylesheet according to its documentation.
-
-For example, Typography provides the `prose` class for styling article content.
-Install it with `vp add -D @tailwindcss/typography`, then add its `@plugin` directive to your stylesheet:
-
-```css
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
-```
-
-Keep any existing theme settings, and apply `prose` to the element wrapping your article to style its headings and paragraphs.
-Typography is optional, not a prerequisite for Tailwind utilities or Markdown rendering.
-See Tailwind's [functions and directives](https://tailwindcss.com/docs/functions-and-directives) for the CSS configuration syntax.
+That import requires `tailwindcss` in the application's dependencies, for example `vp add -D tailwindcss@4.3.3`.
+The selected file replaces the generated entry and needs no additional component import.
+It can contain [`@theme`](https://tailwindcss.com/docs/theme) and [`@plugin`](https://tailwindcss.com/docs/functions-and-directives) directives.
+Plugins such as Typography must be installed separately and are optional, including for Markdown rendering.

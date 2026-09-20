@@ -1,11 +1,10 @@
-Use `@effront/server` to run an Effront application on Node.js or Bun with its browser assets served alongside it.
-This reference explains which entries Vite builds, how to launch the production listener, and how to configure static file lookup.
-For installation and a complete working application, start with the [Node.js / Bun guide](../platforms/node-bun.md).
+`@effront/server` provides native Effect HTTP hosting and static files for Node.js and Bun.
+For installation and startup files, see [Node.js / Bun](../platforms/node-bun.md).
 
-## Vite entries: effrontServer {#vite}
+## effrontServer {#vite}
 
-`effrontServer(options?)` from `@effront/server/vite` connects an application's native Effect HTTP handler to Vite and includes a separate production startup module in the build.
-Register it after `effront()`:
+`effrontServer(options?: EffrontServerOptions): Plugin` from `@effront/server/vite` connects the native handler to Vite development and preview, and builds a separate production startup entry.
+It must follow `effront()`:
 
 ```typescript
 import { effront } from "@effront/vite";
@@ -17,100 +16,91 @@ export default defineConfig({
 });
 ```
 
-The defaults expect these two entries:
+| Option            | Default                 | Entry contract                                                                              |
+| ----------------- | ----------------------- | ------------------------------------------------------------------------------------------- |
+| `rsc?: string`    | `./src/entry.rsc.ts`    | Named `handler` export containing a native HTTP Effect, such as `toHttpEffect(application)` |
+| `server?: string` | `./src/entry.server.ts` | Production startup that launches `serve`                                                    |
 
-| Option   | Default               | What to put in the entry                                                           |
-| -------- | --------------------- | ---------------------------------------------------------------------------------- |
-| `rsc`    | `src/entry.rsc.ts`    | A named `handler` export containing an Effect that returns an `HttpServerResponse` |
-| `server` | `src/entry.server.ts` | Production startup using `serve`, `Layer.launch`, and the platform Runtime         |
+Empty entry strings throw `TypeError`.
+The RSC entry accepts HMR with `if (import.meta.hot) import.meta.hot.accept();`.
 
-The RSC entry can create `handler` with `toHttpEffect(application)` using your application definition from `src/entry.effront.tsx`.
-Include `if (import.meta.hot) import.meta.hot.accept();` in that entry to accept HMR updates.
-Set `rsc` or `server` when you use different entry paths.
+Development and preview use Vite's listener through Node-compatible middleware, not the production startup entry.
+`serve` options therefore do not configure Vite's port or hostname.
+`@effect/platform-node` is required even when production uses Bun.
+Bun-specific runtime behavior requires the built production entry, normally `bun dist/rsc/server.js`, not Vite preview.
 
-Development and preview attach the handler to Vite's existing listener through Node-compatible middleware.
-They do not execute the production startup entry, so its listener settings do not configure Vite's port or hostname.
-The plugin requires `@effect/platform-node` even if you choose Bun for production.
-To check Bun-specific behavior, run the built production entry with `bun dist/rsc/server.js` rather than relying on Vite preview.
+## serve {#serve}
 
-## Production listener: serve {#serve}
+`serve(handler, options)` returns a scoped server Layer.
+`handler` is an `Effect` yielding `HttpServerResponse`, not a Fetch function.
+Launch the Layer with `Layer.launch` and the matching platform Runtime:
 
-Use `serve(handler, options)` in the production startup entry to serve both the application and its static files.
-Choose the import that matches your production runtime:
-
-| Runtime | Import `serve` from    | Run the launched Layer with                        |
+| Runtime | `serve` import         | Runtime                                            |
 | ------- | ---------------------- | -------------------------------------------------- |
 | Node.js | `@effront/server/node` | `NodeRuntime.runMain` from `@effect/platform-node` |
 | Bun     | `@effront/server/bun`  | `BunRuntime.runMain` from `@effect/platform-bun`   |
 
-`handler` is the native Effect HTTP handler described above, not a Fetch-style function.
-`serve` returns a scoped Layer: pass it to `Layer.launch`, then to the chosen Runtime's `runMain`.
-Provide any application-specific service Layers that the handler still requires before launching it.
-See the [Node.js startup example](../platforms/node-bun.md#node) for the complete composition.
+| `ServeOptions` field | Contract                                 |
+| -------------------- | ---------------------------------------- |
+| `assets`             | Required `AssetOptions`, described below |
+| `port`               | Optional number, default `3000`          |
+| `hostname`           | Optional string, default `127.0.0.1`     |
 
-| Option     | Required | Default or purpose                        |
-| ---------- | -------- | ----------------------------------------- |
-| `assets`   | Yes      | Static file configuration described below |
-| `port`     | No       | `3000`                                    |
-| `hostname` | No       | `127.0.0.1`                               |
+Provide remaining application service Layers before launch.
+See the [Node.js startup example](../platforms/node-bun.md#node).
+The default address accepts local connections only.
+An address such as `0.0.0.0` exposes the listener to other machines.
+Bun's server also enforces a 10 MiB request-body limit.
 
-The default listener accepts local connections only.
-To expose it outside the local machine, explicitly choose an address such as `hostname: "0.0.0.0"` and check the intended network exposure.
+## withAssets {#assets}
 
-## Static files: withAssets {#assets}
+`withAssets(handler, options)` from `@effront/server/assets` constructs a handler with static-file serving.
+`serve` already applies it using its `assets` option.
 
-`serve` uses `withAssets` internally, so its `assets` option is where you normally configure file serving.
-Pass a required `client` mount for browser build output and, optionally, a `public` mount for files such as `robots.txt`.
+| `AssetOptions` field  | Contract                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| `client.root`         | Required dedicated filesystem directory for browser output                                            |
+| `client.prefix`       | Required absolute URL prefix other than `/`, such as `/assets/`                                       |
+| `client.cacheControl` | Optional client `Cache-Control` value                                                                 |
+| `public.root`         | Required directory when the optional `public` mount is configured, served without an added URL prefix |
+| `public.cacheControl` | Optional public `Cache-Control` value                                                                 |
 
-| Setting               | Meaning                                                                    |
-| --------------------- | -------------------------------------------------------------------------- |
-| `client.root`         | Dedicated filesystem directory containing browser build output             |
-| `client.prefix`       | Absolute URL path prefix other than `/`, such as `/assets/`                |
-| `client.cacheControl` | Optional `Cache-Control` value for client files                            |
-| `public.root`         | Filesystem directory served at matching URL paths, without an added prefix |
-| `public.cacheControl` | Optional `Cache-Control` value for public files                            |
+Both cache policies default to `public, max-age=0, must-revalidate`.
+Use `public, max-age=31536000, immutable` only for hashed filenames.
+With prefix `/assets/`, `/assets/app.js` looks up `app.js` in `client.root`.
+Mounts must match the actual output directories and URLs when Vite output or `base` changes.
 
-For example, with `client.prefix: "/assets/"`, a request for `/assets/app.js` looks up `app.js` in `client.root`.
-Match these settings to the actual output directories and URLs whenever you customize Vite's output or `base`.
-Both cache settings default to `public, max-age=0, must-revalidate`.
-Use an immutable policy such as `public, max-age=31536000, immutable` only for output with hashed filenames.
+| Request                                                                   | Result                                       |
+| ------------------------------------------------------------------------- | -------------------------------------------- |
+| `GET` or `HEAD` inside the client prefix                                  | File response, or 404 for a missing file     |
+| `GET` or `HEAD` matching a public file                                    | File response                                |
+| Public miss or other method                                               | Application handler                          |
+| Flight, Server Function, or `/_effront` request outside the client prefix | Application handler, bypassing public lookup |
 
-**Which requests reach the application?**
+There are no directory indexes or SPA fallbacks.
+Other filesystem failures remain typed HTTP errors.
+Roots are checked at request time, not validated at startup.
+Deploy trusted directories and manage their symbolic links.
+Effront adds no symlink containment beyond Effect's `HttpStaticServer` path handling.
 
-Static file lookup applies only to `GET` and `HEAD`; other methods reach the application.
-Within the client prefix, missing files return 404 instead of falling back to application routes.
-Outside that prefix, an exact public file match is served when `public` is configured; otherwise the request reaches the application.
-Flight requests, Server Function requests, and `/_effront` or its descendants bypass this public lookup.
-Neither mount supplies directory indexes or SPA fallback.
-Filesystem failures other than missing files remain typed HTTP errors.
+For an existing Effect HTTP server, obtain the handler with `yield* withAssets(handler, options)` during server construction.
+Do not pass the outer construction Effect as the request handler.
 
-Lookup happens when requests arrive, not during a startup directory check.
-Deploy trusted build output and public directories, and manage their contents and symbolic links yourself.
-Path decoding, normalization, and traversal handling are delegated to Effect's standard `HttpStaticServer`, rather than custom Effront path validation.
+| Stage        | Success                | Errors                                         | Required services                              |
+| ------------ | ---------------------- | ---------------------------------------------- | ---------------------------------------------- |
+| Construction | Request handler Effect | `PlatformError`                                | `FileSystem.FileSystem`, `Path.Path`           |
+| Request      | `HttpServerResponse`   | Original handler errors plus `HttpServerError` | Original requirements plus `HttpServerRequest` |
 
-**Using an existing Effect HTTP server**
+The host owns request scopes and must consume or cancel response bodies.
+MIME types, weak ETags, conditionals, and ranges follow Effect `4.0.0-rc.112`:
 
-If you own the HTTP server setup, import `withAssets` from `@effront/server/assets` and call `withAssets(handler, options)` with the same mount configuration.
-It returns an Effect that constructs a handler, so obtain the handler with `yield* withAssets(handler, options)` inside your setup Effect before passing it to your server.
-Do not pass the construction Effect as if it were the request handler.
+| Condition                                       | Behavior                                                             |
+| ----------------------------------------------- | -------------------------------------------------------------------- |
+| `HEAD` or conditional `304`                     | No file stream acquired                                              |
+| Satisfiable single byte range                   | `206`                                                                |
+| Multiple, unsupported, or unsafe-integer ranges | Range ignored                                                        |
+| Valid but unsatisfiable single range            | `416` with `Content-Range`, without asset cache or validator headers |
+| `If-Range`                                      | Ignored                                                              |
+| `Range` on `HEAD`                               | Evaluated, possibly `206` or `416`, without a body                   |
 
-Construction requires the caller's `FileSystem` and `Path` services and has `PlatformError` in its error channel.
-The constructed handler retains the original handler's service requirements and error type, adding `HttpServerRequest` and `HttpServerError`, respectively.
-Your server owns request scopes and must complete or cancel response bodies.
-When using `serve`, this integration is already included.
-
-**HTTP response behavior**
-
-MIME types, weak ETags, conditional responses, and byte ranges follow Effect `4.0.0-rc.112`.
-Keep these standard behaviors in mind when testing caches or download clients:
-
-| Request or condition                                                       | Result                                                                   |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `HEAD` or a matching conditional request returning `304`                   | No file stream is acquired                                               |
-| Satisfiable single byte range                                              | `206` with the selected range                                            |
-| Multiple ranges, unsupported ranges, or ranges outside safe integer bounds | The Range header is ignored                                              |
-| Valid but unsatisfiable single range                                       | `416` with `Content-Range`, but without asset cache or validator headers |
-| `If-Range`                                                                 | Ignored by this Effect version                                           |
-| `Range` on `HEAD`                                                          | Evaluated, potentially returning `206` or `416` without a body           |
-
-Custom caller-provided `HttpPlatform` or ETag services do not change asset responses.
+Caller-provided `HttpPlatform` or ETag services do not change asset responses.

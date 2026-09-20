@@ -1,22 +1,14 @@
-Use Middleware to prepare request information for the pages and form handlers that need it.
-It is also a place to enforce access checks before those handlers do any work.
-You decide both what happens to the request and which parts of the application use that behavior.
-The example below makes the current URL available as a service, then shows how to replace normal processing with a maintenance response and how to handle form submissions.
+## Choose the request scope {#reach}
 
-## Choose which requests to cover {#reach}
+Attach Middleware to Routes for page requests, and to the definition that creates a Server Function for its invocations.
+A protected page does not automatically protect actions rendered on it.
 
-For page requests, attach Middleware to the Routes that should use it.
-For a Server Function, attach it to the definition that creates the function, so the check runs when the function is invoked.
-These are scoped behaviors: adding Middleware to one group of Routes does not make it an application-wide policy.
+For policies that also cover custom HTTP endpoints and unmatched requests, use [global HTTP Middleware](/en/guide/http#global).
+Host-served static assets need host-level configuration.
 
-If the same behavior must cover custom HTTP endpoints or unmatched requests, use [global HTTP Middleware](/en/guide/http#global) for that wider policy.
-That registration covers the router inside Effront's Fetch handler, not static assets served directly by the host.
-Configure those assets at the host level when they need the same headers or access restrictions.
+## Provide a request service {#view}
 
-## Prepare a service for downstream work {#view}
-
-Create `src/request-scope.ts` with the service that consumers will read and the Middleware that supplies its value.
-In this example, `RequestInfo` contains the URL from the current HTTP request.
+Create `src/request-scope.ts` to expose the current request URL as a service:
 
 ```typescript
 import { Context, Effect } from "effect";
@@ -39,17 +31,13 @@ const WithRequestInfo = EFFRONT.Middleware.make<{ provides: RequestInfo }>(
 export const RequestEFFRONT = EFFRONT.withMiddleware(WithRequestInfo);
 ```
 
-The handler receives `httpEffect`, which represents the work it wraps.
-Running that Effect continues the request, and `Effect.provideService` makes the URL available to that work as `RequestInfo`.
-The `provides: RequestInfo` type declaration tells the derived definitions which service they can use, but does not supply a value by itself.
-Keep the declaration and the call to `Effect.provideService` together.
+`provides: RequestInfo` declares the service, while `Effect.provideService` supplies its value to downstream work.
+Run `httpEffect` to continue the request.
+Use the derived `RequestEFFRONT` to define consumers and Routes for this scope.
 
-`EFFRONT.withMiddleware(WithRequestInfo)` returns `RequestEFFRONT`, a definition in the same application with the additional Middleware and service available.
-Use it to create the consumers and the Routes that need this behavior.
+## Apply the service to a Page {#routes}
 
-## Display the service value on a page {#routes}
-
-In `src/entry.effront.tsx`, create a Page that reads `RequestInfo` and register it using `RequestEFFRONT.Routes.make`.
+Create `src/entry.effront.tsx`:
 
 ```tsx
 import { Effect } from "effect";
@@ -76,18 +64,15 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 export default EFFRONT.make({ routes });
 ```
 
-Visit `/request` to see “Request URL:” followed by the current request URL.
-The Middleware supplies the value, and the Page only reads and displays it.
-A Layout or Component created through `RequestEFFRONT` can read the same service when rendered inside these Routes.
+Visit `/request` to see the request URL.
+Creating the Page through `RequestEFFRONT` is not enough: its Routes must activate the Middleware too.
+Layouts and Components created through `RequestEFFRONT` can read the service when rendered inside that scope.
+To limit it to one section, mount these Routes inside parent Routes.
 
-Keep the Page and its Routes paired: creating a Page through `RequestEFFRONT` does not activate Middleware when that Page is registered in the base `EFFRONT.Routes`.
-For a larger application, `mount` the Middleware-equipped Routes inside parent Routes to limit the behavior to that part of the site.
+## Return an early response {#order}
 
-## Stop a request before its handler runs {#order}
-
-A service-providing handler continues by running `httpEffect`.
-To prevent the downstream work from running, return an HTTP response instead.
-For example, put this alternative Middleware in `src/maintenance.ts`:
+To stop downstream work, return a response without running `httpEffect`.
+For example, create `src/maintenance.ts`:
 
 ```typescript
 import { Effect } from "effect";
@@ -99,27 +84,20 @@ export const Maintenance = EFFRONT.Middleware.make(() =>
 );
 ```
 
-After importing `Maintenance` into the entry module, create the affected Routes through `RequestEFFRONT.withMiddleware(Maintenance).Routes.make(...)` instead of `RequestEFFRONT.Routes.make(...)`.
-Requests to those Routes now receive status 503 and “Under maintenance” rather than the page.
-This example always stops processing.
-A conditional policy should run `httpEffect` only in the branch that allows the request to proceed.
+Import `Maintenance` in the entry and replace `RequestEFFRONT.Routes.make(...)` with `RequestEFFRONT.withMiddleware(Maintenance).Routes.make(...)`.
+Requests now receive status 503 and `Under maintenance` instead of the Page.
+For a conditional check, run `httpEffect` only when the request is allowed.
 
-An authentication check follows the same decision: validate a session, return a response such as 401 if validation fails, and otherwise provide the verified user as a service before continuing.
-A username supplied in a cookie or header is input to verify, not proof of identity.
+Authentication follows the same pattern: verify the session, reject invalid requests, and provide the verified user before continuing.
+A username in a cookie or header is not proof of identity.
 
-When several checks are needed, `EFFRONT.withMiddleware(first).withMiddleware(second)` enters `first`, then `second`, then the downstream handler.
-Code that processes the returned response runs in the reverse order.
-An early response skips the remaining inner handlers, so put checks in the order they should run.
-Do not add the same Middleware twice to one chain.
+Chained Middleware enters in declaration order and processes responses in reverse order.
+An early response skips the remaining inner handlers.
+Do not add the same Middleware twice to a chain.
 
-## Apply the behavior to form submissions {#actions}
+## Apply checks to a Server Function {#actions}
 
-An update needs its own request-time checks even if the page containing its form was protected.
-A Server Function uses the Middleware attached to its own definition, rather than acquiring protection just by appearing on a page.
-For an authenticated update, create the function through the definition that includes your authentication Middleware.
-
-If you temporarily enabled the maintenance example, restore the previous Routes definition before trying the form.
-To try service access on a submission, create `src/record-request.ts` and define its handler with `RequestEFFRONT`:
+Define the action with the Middleware-equipped `RequestEFFRONT` in `src/record-request.ts`:
 
 ```typescript
 "use server";
@@ -129,16 +107,14 @@ import { RequestEFFRONT, RequestInfo } from "./request-scope";
 
 export const recordRequest = RequestEFFRONT.ServerFn.make({
   input: Schema.fromFormData(Schema.Struct({})),
-  handler: () =>
-    Effect.gen(function* () {
-      const info = yield* RequestInfo;
-      yield* Effect.logInfo("Form received", { url: info.url });
-    }),
+  handler: Effect.fn("recordRequest")(function* () {
+    const info = yield* RequestInfo;
+    yield* Effect.logInfo("Form received", { url: info.url });
+  }),
 });
 ```
 
-Import `recordRequest` into the Page module and include this form in its rendered output.
-The function accepts form data and returns no value, so it can be passed directly to `action`.
+Restore the Routes without `Maintenance`, import `recordRequest` into the Page module, and include this form in its returned JSX:
 
 ```tsx
 <form action={recordRequest}>
@@ -146,7 +122,7 @@ The function accepts form data and returns no value, so it can be passed directl
 </form>
 ```
 
-Submit the form and check the server log for “Form received” and the submission URL.
-The Middleware reads the request for this invocation, not a value saved when the page was displayed.
-The URL Middleware used here only provides data.
-Add your actual access check to the Server Function's definition before using the same pattern for a protected update.
+Submitting logs `Form received` with the submission URL, not a value saved from the page request.
+This Middleware only provides data.
+For protected updates, attach actual authentication and authorization checks to the Server Function's definition.
+See [Server Functions](/en/guide/server-functions) for returning form state.

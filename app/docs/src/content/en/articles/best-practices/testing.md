@@ -1,66 +1,49 @@
-A useful test tells you whether a change has broken something your users need to do.
-Start with a concrete outcome, such as “an account owner can change their display name and see the saved name on their profile,” rather than a list of components to exercise.
-This article describes a general testing approach for an Effront application: establish that outcome in a browser, cover the underlying rules separately, and check the same journey against the build you intend to release.
+## Test a persisted change in the browser {#pages}
 
-## Start with one user journey {#pages}
+For a profile editor, test the complete save flow with an isolated test account and data store:
 
-Choose a feature whose failure would matter to your users, and write down its starting state and expected result.
-For a profile editor, prepare a test account with a known display name and use an isolated test data store so that the test cannot modify production records.
-Then exercise the running application in a real browser:
+1. Open the profile URL directly and check its initial name.
+2. Enter a different name and submit the form.
+3. Check both the submission feedback and the updated name on the page.
+4. Reload and check that the saved name remains.
 
-1. Open the profile URL directly and check the current name.
-2. Enter a different name in the form and submit it.
-3. Check the result shown to the user and the updated name on the page.
-4. Reload the page and check that the saved name is still displayed.
+Checking after reload distinguishes a stored change from local UI state.
+Also reach the page through an application link and Back/Forward navigation, asserting that the URL and displayed data agree.
+Keep a rejected-update case that checks the error feedback and confirms the stored data did not change.
 
-The final step distinguishes a persistent update from a change that appeared only in local UI state.
-Also reach the profile through an application link and the browser's Back and Forward buttons, checking that the URL and displayed data agree.
-These checks cover the connections between a page, a form, and the server that testing a function alone would miss.
+## Test rules below the Server Function {#services}
 
-## Cover business rules without the browser {#services}
+Put shared business logic in functions or Effect services that Pages and Server Functions call, then test those functions or services directly.
+An Effront Server Function cannot be invoked as an ordinary function in the server graph.
+Keep its [form submission](/en/guide/server-functions) in the browser test to exercise the request and rendering path.
 
-Once the journey is clear, identify the rules that need more input combinations than the browser test should carry.
-For the profile editor, these might include rejecting a blank name, refusing changes to someone else's account, and leaving the existing name intact when an update fails.
-Test the outcome and stored state for each case, not just whether a function returned successfully.
+Use smaller tests for blank names, unauthorized edits, and failed writes.
+Assert the result and stored state, not only whether the function succeeded.
+For authorization, submit a record ID the caller does not own and verify rejection on the server.
+A hidden or disabled edit button does not test that boundary.
 
-Put shared business logic in functions or Effect services that a Page or Server Function can call.
-Test those functions or services directly.
-An Effront Server Function itself cannot be called as an ordinary function in the server graph.
-Keep form submission in the browser test so that the real request and rendering path remains covered.
-See [Server Functions](/en/guide/server-functions) for the form integration contract.
+An Effect Layer can supply predictable service responses and failures, as described in [Effect Layers](https://effect.website/docs/requirements-management/layers/) and [Effront services](/en/guide/effect).
+A test double does not verify the real database or external API adapter, so cover that adapter separately with an integration test against a test instance.
 
-When the logic depends on an Effect service, supply a test implementation through a Layer to make inputs, responses, and failures predictable.
-The [Effect Layers guide](https://effect.website/docs/requirements-management/layers/) explains this dependency mechanism, and the [services guide](/en/guide/effect) explains how services connect to an Effront application.
-A test double checks how your logic handles that implementation, not whether your real database or external API integration works.
-Keep a separate integration check for the actual dependency where that behavior matters.
+## Verify the release artifact {#production}
 
-Retain a browser case for a rejected update as well: the user should receive the intended feedback and the data should remain unchanged.
-Authorization must be enforced on the server, because users can change submitted values, including hidden fields.
-A hidden or disabled edit button is not an authorization test.
+Run the important journey against the built application in its target runtime, using test data and credentials.
+Use the host's production entry point from [Platforms](../platforms.md#build-startup), not a development server or a preview in a different runtime.
 
-## Check the release build in its target runtime {#production}
+Include checks for the boundaries the application uses:
 
-Repeat the important journey with the application built for your chosen host before releasing it.
-Use the host's production entry point and runtime, with test data and test credentials rather than production records or secrets.
-See [Platforms](../platforms.md#build-startup) for build output and startup instructions.
-A successful development session, or a preview running in a different environment, is not evidence that host-specific APIs work in that runtime.
+- **Direct entry:** the requested page delivers HTML, CSS, and images, and becomes interactive after JavaScript loads.
+- **Missing resources:** unknown page and asset URLs return the expected 404 responses.
+- **Progressive forms:** Server Function forms submit and display the resulting page with JavaScript disabled.
+- **Streaming:** delayed content completes, and navigating away before it completes leaves the chosen destination visible.
+- **Browser fallback:** in supported browsers without the Navigation API, links work through full-document navigation.
+- **Secret handling:** recognizable synthetic server secrets are absent from HTML and Flight responses. Never use real credentials as test markers.
 
-While running that journey, check that directly opening the URL delivers the required HTML, CSS, and images, and that the page remains interactive after JavaScript loads.
-Check unknown page and asset URLs for the expected 404 responses.
-To check for accidental disclosure, use recognizable synthetic values for server-side secrets and assert that they are absent from the HTML and Flight responses returned to the browser.
-Do not use real credentials as test markers.
+## Isolate data and automate startup {#tools}
 
-Extend the journey for the features and browser support you promise.
-For a form connected to a Server Function, test submission and the resulting page with JavaScript disabled.
-For a Suspense-based loading state, test both completion and navigating away while the content is still loading.
-If you support browsers without the Navigation API, repeat link navigation there to check the full-page fallback.
+Give each test a known initial state and separate records so concurrent tests cannot overwrite one another's data.
+[Playwright](https://playwright.dev/docs/intro) can drive the browser and manage application startup and shutdown through [webServer](https://playwright.dev/docs/test-webserver).
+A runner such as [Vitest](https://vitest.dev/guide/) can cover isolated logic.
 
-## Make the checks repeatable {#tools}
-
-Automate the journey and rule checks once their expected outcomes are explicit.
-[Playwright](https://playwright.dev/docs/intro) can drive the browser, while a runner such as [Vitest](https://vitest.dev/guide/) can run the isolated logic tests.
-Playwright's [webServer configuration](https://playwright.dev/docs/test-webserver) can start the application as part of the test run.
-
-Give each test a known initial state and prevent concurrent tests from overwriting one another's data.
-Use the smaller logic tests to cover many rule combinations, while keeping browser tests focused on the journeys and integration failures that matter to users.
-When a bug escapes those checks, add a regression test at the boundary that would have detected it, then verify that the original user journey still succeeds.
+Keep input combinations in the smaller tests and browser coverage focused on complete journeys and integration failures.
+For a regression, add the smallest test that detects the failure and rerun the affected browser journey.
