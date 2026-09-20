@@ -45,5 +45,6 @@ Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before en
 - When changing native host wiring or profile prerequisites: [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md).
 - When changing Markdown rendering or assets: [Markdown guide](../packages/markdown/docs/GUIDE.md).
 - When changing standalone host boundaries: [Workers architecture](../docs/WORKERS.md).
+- When exploring or changing Node Loading/Suspense examples: [playground guide](node/docs/LOADING.md).
 
 _This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._
