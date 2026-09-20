@@ -75,10 +75,34 @@ Promise を render 内で新しく作らないため、再描画のたびに新�
 ルート Loading に置き換わる場合も外側のレイアウトは残り、完了後にはページの更新結果が現れます。
 「更新 1」「更新 2」と繰り返し試せます。
 
+## 4. 子が TanStack Query で取得
+
+「4. Query で Suspend」または `http://127.0.0.1:4455/loading/query` を開きます。
+親から渡すのは項目番号だけで、子自身が `useSuspenseQuery({ queryKey, queryFn })` を呼びます。
+Promise props や `React.use` は使いません。
+`"use client"` のコンポーネントも SSR されるため、「開始」を押した後だけ取得する子をマウントし、ブラウザー実行を保証します。
+JavaScript 無効時は説明と開始ボタンだけが表示され、取得は始まりません。
+
+1. 「開始」で初回取得します。キャッシュがないため、ローカル Suspense の fallback が出ます。
+2. 「通常のキー変更」で未取得の次の項目に進み、結果欄が fallback に置き換わります。
+3. 「Transition のキー変更」でさらに次へ進みます。`isPending` の間は前の結果が残ります。
+4. 「同じキーを再取得」は `refetch()` です。キャッシュを表示したまま `isFetching` が変化し、完了時刻が更新されます。Transition は使わず、fallback も出ません。
+
+取得先は同じホストの `public/loading-query.txt` です。
+各取得前にブラウザーのタイマーで2秒待ち、実際に `fetch` します。外部 API や認証は不要です。
+項目番号は Query のキャッシュキーと URL の検索パラメーターに使いますが、静的ファイルなので本文は同じです。
+`cache: "no-store"` は HTTP キャッシュを避ける設定で、TanStack Query のキャッシュとは別です。
+`staleTime: Infinity` により自動再取得を避け、ボタン操作だけを比較できます。
+`QueryClient` は Suspend しない親で一度作り、Provider とローカル Suspense の順で配置するため、初回 Suspend で作り直されません。
+キャッシュの所有範囲はこのページのマウント中で、ページを離れて戻れば開始前に戻ります。
+再取得失敗時は表示済みデータとエラー説明を残し、同じボタンから再試行できます。
+
 ## 実装を読む
 
 - [`routes.tsx`](../src/features/loading/routes.tsx): `Loading`、永続レイアウト、サーバーの待機、兄弟・親子の境界構成。
 - [`client.tsx`](../src/features/loading/client.tsx): イベント所有の Promise、`use`、通常更新、`useTransition`、局所的な境界。
+- [`query-client.tsx`](../src/features/loading/query-client.tsx): ブラウザーイベントによる初回マウント、安定した QueryClient、子が所有する Query。
+- [`query.e2e.ts`](../../../tests/e2e-server/query.e2e.ts): SSR/ブラウザーの開始境界、初回とキー変更、キャッシュ再取得、失敗後の再試行。
 - [`loading.e2e.ts`](../../../tests/e2e-server/loading.e2e.ts): 実際のホスト上で fallback・段階的な表示・状態保持・サーバーの待機区間を検証。
 
 ## ブラウザー検証
@@ -98,6 +122,9 @@ Loading ページは Node サンプルにのみあるため、そのケースだ
 ポート 4451〜4454 を空け、実行中に同じサンプルを別途 build しないでください。
 
 ## 参考
+
+- [TanStack Query Suspense: useSuspenseQuery、キー変更と Transition、QueryClient の寿命](https://tanstack.com/query/latest/docs/framework/react/guides/suspense)
+- [TanStack Query: Background Fetching Indicators](https://tanstack.com/query/latest/docs/framework/react/guides/background-fetching-indicators)
 
 - [React Suspense: コンテンツを一度に、または入れ子で順次表示する](https://react.dev/reference/react/Suspense)
 - [React use: Promise を読み取る](https://react.dev/reference/react/use)

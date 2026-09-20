@@ -19,6 +19,7 @@ catalog:
   "@playwright/test": 1.63.0
   "@tailwindcss/typography": ^0.5.20
   "@tailwindcss/vite": ^4.3.3
+  "@tanstack/react-query": 5.103.1
   "@totto2727/gitignore-patterns": jsr:0.1.0
   "@tsconfig/strictest": 2.0.8
   "@types/bun": 1.4.2

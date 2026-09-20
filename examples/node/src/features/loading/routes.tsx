@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { EFFRONT } from "../../effront";
 import { Counter } from "../../components/counter";
 import { SuspensionDemo } from "./client";
+import { QueryDemo } from "./query-client";
 
 function Timing({
   startedAt,
@@ -52,6 +53,9 @@ const Layout = EFFRONT.Layout.make({
             <a className="text-blue-700 underline" href="/loading/interaction">
               3. 操作で Suspend
             </a>
+            <a className="text-blue-700 underline" href="/loading/query">
+              4. Query で Suspend
+            </a>
           </nav>
         </header>
         {children}
@@ -75,6 +79,10 @@ const Home = EFFRONT.Page.make({
           </li>
           <li>
             クライアントで新しい Promise を読み、最寄りの境界と Transition の違いを確認します。
+          </li>
+          <li>
+            子が useSuspenseQuery で取得します。Promise props
+            なしで、初回・キー変更・再取得を比較します。
           </li>
         </ol>
         <p>
@@ -245,8 +253,11 @@ const Interaction = EFFRONT.Page.make({
     ),
 });
 
+const Query = EFFRONT.Page.make({ render: () => Effect.succeed(<QueryDemo />) });
+
 export const loadingRoutes = EFFRONT.Routes.make({ layout: Layout, loading: Loading })
   .page("/", Home)
   .page("/navigation", Navigation)
   .page("/stages", Stages)
-  .page("/interaction", Interaction);
+  .page("/interaction", Interaction)
+  .page("/query", Query);
