@@ -61,9 +61,6 @@ export default defineConfig({
 });
 ```
 
-These filenames match the default entries, so no additional entry options are needed.
-`effront()` already registers the React and Vite RSC plugins: do not add another copy of either plugin.
-
 For a different Wrangler configuration file or other Cloudflare plugin options, pass the options directly to `effrontCloudflare({ ...options })`, not inside a `cloudflare` property.
 See the [Wrangler configuration reference](https://developers.cloudflare.com/workers/wrangler/configuration/) when adding Worker settings.
 

@@ -42,10 +42,6 @@ export default defineConfig({
 });
 ```
 
-You can now start development without creating a production listener.
-Do not add `NODE_OPTIONS=--conditions=react-server` to the process environment.
-The Vite integration selects the React conditions for each environment.
-
 ```bash
 vp dev
 ```

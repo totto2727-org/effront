@@ -42,10 +42,6 @@ export default defineConfig({
 });
 ```
 
-これで、本番用のリスナーを作る前に開発を始められます。
-プロセスの環境変数に `NODE_OPTIONS=--conditions=react-server` を追加しないでください。
-React の条件は Vite 統合が実行環境ごとに選択します。
-
 ```bash
 vp dev
 ```

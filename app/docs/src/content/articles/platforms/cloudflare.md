@@ -61,9 +61,6 @@ export default defineConfig({
 });
 ```
 
-ここで使ったファイル名は既定のエントリーと一致するため、エントリーの追加設定は不要です。
-React plugin と Vite RSC plugin は `effront()` が登録するので、重ねて追加しないでください。
-
 別の Wrangler 設定ファイルを使う場合など、Cloudflare plugin のオプションを変更するときは、`cloudflare` プロパティの下に入れず、`effrontCloudflare({ ...options })` に直接渡します。
 Worker の設定を追加するときは、[Wrangler の設定リファレンス](https://developers.cloudflare.com/workers/wrangler/configuration/) を参照してください。
 
