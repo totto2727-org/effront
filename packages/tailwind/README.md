@@ -1,75 +1,101 @@
 # @effront/tailwind
 
-An optional Effront integration that generates and automatically loads Tailwind CSS, including initial server-rendered HTML, without requiring a stylesheet file or manual CSS imports.
+Style Effront pages with Tailwind CSS, including the initial HTML, without manual CSS imports.
 
 ## Usage
 
-Style the [Alchemy example's navigation and content](../../examples/alchemy/src/components/shell.tsx) with Tailwind utilities through its [Vite configuration](../../examples/alchemy/vite.config.ts).
-With `effrontTailwind()`, `className="max-w-3xl"` renders a 768px maximum content width, and `px-4 py-2` renders 16px horizontal and 8px vertical padding.
-These styles apply before hydration, including when JavaScript is disabled.
+Add `effrontTailwind()` to your application's Vite plugins.
+For example, with Alchemy:
+
+```ts
+import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
+import { effrontTailwind } from "@effront/tailwind";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
+});
+```
+
+Render this component from a Page or Layout:
+
+```tsx
+"use client";
+
+export function Greeting() {
+  return <p className="max-w-3xl px-4 py-2">Hello, Tailwind!</p>;
+}
+```
+
+With Tailwind's default theme, the paragraph has a maximum width of `48rem` and padding of `1rem` horizontally and `0.5rem` vertically.
+The styles apply in the initial HTML, including with JavaScript disabled.
+See the [Alchemy navigation component](../../examples/alchemy/src/components/shell.tsx) and [Vite configuration](../../examples/alchemy/vite.config.ts) for a complete application.
 
 ## Key features
 
 - Includes the official `@tailwindcss/vite` plugin and Tailwind CSS 4.
-- Generates a virtual stylesheet without creating `style.css` on disk.
-- Automatically loads either the generated stylesheet or an explicitly selected CSS file.
+- Loads a generated stylesheet or your selected CSS file without manual imports.
 - Supports Tailwind class updates and custom stylesheet HMR.
-- Works with native Alchemy hosting and the standalone Cloudflare adapter.
 
 ## Prerequisites
 
-- **Integration**: An Effront application using its Vite RSC integration and rendered React client boundaries.
-- **CSS plugins**: Install any plugin referenced by a custom stylesheet, such as `@tailwindcss/typography`.
-- **Toolchain**: VitePlus or another npm-compatible package manager.
+- An Effront application using `@effront/vite` and a host adapter.
 
 ## Setup
 
-After version `0.1.3` is published, install the integration:
+Install the integration:
 
 ```bash
-vp add -D @effront/tailwind@0.1.3
-```
-
-Import its integration in the Vite configuration:
-
-```ts
-import { effrontTailwind } from "@effront/tailwind";
+vp add -D @effront/tailwind@0.1.4
 ```
 
 ## API
 
 ### `effrontTailwind(options?: EffrontTailwindOptions)`
 
-Returns Vite plugins that compile Tailwind and automatically load a shared stylesheet through rendered React client boundaries.
-Register it once alongside the application's Effront integration; do not also register `@tailwindcss/vite`.
-
-```ts
-export default defineConfig({
-  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
-});
-```
-
-The default virtual stylesheet imports Tailwind, which scans the Vite application root for utility classes.
-No stylesheet file or component CSS import is needed.
-This integration does not inject styles into unrelated HTML pages without rendered client boundaries.
+Returns the Tailwind Vite plugins and loads CSS for rendered `"use client"` components, as in Usage.
+Register it once; do not also register `@tailwindcss/vite`.
+Omitting `stylesheet` generates the default Tailwind stylesheet.
 
 ### `EffrontTailwindOptions.stylesheet`
 
-An optional CSS path, resolved relative to the Vite root, replaces the generated stylesheet.
-An empty path is rejected.
+To customize a theme or other Tailwind settings, create a CSS file and pass its path through `stylesheet`.
+The path is resolved relative to the Vite root.
 The selected stylesheet is loaded automatically; do not import it manually.
+An empty path throws `TypeError`.
+
+In the Usage configuration, replace the no-options call:
 
 ```ts
-effrontTailwind({ stylesheet: "./src/styles.css" });
+export default defineConfig({
+  // Replace effrontTailwind() with the explicit stylesheet selection.
+  plugins: [effrontTailwind({ stylesheet: "./src/styles.css" }), effront(), effrontAlchemy()],
+});
 ```
 
 Keep Tailwind's import in the selected file, followed by custom theme or plugin configuration:
 
 ```css
 @import "tailwindcss";
+
+@theme {
+  --color-brand: #2563eb;
+}
+```
+
+This example makes `text-brand` and `bg-brand` available.
+
+To add a Tailwind plugin, install the chosen package and configure it in the selected stylesheet according to its documentation.
+For example, after installing `@tailwindcss/typography`, add its directive to the stylesheet above to make the `prose` class available:
+
+```css
+@import "tailwindcss";
+/* Add this directive after the import; keep the existing @theme block. */
 @plugin "@tailwindcss/typography";
 ```
 
+Typography is one optional plugin, not a requirement for Effront or Markdown.
 The [Markdown stylesheet](../../examples/markdown/src/styles.css) demonstrates Typography configuration, while the [documentation stylesheet](../../app/docs/src/styles.css) adds theme definitions.
 Tailwind syntax and supported directives are documented in the [official Vite integration guide](https://tailwindcss.com/docs/installation/using-vite).
 

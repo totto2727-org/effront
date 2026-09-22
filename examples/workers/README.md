@@ -1,12 +1,15 @@
 # Cloudflare Workers example
 
-An Effront example that serves React Server Components on Cloudflare Workers without Alchemy, with request-scoped bindings, interactive React components, and Server Functions.
+This example renders a greeting from Cloudflare Worker bindings and calls a Server Function from an interactive React page, without Alchemy.
 
 ## Usage
 
-Use the [runnable application](src/entry.effront.tsx) to render a greeting from Worker bindings and interact with it in the browser.
-At `/`, the page shows `Hello from Cloudflare Workers`; clicking `Count: 0` changes the counter to `Count: 1`, and clicking `Call a Server Function` displays `Hello from Cloudflare Workers, Ada!`.
-The About link navigates to `/about`, which displays the configured application label.
+In the [runnable application](src/entry.effront.tsx):
+
+1. Open `/` and find `Hello from Cloudflare Workers`, the greeting supplied by the Worker.
+2. Click **Count: 0**. The hydrated counter changes to **Count: 1**.
+3. Click **Call a Server Function**. The result is `Hello from Cloudflare Workers, Ada!`.
+4. Follow **About** to `/about` to see the configured application label.
 
 ## Key features
 
@@ -24,7 +27,7 @@ The About link navigates to `/about`, which displays the configured application 
 
 Use the [example source](src/) as the starting point for your own application.
 Follow [core Setup](../../packages/core/README.md#setup), [Vite Setup](../../packages/vite/README.md#setup), and [Cloudflare Setup](../../packages/cloudflare/README.md#setup) for the runtime and tooling dependencies.
-Acquire the styling integration through [Tailwind Setup](../../packages/tailwind/README.md#setup).
+Install the styling integration through [Tailwind Setup](../../packages/tailwind/README.md#setup).
 
 Its Fetch entry connects the supplied application definition to the Worker:
 
@@ -49,7 +52,12 @@ HEAD /      -> 200 with an empty body
 
 ### `APP_LABEL` and `GREETING`
 
-Set these nonsecret Worker variables in `wrangler.jsonc` to change the About label and the greeting used by both the Home route and Server Function.
+Set these nonsecret Worker variables in `wrangler.jsonc`:
+
+| Variable    | Used by                                            |
+| ----------- | -------------------------------------------------- |
+| `APP_LABEL` | The label on `/about`                              |
+| `GREETING`  | The greeting on `/` and the Server Function result |
 
 ```json
 {

@@ -1,41 +1,45 @@
 # @effront/alchemy
 
-This experimental adapter connects Effront applications to native Alchemy Cloudflare Workers so construction-time capabilities can provide request-local services for streamed pages and Server Functions.
+Serve Effront pages and Server Functions on Alchemy Cloudflare Workers with request-local Effect services.
 
 ## Usage
 
-Use the [native Alchemy example](../../examples/alchemy/src/entry.workers.ts) to serve `Hello from Alchemy KV` from a request-local service backed by an Alchemy KV binding, then invoke its greeting Server Function from the browser.
-Pair that Worker with its [stack](../../examples/alchemy/alchemy.run.ts), [Vite configuration](../../examples/alchemy/vite.config.ts), and [application](../../examples/alchemy/src/entry.effront.tsx) for the complete integration.
-Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@effront/vite` and `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`.
-The compiler owns the React, RSC, SSR, and browser graphs and accepts `application`; the Alchemy adapter accepts only `worker` and adds the native bridge and runtime compilation settings.
-Its `CacheClient` holds an Alchemy-native client, while only the resulting label and greeting reach the rendered page.
-This capability boundary still depends on Alchemy's client type and is not a provider-independent cache abstraction.
+The [native Worker example](../../examples/alchemy/src/entry.workers.ts) supplies a KV client to an Effront application.
+Its home page renders `Hello from Alchemy KV`, and its browser button calls a greeting Server Function using the same request-local service.
+Use its [stack](../../examples/alchemy/alchemy.run.ts), [Vite configuration](../../examples/alchemy/vite.config.ts), and [application](../../examples/alchemy/src/entry.effront.tsx) together.
 
-The official CLI path uses `alchemy dev` orchestration, which injects the host and runtime stack bindings.
-With the pinned beta, even local CLI planning requires a configured Cloudflare profile.
-If it reports `Provider 'Cloudflare' is not configured in profile 'default'`, configure that profile before retrying rather than supplying fake credentials.
-The separate local test host does not establish that Alchemy CLI planning is authentication-free.
-The pinned development host has a [reproduced runtime failure](docs/INTEGRATION.md#compatibility) after planning; a configured profile does not resolve it, and passing production build/preview checks do not establish working development.
+Register the compiler before the Alchemy adapter:
+
+```ts
+import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({ plugins: [effront(), effrontAlchemy()] });
+```
+
+Start native applications through `alchemy dev`, not bare Vite.
+Alchemy supplies the host and stack bindings, so do not add a second Cloudflare runtime plugin.
+If local planning reports `Provider 'Cloudflare' is not configured in profile 'default'`, configure that profile before retrying.
+See [compatibility limits](docs/INTEGRATION.md#compatibility) before changing Alchemy or Effect versions.
 
 ## Key features
 
-- Defer RSC application imports until a Worker request rather than loading them during infrastructure evaluation.
-- Capture capability references during native Worker construction and acquire application Layers per request.
-- Preserve typed application failures for handling at the HTTP boundary.
-- Add Alchemy's official native Worker bridge to the separately registered Effront compiler integration.
-- Support the pinned Worker and native KV runtime APIs with explicit compatibility limits.
+- Use Alchemy resource clients in request-local application services.
+- Retain request resources while pages stream and Server Functions execute.
+- Handle typed application failures at the HTTP boundary.
 
 ## Prerequisites
 
 - **Compatibility**: Alchemy and its Cloudflare runtime `2.0.0-beta.77`, with a coherent Effect `4.0.0-rc.112` family across the application and host.
-- **Toolchain**: VitePlus, matching core React peers, and a native Alchemy Worker configured for the `rsc` entry and `ssr` child environment.
+- **Host**: A configured Cloudflare profile is required for the pinned CLI, including local planning.
 
 ## Setup
 
-After version `0.1.3` is published, install the adapter and matching host dependencies:
+Install the adapter and matching host dependencies:
 
 ```sh
-vp add @effront/alchemy@0.1.3 alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.3 @effront/vite@0.1.3
+vp add @effront/alchemy@0.1.4 alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.4 @effront/vite@0.1.4
 ```
 
 Use the [core runtime peer requirements](../core/README.md#setup) for React and `@effect/platform-browser`.

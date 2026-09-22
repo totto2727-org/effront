@@ -1,10 +1,10 @@
 # @effront/cloudflare
 
-Cloudflare Workers integration for Effront lets you run React Server Components and SSR in workerd and read typed environment bindings inside request Effects.
+Serve Effront applications on Cloudflare Workers and read typed bindings in request Effects.
 
 ## Usage
 
-Render pages using Cloudflare Workers rather than a Node SSR process by registering both integrations in `vite.config.ts`:
+Register both plugins in `vite.config.ts`:
 
 ```ts
 import { defineConfig } from "vite-plus";
@@ -29,28 +29,27 @@ export const greeting = Effect.gen(function* () {
 });
 ```
 
-A Page or request Layer that evaluates `greeting` receives `Hello from Greeting Worker`, which it can render into the HTML response.
+A Page that evaluates `greeting` can render `Hello from Greeting Worker`.
 The [standalone Workers example](../../examples/workers/README.md#usage) provides the complete runnable application and Wrangler configuration.
 The Fetch handler comes from `@effront/core/workers`; import request accessors from `@effront/cloudflare/workers` to avoid loading the Vite plugin in your Worker.
 
 ## Key features
 
 - Execute the `rsc` Worker environment and its `ssr` child in workerd.
-- Nest default SSR output inside the Worker upload directory while preserving explicit output paths.
-- Forward Cloudflare Vite options while keeping Effront's required environment wiring intact.
-- Read typed bindings and the Cloudflare execution context through the existing request-local core Context.
+- Configure Wrangler selection, persistence, and other Cloudflare Vite options.
+- Read typed bindings and the Cloudflare execution context in request Effects.
 
 ## Prerequisites
 
 - **Application**: configure `@effront/core` and the matching `@effront/vite` integration with compatible Effect peers.
-- **Toolchain**: use VitePlus or a compatible Vite installation and a Cloudflare Worker configuration.
+- **Host configuration**: a Wrangler configuration with the application's entry and bindings.
 - **Deployment**: Cloudflare credentials are required when publishing to Cloudflare; local workerd usage does not require an account.
 
 ## Setup
 
 ```sh
-npm install @effront/core@0.1.3 @effront/cloudflare@0.1.3
-npm install --save-dev @effront/vite@0.1.3 @vitejs/plugin-rsc@0.5.34 vite-plus@0.3.1
+npm install @effront/core@0.1.4 @effront/cloudflare@0.1.4
+npm install --save-dev @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35 vite-plus@0.3.1
 ```
 
 Install the [core runtime peers](../core/README.md#setup) as well.
@@ -60,16 +59,9 @@ The Cloudflare Vite plugin is included as this package's dependency.
 
 ### `effrontCloudflare(options?)` and `EffrontCloudflareOptions`
 
-Import these from `@effront/cloudflare` for build configuration.
-The function returns Vite plugins and must be registered alongside `effront()`, as shown in Usage.
+Import from `@effront/cloudflare`.
+The function returns Vite plugins to register alongside `effront()`, as shown in Usage.
 `EffrontCloudflareOptions` accepts the installed `@cloudflare/vite-plugin` options except `viteEnvironment`, which is fixed to the `rsc` Worker and its `ssr` child.
-
-```ts
-import { effrontCloudflare, type EffrontCloudflareOptions } from "@effront/cloudflare";
-
-const options: EffrontCloudflareOptions = {};
-const plugins = effrontCloudflare(options);
-```
 
 The default SSR output is `<rsc output>/ssr`, with RSC output defaulting to `<build.outDir or dist>/rsc`.
 An explicit `environments.ssr.build.outDir` is preserved and must remain available to the host's Worker artifact.
@@ -88,14 +80,14 @@ const { getWorkersEnv, getWorkersRequestContext } = createWorkersContextAccessor
 }>();
 ```
 
-Both readers use the existing core request Context without creating a service or Layer and preserve host object identity.
+Both readers preserve host object identity.
 Omitted Env defaults to `unknown`.
 Types describe host values without validating them at runtime.
 Use them during `createFetchHandler` request processing; outside that context, the core accessor reports a wiring `TypeError`.
 
 ### `getWorkersEnv<Env>()`, `getWorkersRequestContext<Env>()`, and `CloudflareExecutionContext`
 
-The same runtime subpath exposes ready-to-use readers when a shared factory is unnecessary:
+Use the direct readers when you do not need a shared Env type:
 
 ```ts
 import { getWorkersEnv, getWorkersRequestContext } from "@effront/cloudflare/workers";
@@ -109,7 +101,7 @@ const requestLabel = Effect.gen(function* () {
 });
 ```
 
-For a GET with the binding from Usage, `requestLabel` returns `GET: Greeting Worker`.
+For a GET request, `requestLabel` returns `GET: Greeting Worker`.
 `CloudflareExecutionContext` is the exported minimal contract `{ waitUntil(promise: Promise<unknown>): void }`.
 The context reader returns `{ env, request, executionContext }` with this fixed execution-context type.
 For a custom execution-context type as well as Env, use [`createWorkersContextAccessors<Env, ExecutionContext>()` from core](../core/docs/API.md#fetch-and-request-context).

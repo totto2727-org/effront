@@ -1,6 +1,6 @@
 # @effront/core
 
-Effront is a React meta-framework built on Web standards and Effect for rendering streamed pages, sharing request-local services, and calling React Server Functions through a host-neutral HTTP boundary.
+Build React pages and Server Functions with typed routes and request-local Effect services.
 
 ## Usage
 
@@ -40,7 +40,8 @@ import application from "./entry.effront";
 export default { fetch: createFetchHandler(application) };
 ```
 
-With the [Cloudflare integration](../cloudflare/README.md#usage), a browser request to `/` receives HTML containing `Hello, world!`, followed by hydration and client navigation support.
+Register the [Cloudflare integration](../cloudflare/README.md#usage) to serve this Fetch entry.
+A request to `/` returns HTML containing `Hello, world!`.
 The [standalone Workers example](../../examples/workers/README.md#usage) supplies the complete host configuration.
 Native Effect HTTP hosts can instead use [`toHttpEffect` or `makeHttpEffect`](docs/API.md#native-effect-http).
 
@@ -56,25 +57,24 @@ Native Effect HTTP hosts can instead use [`toHttpEffect` or `makeHttpEffect`](do
 
 - **React and Effect**: use versions matching this package's peer dependencies, including the matching `@effect/platform-browser` version.
 - **RSC compilation**: use the matching `@effront/vite` integration and its Vite/React Server Components toolchain.
-- **Host**: configure a supported adapter such as [Cloudflare Workers](../cloudflare/README.md); a portable HTTP boundary does not imply that every runtime or bundler is supported.
+- **Host**: choose [Cloudflare Workers](../cloudflare/README.md), [Node.js or Bun](../server/README.md), or [Alchemy](../alchemy/README.md).
 
 ## Setup
 
 ```sh
-npm install @effront/core@0.1.3
-npm install --save-dev @effront/vite@0.1.3 @vitejs/plugin-rsc@0.5.34
+npm install @effront/core@0.1.4
+npm install --save-dev @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35
 ```
 
 For the current compatibility baseline, install matching runtime peers:
 
 ```sh
-npm install effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112 react@19.3.0-canary-1d34f91d-20260909 react-dom@19.3.0-canary-1d34f91d-20260909
+npm install effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112 react@19.3.0 react-dom@19.3.0
 ```
 
 ## API
 
-The [core API guide](docs/API.md) covers all application factories, page transitions, native HTTP handlers, Fetch handlers, request-context readers, and exported contract types.
-Application authoring imports belong to the RSC graph; `internal/*` entry points are reserved for matching build integrations.
+See the [core API reference](docs/API.md) for application factories, page transitions, HTTP handlers, request-context readers, and contract types.
 
 ## Development
 

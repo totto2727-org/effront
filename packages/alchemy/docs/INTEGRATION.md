@@ -1,8 +1,7 @@
 # Alchemy-native integration
 
-This branch is an experimental Alchemy-first configuration of Effront.
-`@effront/alchemy` is included in the synchronized public Effront release; the integration remains experimental and retains the compatibility limits below.
-Existing package versions remain unchanged for this experiment; a release requires a separate version and publication decision.
+Alchemy constructs infrastructure capabilities before Effront handles requests.
+The adapter connects those two lifetimes without importing the RSC application during construction or serializing host capabilities into rendered output.
 
 ## Boundaries
 
@@ -20,17 +19,14 @@ Core imports neither Alchemy nor Cloudflare.
 `makeHttpEffect(application)` captures application capability references during construction and returns a request handler.
 Neither API runs an independent Effect runtime.
 
-The Alchemy adapter lives under `packages/alchemy/src/cloudflare/`.
-A future AWS integration can add a sibling provider directory and explicit package subpaths without introducing AWS dependencies into core or the Cloudflare entry.
 Native Node/Bun HTTP hosting is provided separately by [`@effront/server`](../../server/README.md), without Alchemy or the Workers Fetch boundary.
-The Alchemy verification described here does not establish Node/Bun runtime guarantees.
-The existing standalone `@effront/cloudflare` and Fetch wrapper remain as compatibility paths with their independent regression fixtures.
+The standalone `@effront/cloudflare` adapter uses the Fetch boundary and has independent regression fixtures.
 
 ## Construction versus requests
 
 Alchemy Worker construction resolves capabilities and records infrastructure bindings.
 It must not import the application eagerly: the application belongs to the RSC graph, while construction runs in the deployment tool and during isolate initialization.
-Use `makeApplicationHttpEffect(() => import("./entry.effront").then(module => module.default))` to defer that import until a request.
+`makeApplicationHttpEffect(() => import("./entry.effront").then(module => module.default))` defers that import until a request.
 The construction Effect captures service references, not ownership of their lifetimes.
 The handler merges the live request context over those references and does not restore a construction-time request, runtime context, router or scope.
 
@@ -49,31 +45,27 @@ Do not acquire request-scoped connections in the Alchemy Worker construction Eff
 6. Render only the resulting application data, never the capability object or host environment.
 
 `CacheClient` stores a reference to the native Alchemy client in Effect Context; it does not serialize values or introduce an RPC boundary.
-The current example deliberately types that service using Alchemy's client type, so it is not an Alchemy-independent cache contract.
+The service uses Alchemy's client type, so it is not an Alchemy-independent cache contract.
 Applications requiring host independence should define their own capability contract, including errors and runtime requirements.
-Alternatively, an application factory can accept the constructed client through a closure; that is a different authoring choice, not a requirement to create another Service.
-The factory variant is not implemented or claimed as verified by this example.
 
 The example also calls a React Server Function that reads the request's KV-backed service.
 KV is eventually consistent; the fixed greeting demonstrates binding use, not a transactional counter or database abstraction.
 
 ## Configuration and Wrangler
 
-Each migrated application has an `alchemy.run.ts`, a native Worker module, and a `vite.config.ts`.
+Each Alchemy application has an `alchemy.run.ts`, a native Worker module, and a `vite.config.ts`.
 `alchemy.run.ts` defines the stack and providers, the Worker declares infrastructure/runtime requirements, and Vite configures the React compilation graphs.
-Register `plugins: [effront(), effrontAlchemy()]`, importing `effront` from `@effront/vite` and `effrontAlchemy` from `@effront/alchemy/cloudflare/vite`.
+The [Vite API](API.md#effrontalchemyoptions-and-effrontalchemyoptions) documents plugin registration and entry options.
 `effront()` owns the React, RSC, SSR, and browser compilation graphs and the application-entry alias; the Alchemy adapter does not register it implicitly.
-Set a custom application entry only through `effront({ application })`; the Alchemy options contain only `worker` for the native Worker module.
 The adapter uses Alchemy's official `makeWorkerBridge`, rather than passing a Promise-based Fetch function to the Worker.
-Register `effront()` before `effrontAlchemy()` so the adapter replaces the portable RSC input before the Cloudflare host captures its Worker entry.
+Registering `effront()` first lets the adapter replace the portable RSC input before the Cloudflare host captures its Worker entry.
 A separate pre-order hook colocates the default SSR output before the portable compiler supplies its generic default, while preserving explicit output directories.
 The native Worker declares `viteEnvironments: { entry: "rsc", children: ["ssr"] }`.
 Do not set a competing `vite.main`: the Effront adapter owns the RSC bridge entry.
 
-The migrated applications do not need a hand-maintained `wrangler.toml` or `wrangler.jsonc`.
-Their old Wrangler files have been removed.
-Vite is still required because it compiles React Server Components, it is not a second infrastructure configuration.
-The standalone legacy test fixtures keep their Wrangler configuration because they deliberately test the non-Alchemy adapter.
+Alchemy supplies the host configuration, so these applications do not maintain a separate Wrangler file.
+Vite remains responsible for React compilation, not infrastructure.
+Standalone Workers fixtures retain Wrangler configuration to test the non-Alchemy adapter.
 
 Alchemy CLI injects the Cloudflare runtime host and the bindings registered during native construction.
 Applications do not import the runtime plugin or inspect `ALCHEMY_CLOUDFLARE_VITE_INJECTED`.

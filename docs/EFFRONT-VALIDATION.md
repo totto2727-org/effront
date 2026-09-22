@@ -1,5 +1,9 @@
 # Effront rename and plugin boundaries
 
+Historical evidence for the rename and compiler-integration milestone follows.
+Versions, paths, commands, and observations describe that milestone, not the current checkout.
+For current development commands, use [AGENTS.md](../AGENTS.md).
+
 ## Current public surface
 
 The framework package is `@effront/core`, located at `packages/core`.

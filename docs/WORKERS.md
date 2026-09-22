@@ -1,13 +1,14 @@
 # Workers architecture
 
-This document describes the Workers framework and its Vite integration.
+Workers hosting separates request-scoped application services from three rendering graphs: RSC, SSR, and browser.
+The separation keeps host bindings out of the rendering protocol and lets Wrangler attach the server modules required by a built Worker.
 The upstream base is `ed886996d1d3780b94166af4f798c53416d547c8`.
 
 ## Goal
 
-Expose a Workers-native Fetch handler and run the same application in Cloudflare's Vite development environment and Wrangler's local built-output host.
-D1 and other storage integrations are intentionally deferred by the user.
-No container, Bun process, cloud deployment, PR, or npm publishing is required.
+Run the same Workers-native Fetch application in Cloudflare's Vite development environment and Wrangler's local built-output host.
+The original milestone required no container, Bun process, cloud deployment, PR, or npm publishing.
+Its storage integrations were deferred.
 
 ## Runtime boundaries
 
@@ -15,7 +16,7 @@ No container, Bun process, cloud deployment, PR, or npm publishing is required.
 flowchart TD
   Host[Workers fetch request / env / executionContext] --> Adapter[@effront/core/workers createFetchHandler]
   Adapter --> Context[Request-scoped Effect context and application Layer]
-  Context --> HTTP[Effect HttpRouter.toWebHandler]
+  Context --> HTTP[Effect HttpEffect.toWebHandler]
   HTTP --> RSC[RSC graph: application and Flight rendering]
   RSC --> SSR[SSR graph: renderHtml]
   RSC --> Flight[Flight Web stream]
@@ -24,66 +25,78 @@ flowchart TD
   Flight --> Browser
 ```
 
-`createFetchHandler` creates the application Layer for each request, not once globally.
-This permits Layer acquisition to access the current environment and avoids sharing request-specific resources across Workers requests.
-Both Layer acquisition and the handler's Effect context receive the same Workers context.
-The response body's EOF, error, or cancellation owns request-scope disposal.
+### Request context and resource lifetime
 
-`getWorkersEnv<Env>()` and `getWorkersRequestContext<Env, ExecutionContext>()` retrieve typed host values without copying them into a serialization format.
-`createWorkersContextAccessors<Env, ExecutionContext>()` binds both types once and returns zero-argument Effect-producing readers of the same request Context.
-The generic defaults are unknown for both types.
-`@effront/cloudflare/workers` wraps the factory with a fixed `{ waitUntil(promise: Promise<unknown>): void }` execution context and accepts only Env.
-Its runtime export is separate from the package's Vite plugin entry.
-Factories create readers, not additional services or Layers, and preserve request/env/execution-context object identity.
-Type parameters are compile-time contracts rather than runtime validation.
-The latter exposes `request`, `env`, and `executionContext`.
-Type arguments are caller assertions, not validation of runtime bindings.
-Developers remain responsible for not explicitly rendering secrets or passing bindings into Client Components.
+`createFetchHandler` acquires the application Layer for each request rather than sharing it globally.
+Layer acquisition and request handling receive the same Workers context, so services can read the current bindings without sharing request-owned resources.
+The response body's EOF, error, or cancellation closes the request scope.
 
-The RSC graph imports `@vitejs/plugin-rsc/rsc/server`.
-HTML rendering loads the separate SSR entry with `import.meta.viteRsc.loadModule("ssr", "index")`.
-Only the Flight Web stream and rendering options cross that boundary, not the environment or execution context.
+| Reader                                                   | Result                                                            |
+| -------------------------------------------------------- | ----------------------------------------------------------------- |
+| `getWorkersEnv<Env>()`                                   | The host's environment bindings                                   |
+| `getWorkersRequestContext<Env, ExecutionContext>()`      | The original `request`, `env`, and `executionContext` objects     |
+| `createWorkersContextAccessors<Env, ExecutionContext>()` | Zero-argument Effect-producing readers with both types bound once |
+
+Both core type parameters default to `unknown`.
+The `@effront/cloudflare/workers` factory accepts only `Env` and fixes the execution context to `{ waitUntil(promise: Promise<unknown>): void }`.
+Its runtime export is separate from the Cloudflare Vite plugin entry.
+Factories create readers of the existing context, not additional services or Layers.
+Type parameters assert the host contract rather than validating bindings at runtime.
+
+Bindings are not serialized implicitly.
+Applications must still avoid rendering secrets or passing bindings into Client Components.
+
+### Rendering graphs
+
+The RSC graph imports `@vitejs/plugin-rsc/rsc/server` and loads the separate HTML renderer with `import.meta.viteRsc.loadModule("ssr", "index")`.
+Only the Flight Web stream and rendering options cross into SSR, not the environment or execution context.
 The SSR graph uses the edge-compatible React DOM renderer and the plugin's SSR Flight client.
 The browser graph uses the plugin's browser Flight client and hydration entry.
 
 ## Host and build ownership
 
-`@effront/vite` exports the host-independent `effront()` plugin, which owns React, Vite RSC, and the React compiler.
-`@effront/cloudflare` exports `effrontCloudflare()`, which owns only the Cloudflare plugin plus the required Worker/SSR environment and SSR-output layout invariants.
-Workers applications register both explicitly: `plugins: [effront(), effrontCloudflare()]`.
-Cloudflare options, when needed, are passed directly to `effrontCloudflare(...)` rather than nested beneath a `cloudflare` property; the ordinary configuration uses `effrontCloudflare()` with no options.
+Workers applications register `plugins: [effront(), effrontCloudflare()]`.
+`@effront/vite` owns React, Vite RSC, and the React compiler.
+`@effront/cloudflare` owns the Cloudflare plugin, Worker/SSR environment wiring, and SSR output layout.
 Do not register React or Vite RSC plugins a second time.
-For native Node or Bun hosting instead of Cloudflare, use the separate [`@effront/server` integration](../packages/server/README.md); the Workers wiring described here remains unchanged.
-The default RSC entry is the application's `src/entry.workers.ts`, which exports the Workers Fetch object.
-The application-definition entry defaults to `src/entry.effront.tsx` and directly exports the application definition.
-Despite its name, this definition module stays in the RSC graph rather than becoming the browser hydration entry.
-The framework provides the SSR and browser entries.
-The Cloudflare wrapper owns the required `viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] }`.
-Other Cloudflare options are passed directly to `effrontCloudflare(options)` and forwarded without disabling state persistence or remote bindings.
-The wrapper does not set server host, port, strict-port mode, project root, or a Wrangler config path.
-Vite runs from the application directory and uses normal configuration discovery.
 
-VitePlus drives Vite and builds the graph-specific outputs.
-Wrangler runs the generated `examples/workers/dist/rsc/wrangler.json` using `--local --no-bundle`.
-The wrapper places SSR output inside the Worker upload root (by default `dist/rsc/ssr`) so dynamically loaded SSR modules are attached by Wrangler.
-Emitting SSR as a sibling `dist/ssr` builds successfully but fails in Wrangler at runtime because that module is not attached to the Worker.
-Workers assets are host-owned, not Bun filesystem middleware.
-The example's Cloudflare configuration owns the assets binding and runtime variables.
-It omits `run_worker_first` and relies on Cloudflare's default asset-first routing.
-The generated Wrangler configuration supplies the built client asset directory.
-Worker-first routing remains an explicit application choice for cases such as protecting asset requests or overriding a conflicting static URL.
+| Entry                   | Owner and purpose                                                      |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `src/entry.workers.ts`  | Application-owned default RSC entry exporting the Workers Fetch object |
+| `src/entry.effront.tsx` | Application-owned definition export, kept in the RSC graph             |
+| SSR and browser entries | Framework-provided HTML rendering and hydration                        |
+
+The application definition is not the browser hydration entry.
+For native Node or Bun hosting, use the separate [`@effront/server` integration](../packages/server/README.md).
+
+The Cloudflare adapter owns `viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] }`.
+Other options are passed directly to `effrontCloudflare(options)`, not nested under `cloudflare`.
+The ordinary configuration uses `effrontCloudflare()` without options.
+The adapter forwards those options without disabling state persistence or remote bindings.
+It does not set host, port, strict-port mode, project root, or a Wrangler config path.
+Vite uses normal configuration discovery from the application directory.
+
+### SSR output and static assets
+
+VitePlus builds the graph-specific outputs.
+Wrangler runs the generated `examples/workers/dist/rsc/wrangler.json` using `--local`.
+The adapter nests SSR output inside the Worker upload root, by default at `dist/rsc/ssr`, so Wrangler attaches dynamically loaded SSR modules.
+A sibling `dist/ssr` can compile successfully but fail at runtime because Wrangler has not attached it to the Worker.
+
+Cloudflare owns static assets.
+The example config supplies the assets binding and runtime variables, while the generated Wrangler config supplies the built client asset directory.
+The example omits `run_worker_first`, using Cloudflare's default asset-first routing.
+Worker-first routing is an application choice when protecting asset requests or overriding a conflicting static URL.
 Changing Wrangler runtime variables must not require rebuilding the application.
 
-Packages expose built JavaScript and declaration files through explicit package exports; Vite bundles those entries into the application.
-The workspace consumer exercises the actual `@effront/core`, `@effront/vite`, `@effront/cloudflare`, and `@effront/core/workers` exports.
-This is not a claim of standalone unbundled Node compatibility or published-package readiness.
+Packages expose built JavaScript and declarations through explicit exports, which Vite bundles into the application.
+The workspace consumer uses the actual `@effront/core`, `@effront/vite`, `@effront/cloudflare`, and `@effront/core/workers` exports.
+That consumer alone does not establish unbundled Node compatibility or published-package readiness.
 
 ## Tooling
 
-`vite.config.ts` at the repository root owns formatting, lint, and unit-test configuration.
-Formatting and lint rules use VitePlus defaults, matching the source monorepo's baseline formatting.
-Ignore patterns only exclude dependencies and generated or temporary output.
-The workspace contains the framework and its Workers example.
+The root `vite.config.ts` owns formatting, lint, and unit-test configuration with VitePlus's default formatting and lint rules.
+Ignore patterns exclude dependencies and generated or temporary output.
 
 ## Verification contract
 
@@ -94,15 +107,15 @@ The workspace contains the framework and its Workers example.
 - Browser checks cover HTML, Flight, hydrated interaction, navigation, unknown routes, and secret non-disclosure.
 - Successful compilation alone does not establish Workers runtime or hydration correctness.
 
-[Observed verification results](WORKERS-VALIDATION.md) map each requirement to its completed local checks.
+[Historical verification results](WORKERS-VALIDATION.md) map the Workers migration requirements to the checks observed at each milestone.
 
 ## Scope
 
-The upstream CLI, Bun server/filesystem hosting, Rspack build machinery, development panel/RPC, Vercel adapter, obsolete examples, and vendored research snapshots have been removed.
-Their history is preserved by Git.
+The upstream CLI, Bun server/filesystem hosting, Rspack build machinery, development panel/RPC, Vercel adapter, obsolete examples, and vendored research snapshots were removed.
+Git preserves their history.
 The original Workers milestone did not deliver Node/Bun adapters or establish their compatibility.
-The subsequent `@effront/server` package hosts the native Effect HTTP handler separately; the Workers validation evidence above does not establish its runtime guarantees.
-D1, KV, R2, authentication integrations, and production deployment remain outside the user's requested scope.
+The subsequent `@effront/server` package hosts native Effect HTTP separately and is not validated by the Workers evidence.
+D1, KV, R2, authentication integrations, and production deployment were outside that original milestone.
 
 ## Official references
 

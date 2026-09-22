@@ -1,10 +1,19 @@
 # @effront/server
 
-Native Effect HTTP hosting for Effront applications on Node.js and Bun, with static assets and a separate Vite development integration.
+Serve Effront pages and static assets on Node.js or Bun with native Effect HTTP.
 
 ## Usage
 
-Serve a compiled RSC handler and its browser assets on Node.js without a Fetch shim:
+Export your application's HTTP handler from `src/entry.rsc.ts`:
+
+```ts
+import { toHttpEffect } from "@effront/core/http";
+import application from "./entry.effront";
+
+export const handler = toHttpEffect(application);
+```
+
+Start the Node.js server from `src/entry.server.ts`:
 
 ```ts
 import { NodeRuntime } from "@effect/platform-node";
@@ -26,16 +35,29 @@ serve(handler, {
 }).pipe(Layer.launch, NodeRuntime.runMain);
 ```
 
-The server responds with streamed HTML, serves the generated browser modules and styles, and keeps Effect request scopes alive through streaming and client cancellation.
-The Bun variant uses `serve` from `@effront/server/bun` and `BunRuntime.runMain` from `@effect/platform-bun`.
+With the [Vite plugin](#api) below, this entry is emitted as `dist/rsc/server.js` and serves the application at `http://127.0.0.1:3000`.
+The asset paths are relative to that compiled file, not the launch directory.
+For Bun, change the imports and launcher in the `src/entry.server.ts` example above, leaving the asset options unchanged:
+
+```ts
+// Replace the Node.js imports in src/entry.server.ts with these Bun imports.
+import { BunRuntime } from "@effect/platform-bun";
+import { serve } from "@effront/server/bun";
+import { Layer } from "effect";
+```
+
+```ts
+// At the end of the existing serve(...) call, replace NodeRuntime.runMain.
+}).pipe(Layer.launch, BunRuntime.runMain);
+```
+
 The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](../../examples/bun/src/entry.server.ts) are complete application examples.
 
 ## Key features
 
 - Native `NodeHttpServer` and `BunHttpServer` Layers, owned by standard Effect lifetime management.
-- RSC, SSR and browser compilation without process-wide React server conditions.
 - Standard Effect static asset lookup, ETags, HEAD, conditional requests and single byte ranges.
-- Vite dev and preview middleware without a second listener or Cloudflare dependency.
+- Vite development and preview integration.
 
 ## Prerequisites
 
@@ -46,41 +68,85 @@ The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](..
 
 ## Setup
 
-This package is introduced by the current change and is not yet available from the registry.
-Link an already prepared checkout into a consumer:
+Install the adapter and Node.js platform dependencies:
 
 ```sh
-vp link /absolute/path/to/effront/packages/server
-vp add @effect/platform-node@4.0.0-rc.112 effect@4.0.0-rc.112
+vp add @effront/server@0.1.4 @effect/platform-node@4.0.0-rc.112 effect@4.0.0-rc.112
 ```
 
 For Bun production, additionally install `@effect/platform-bun@4.0.0-rc.112`.
 The `/vite` tooling entry needs `@effect/platform-node` even when the production application uses Bun.
-Acquire the [portable Vite integration and its peers](../vite/README.md#setup) separately.
+Install the [Vite integration and its peers](../vite/README.md#setup) separately.
 
 ## API
 
-- `@effront/server/node` and `/bun`: `serve(handler, options)` returns a scoped Layer. `options.assets` is required, `port` defaults to `3000`, and `hostname` defaults to `127.0.0.1`. Use `0.0.0.0` explicitly when exposing the listener outside the local machine.
-- `@effront/server/assets`: `withAssets(handler, options)` constructs a native Effect HTTP handler using the caller's FileSystem and Path services plus Effect's standard `HttpStaticServer.make` and lazy-stream `HttpPlatform.layer`. Configure a dedicated `client` root with a non-root absolute URL prefix and an optional public root. Filesystem lookup happens when requests arrive, without startup directory validation.
-- `@effront/server/vite`: `effrontServer({ rsc?, server? })` is registered after `effront()`. Defaults are `src/entry.rsc.ts` (named `handler` Effect export) and `src/entry.server.ts` (production startup). Keep the application definition in `src/entry.effront.tsx`.
+### `serve(handler, options)`
+
+Import from `@effront/server/node` or `@effront/server/bun`.
+Returns a scoped Layer to launch with `Layer.launch` and the matching platform's `runMain`, as in Usage.
+Both subpaths export `ServeOptions`:
+
+| Option     | Default       | Purpose                                                                                 |
+| ---------- | ------------- | --------------------------------------------------------------------------------------- |
+| `assets`   | Required      | Client and optional public file mounts described below.                                 |
+| `port`     | `3000`        | HTTP listener port.                                                                     |
+| `hostname` | `"127.0.0.1"` | Listener address. Use `"0.0.0.0"` to accept connections from outside the local machine. |
+
+Application service requirements remain in the returned Layer's type.
+The server retains request scopes through streaming completion, failure, or cancellation.
+
+### `effrontServer({ rsc?, server? })`
+
+Import from `@effront/server/vite` and register after `effront()`:
 
 ```ts
-plugins: [effront(), effrontServer()];
+import { effrontServer } from "@effront/server/vite";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({ plugins: [effront(), effrontServer()] });
 ```
 
+The exported `EffrontServerOptions` type has two optional paths relative to the Vite root:
+
+- `rsc`: defaults to `src/entry.rsc.ts`, which must export a named `handler` Effect.
+- `server`: defaults to `src/entry.server.ts`, the production startup module.
+
+Empty entry paths throw `TypeError`.
+Keep the application definition in `src/entry.effront.tsx`, or set its path with `effront({ application })`.
 Vite development and preview use Node-compatible middleware, not the Bun production server.
 Use the production Bun entry to exercise Bun-only APIs.
-Default sample paths assume `dist/rsc/server.js`, `dist/client/assets`, and URL prefix `/assets/`; adjust the explicit mounts if you customize Vite output or base URLs.
-Public files are exact matches only, without directory indexes or SPA fallback.
-Missing files under the client prefix return 404 rather than entering application routes.
-Static MIME types, cache headers, weak ETags, ranges and conditional responses follow Effect `4.0.0-rc.112`, not a separate Effront HTTP implementation.
-HEAD and 304 do not acquire file streams because assets use Effect's portable lazy filesystem streams on both hosts, rather than native Node streams or `Bun.file` responses.
-The host still owns stream completion and cancellation; custom caller `HttpPlatform` or ETag services do not change asset responses.
-Unsupported, multipart and unsafe-integer ranges are ignored, while an unsatisfiable valid single range returns 416.
-In this Effect version, `If-Range` is ignored and Range is evaluated even for HEAD, which can return 206 or 416 without a body.
-The standard 416 response includes `Content-Range` but no asset cache or validator headers.
-Path decoding, normalization and traversal handling are delegated to `HttpStaticServer`.
-Serve trusted deployment/public directories; their contents and symlinks are the consumer's responsibility, outside Effront's support guarantees.
+
+### `withAssets(handler, options)`
+
+Import from `@effront/server/assets` when composing your own Effect HTTP host.
+It returns a construction Effect requiring `FileSystem` and `Path`, whose result is the request handler.
+The `serve` helpers apply it automatically.
+
+The subpath also exports `AssetOptions` and `AssetMount`:
+
+- `client`: a required mount with filesystem `root`, a dedicated non-root absolute URL `prefix`, and optional `cacheControl`.
+- `public`: an optional mount with `root` and optional `cacheControl`, served at matching URL paths.
+- `cacheControl`: defaults to `"public, max-age=0, must-revalidate"` for either mount. Use immutable caching only for hashed files.
+
+The Usage example assumes `dist/client/assets` at `/assets/`.
+Adjust the mounts when changing Vite output directories or base URLs.
+
+> [!WARNING]
+> Use trusted deployment/public directories. Their contents and symlinks are your responsibility.
+
+Roots are checked on requests, not at startup.
+
+### Static HTTP behavior
+
+- Only GET and HEAD requests use static assets. Other methods reach the application.
+- A missing client asset returns 404. A public-file miss falls through to the application.
+- Public mounts serve exact files, without directory indexes or SPA fallback. Flight and Server Function requests bypass them.
+- MIME types, weak ETags, conditional requests, path decoding, normalization, and traversal handling follow Effect `4.0.0-rc.112`'s `HttpStaticServer`.
+- HEAD and 304 do not open file streams. The host owns stream completion and cancellation. Caller-provided `HttpPlatform` or ETag services do not change asset responses.
+- Satisfiable single byte ranges return 206. Unsupported, multipart, and unsafe-integer ranges are ignored.
+- An unsatisfiable single range returns 416 with `Content-Range`, but without asset cache or validator headers.
+- In this Effect version, `If-Range` is ignored. Range is evaluated for HEAD, which can return 206 or 416 without a body.
 
 ## Development
 

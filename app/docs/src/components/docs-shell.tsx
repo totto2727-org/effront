@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { localizedPath, type DocLocale } from "../content/locale";
 import { ArrowLeftIcon, ArrowRightIcon, ExternalLinkIcon, SearchIcon } from "lucide-react";
 import {
   Sidebar,
@@ -24,13 +25,18 @@ type NavigationItem = Readonly<{ slug: string; title: string; section: string; g
 type Heading = Readonly<{ id: string; title: string }>;
 
 export type DocsShellProps = Readonly<{
+  locale?: DocLocale;
   current: NavigationItem;
   navigation: readonly NavigationItem[];
   headings: readonly Heading[];
   children: React.ReactNode;
 }>;
 
-function DocsNavigation({ current, navigation }: Pick<DocsShellProps, "current" | "navigation">) {
+function DocsNavigation({
+  current,
+  navigation,
+  locale = "ja",
+}: Pick<DocsShellProps, "current" | "navigation" | "locale">) {
   const [query, setQuery] = React.useState("");
   const { setOpenMobile } = useSidebar();
   const filtered = navigation.filter((item) =>
@@ -62,7 +68,7 @@ function DocsNavigation({ current, navigation }: Pick<DocsShellProps, "current" 
     <>
       <SidebarHeader>
         <a
-          href="/"
+          href={localizedPath("/", locale)}
           className="rounded-md px-2 py-1 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
           <span className="block font-mono text-sm font-semibold tracking-tight">Effront</span>
@@ -71,7 +77,7 @@ function DocsNavigation({ current, navigation }: Pick<DocsShellProps, "current" 
           </span>
         </a>
         <label className="relative block px-1">
-          <span className="sr-only">ガイドを絞り込む</span>
+          <span className="sr-only">{locale === "en" ? "Filter guides" : "ガイドを絞り込む"}</span>
           <SearchIcon
             aria-hidden="true"
             className="pointer-events-none absolute top-2.5 left-3 size-3.5 text-muted-foreground"
@@ -79,7 +85,7 @@ function DocsNavigation({ current, navigation }: Pick<DocsShellProps, "current" 
           <SidebarInput
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="ガイドを検索"
+            placeholder={locale === "en" ? "Search guides" : "ガイドを検索"}
             className="pl-7"
           />
         </label>
@@ -117,7 +123,7 @@ function DocsNavigation({ current, navigation }: Pick<DocsShellProps, "current" 
         ))}
         {filtered.length === 0 && (
           <p className="px-5 py-4 text-sm text-sidebar-foreground/60">
-            一致するガイドはありません。
+            {locale === "en" ? "No guides match your search." : "一致するガイドはありません。"}
           </p>
         )}
       </SidebarContent>
@@ -128,21 +134,26 @@ function DocsNavigation({ current, navigation }: Pick<DocsShellProps, "current" 
           target="_blank"
           rel="noreferrer"
         >
-          effective-rsc 公式サイト <ExternalLinkIcon aria-hidden="true" className="size-3" />
+          {locale === "en" ? "effective-rsc website" : "effective-rsc 公式サイト"}{" "}
+          <ExternalLinkIcon aria-hidden="true" className="size-3" />
         </a>
       </SidebarFooter>
     </>
   );
 }
 
-function PreviousNext({ current, navigation }: Pick<DocsShellProps, "current" | "navigation">) {
+function PreviousNext({
+  current,
+  navigation,
+  locale = "ja",
+}: Pick<DocsShellProps, "current" | "navigation" | "locale">) {
   const index = navigation.findIndex((item) => item.slug === current.slug);
   const previous = index > 0 ? navigation[index - 1] : undefined;
   const next = index >= 0 && index < navigation.length - 1 ? navigation[index + 1] : undefined;
   if (!previous && !next) return null;
   return (
     <nav
-      aria-label="前後のページ"
+      aria-label={locale === "en" ? "Previous and next pages" : "前後のページ"}
       className="mt-16 grid gap-3 border-t border-border pt-7 sm:grid-cols-2"
     >
       {previous ? (
@@ -151,7 +162,7 @@ function PreviousNext({ current, navigation }: Pick<DocsShellProps, "current" | 
           className="group rounded-lg border border-border p-4 outline-none hover:border-foreground/25 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <ArrowLeftIcon className="size-3" /> 前のページ
+            <ArrowLeftIcon className="size-3" /> {locale === "en" ? "Previous page" : "前のページ"}
           </span>
           <span className="mt-1 block font-medium group-hover:text-emerald-700">
             {previous.title}
@@ -166,7 +177,7 @@ function PreviousNext({ current, navigation }: Pick<DocsShellProps, "current" | 
           className="group rounded-lg border border-border p-4 text-right outline-none hover:border-foreground/25 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
-            次のページ <ArrowRightIcon className="size-3" />
+            {locale === "en" ? "Next page" : "次のページ"} <ArrowRightIcon className="size-3" />
           </span>
           <span className="mt-1 block font-medium group-hover:text-emerald-700">{next.title}</span>
         </a>
@@ -175,26 +186,32 @@ function PreviousNext({ current, navigation }: Pick<DocsShellProps, "current" | 
   );
 }
 
-export function DocsShell({ current, navigation, headings, children }: DocsShellProps) {
+export function DocsShell({
+  current,
+  navigation,
+  headings,
+  children,
+  locale = "ja",
+}: DocsShellProps) {
   return (
     <SidebarProvider defaultOpen>
       <a href="#main-content" className="skip-link">
-        本文へ移動
+        {locale === "en" ? "Skip to content" : "本文へ移動"}
       </a>
       <Sidebar>
-        <DocsNavigation current={current} navigation={navigation} />
+        <DocsNavigation current={current} navigation={navigation} locale={locale} />
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-20 flex min-h-15 items-center gap-3 border-b border-border/80 bg-background/90 px-4 py-2 backdrop-blur md:px-8">
           <SidebarTrigger aria-label="Toggle Sidebar" className="md:hidden" />
-          <nav aria-label="パンくずリスト" className="min-w-0">
+          <nav aria-label={locale === "en" ? "Breadcrumbs" : "パンくずリスト"} className="min-w-0">
             <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
               <li>
                 <a
-                  href="/"
+                  href={localizedPath("/", locale)}
                   className="rounded-sm outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  ドキュメント
+                  {locale === "en" ? "Documentation" : "ドキュメント"}
                 </a>
               </li>
               {[current.section, ...(current.group ? [current.group] : []), current.title].map(
@@ -216,11 +233,39 @@ export function DocsShell({ current, navigation, headings, children }: DocsShell
               )}
             </ol>
           </nav>
+          <nav
+            aria-label={locale === "en" ? "Language" : "言語"}
+            className="ml-auto flex shrink-0 gap-2 text-xs"
+          >
+            <a
+              href={localizedPath(current.slug, "en")}
+              hrefLang="en"
+              lang="en"
+              aria-current={locale === "en" ? "true" : undefined}
+              className="rounded px-1 py-2 underline-offset-4 hover:underline aria-current:font-semibold"
+            >
+              English
+            </a>
+            <a
+              href={localizedPath(current.slug, "ja")}
+              hrefLang="ja"
+              lang="ja"
+              aria-current={locale === "ja" ? "true" : undefined}
+              className="rounded px-1 py-2 underline-offset-4 hover:underline aria-current:font-semibold"
+            >
+              日本語
+            </a>
+          </nav>
         </header>
         <div className="mx-auto grid w-full max-w-[90rem] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_11rem]">
           <main id="main-content" className="min-w-0 px-5 py-10 sm:px-8 sm:py-14 lg:px-14">
             <noscript>
-              <nav aria-label="ドキュメントナビゲーション" className="docs-noscript-nav">
+              <nav
+                aria-label={
+                  locale === "en" ? "Documentation navigation" : "ドキュメントナビゲーション"
+                }
+                className="docs-noscript-nav"
+              >
                 <p>
                   <strong>Effront</strong> Effect-powered frontends. Fetch-native.
                 </p>
@@ -240,16 +285,16 @@ export function DocsShell({ current, navigation, headings, children }: DocsShell
               </nav>
             </noscript>
             <div className="max-w-3xl">{children}</div>
-            <PreviousNext current={current} navigation={navigation} />
+            <PreviousNext current={current} navigation={navigation} locale={locale} />
           </main>
           <aside
-            aria-label="このページ内"
+            aria-label={locale === "en" ? "On this page" : "このページ内"}
             className="hidden border-l border-border/70 px-6 py-14 lg:block"
           >
             {headings.length > 0 && (
               <nav className="sticky top-23">
                 <p className="mb-3 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                  このページ内
+                  {locale === "en" ? "On this page" : "このページ内"}
                 </p>
                 <ol className="space-y-2 border-l border-border text-sm">
                   {headings.map((heading) => (

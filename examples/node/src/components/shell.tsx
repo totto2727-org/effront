@@ -12,6 +12,9 @@ export function Shell({ children }: { readonly children: ReactNode }) {
         <a className="text-blue-700 underline" href="/about">
           About
         </a>
+        <a className="text-blue-700 underline" href="/loading">
+          Loading / Suspense
+        </a>
       </nav>
       <main className="max-w-3xl">{children}</main>
     </>

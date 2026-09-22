@@ -1,15 +1,17 @@
 # Cross-package documentation index
 
-This directory is a developer/reference index, not a consumer package README.
 For application setup and public APIs, start with the [Effront README](../README.md).
+For framework maintenance, choose the reference below that matches your change.
 
 ## Shared architecture and operations
 
-- [Workers architecture](WORKERS.md): core, Vite, Cloudflare, and browser graph boundaries.
-- [Test boundaries](TESTING.md): cross-package unit, integration, browser, and HMR ownership.
-- [Release policy](PUBLISHING.md): shared packaging, npm CI, version policy, and publication authorization.
-- [Roadmap](ROADMAP.md): deferred features and host adapters spanning the framework.
-- [Upstream provenance](UPSTREAM.md): retained history, licenses, and incorporation records.
+| Maintainer task                                  | Reference                          |
+| ------------------------------------------------ | ---------------------------------- |
+| Change core, Vite, or Cloudflare boundaries      | [Workers architecture](WORKERS.md) |
+| Select unit, integration, browser, or HMR checks | [Test boundaries](TESTING.md)      |
+| Prepare package versions or publication          | [Release policy](PUBLISHING.md)    |
+| Evaluate a deferred feature or host adapter      | [Roadmap](ROADMAP.md)              |
+| Compare or incorporate upstream changes          | [Upstream provenance](UPSTREAM.md) |
 
 ## Owner-specific guides
 
