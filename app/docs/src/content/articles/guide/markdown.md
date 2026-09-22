@@ -1,6 +1,8 @@
 Markdown の記事を Effront アプリケーションのページとして表示し、記事へのリンクやローカルアセットの参照を公開 URL に解決できます。
 この例では、`@effront/markdown` と Comark の React レンダラーで記事を表示します。
 
+[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+
 ## 記事を追加する {#setup}
 
 コレクションとパーサー、React レンダラーをアプリケーションにインストールします。
@@ -92,7 +94,7 @@ export default EFFRONT.make({
 });
 ```
 
-`/manual/intro` を開くと、Layout の内側に記事が表示されます。
+[http://127.0.0.1:1340/manual/intro](http://127.0.0.1:1340/manual/intro) を開くと、Layout の内側に記事が表示されます。
 余白や色を加えるには [Styling](./styling.md) を参照してください。
 
 次の記事には `src/content/details.md` を追加し、Page を `/manual/details` に登録します。

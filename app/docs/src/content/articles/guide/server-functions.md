@@ -3,6 +3,8 @@ Server Function を使うと、フォームや Client Component からサーバ�
 以下の挨拶フォームは、React の `useActionState` でサーバーの応答を表示します。
 戻り値が不要なフォームには、[直接 action に渡す方法](#forms)を使えます。
 
+[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+
 ## アプリケーション定義を共有する {#identity}
 
 `src/effront.ts` を作り、同じ `EFFRONT` をアプリケーションエントリーと Server Function のモジュールで import します。
@@ -95,7 +97,7 @@ export default EFFRONT.make({
 });
 ```
 
-`/` を開いて `Ada` を入力し、**Greet** を選びます。
+[http://127.0.0.1:1340](http://127.0.0.1:1340) を開いて `Ada` を入力し、**Greet** を選びます。
 送信後、フォームに `Hello, Ada.` と表示されます。
 
 ## 状態を返さずに送信する {#forms}

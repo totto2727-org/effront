@@ -1,5 +1,5 @@
 `@effront/server` は Node.js と Bun 向けに、ネイティブ Effect HTTP ホストと静的ファイル配信を提供します。
-インストールと起動ファイルは [Node.js / Bun](../platforms/node-bun.md) を参照してください。
+インストールと起動ファイルは [Node.js](../platforms/node.md) と [Bun](../platforms/bun.md) を参照してください。
 
 ## effrontServer {#vite}
 
@@ -47,7 +47,7 @@ Bun 固有の実行時動作を確認するには、Vite プレビューでは�
 | `hostname`                  | 省略可能な文字列。既定値 `127.0.0.1`。 |
 
 起動前に、残りのアプリケーションサービス Layer を提供します。
-[Node.js の起動例](../platforms/node-bun.md#node) を参照してください。
+[Node.js の起動例](../platforms/node.md#node) を参照してください。
 既定のアドレスはローカル接続だけを受け付けます。
 `0.0.0.0` などのアドレスは、他のマシンにもリスナーを公開します。
 Bun のサーバーは、リクエスト本文に 10 MiB の上限も適用します。

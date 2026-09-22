@@ -13,7 +13,7 @@
 
 ## サーバー側の表示を再利用する {#server}
 
-[Routes](./routes.md#pages) のアプリケーションエントリーで `Welcome` を定義し、`HomePage` を置き換えます。
+[Routes](./routes.md#application) のアプリケーションエントリーで `Welcome` を定義し、`HomePage` を置き換えます。
 
 ```tsx
 const Welcome = EFFRONT.Component.make({
@@ -26,7 +26,7 @@ const HomePage = EFFRONT.Page.make({
 ```
 
 既存の `Effect` の import、`EFFRONT`、RootLayout、ルート登録は残します。
-`/` を開くと `Hello, Ada.` と表示されます。
+[http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと `Hello, Ada.` と表示されます。
 データを使う場合は、`render` が返す Effect の中で[アプリケーションサービス](./effect.md)を読み取ります。
 
 ## 操作できる UI を加える {#client-boundary}
@@ -60,7 +60,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-`/` を開いて `Count: 0` をクリックすると、カウンターが増えます。
+[http://127.0.0.1:1340](http://127.0.0.1:1340) を開いて `Count: 0` をクリックすると、カウンターが増えます。
 挨拶は引き続きサーバー側で描画します。
 
 Client Component とその import 先から、サーバー専用のサービスを import しないでください。

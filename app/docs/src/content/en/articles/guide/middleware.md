@@ -1,6 +1,8 @@
 Effront Middleware runs checks or provides request-specific services around page requests and Server Function calls.
 Use it for shared behavior such as checking authentication or making the current user available to application code.
 
+Continue in the running [Getting started sample](./getting-started.md), which serves [http://127.0.0.1:1340](http://127.0.0.1:1340).
+
 ## Choose the request scope {#reach}
 
 Attach Middleware to Routes for page requests, and to the definition that creates a Server Function for its invocations.
@@ -67,7 +69,7 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 export default EFFRONT.make({ routes });
 ```
 
-Visit `/request` to see the request URL.
+Visit [http://127.0.0.1:1340/request](http://127.0.0.1:1340/request) to see the request URL.
 Creating the Page through `RequestEFFRONT` is not enough: its Routes must activate the Middleware too.
 Layouts and Components created through `RequestEFFRONT` can read the service when rendered inside that scope.
 To limit it to one section, mount these Routes inside parent Routes.

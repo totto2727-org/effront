@@ -1,6 +1,8 @@
 Use Effect services to keep application logic separate from the Pages that call it.
 The greeting example gives a Page a replaceable service, with its implementation and lifetime managed through an Effect Layer.
 
+Continue in the running [Getting started sample](./getting-started.md), which serves [http://127.0.0.1:1340](http://127.0.0.1:1340).
+
 ## Use a service in a Page {#service}
 
 Create `src/greeting.ts`:
@@ -49,7 +51,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes, layer: Greeting.layer });
 ```
 
-Open `/` to see `Hello, Ada.`
+Open [http://127.0.0.1:1340](http://127.0.0.1:1340) to see `Hello, Ada.`
 To replace the implementation, pass another Layer that provides `Greeting` without changing the Page.
 
 ## Choose the service scope {#lifetime}

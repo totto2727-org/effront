@@ -1,5 +1,5 @@
 `@effront/server` provides native Effect HTTP hosting and static files for Node.js and Bun.
-For installation and startup files, see [Node.js / Bun](../platforms/node-bun.md).
+For installation and startup files, see [Node.js](../platforms/node.md) and [Bun](../platforms/bun.md).
 
 ## effrontServer {#vite}
 
@@ -47,7 +47,7 @@ Launch the Layer with `Layer.launch` and the matching platform Runtime:
 | `hostname`           | Optional string, default `127.0.0.1`     |
 
 Provide remaining application service Layers before launch.
-See the [Node.js startup example](../platforms/node-bun.md#node).
+See the [Node.js startup example](../platforms/node.md#node).
 The default address accepts local connections only.
 An address such as `0.0.0.0` exposes the listener to other machines.
 Bun's server also enforces a 10 MiB request-body limit.

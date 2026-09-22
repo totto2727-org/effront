@@ -30,6 +30,11 @@ const RetiredArticleRedirects = HttpRouter.middleware(
             status: 308,
           });
         }
+        if (canonicalPath === "/platforms/node-bun") {
+          return HttpServerResponse.redirect(`${destination("/platforms")}${url.search}`, {
+            status: 308,
+          });
+        }
         if (canonicalPath === "/guide/testing") {
           return HttpServerResponse.redirect(
             `${destination("/best-practices/testing")}${url.search}`,
@@ -135,7 +140,8 @@ export default EFFRONT.make({
     .page("/guide/components", documentPage("/guide/components"))
     .page("/guide/effect", documentPage("/guide/effect"))
     .page("/platforms", documentPage("/platforms"))
-    .page("/platforms/node-bun", documentPage("/platforms/node-bun"))
+    .page("/platforms/node", documentPage("/platforms/node"))
+    .page("/platforms/bun", documentPage("/platforms/bun"))
     .page("/platforms/alchemy", documentPage("/platforms/alchemy"))
     .page("/guide/markdown", documentPage("/guide/markdown"))
     .page("/guide/styling", documentPage("/guide/styling"))
@@ -200,7 +206,8 @@ export default EFFRONT.make({
     .page("/ja/guide/components", documentPage("/ja/guide/components"))
     .page("/ja/guide/effect", documentPage("/ja/guide/effect"))
     .page("/ja/platforms", documentPage("/ja/platforms"))
-    .page("/ja/platforms/node-bun", documentPage("/ja/platforms/node-bun"))
+    .page("/ja/platforms/node", documentPage("/ja/platforms/node"))
+    .page("/ja/platforms/bun", documentPage("/ja/platforms/bun"))
     .page("/ja/platforms/alchemy", documentPage("/ja/platforms/alchemy"))
     .page("/ja/guide/markdown", documentPage("/ja/guide/markdown"))
     .page("/ja/guide/styling", documentPage("/ja/guide/styling"))
@@ -265,7 +272,8 @@ export default EFFRONT.make({
     .page("/en/guide/components", documentPage("/en/guide/components"))
     .page("/en/guide/effect", documentPage("/en/guide/effect"))
     .page("/en/platforms", documentPage("/en/platforms"))
-    .page("/en/platforms/node-bun", documentPage("/en/platforms/node-bun"))
+    .page("/en/platforms/node", documentPage("/en/platforms/node"))
+    .page("/en/platforms/bun", documentPage("/en/platforms/bun"))
     .page("/en/platforms/alchemy", documentPage("/en/platforms/alchemy"))
     .page("/en/guide/markdown", documentPage("/en/guide/markdown"))
     .page("/en/guide/styling", documentPage("/en/guide/styling"))

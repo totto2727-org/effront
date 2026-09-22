@@ -1,9 +1,66 @@
-`Page` でページを作り、`Layout` で共通の UI を定義し、`Routes` に URL を登録します。
-ルートパラメーターで URL の値を受け取り、関連するページをグループにまとめてレイアウトや読み込み中の UI を共有できます。
+`Layout` でページ共通の HTML を、`Page` で各ページの内容を定義し、`Routes` で URL に接続します。
+このガイドではトップページから始めて、URL パラメーターと、専用のレイアウトや読み込み表示を持つセクションを追加します。
 
-## Page を登録する {#pages}
+[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+最初の三つのセクションで `src/entry.effront.tsx` の構成要素を説明し、[エントリー全体](#application)でそれらを組み合わせます。
 
-`src/entry.effront.tsx` で Page とルート Layout を作り、Page の URL を登録します。
+## 共通の Layout を定義する {#layouts}
+
+Layout はページを囲む HTML を描画します。
+`children` にはページの内容が入り、ルートをグループ化した場合は子のレイアウトが入ります。
+ルート Layout はドキュメントの `<html>` と `<body>` 要素を提供します。
+
+```tsx
+import { Application } from "@effront/core";
+import { Effect } from "effect";
+
+const EFFRONT = Application.effront();
+
+const RootLayout = EFFRONT.Layout.make({
+  render: ({ children }) =>
+    Effect.succeed(
+      <html lang="en">
+        <body>{children}</body>
+      </html>,
+    ),
+});
+```
+
+`Application.effront()` は、このファイルの Layout、Page、Routes を作るための定義を生成します。
+Layout の `render` は React 要素を含む Effect を返します。
+
+## Page の内容を定義する {#pages}
+
+Page は URL に対応するページの内容を提供します。
+`RootLayout` の後に `HomePage` を定義します。
+
+```tsx
+const HomePage = EFFRONT.Page.make({
+  render: () => Effect.succeed(<h1>Home</h1>),
+});
+```
+
+ここではデータを読み込む必要がないため、`Effect.succeed` で内容を包みます。
+データを使うページでは、`render` の中で[アプリケーションサービス](./effect.md)を読み取り、要素を返せます。
+Page を定義しただけでは、まだ URL は割り当てられません。
+
+## Routes で Layout と Page を接続する {#routes}
+
+`Routes.make` はルートグループを作ります。
+最上位のルートグループに Layout を渡し、`.page(path, page)` で URL パスと Page を関連付けます。
+
+```tsx
+const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
+```
+
+この登録により、ブラウザーが `/` を要求すると `RootLayout` の内側に `HomePage` が描画されます。
+アプリケーションに渡す最上位のルートグループには Layout と少なくとも一つの Page が必要です。
+`.page()` と `.mount()` は新しいルート定義を返すため、その戻り値を保持してください。
+
+## エントリー全体を組み合わせて動かす {#application}
+
+`src/entry.effront.tsx` を次のエントリー全体で置き換えます。
+default export で、設定したルートをアプリケーションに渡します。
 
 ```tsx
 import { Application } from "@effront/core";
@@ -29,14 +86,13 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes });
 ```
 
-`/` を開くと、RootLayout の `children` の位置に `Home` と表示されます。
-ルート Routes には Layout と少なくとも一つの Page が必要です。
-以降の例で `routes` を置き換える際も、default export は残します。
-`.page()` と `.mount()` は新しい定義を返すため、その戻り値を使ってください。
+保存して [http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと、RootLayout の `children` の位置に `Home` と表示されます。
+以降の例で `routes` を置き換える際も、import、各定義、default export は残してください。
 
 ## URL パラメーターを受け取る {#matching}
 
-`effect` の import に `Schema` を追加し、ルートパターンと同じ名前のパラメーターを持つ Page を定義します。
+`effect` の import に `Schema` を追加します。
+既存の `routes` 宣言より前に `ArticlePage` と `ManualPage` を追加し、`routes` 宣言を次のものに置き換えます。
 
 ```tsx
 const ArticlePage = EFFRONT.Page.make({
@@ -55,9 +111,9 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/manual/*path", ManualPage);
 ```
 
-- `/articles/hello` は `hello` と表示します。
-- `/manual/setup/install` は `setup/install` と表示します。
-- `/manual` と `/manual/` では `path` が空文字列になり、`Manual` と表示します。
+- [http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello) は `hello` と表示します。
+- [http://127.0.0.1:1340/manual/setup/install](http://127.0.0.1:1340/manual/setup/install) は `setup/install` と表示します。
+- [http://127.0.0.1:1340/manual](http://127.0.0.1:1340/manual) と [http://127.0.0.1:1340/manual/](http://127.0.0.1:1340/manual/) では `path` が空文字列になり、`Manual` と表示します。
 
 名前付きパラメーターは一つのセグメントを受け取ります。
 catch-all は空文字列を含む残りのパスを受け取り、パターンの末尾にしか置けません。
@@ -70,14 +126,12 @@ Schema は URL デコード済みの文字列を受け取り、デコードし�
 検証や変換には [Effect Schema](https://effect.website/docs/schema/introduction/) を使います。
 GET と HEAD でデコードに失敗すると、クライアントナビゲーション中も描画前に 404 を返します。
 未登録の URL も 404 になります。
-パラメーターの Schema は、ルートの Middleware が提供するサービスを使えます。
-
-Server Function の POST 後のページ更新中にパラメーターのデコードが失敗した場合は、アクションの結果を保持したまま、React のエラー処理で描画が失敗します。
-更新後のページが表示できなかったことだけを理由に、変更操作を再実行しないでください。
+マッチングとデコードの詳しい契約は、[ルーティング API リファレンス](../api-reference/routing.md)を参照してください。
 
 ## セクションの Layout と読み込み表示を追加する {#mount}
 
-子 Routes グループを定義し、固定プレフィックスに mount します。
+既存の `routes` 宣言より前に `ArticleLayout`、`ArticleLoading`、子グループの `articles` を追加します。
+`routes` 宣言を次のものに置き換え、固定プレフィックスに mount します。
 
 ```tsx
 const ArticleLayout = EFFRONT.Layout.make({
@@ -105,7 +159,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .mount("/articles", articles);
 ```
 
-`/articles/hello` では、ArticlePage が ArticleLayout、RootLayout の内側に表示されます。
+[http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello) では、ArticlePage が ArticleLayout、RootLayout の内側に表示されます。
 親にあった `.page("/articles/:slug", ArticlePage)` の登録は残さないでください。
 記事の内容が suspend している間は、ArticleLayout の内側に ArticleLoading が表示されます。
 Loading の `render` は Effect ではなく同期的な ReactNode を返し、すぐに応答が完成する場合は読み込み表示が見えないこともあります。

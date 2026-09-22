@@ -1,116 +1,73 @@
-## Connect your application to a Worker {#setup}
+Run the [Cloudflare Workers example](https://github.com/totto2727-org/effront/tree/main/examples/workers) locally with Vite, then check the built Worker with Wrangler.
+The example uses `@effront/cloudflare` and does not require Alchemy.
 
-Use the dependencies and `src/entry.effront.tsx` application from [Getting started](../guide/getting-started.md).
-Add the Workers adapter and Wrangler:
+## Run the example {#setup}
 
-```bash
-vp add -D @effront/cloudflare@0.1.4 wrangler
-```
-
-Create `src/entry.workers.ts`:
-
-```typescript
-import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.effront";
-
-export default { fetch: createFetchHandler(application) };
-```
-
-## Configure the Worker and build {#vite}
-
-Create `wrangler.jsonc` at the project root:
-
-```json
-{
-  "name": "my-effront-app",
-  "main": "src/entry.workers.ts",
-  "compatibility_date": "2026-09-12",
-  "compatibility_flags": ["nodejs_compat"],
-  "assets": { "binding": "ASSETS" }
-}
-```
-
-Keep `nodejs_compat` and the `ASSETS` binding.
-The build supplies the browser asset directory in the generated Wrangler configuration.
-
-Create `vite.config.ts`:
-
-```typescript
-import { effront } from "@effront/vite";
-import { effrontCloudflare } from "@effront/cloudflare";
-import { defineConfig } from "vite-plus";
-
-export default defineConfig({
-  plugins: [effront(), effrontCloudflare()],
-});
-```
-
-The adapter includes the Cloudflare Vite plugin.
-Pass its options directly to `effrontCloudflare({ ...options })`, not inside a `cloudflare` property.
-Use the [Wrangler configuration reference](https://developers.cloudflare.com/workers/wrangler/configuration/) for additional Worker settings.
-
-## Run and verify your application {#local}
-
-Start development:
+Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then run:
 
 ```bash
+git clone https://github.com/totto2727-org/effront.git
+cd effront
+vp install
+vp exec --filter "./packages/*" -- vp pack
+cd examples/workers
 vp dev
 ```
 
-Open the printed URL and visit a registered route.
-The homepage from Getting started should display `Hello, Effront`.
+Open [http://127.0.0.1:1343](http://127.0.0.1:1343).
+The homepage displays `Hello, world!` and `Hello from Cloudflare Workers`.
+Click `Count: 0` to check that the counter increments.
 
-To check the built Worker, stop the development server and run:
+## Find the Worker configuration {#vite}
+
+The example includes the files needed to run on Workers:
+
+| File                    | Role                                                                                                        |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | Defines the pages, root layout, and routes.                                                                 |
+| `src/entry.workers.ts`  | Exports the Fetch handler created by `createFetchHandler(application)`.                                     |
+| `vite.config.ts`        | Registers `effront()` and `effrontCloudflare()`, adds Tailwind, and fixes the development and preview URLs. |
+| `wrangler.jsonc`        | Sets the Worker entry, compatibility settings, `ASSETS` binding, and application variables.                 |
+| `package.json`          | Lists the adapter, Wrangler, and application dependencies.                                                  |
+
+Edit page content in `src/entry.effront.tsx`.
+Keep the existing `nodejs_compat` flag and `ASSETS` binding when changing Wrangler settings.
+See the [Wrangler configuration reference](https://developers.cloudflare.com/workers/wrangler/configuration/) for other options.
+
+## Preview the built Worker {#local}
+
+Stop development, then run these commands from `examples/workers`:
 
 ```bash
 vp build
-vp exec wrangler dev --local --config dist/rsc/wrangler.json
+vp preview
 ```
 
-Use the generated configuration, not the source `wrangler.jsonc`, so Wrangler loads the built Worker and its browser assets.
-Neither local workflow deploys the application or requires Cloudflare authentication for this configuration.
+Open [http://127.0.0.1:4343](http://127.0.0.1:4343) and check the counter and greeting form.
+To run the built Worker independently of Vite, stop preview and use the generated Wrangler configuration:
 
-## Add application configuration {#context}
-
-To display a configured application name, add `vars` to `wrangler.jsonc`:
-
-```json
-{
-  "vars": {
-    "APP_LABEL": "My Effront App"
-  }
-}
+```bash
+vp exec wrangler dev --local --config dist/rsc/wrangler.json --ip 127.0.0.1 --port 8787
 ```
 
-In `src/entry.effront.tsx`, add the accessor import and declaration below, then replace `HomePage`.
-Keep the existing `Effect` import, `EFFRONT`, layout, and application export.
+Open [http://127.0.0.1:8787](http://127.0.0.1:8787).
+The generated configuration loads the built Worker and its browser assets, rather than the source entry in `wrangler.jsonc`.
+These local commands do not deploy the example or require Cloudflare authentication.
 
-```tsx
-import { createWorkersContextAccessors } from "@effront/cloudflare/workers";
+## Change an application variable {#context}
 
-const { getWorkersEnv } = createWorkersContextAccessors<{ APP_LABEL: string }>();
+In `wrangler.jsonc`, change the existing `APP_LABEL` value to `My Effront App`.
+Keep `GREETING` and the other settings unchanged.
+Restart `vp dev`, then open [http://127.0.0.1:1343/about](http://127.0.0.1:1343/about) to see `My Effront App`.
 
-const HomePage = EFFRONT.Page.make({
-  render: () =>
-    Effect.gen(function* () {
-      const env = yield* getWorkersEnv();
-      return <h1>{env.APP_LABEL}</h1>;
-    }),
-});
-```
+`src/features/greeting/services.ts` reads the variables through `getWorkersEnv` and provides them to the pages as a `Host` service.
+`APP_LABEL` appears on the About page; `GREETING` appears on the homepage and in the greeting Server Function.
+For access to the request or `waitUntil()`, see the [Workers context accessors](../api-reference/workers.md).
 
-Restart development after changing Wrangler configuration, then open `/` to see `My Effront App`.
-Read environment values inside the request handled by `createFetchHandler`, such as in a Page or request Layer.
-The type argument does not validate values at runtime, so validate required values and formats before using them.
-For the incoming `request`, `executionContext`, or `waitUntil()`, see the [Workers context accessors](../api-reference/workers.md).
+<span id="secrets"></span>
 
-## Keep credentials on the server {#secrets}
+For credentials rather than display text, use [Cloudflare secrets](https://developers.cloudflare.com/workers/configuration/environment-variables/) instead of `vars`.
 
-Store credentials as Cloudflare secrets, not in `vars`.
-Follow [Cloudflare's environment variables documentation](https://developers.cloudflare.com/workers/configuration/environment-variables/) for local secret configuration.
-Reading an environment value does not send it to the browser, but rendering it in JSX or passing it as a Client Component prop does.
-Return only the values intended for display.
+## Manage resources with Alchemy {#alchemy}
 
-## Use Alchemy instead {#alchemy}
-
-To define the Worker and its resources in code, use the [Alchemy setup](./alchemy.md) instead of this Wrangler setup.
+To define the Worker and its resources in code, start with the separate [Alchemy example](./alchemy.md).

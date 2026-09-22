@@ -150,8 +150,8 @@ test("sidebar DOM and latest scroll position survive article, previous-next and 
   });
   const offset = await sidebar.evaluate((node) => node.scrollTop);
   expect(offset).toBeGreaterThan(0);
-  await page.locator('article a[href="/platforms/node-bun"]').click();
-  await expect(page).toHaveURL(/\/platforms\/node-bun$/);
+  await page.locator('article a[href="/platforms/bun"]').click();
+  await expect(page).toHaveURL(/\/platforms\/bun$/);
   await expect.poll(() => sidebar.evaluate((node) => node.scrollTop)).toBe(offset);
   expect(await sidebarNode?.evaluate((node) => node.isConnected)).toBe(true);
   await page.getByRole("navigation", { name: "前後のページ" }).getByRole("link").last().click();
@@ -162,7 +162,7 @@ test("sidebar DOM and latest scroll position survive article, previous-next and 
   });
   const latest = await sidebar.evaluate((node) => node.scrollTop);
   await page.goBack();
-  await expect(page).toHaveURL(/\/platforms\/node-bun$/);
+  await expect(page).toHaveURL(/\/platforms\/bun$/);
   await expect.poll(() => sidebar.evaluate((node) => node.scrollTop)).toBe(latest);
   await page.goForward();
   await expect(page).toHaveURL(/\/platforms\/alchemy$/);
@@ -173,15 +173,18 @@ test("sidebar DOM and latest scroll position survive article, previous-next and 
 test("Markdown headings scroll natively and highlighted code remains selectable and keyboard reachable", async ({
   page,
 }) => {
-  await page.goto("/platforms/node-bun");
-  await page.getByRole("complementary", { name: "このページ内" }).locator('a[href="#bun"]').click();
-  await expect(page).toHaveURL(/#bun$/);
+  await page.goto("/guide/routes");
+  await page
+    .getByRole("complementary", { name: "このページ内" })
+    .locator('a[href="#application"]')
+    .click();
+  await expect(page).toHaveURL(/#application$/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
   const code = page
     .locator("article pre[data-code-block]")
-    .filter({ hasText: "import { NodeRuntime }" });
+    .filter({ hasText: "export default EFFRONT.make({ routes })" });
   await expect(code).toHaveAttribute("tabindex", "0");
-  await expect(code).toContainText('import { NodeRuntime } from "@effect/platform-node";');
+  await expect(code).toContainText('import { Application } from "@effront/core";');
   const token = code.locator('span[style*="--shiki-dark"]').first();
   await expect(token).toBeAttached();
   expect(await token.evaluate((node) => getComputedStyle(node).color)).not.toBe("rgb(0, 0, 0)");
@@ -242,6 +245,7 @@ test("unknown and historical removed routes return real HTML and Flight 404 resp
 });
 
 for (const { retired, canonical } of [
+  { retired: "/platforms/node-bun", canonical: "/platforms" },
   {
     retired: "/advanced/production-startup",
     canonical: "/platforms",
@@ -295,7 +299,7 @@ test.describe("retired startup bookmark without JavaScript", () => {
     await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
     await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
     await expect(page.locator("article h2#support")).toBeVisible();
-    await expect(page.locator('article a[href="/platforms/node-bun"]')).toBeVisible();
+    await expect(page.locator('article a[href="/platforms/bun"]')).toBeVisible();
   });
 });
 
@@ -321,3 +325,22 @@ test("native Flight navigation follows the retired URL while preserving the shel
   expect(await search?.evaluate((node) => node.isConnected)).toBe(true);
   await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
 });
+
+for (const prefix of ["", "/en", "/ja"]) {
+  test.describe(`retired native-host bookmarks ${prefix || "unprefixed"}`, () => {
+    test.use({ javaScriptEnabled: false });
+    for (const fragment of ["setup", "entries", "assets", "node", "bun"]) {
+      test(`preserves the ${fragment} anchor and query with both host choices`, async ({
+        page,
+      }) => {
+        await page.goto(`${prefix}/platforms/node-bun?from=bookmark#${fragment}`);
+        await expect(page).toHaveURL(`${prefix}/platforms?from=bookmark#${fragment}`);
+        await expect(page.locator(`article #${fragment}`)).toBeAttached();
+        for (const host of ["node", "bun"]) {
+          await expect(page.locator(`article a[href="${prefix}/platforms/${host}"]`)).toBeVisible();
+        }
+        await expect(page.locator('a[href*="node-bun"]')).toHaveCount(0);
+      });
+    }
+  });
+}

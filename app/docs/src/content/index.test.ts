@@ -31,7 +31,8 @@ const retainedUrls = [
   "/guide/http",
   "/platforms",
   "/platforms/cloudflare",
-  "/platforms/node-bun",
+  "/platforms/node",
+  "/platforms/bun",
   "/platforms/alchemy",
   "/guide/markdown",
   "/guide/styling",
@@ -201,29 +202,36 @@ describe("documentation catalog", () => {
 
   it("describes implemented hosts and separates Bun production from Vite middleware", async () => {
     const platforms = await render("/platforms");
-    for (const host of ["cloudflare", "alchemy", "node-bun"]) {
+    for (const host of ["cloudflare", "alchemy", "node", "bun"]) {
       expect(platforms).toContain(`href="/platforms/${host}"`);
     }
     for (const adapter of ["@effront/cloudflare", "@effront/alchemy", "@effront/server"]) {
       expect(platforms).toContain(adapter);
     }
-    const native = await text("/platforms/node-bun");
+    for (const host of ["node", "bun"]) {
+      const native = await text(`/platforms/${host}`);
+      for (const required of [
+        `${host} dist/rsc/server.js`,
+        `@effront/server/${host}`,
+        "effrontServer()",
+        "dist/client/assets",
+        "vp dev",
+        "vp preview",
+        "vp run start",
+      ]) {
+        expect(native).toContain(required);
+      }
+      expect(await render(`/platforms/${host}`)).toContain('href="/api-reference/server"');
+    }
+    const bun = await text("/platforms/bun");
     for (const required of [
-      "node dist/rsc/server.js",
-      "bun dist/rsc/server.js",
       "Bun 1.4.2",
       "@effect/platform-node",
       "@effect/platform-bun",
-      "effrontServer()",
-      "Layer.launch",
-      "dist/client/assets",
-      "vp dev",
+      "Node 互換",
     ]) {
-      expect(native).toContain(required);
+      expect(bun).toContain(required);
     }
-    expect(await render("/platforms/node-bun")).toContain(
-      'href="/best-practices/testing#production"',
-    );
     const testing = await render("/best-practices/testing");
     expect(testing).toContain('href="https://playwright.dev/docs/test-webserver"');
     expect(testing).toContain('href="/guide/server-functions"');
@@ -241,6 +249,114 @@ describe("documentation catalog", () => {
       expect(lifetime).toContain(contract);
     }
   });
+
+  it.each(["en", "ja"] as const)(
+    "links runnable platform examples and their configured URLs in %s",
+    async (locale) => {
+      const repository = new URL("../../../../", import.meta.url);
+      for (const [slug, example, port] of [
+        ["node", "node", 1341],
+        ["bun", "bun", 1342],
+        ["cloudflare", "workers", 1343],
+      ] as const) {
+        const html = await render(`/${locale}/platforms/${slug}`);
+        const prose = await text(`/${locale}/platforms/${slug}`);
+        const config = readFileSync(
+          new URL(`examples/${example}/vite.config.ts`, repository),
+          "utf8",
+        );
+        expect(config).toContain(`server: { host: "127.0.0.1", port: ${port}, strictPort: true }`);
+        expect(config).toContain(
+          `preview: { host: "127.0.0.1", port: ${port + 3000}, strictPort: true }`,
+        );
+        for (const value of [port, port + 3000]) {
+          expect(html).toContain(`href="http://127.0.0.1:${value}"`);
+        }
+        expect(html).toContain(
+          `href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"`,
+        );
+        for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
+          expect(prose).toContain(file);
+          expect(readFileSync(new URL(`examples/${example}/${file}`, repository), "utf8")).not.toBe(
+            "",
+          );
+        }
+        expect(prose).toContain(`cd examples/${example}`);
+        expect(prose).toContain("vp exec --filter &quot;./packages/*&quot; -- vp pack");
+        expect(prose).not.toContain("vp add");
+      }
+      const alchemy = await render(`/${locale}/platforms/alchemy`);
+      expect(alchemy).toContain(
+        'href="https://github.com/totto2727-org/effront/tree/main/examples/alchemy"',
+      );
+      expect(alchemy).toContain('href="http://localhost:1337"');
+      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello from Alchemy KV");
+      expect(
+        readFileSync(new URL("examples/alchemy/src/entry.workers.ts", repository), "utf8"),
+      ).toContain('dev: { host: "localhost", port: 1337, strictPort: true }');
+      const chooser = await render(`/${locale}/platforms`);
+      for (const id of ["setup", "entries", "assets", "node", "bun"]) {
+        expect(chooser).toContain(`id="${id}"`);
+      }
+      expect(chooser).not.toContain("node-bun");
+      expect(() => getPage(`/${locale}/platforms/node-bun`)).toThrow(
+        "Documentation route is missing content",
+      );
+    },
+  );
+
+  it.each(["en", "ja"] as const)(
+    "introduces Layout, Page, Routes, then the complete entry in %s",
+    (locale) => {
+      const directory = locale === "en" ? "en/articles" : "articles";
+      const source = readFileSync(
+        new URL(`./${directory}/guide/routes.md`, import.meta.url),
+        "utf8",
+      );
+      const sections = source.split(/^## /m).slice(1);
+      expect(sections.slice(0, 4).map((section) => section.match(/\{#([^}]+)\}/)?.[1])).toEqual([
+        "layouts",
+        "pages",
+        "routes",
+        "application",
+      ]);
+      const code = (section: string) => section.match(/```tsx\n([\s\S]*?)\n```/)?.[1] ?? "";
+      expect(code(sections[0]!)).toContain("EFFRONT.Layout.make");
+      expect(code(sections[0]!)).not.toContain("EFFRONT.Page.make");
+      expect(code(sections[1]!)).toContain("EFFRONT.Page.make");
+      expect(code(sections[1]!)).not.toContain("EFFRONT.Routes.make");
+      expect(code(sections[2]!)).toContain(
+        'Routes.make({ layout: RootLayout }).page("/", HomePage)',
+      );
+      expect(code(sections[3]!)).toContain("export default EFFRONT.make({ routes })");
+      expect(source).toContain("http://127.0.0.1:1340/articles/hello");
+    },
+  );
+
+  it.each(["en", "ja"] as const)(
+    "gives executable guide steps the running sample's explicit origin in %s",
+    async (locale) => {
+      for (const [guide, path] of [
+        ["getting-started", ""],
+        ["routes", ""],
+        ["components", ""],
+        ["effect", ""],
+        ["server-functions", ""],
+        ["middleware", "/request"],
+        ["markdown", "/manual/intro"],
+        ["http", "/api/greeting"],
+      ]) {
+        expect(await render(`/${locale}/guide/${guide}`)).toContain(
+          `href="http://127.0.0.1:1340${path}"`,
+        );
+      }
+      const config = readFileSync(
+        new URL("../../../../examples/hello-world/vite.config.ts", import.meta.url),
+        "utf8",
+      );
+      expect(config).toContain('server: { host: "127.0.0.1", port: 1340, strictPort: true }');
+    },
+  );
 
   it.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
     "%s indexes every public package export and the manifest release version",

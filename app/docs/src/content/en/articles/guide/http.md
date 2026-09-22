@@ -41,7 +41,7 @@ export default EFFRONT.make({ routes, layer: ApplicationLayer });
 ```
 
 `Layer.provideMerge` supplies `Greeting` to the route registration and retains it for the Page.
-Request `/api/greeting` on your application's origin.
+Open [http://127.0.0.1:1340/api/greeting](http://127.0.0.1:1340/api/greeting).
 Expect status `200`, content type `application/json`, and:
 
 ```json

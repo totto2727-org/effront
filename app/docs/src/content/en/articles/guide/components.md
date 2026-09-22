@@ -13,7 +13,7 @@ Keep data access on the server and add Client Components only where interaction 
 
 ## Reuse server-rendered UI {#server}
 
-In the application entry from [Routes](./routes.md#pages), define `Welcome` and replace `HomePage` with:
+In the application entry from [Routes](./routes.md#application), define `Welcome` and replace `HomePage` with:
 
 ```tsx
 const Welcome = EFFRONT.Component.make({
@@ -26,7 +26,7 @@ const HomePage = EFFRONT.Page.make({
 ```
 
 Keep the entry's `Effect` import, `EFFRONT`, RootLayout, and route registration.
-Opening `/` displays `Hello, Ada.`
+Opening [http://127.0.0.1:1340](http://127.0.0.1:1340) displays `Hello, Ada.`
 For data-backed UI, read [application services](./effect.md) inside the Effect returned by `render`.
 
 ## Add an interactive control {#client-boundary}
@@ -60,7 +60,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open `/` and click `Count: 0` to increment the counter.
+Open [http://127.0.0.1:1340](http://127.0.0.1:1340) and click `Count: 0` to increment the counter.
 The greeting remains server-rendered.
 
 Keep server-only service imports out of Client Components and the modules they import.

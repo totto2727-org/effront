@@ -11,7 +11,7 @@ vp install
 node --run dev
 ```
 
-Open [http://localhost:1340](http://localhost:1340).
+Open [http://127.0.0.1:1340](http://127.0.0.1:1340).
 The page displays `Hello, world`.
 
 ## Explore the sample {#application}

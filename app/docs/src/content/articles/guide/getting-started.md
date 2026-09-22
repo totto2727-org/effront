@@ -11,7 +11,7 @@ vp install
 node --run dev
 ```
 
-[http://localhost:1340](http://localhost:1340) を開くと、`Hello, world` が表示されます。
+[http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと、`Hello, world` が表示されます。
 
 ## サンプルの構成を見る {#application}
 

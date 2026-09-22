@@ -55,8 +55,10 @@ Global HTTP middleware already redirects these retired paths for HTML and Flight
 | ------------------------------ | ------------------------- |
 | `/advanced/production-startup` | `/platforms`              |
 | `/guide/testing`               | `/best-practices/testing` |
+| `/platforms/node-bun`          | `/platforms`              |
 
 Only the destinations appear in the catalog and navigation.
+The platform chooser retains the former Node.js/Bun heading IDs as anchor targets, including `node` and `bun` beside their respective guide links.
 Content tests check catalog coverage, declared headings, and rendered internal article links.
 
 ## Content ownership and rendering

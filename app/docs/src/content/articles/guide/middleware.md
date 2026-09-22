@@ -1,6 +1,8 @@
 Effront の Middleware は、ページのリクエストや Server Function の呼び出しに対して、事前のチェックやリクエスト固有のサービスの提供を行います。
 認証の確認や、アプリケーションから現在のユーザーを参照できるようにする処理などを共通化できます。
 
+[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+
 ## 適用するリクエストを選ぶ {#reach}
 
 ページへのリクエストには Routes に、Server Function の呼び出しにはその関数を作る定義に Middleware を付けます。
@@ -67,7 +69,7 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 export default EFFRONT.make({ routes });
 ```
 
-`/request` を開くと、リクエスト URL が表示されます。
+[http://127.0.0.1:1340/request](http://127.0.0.1:1340/request) を開くと、リクエスト URL が表示されます。
 `RequestEFFRONT` から Page を作るだけでは不十分で、Routes でも Middleware を有効にする必要があります。
 `RequestEFFRONT` から作った Layout と Component も、このスコープ内で描画される場合にサービスを読み取れます。
 一つのセクションに限定するには、この Routes を親 Routes に mount します。

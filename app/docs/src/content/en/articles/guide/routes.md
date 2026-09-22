@@ -1,9 +1,66 @@
-Build pages with `Page`, share their UI with `Layout`, and register their URLs with `Routes`.
-Route parameters provide values from the URL, while nested route groups let related pages share a layout and loading UI.
+Use `Layout` for the HTML shared by pages, `Page` for each page's content, and `Routes` to connect them to URLs.
+This guide starts with a homepage, then adds URL parameters and a section with its own layout and loading UI.
 
-## Register a Page {#pages}
+Use the running [Getting started sample](./getting-started.md) at [http://127.0.0.1:1340](http://127.0.0.1:1340).
+The first three sections explain the parts of `src/entry.effront.tsx`; the [complete entry](#application) puts them together.
 
-In `src/entry.effront.tsx`, create a Page and a root Layout, then register the Page's URL:
+## Define the shared Layout {#layouts}
+
+A Layout renders the HTML around a page.
+Its `children` value is the page content, or a nested layout when routes are grouped.
+The root Layout provides the document's `<html>` and `<body>` elements.
+
+```tsx
+import { Application } from "@effront/core";
+import { Effect } from "effect";
+
+const EFFRONT = Application.effront();
+
+const RootLayout = EFFRONT.Layout.make({
+  render: ({ children }) =>
+    Effect.succeed(
+      <html lang="en">
+        <body>{children}</body>
+      </html>,
+    ),
+});
+```
+
+`Application.effront()` creates the definition used to make the Layout, Pages, and Routes in this file.
+The Layout's `render` returns an Effect containing its React elements.
+
+## Define the Page content {#pages}
+
+A Page supplies the content for a URL.
+Define `HomePage` after `RootLayout`:
+
+```tsx
+const HomePage = EFFRONT.Page.make({
+  render: () => Effect.succeed(<h1>Home</h1>),
+});
+```
+
+Here, `Effect.succeed` wraps content that does not need to load data.
+For data-backed pages, `render` can read [application services](./effect.md) before returning its elements.
+Defining the Page alone does not give it a URL.
+
+## Connect the Layout and Page with Routes {#routes}
+
+`Routes.make` creates a route group.
+Give the root group its Layout, then use `.page(path, page)` to associate a URL path with a Page:
+
+```tsx
+const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
+```
+
+This registration renders `HomePage` inside `RootLayout` when the browser requests `/`.
+The root group needs a Layout and at least one Page.
+Calls to `.page()` and `.mount()` return new route definitions, so keep their return values.
+
+## Run the complete application entry {#application}
+
+Replace `src/entry.effront.tsx` with the complete entry below.
+The default export gives the configured routes to the application.
 
 ```tsx
 import { Application } from "@effront/core";
@@ -29,14 +86,13 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes });
 ```
 
-Open `/` to see `Home` where RootLayout renders `children`.
-The root Routes must have a Layout and at least one Page.
-Keep the default export when replacing `routes` in the following examples.
-Calls to `.page()` and `.mount()` return new definitions, so use their return values.
+Save, then open [http://127.0.0.1:1340](http://127.0.0.1:1340) to see `Home` where RootLayout renders `children`.
+Keep the imports, definitions, and default export when replacing `routes` in the following examples.
 
 ## Read URL parameters {#matching}
 
-Add `Schema` to the `effect` import and define Pages with parameter names matching their route patterns:
+Add `Schema` to the `effect` import.
+Add `ArticlePage` and `ManualPage` before the existing `routes` declaration, then replace that declaration with the one below:
 
 ```tsx
 const ArticlePage = EFFRONT.Page.make({
@@ -55,9 +111,9 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/manual/*path", ManualPage);
 ```
 
-- `/articles/hello` displays `hello`.
-- `/manual/setup/install` displays `setup/install`.
-- `/manual` and `/manual/` supply an empty `path` and display `Manual`.
+- [http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello) displays `hello`.
+- [http://127.0.0.1:1340/manual/setup/install](http://127.0.0.1:1340/manual/setup/install) displays `setup/install`.
+- [http://127.0.0.1:1340/manual](http://127.0.0.1:1340/manual) and [http://127.0.0.1:1340/manual/](http://127.0.0.1:1340/manual/) supply an empty `path` and display `Manual`.
 
 A named parameter captures one segment.
 A terminal catch-all captures the remaining path, including an empty string, and must be last in the pattern.
@@ -70,14 +126,12 @@ Schemas receive URL-decoded strings and pass their decoded values to `render`.
 Use [Effect Schema](https://effect.website/docs/schema/introduction/) to validate or transform them.
 For GET and HEAD, a decoding failure returns 404 before rendering, including during client navigation.
 Unregistered URLs also return 404.
-A parameter Schema can use services supplied by the route's Middleware.
-
-If parameter decoding fails during the page refresh after a Server Function POST, the action's result is preserved and rendering fails through React's error handling.
-Do not retry a mutation merely because the refreshed page failed.
+For the complete matching and decoding contract, see the [routing API reference](../api-reference/routing.md).
 
 ## Add a section layout and loading UI {#mount}
 
-Define a child Routes group and mount it at a fixed prefix:
+Add `ArticleLayout`, `ArticleLoading`, and the child `articles` group before the existing `routes` declaration.
+Replace that declaration with the one below to mount the group at a fixed prefix:
 
 ```tsx
 const ArticleLayout = EFFRONT.Layout.make({
@@ -105,7 +159,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .mount("/articles", articles);
 ```
 
-At `/articles/hello`, ArticlePage appears inside ArticleLayout and RootLayout.
+At [http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello), ArticlePage appears inside ArticleLayout and RootLayout.
 Do not retain the earlier `.page("/articles/:slug", ArticlePage)` registration on the parent.
 ArticleLoading appears inside ArticleLayout while the article content suspends.
 Its `render` returns a synchronous ReactNode, not an Effect, and an immediate response may not show it visibly.

@@ -1,6 +1,8 @@
 Publish Markdown content as pages in your Effront application, with article links and local assets resolved to their public URLs.
 The example renders an article with `@effront/markdown` and Comark's React renderer.
 
+Continue in the running [Getting started sample](./getting-started.md), which serves [http://127.0.0.1:1340](http://127.0.0.1:1340).
+
 ## Add an article {#setup}
 
 Install the collection/parser and React renderer in your application:
@@ -91,7 +93,7 @@ export default EFFRONT.make({
 });
 ```
 
-Open `/manual/intro` to see the article inside your Layout.
+Open [http://127.0.0.1:1340/manual/intro](http://127.0.0.1:1340/manual/intro) to see the article inside your Layout.
 Use [Styling](./styling.md) to add spacing and colors.
 
 For a second article, add `src/content/details.md` and register its Page at `/manual/details`.

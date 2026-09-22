@@ -4,6 +4,8 @@ import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  server: { host: "127.0.0.1", port: 1343, strictPort: true },
+  preview: { host: "127.0.0.1", port: 4343, strictPort: true },
   plugins: [effrontTailwind(), effront(), effrontCloudflare()],
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],

@@ -8,7 +8,7 @@ export default class App extends Cloudflare.Worker<App>()(
   "App",
   {
     main: import.meta.url,
-    dev: { port: 1337 },
+    dev: { host: "localhost", port: 1337, strictPort: true },
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
   },

@@ -36,7 +36,7 @@ for (const reader of locales) {
     await expect(commands).toHaveText(
       "git clone https://github.com/totto2727-org/effront.git\ncd effront/examples/hello-world\nvp install\nnode --run dev",
     );
-    await expect(page.locator('article a[href="http://localhost:1340"]')).toBeVisible();
+    await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toBeVisible();
     await expect(
       page.locator(
         'article a[href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"]',
@@ -63,22 +63,70 @@ for (const reader of locales) {
     ).toBeVisible();
   });
 
-  test(`${reader.locale} reader chooses Node.js and finds development and production start commands`, async ({
+  for (const [host, example, dev, preview] of [
+    ["node", "node", "http://127.0.0.1:1341", "http://127.0.0.1:4341"],
+    ["bun", "bun", "http://127.0.0.1:1342", "http://127.0.0.1:4342"],
+    ["cloudflare", "workers", "http://127.0.0.1:1343", "http://127.0.0.1:4343"],
+    ["alchemy", "alchemy", "http://localhost:1337", null],
+  ] as const) {
+    test(`${reader.locale} reader runs the existing ${host} example without assembling host configuration`, async ({
+      page,
+    }) => {
+      await page.goto(`/${reader.locale}/platforms`);
+      await page.locator(`article a[href="/${reader.locale}/platforms/${host}"]`).click();
+      await expect(page).toHaveURL(`/${reader.locale}/platforms/${host}`);
+      await expect(
+        page.locator(
+          `article a[href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"]`,
+        ),
+      ).toBeVisible();
+      await followHeading(page, reader, "setup");
+      const commands = page.locator("article pre code").filter({ hasText: "git clone" });
+      await expect(commands).toContainText(`cd examples/${example}`);
+      await expect(commands).toContainText('vp exec --filter "./packages/*" -- vp pack');
+      await expect(page.locator(`article a[href="${dev}"]`).first()).toBeVisible();
+      for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
+        await expect(
+          page.locator("article table").getByRole("row").filter({ hasText: file }),
+        ).toBeVisible();
+      }
+      if (preview) {
+        await expect(page.locator(`article a[href="${preview}"]`)).toBeVisible();
+        await expect(page.locator("article pre code").filter({ hasText: "vp preview" })).toHaveText(
+          "vp build\nvp preview",
+        );
+      }
+      if (host === "node" || host === "bun") {
+        await followHeading(page, reader, host);
+        await expect(
+          page.locator("article pre code").filter({ hasText: /^vp run start$/ }),
+        ).toBeVisible();
+        await expect(page.locator("article")).toContainText(`${host} dist/rsc/server.js`);
+        await expect(page.locator('article a[href="http://127.0.0.1:3000"]')).toBeVisible();
+        const other = reader.locale === "en" ? "ja" : "en";
+        await page.locator(`a[hreflang="${other}"]`).click();
+        await expect(page).toHaveURL(`/${other}/platforms/${host}`);
+        await expect(page.locator("html")).toHaveAttribute("lang", other);
+      }
+    });
+  }
+
+  test(`${reader.locale} reader learns Layout, Page and Routes before the complete registration`, async ({
     page,
   }) => {
-    await page.goto(`/${reader.locale}/platforms`);
-    await page.locator(`article a[href="/${reader.locale}/platforms/node-bun"]`).click();
-    await expect(page).toHaveURL(`/${reader.locale}/platforms/node-bun`);
-    await followHeading(page, reader, "entries");
-    await expect(page.locator("article pre code").filter({ hasText: /^vp dev\s*$/ })).toBeVisible();
-    await followHeading(page, reader, "node");
-    const startup = page.locator("article pre code").filter({ hasText: "node dist/rsc/server.js" });
-    await expect(startup).toHaveText(/vp build\s+node dist\/rsc\/server\.js/);
-    const server = page.locator("article pre code").filter({ hasText: "NodeRuntime.runMain" });
-    await expect(server).toContainText('from "@effront/server/node"');
-    await expect(server).toContainText('hostname: "127.0.0.1"');
-    await expect(server).toContainText('new URL("../client/assets", import.meta.url)');
-    await expect(server).toContainText('prefix: "/assets/"');
+    await openGuide(page, reader, "/guide/routes");
+    const ids = await page
+      .locator("article h2")
+      .evaluateAll((headings) => headings.map((heading) => heading.id));
+    expect(ids.slice(0, 4)).toEqual(["layouts", "pages", "routes", "application"]);
+    for (const id of ids.slice(0, 4)) await followHeading(page, reader, id);
+    const complete = page
+      .locator("article pre code")
+      .filter({ hasText: "export default EFFRONT.make({ routes })" });
+    await expect(complete).toContainText("EFFRONT.Layout.make");
+    await expect(complete).toContainText("EFFRONT.Page.make");
+    await expect(complete).toContainText('Routes.make({ layout: RootLayout }).page("/", HomePage)');
+    await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toHaveCount(2);
   });
 
   test(`${reader.locale} reader distinguishes default Tailwind setup from optional customization`, async ({

@@ -42,6 +42,7 @@ const locales = [
 ] as const;
 
 const retiredArticles = [
+  { retired: "/platforms/node-bun", canonical: "/platforms", fragment: "#bun" },
   { retired: "/advanced/production-startup", canonical: "/platforms", fragment: "" },
   { retired: "/guide/testing", canonical: "/best-practices/testing", fragment: "#production" },
 ];
@@ -86,7 +87,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
         await expect(page.locator("article h1")).toHaveCSS("font-size", "36px");
 
         const navigation = page.getByRole("navigation", { name: labels.navigation });
-        await expect(navigation.getByRole("link")).toHaveCount(38);
+        await expect(navigation.getByRole("link")).toHaveCount(39);
         expect(
           await navigation
             .getByRole("link")
@@ -189,7 +190,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
         await expect(page.locator("article")).toHaveAttribute("data-doc-page", canonical);
         await expect(page.locator("article h1")).toHaveText(metadata(path).title);
         const navigation = page.getByRole("navigation", { name: labels.navigation });
-        await expect(navigation.getByRole("link")).toHaveCount(38);
+        await expect(navigation.getByRole("link")).toHaveCount(39);
         expect(
           await navigation
             .getByRole("link")
@@ -288,7 +289,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
       if (!destinationArticle) throw new Error(`Missing translated article: ${destination}`);
       await expect(page.locator("article h1")).toHaveText(destinationArticle.title);
       const sidebarLinks = page.locator('[data-slot="sidebar-content"]').getByRole("link");
-      await expect(sidebarLinks).toHaveCount(38);
+      await expect(sidebarLinks).toHaveCount(39);
       expect(
         await sidebarLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
       ).toEqual(
@@ -369,6 +370,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
     "/reading/overview",
     "/advanced/production-startup-extra",
     "/guide/testing-extra",
+    "/platforms/node-bun-extra",
   ]) {
     for (const accept of ["text/html", "text/x-component"]) {
       test(`${localizedUrl(path)} returns a real ${accept} 404`, async ({ request }) => {

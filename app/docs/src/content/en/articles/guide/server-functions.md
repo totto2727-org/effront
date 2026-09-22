@@ -2,6 +2,8 @@ Server Functions let forms and Client Components invoke Effect handlers on the s
 The greeting form below displays the server's reply with React's `useActionState`.
 For a form that does not need a return value, use the [direct action variant](#forms).
 
+Continue in the running [Getting started sample](./getting-started.md), which serves [http://127.0.0.1:1340](http://127.0.0.1:1340).
+
 ## Share the application definition {#identity}
 
 Create `src/effront.ts` and import this same `EFFRONT` in the application entry and Server Function modules:
@@ -95,7 +97,7 @@ export default EFFRONT.make({
 });
 ```
 
-Open `/`, enter `Ada`, and select **Greet**.
+Open [http://127.0.0.1:1340](http://127.0.0.1:1340), enter `Ada`, and select **Greet**.
 The form displays `Hello, Ada.` after submission.
 
 ## Submit without returning state {#forms}
