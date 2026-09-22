@@ -15,7 +15,6 @@ Choose a [host setup](./platforms.md) to run it.
 ## Choose your next guide {#next}
 
 - Render articles with [Markdown](./guide/markdown.md) or add Tailwind CSS with [Styling](./guide/styling.md).
-- Check service lifetimes and screen updates in [Runtime contracts](./advanced.md).
 - Test application logic and browser behavior with [Testing applications](./best-practices/testing.md).
 - Look up options and types in the [API reference](./api-reference.md).
 - Follow the implementation in the [architecture walkthrough](/en/architecture/implementation/overview).

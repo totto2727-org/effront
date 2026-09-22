@@ -25,6 +25,12 @@ const RetiredArticleRedirects = HttpRouter.middleware(
         const prefixed = /^\/(en|ja)(?:\/|$)/.test(url.pathname);
         const destination = (path: string) =>
           prefixed ? localizedPath(path, documentLocale(url.pathname)) : path;
+        if (canonicalPath === "/advanced") {
+          return HttpServerResponse.redirect(
+            `${destination("/advanced/server-function-execution-and-refresh")}${url.search}#execution`,
+            { status: 308 },
+          );
+        }
         if (canonicalPath === "/advanced/production-startup") {
           return HttpServerResponse.redirect(`${destination("/platforms")}${url.search}`, {
             status: 308,
@@ -151,11 +157,14 @@ export default EFFRONT.make({
     .page("/api-reference/alchemy", documentPage("/api-reference/alchemy"))
     .page("/api-reference/tailwind", documentPage("/api-reference/tailwind"))
     .page("/platforms/cloudflare", documentPage("/platforms/cloudflare"))
+    .page(
+      "/best-practices/authentication-and-authorization",
+      documentPage("/best-practices/authentication-and-authorization"),
+    )
     .page("/best-practices/testing", documentPage("/best-practices/testing"))
     .page("/guide/server-functions", documentPage("/guide/server-functions"))
     .page("/guide/middleware", documentPage("/guide/middleware"))
     .page("/guide/http", documentPage("/guide/http"))
-    .page("/advanced", documentPage("/advanced"))
     .page(
       "/advanced/request-runtime-and-lifetimes",
       documentPage("/advanced/request-runtime-and-lifetimes"),
@@ -217,11 +226,14 @@ export default EFFRONT.make({
     .page("/ja/api-reference/alchemy", documentPage("/ja/api-reference/alchemy"))
     .page("/ja/api-reference/tailwind", documentPage("/ja/api-reference/tailwind"))
     .page("/ja/platforms/cloudflare", documentPage("/ja/platforms/cloudflare"))
+    .page(
+      "/ja/best-practices/authentication-and-authorization",
+      documentPage("/ja/best-practices/authentication-and-authorization"),
+    )
     .page("/ja/best-practices/testing", documentPage("/ja/best-practices/testing"))
     .page("/ja/guide/server-functions", documentPage("/ja/guide/server-functions"))
     .page("/ja/guide/middleware", documentPage("/ja/guide/middleware"))
     .page("/ja/guide/http", documentPage("/ja/guide/http"))
-    .page("/ja/advanced", documentPage("/ja/advanced"))
     .page(
       "/ja/advanced/request-runtime-and-lifetimes",
       documentPage("/ja/advanced/request-runtime-and-lifetimes"),
@@ -283,11 +295,14 @@ export default EFFRONT.make({
     .page("/en/api-reference/alchemy", documentPage("/en/api-reference/alchemy"))
     .page("/en/api-reference/tailwind", documentPage("/en/api-reference/tailwind"))
     .page("/en/platforms/cloudflare", documentPage("/en/platforms/cloudflare"))
+    .page(
+      "/en/best-practices/authentication-and-authorization",
+      documentPage("/en/best-practices/authentication-and-authorization"),
+    )
     .page("/en/best-practices/testing", documentPage("/en/best-practices/testing"))
     .page("/en/guide/server-functions", documentPage("/en/guide/server-functions"))
     .page("/en/guide/middleware", documentPage("/en/guide/middleware"))
     .page("/en/guide/http", documentPage("/en/guide/http"))
-    .page("/en/advanced", documentPage("/en/advanced"))
     .page(
       "/en/advanced/request-runtime-and-lifetimes",
       documentPage("/en/advanced/request-runtime-and-lifetimes"),

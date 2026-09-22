@@ -24,16 +24,17 @@ Each locale has authored articles and a catalog, with no automatic translation o
 
 ### Place the article
 
-| Section                       | Content                                                    |
-| ----------------------------- | ---------------------------------------------------------- |
-| Getting started               | Initial application setup                                  |
-| Platforms                     | Standalone Workers, Alchemy, and native Node.js/Bun setup  |
-| Guides                        | Feature tasks and application-facing runtime contracts     |
-| Best practices                | Application-development recommendations, including testing |
-| API reference                 | Public exports and contracts                               |
-| Architecture / アーキテクチャ | Seven source-based implementation chapters                 |
+| Section                       | Content                                                          |
+| ----------------------------- | ---------------------------------------------------------------- |
+| Getting started               | Initial application setup                                        |
+| Platforms                     | Standalone Workers, Alchemy, and native Node.js/Bun setup        |
+| Guides                        | Feature tasks, client navigation, and Server Function results    |
+| Best practices                | Authentication and authorization, service lifetimes, and testing |
+| API reference                 | Public exports and contracts                                     |
+| Architecture / アーキテクチャ | Seven source-based implementation chapters                       |
 
-Runtime contracts remain grouped under 実行時の契約, and Architecture chapters under 実装解説.
+Guides and Best practices list their articles directly, without a Runtime behavior subgroup.
+Architecture chapters remain grouped under Implementation / 実装解説.
 Keep contributor commands and framework test implementation out of the consumer testing article.
 
 ### Preserve URLs and heading links
@@ -51,13 +52,15 @@ Keep published URLs and heading IDs when moving sidebar groups.
 If a canonical URL changes, retain a compatibility route or permanent redirect.
 Global HTTP middleware already redirects these retired paths for HTML and Flight, preserving the locale prefix and query string:
 
-| Retired path                   | Destination               |
-| ------------------------------ | ------------------------- |
-| `/advanced/production-startup` | `/platforms`              |
-| `/guide/testing`               | `/best-practices/testing` |
-| `/platforms/node-bun`          | `/platforms`              |
+| Retired path                   | Destination                                                 |
+| ------------------------------ | ----------------------------------------------------------- |
+| `/advanced`                    | `/advanced/server-function-execution-and-refresh#execution` |
+| `/advanced/production-startup` | `/platforms`                                                |
+| `/guide/testing`               | `/best-practices/testing`                                   |
+| `/platforms/node-bun`          | `/platforms`                                                |
 
 Only the destinations appear in the catalog and navigation.
+The `/advanced` redirect sets `#execution` explicitly, including for bookmarks with the former `#chapters` fragment.
 The platform chooser retains the former Node.js/Bun heading IDs as anchor targets, including `node` and `bun` beside their respective guide links.
 Content tests check catalog coverage, declared headings, and rendered internal article links.
 

@@ -71,12 +71,38 @@ export const update = EFFRONT.ServerFn.make({
 入力のデコード失敗や未処理のハンドラー失敗は呼び出しを reject し、`Output` や次の action state にはなりません。
 想定内のドメインエラーをフォームの状態に表示する場合は、シリアライズ可能な結果として返してください。
 
+Schema のデコードは、身元や権限を証明しません。
+レコード ID、hidden フィールド、`previousState` は、クライアント由来の値です。
+
 ## 実行上の制約 {#execution}
 
-保護された操作の前に、ハンドラーまたはその [ミドルウェア](/ja/guide/middleware) で認証と認可を行う必要があります。
-検証済みの識別子、hidden フィールド、前の状態もクライアント由来のデータであり、権限の証明にはなりません。
-検証にスコープ付きサービスが必要なら、対応する `EFFRONT.withMiddleware(...)` ファクトリーから関数を作ります。
-関数はそのアプリケーション ID とミドルウェアチェーンを保持します。
+`EFFRONT.withMiddleware(...)` から作った関数は、そのアプリケーション ID とミドルウェアチェーンを保持します。
+関数のミドルウェアは、実行と更新後のレスポンスを包みます。
+ページと関数それぞれのアクセス権の確認は、[認証と認可](/ja/best-practices/authentication-and-authorization)を参照してください。
 
 RSC やその他のサーバーコードで直接 `await` して呼び出すと、`TypeError` で reject します。
 他のサーバーコードでも必要な処理は通常の Effect に切り出し、両方から呼び出してください。
+
+## リクエストプロトコル {#request-protocol}
+
+Server Function の POST リクエストには、共通の [HTTP ボディサイズと `Content-Length` の制限](./http.md#handler)が適用されます。
+[Fetch ハンドラー](./workers.md#fetch)にも同じ制限を記載しています。
+ブラウザーからの呼び出しでは、Effront は React の引数デコーダーに `arraySizeLimit: 10_000` を渡します。
+
+| 条件                                                                                                                            | ステータス |
+| ------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `Origin` がない、URL として解析できない、`Host` がない、または Origin の URL の `host` が小文字にした `Host` ヘッダーと異なる。 | `403`      |
+| ボディを読み取れない、読み取り中にサイズ上限を超える、または multipart データとして解析できない。                               | `400`      |
+| React がブラウザー呼び出しの引数をデコードできない、デコード結果が引数配列ではない、または指定された関数を読み込めない。        | `400`      |
+| ネイティブフォームのボディが multipart ではない、action をデコードできない、または Server Function の action が含まれない。     | `400`      |
+| `Content-Length` が [HTTP の入口での検証](./http.md#handler)に失敗する。                                                        | `413`      |
+| ネイティブフォームの Server Function の実行が失敗する、または実行後の React フォーム状態のデコードが失敗する。                  | `500`      |
+
+`Origin` の検証は、ポートを含む URL の `host` を比較し、完全な origin やスキームは比較しません。
+HTTP の `Content-Length` 検証は、Server Function の検証より先に実行します。
+ヘッダーの検証を通過しても、受信バイト数が上限を超えると `400` になります。
+
+アプリケーションの入力 Schema の失敗は、React のプロトコルデコードの失敗とは異なります。
+ブラウザーからの呼び出しでは、Effront は入力 Schema やハンドラーの失敗を関数の結果に含めます。
+更新後のページのレンダーが成功すれば、Flight レスポンスのステータスは `200` になります。
+失敗結果は、Effront が[更新後のページ](/ja/advanced/server-function-execution-and-refresh#result-and-refresh)を反映する前に、呼び出しを reject します。

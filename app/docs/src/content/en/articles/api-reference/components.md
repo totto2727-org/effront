@@ -91,4 +91,22 @@ Only serializable settings are accepted, not callbacks.
 For a custom React boundary, use an automatic or distinct name: `effront-page` is reserved.
 Changing explicit `enabled` on a displayed Page can reset its local state.
 Live reduced-motion preference changes retain the boundary and preserve Page input state.
-See [page transitions](/en/advanced/client-navigation#transition-scope) for link transition types.
+Each Page uses its own configuration, so an enabled outgoing Page can still animate when the destination disables animations.
+The Page animation does not cover every later Suspense reveal.
+Use a separate [React ViewTransition](https://react.dev/reference/react/ViewTransition) for content that should animate on reveal.
+
+An anchor can add an application transition type:
+
+```tsx
+<a href="/photos/2" data-effront-transition-types="photo-next">
+  Next photo
+</a>
+```
+
+| Link transition types | Contract                                                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Scope                 | The attribute adds types for push and replace, not later Back or Forward traversal.                                                                                |
+| Class mapping         | A configuration such as `enter: { "photo-next": "photo-fade" }` selects a CSS class. Supply the matching View Transition pseudo-element styles in the application. |
+| Reserved names        | `navigation`, `navigation-*`, `server-function`, and `hmr-refresh` are ignored in the attribute.                                                                   |
+
+For Page and application configuration examples, see [Client navigation](/en/advanced/client-navigation#transition-scope).

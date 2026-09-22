@@ -1,80 +1,85 @@
-クライアントナビゲーションでは、共有 Layout を維持したまま Page を切り替えます。
-レスポンスが完了する前に遷移先が表示されることがあるため、ページ移動の完了と読み込みの完了は同じではありません。
+通常のリンクで、共有 Layout を維持したまま Page を切り替えられます。
 
-## ページ間で保持される状態 {#native-navigation}
+## 通常のリンクで移動する {#native-navigation}
 
-通常のアンカーでクライアントナビゲーションを利用できます。
-
-```tsx
-<a href="/settings">設定を開く</a>
-```
-
-両方のルートが共有する Layout に検索欄やメニューを置くと、Page が切り替わってもその状態を維持できます。
-各 Page の中へ移したり、URL ごとに変わる `key` を付けたりすると、再マウントによって状態がリセットされます。
-
-クライアントナビゲーションには、`window.navigation` と `NavigationPrecommitController` の両方が必要です。
-対応していないブラウザーではリンク先のドキュメント全体を読み込み、メモリ上の状態はページ間で保持されません。
-JavaScript が有効なら、Client Components と Server Functions は引き続き動作します。
-JavaScript が無効でも、サーバーで描画したリンクとネイティブフォームの送信は利用できます。
-
-ハッシュだけの移動、ダウンロード、フォーム送信、再読み込み、ブラウザーが Effront の介入を許可しない遷移は、ブラウザーの管理に任せます。
-ブラウザー API の詳細は [MDN の Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API) を参照してください。
-
-## Page のアニメーションと共有 Layout {#transition-scope}
-
-対応ブラウザーでは、既定で Page がクロスフェードし、共有 Layout はアニメーションの対象外に残ります。
-OS の動きを減らす設定は Page のアニメーションを抑制し、ページを開いている途中で変更しても入力状態やフォーカスをリセットしません。
-
-`Page.make({ viewTransition: false, render })` は、その Page の遷移境界を取り除きます。
-アプリケーション全体の設定は、`Layer.succeed(PageViewTransition, config)` を `EFFRONT.make` の `layer` オプションへ渡して提供します。
-全体に `{ enabled: false }` を指定しても、Page に `viewTransition: { enabled: true }` を指定すれば、その Page だけ有効にできます。
-インポートと指定できるプロパティは[遷移設定のリファレンス](/api-reference/components#view-transition)を参照してください。
-
-各 Page はそれぞれの設定に従うため、無効な Page へ移動しても、遷移元の終了アニメーションが残る場合があります。
-マウント済みの Page の `enabled` を変更すると、OS の動きを減らす設定とは異なり、状態がリセットされることがあります。
-
-遷移の種別は CSS クラスを選ぶものであり、組み込みの独自アニメーションを選ぶものではありません。
-たとえば、次のリンクはアプリケーション独自の `photo-next` という種別を追加します。
+登録済みのページへはアンカーで移動します。
 
 ```tsx
-<a href="/photos/2" data-effront-transition-types="photo-next">
-  次の写真
-</a>
+<a href="/settings">Settings</a>
 ```
 
-`PageViewTransition` のクラス対応表で、`photo-next` を `photo-fade` に対応付けられます。
-対応する View Transition の疑似要素のスタイルは、アプリケーション側で用意する必要があります。
-Page の設定はアプリケーションの設定をプロパティごとに上書きしますが、種別とクラスの対応表はマージせずに置き換えます。
-既定の設定を維持するには、置き換える `default` の対応表に `default: "auto"`、`"hmr-refresh": "none"`、`"navigation-ua-visual-transition": "none"` を含める必要があります。
+検索欄などの状態をページ間で保持するには、共有 Layout に配置してください。
+対応ブラウザーでは、既定で Page がフェードし、共有 Layout はアニメーションの対象外です。
 
-リンク属性で種別を追加するのは push または replace の遷移だけで、後から戻る・進むを操作しても再適用しません。
-`navigation`、`navigation-*`、`server-function`、`hmr-refresh` は予約された種別名です。
-Page のアニメーションは、その後に Suspense の内容が表示される場面すべてを対象にはしません。
-その内容を別にアニメーションさせるには、独自の [React ViewTransition 境界](https://react.dev/reference/react/ViewTransition)が必要です。
+> [!NOTE]
+> クライアントナビゲーションに非対応のブラウザーはドキュメント全体を読み込むため、Layout の状態はリセットされます。
+> JavaScript が無効でもリンクは利用できます。
+> 詳細は[ブラウザーの対応](/ja/architecture/implementation/navigation#browser-start)を参照してください。
 
-## 画面表示、URL、ストリームの完了 {#commit-and-stream}
+## Page のアニメーションを無効にする {#transition-scope}
 
-遷移先を表示できるまでは、現在のページが表示されたままになります。
-キャンセル可能な遷移では、遷移先の最初の表示に合わせて URL と履歴が確定し、その後にブラウザー標準のフォーカス移動とスクロール処理が進みます。
-戻る・進むの一部はキャンセルできないため、画面より先に URL が変わることがあります。
+以下の抜粋では、`./effront` の共有ファクトリー `EFFRONT` と、`./routes` の[登録済みのルート定義](/ja/guide/routes#application)を使います。
 
-最初の表示には Suspense の fallback が含まれ、残りのレスポンスが後から届くことがあります。
-そのため、ページ移動の完了後も役立つ読み込み中の表示が必要で、ストリーミング中に失敗し得る内容には React Error Boundary が必要です。
+Page 定義:
 
-表示待ちの遷移先が現れる前に別の移動先を選ぶと、待機中の遷移先を破棄し、その通信を終了します。
-まだ表示されているページは、ストリームが完了するか別のページに置き換わるまで、内容を受け取り続けられます。
-遷移先が表示された後は、ブラウザーの停止操作で残りのストリームを中断することはできません。
+```tsx
+import { Effect } from "effect";
+import { EFFRONT } from "./effront";
 
-## 履歴の再利用とドキュメントの読み込み {#history-cache}
+export const SettingsPage = EFFRONT.Page.make({
+  viewTransition: false,
+  render: () => Effect.succeed(<h1>Settings</h1>),
+});
+```
 
-戻る・進むでは、その履歴エントリーで読み込みが完了した内容を再利用できます。
-URL 単位のキャッシュではないため、push、replace、保存済みの内容がない履歴への移動では、遷移先を取得し直します。
+`SettingsPage` を [Routes.page](/ja/guide/routes#routes) で登録してください。
+リンクから登録先の URL へ移動すると、Settings 自体の Page アニメーションは発生しません。
 
-スクロール復元とフォーカスはブラウザーの動作に従います。
-最初の表示後に Suspense の内容が増えると、fallback の表示中に記録された位置へ復元されることがあります。
-Effront は残りの内容を待ってから、改めて位置を復元するわけではありません。
+> [!NOTE]
+> 遷移元の Page でアニメーションが有効なら、遷移元はアニメーションする場合があります。
+> OS の動きを減らす設定は、入力状態やフォーカスをリセットせずに Page のアニメーションを抑制します。
 
-同一オリジンへのリダイレクトは、ブラウザーが許可する場合、クライアントナビゲーションとして続行できます。
-別オリジンへのリダイレクト、履歴移動中に URL が変わるリダイレクトなど、クライアントナビゲーションを続けられない場合は、ドキュメント全体を読み込みます。
-HTTP の非成功レスポンスや、ページ更新に使う Flight 形式以外のレスポンスでも、ドキュメント全体の読み込みに切り替わります。
-こうした読み込みでは共有 Layout の状態が失われるため、未保存のユーザーデータの永続保存を Layout の状態保持に頼ることはできません。
+## アプリケーション全体のアニメーションを無効にする {#global-config}
+
+アプリケーション定義:
+
+```tsx
+import { PageViewTransition } from "@effront/core";
+import { Layer } from "effect";
+import { EFFRONT } from "./effront";
+import { routes } from "./routes";
+
+export default EFFRONT.make({
+  routes,
+  layer: Layer.succeed(PageViewTransition, { enabled: false }),
+});
+```
+
+Page 側で明示的に有効にしない限り、Page アニメーションなしで切り替わります。
+Settings だけアニメーションを有効にするには、Page 定義を置き換えます。
+
+```tsx
+export const SettingsPage = EFFRONT.Page.make({
+  viewTransition: { enabled: true },
+  render: () => Effect.succeed(<h1>Settings</h1>),
+});
+```
+
+対応ブラウザーでは、動きを減らす設定が無効なら Settings のアニメーションを利用できます。
+独自のアニメーションやその他の設定は [PageViewTransition リファレンス](/ja/api-reference/components#view-transition)を参照してください。
+
+## 内容が届くまで読み込み UI を表示する {#commit-and-stream}
+
+遷移先は、内容の読み込みが完了する前に表示される場合があります。
+内容が届くまで [Loading または Suspense](/ja/guide/routes#mount)を表示してください。
+ストリーミング中に失敗し得る内容には [React Error Boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)を追加してください。
+URL の更新タイミングとキャンセルの動作は[画面表示とストリームの完了](/ja/architecture/implementation/navigation#transition-commit)を参照してください。
+
+## 戻る・進むと再読み込み {#history-cache}
+
+戻る・進むでは、その履歴エントリーで読み込みが完了したレスポンスを再利用できます。
+再読み込みや[ドキュメント読み込みへの切り替え](/ja/architecture/implementation/navigation#flight-load)では、新しいドキュメントを読み込みます。
+
+> [!NOTE]
+> ドキュメント全体を読み込むと、Layout の状態は失われます。
+> 重要なユーザー入力は、Layout とは別に保存してください。

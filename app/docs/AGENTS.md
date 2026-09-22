@@ -19,7 +19,7 @@
 
 ### Authored content and implementation excerpts
 
-- Getting started and Guides explain Effront features for npm consumers, not repository contributors. Platforms owns host-specific setup; Best practices owns testing and other application-development recommendations without implying a framework-specific API. Guides nests application-facing runtime contracts without changing their `/advanced/*` URLs.
+- Getting started and Guides explain Effront features for npm consumers, not repository contributors. Platforms owns host-specific setup. Best practices owns authentication and authorization, service lifetimes, and application testing. Client navigation and Server Function results are direct Guides entries, with their `/advanced/*` URLs preserved.
 - Write Effront-specific explanations and link generic React/Effect concepts to official documentation. Keep developer commands here or in the authoring guide, not consumer testing pages.
 - Author English from the verified API and reader task, review it, then translate it into Japanese. Keep both catalogs, stable heading IDs, and examples aligned; validate `/en` and `/ja` without falling back to another language.
 - Consumer guides describe required steps, observable results, and actionable caveats. Keep internal wiring in Architecture; avoid explanations of mechanisms users do not need to configure or unsupported scenarios unrelated to the guide.

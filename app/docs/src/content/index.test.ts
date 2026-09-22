@@ -41,7 +41,7 @@ const retainedUrls = [
   "/api-reference/markdown",
   "/api-reference/alchemy",
   "/api-reference/tailwind",
-  "/advanced",
+  "/best-practices/authentication-and-authorization",
   "/advanced/request-runtime-and-lifetimes",
   "/advanced/client-navigation",
   "/advanced/server-function-execution-and-refresh",
@@ -62,6 +62,69 @@ const retainedUrls = [
 ];
 
 describe("documentation catalog", () => {
+  it.each(["en", "ja"] as const)(
+    "lists client navigation directly under Guides with its published URL and anchors in %s",
+    (locale) => {
+      const slug = `/${locale}/advanced/client-navigation`;
+      const page = getPage(slug);
+      expect(page.section).toBe("Guides");
+      expect(page.group).toBeUndefined();
+      expect(localizedNavigation(locale).find((item) => item.slug === slug)).toEqual({
+        slug,
+        title: page.title,
+        section: "Guides",
+      });
+      expect(page.headings.map((heading) => heading.id)).toEqual([
+        "native-navigation",
+        "transition-scope",
+        "global-config",
+        "commit-and-stream",
+        "history-cache",
+      ]);
+    },
+  );
+
+  it.each(["en", "ja"] as const)(
+    "renders concise Page and application examples with notes and reference links in %s",
+    async (locale) => {
+      const slug = `/${locale}/advanced/client-navigation`;
+      const html = await render(slug);
+      const content = await text(slug);
+      for (const example of [
+        "viewTransition: false",
+        "layer: Layer.succeed(PageViewTransition, { enabled: false })",
+        "viewTransition: { enabled: true }",
+      ]) {
+        expect(content).toContain(example);
+      }
+      expect(html.match(/data-alert="note"/g)).toHaveLength(3);
+      expect(content).not.toContain("[!NOTE]");
+      expect(html).toContain(`href="/${locale}/api-reference/components#view-transition"`);
+      for (const referenceOnly of [
+        "data-effront-transition-types",
+        "hmr-refresh",
+        "navigation-ua-visual-transition",
+        "photo-fade",
+      ]) {
+        expect(content).not.toContain(referenceOnly);
+        expect(await text(`/${locale}/api-reference/components`)).toContain(referenceOnly);
+      }
+      expect(content).not.toMatch(/transition boundary|遷移境界|NavigationPrecommitController/);
+    },
+  );
+
+  it("keeps client navigation code examples identical in English and Japanese", () => {
+    const examples = (directory: string) => {
+      const source = readFileSync(
+        new URL(`./${directory}/advanced/client-navigation.md`, import.meta.url),
+        "utf8",
+      );
+      return [...source.matchAll(/```tsx\n([\s\S]*?)\n```/g)].map((match) => match[1]);
+    };
+    expect(examples("en/articles")).toHaveLength(4);
+    expect(examples("articles")).toEqual(examples("en/articles"));
+  });
+
   it("preserves published URLs and unique serializable navigation metadata", () => {
     expect(pages.map((page) => page.slug).toSorted()).toEqual(retainedUrls.toSorted());
     expect(new Set(pages.map((page) => page.slug)).size).toBe(pages.length);
@@ -93,18 +156,112 @@ describe("documentation catalog", () => {
     expect(() => getPage(retired)).toThrow("Documentation route is missing content");
   });
 
-  it("separates testing best practices from feature guides without duplicating the article", () => {
-    expect(
-      pages.filter((page) => page.section === "Best practices").map((page) => page.slug),
-    ).toEqual(["/best-practices/testing"]);
-    expect(
-      getPage("/best-practices/testing")
-        .headings.map((heading) => heading.id)
-        .toSorted(),
-    ).toEqual(["pages", "production", "services", "tools"]);
-    expect(navigation.map((page) => page.slug)).not.toContain("/guide/testing");
-    expect(() => getPage("/guide/testing")).toThrow("Documentation route is missing content");
-  });
+  it.each(["en", "ja"] as const)(
+    "classifies final guides and best practices without a runtime overview or subgroup in %s",
+    async (locale) => {
+      const items = localizedNavigation(locale);
+      expect(
+        items
+          .filter((item) => item.section === "Best practices")
+          .map((item) => documentPath(item.slug)),
+      ).toEqual([
+        "/best-practices/authentication-and-authorization",
+        "/advanced/request-runtime-and-lifetimes",
+        "/best-practices/testing",
+      ]);
+      for (const item of items.filter((item) =>
+        ["Guides", "Best practices"].includes(item.section),
+      )) {
+        expect(item.group).toBeUndefined();
+      }
+      const expectedHeadings = [
+        [
+          "/best-practices/authentication-and-authorization",
+          ["entry-points", "shared-policy", "authorization"],
+        ],
+        [
+          "/advanced/request-runtime-and-lifetimes",
+          ["resource-design", "request-layer", "response-lifetime"],
+        ],
+        ["/best-practices/testing", ["tools", "routes", "pages", "layouts", "server-functions"]],
+        [
+          "/advanced/server-function-execution-and-refresh",
+          ["execution", "result-and-refresh", "concurrency"],
+        ],
+        ["/api-reference/server-functions", ["make", "arguments", "execution", "request-protocol"]],
+      ] as const;
+      for (const [slug, ids] of expectedHeadings) {
+        const page = getPage(localizedPath(slug, locale));
+        expect(page.headings.map((heading) => heading.id)).toEqual(ids);
+        const directory = locale === "en" ? "en/articles" : "articles";
+        const source = readFileSync(new URL(`./${directory}${slug}.md`, import.meta.url), "utf8");
+        expect(page.headings).toEqual(
+          [...source.matchAll(/^#{2,6} (.*?) \{#([^}]+)\}$/gm)].map((match) => ({
+            id: match[2],
+            title: match[1]?.replace(/`/g, ""),
+          })),
+        );
+      }
+      expect(getPage(`/${locale}/best-practices/authentication-and-authorization`).title).toBe(
+        locale === "en" ? "Authentication and authorization" : "認証と認可",
+      );
+      expect(getPage(`/${locale}/advanced/request-runtime-and-lifetimes`).title).toBe(
+        locale === "en" ? "Manage service lifetimes" : "サービスの生存期間を管理する",
+      );
+      expect(getPage(`/${locale}/advanced/server-function-execution-and-refresh`).section).toBe(
+        "Guides",
+      );
+      for (const [slug, ids] of [
+        ["/best-practices/testing", ["services", "production"]],
+        ["/advanced/request-runtime-and-lifetimes", ["render-scope"]],
+        ["/advanced/server-function-execution-and-refresh", ["input-boundary"]],
+      ] as const) {
+        const html = await render(localizedPath(slug, locale));
+        for (const id of ids) expect(html).toContain(`id="${id}"`);
+      }
+      for (const retired of ["/advanced", "/guide/testing"]) {
+        expect(items.map((item) => item.slug)).not.toContain(localizedPath(retired, locale));
+        expect(() => getPage(localizedPath(retired, locale))).toThrow(
+          "Documentation route is missing content",
+        );
+        expect(() => getPage(retired)).toThrow("Documentation route is missing content");
+      }
+    },
+  );
+
+  it.each(["en", "ja"] as const)(
+    "documents runnable Route, Page, Layout and Server Function checks against the example in %s",
+    async (locale) => {
+      const html = await render(`/${locale}/best-practices/testing`);
+      const content = (await text(`/${locale}/best-practices/testing`)).replaceAll("&quot;", '"');
+      for (const contract of [
+        "@playwright/test",
+        'request.get("/not-a-route")',
+        "missing.status()).toBe(404)",
+        'name: "Count: 1"',
+        "element.isConnected",
+        'getByTestId("action-greeting")',
+        "Hello from Alchemy KV, Ada!",
+        "TypeError",
+      ])
+        expect(content).toContain(contract);
+      for (const path of [
+        "tree/main/examples/alchemy",
+        "tree/main/tests/e2e-alchemy",
+        "blob/main/tests/e2e-alchemy/playwright.config.ts",
+        "blob/main/docs/TESTING.md#native-alchemy-integration",
+      ])
+        expect(html).toContain(`href="https://github.com/totto2727-org/effront/${path}"`);
+      expect(content).toContain(
+        locale === "en"
+          ? "does not provide a public Vitest harness"
+          : "公開テストハーネスを提供していません",
+      );
+      expect(content).toContain(
+        locale === "en" ? "without Cloudflare authentication" : "Cloudflare の認証なし",
+      );
+    },
+  );
 
   it("keeps every Markdown document registered, including the explicit root alias", () => {
     const sources = Object.keys(import.meta.glob("./articles/**/*.md"));
@@ -143,7 +300,7 @@ describe("documentation catalog", () => {
       expect(
         items.filter((item) => documentPath(item.slug).startsWith("/architecture/implementation/")),
       ).toHaveLength(7);
-      for (const retired of ["/advanced/production-startup", "/guide/testing"]) {
+      for (const retired of ["/advanced", "/advanced/production-startup", "/guide/testing"]) {
         expect(() => getPage(localizedPath(retired, locale))).toThrow(
           "Documentation route is missing content",
         );
@@ -169,7 +326,6 @@ describe("documentation catalog", () => {
       "/guide/server-functions",
       "/guide/middleware",
       "/guide/http",
-      "/best-practices/testing",
     ]) {
       expect(await text(slug)).not.toMatch(/Cloudflare|Workers|Wrangler|workerd|Vercel/);
     }
@@ -192,7 +348,6 @@ describe("documentation catalog", () => {
     expect(await render("/guide/getting-started")).toContain(
       'href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"',
     );
-    expect(await text("/best-practices/testing")).toContain("フォーム送信");
     const effect = await render("/guide/effect");
     for (const contract of ["Context.Service", "Layer", "Application.effront"]) {
       expect(effect.replace(/<[^>]*>/g, "")).toContain(contract);
@@ -292,22 +447,21 @@ describe("documentation catalog", () => {
     for (const required of ["Bun 1.4.2", "@effect/platform-node", "@effect/platform-bun"]) {
       expect(bun).toContain(required);
     }
-    const testing = await render("/best-practices/testing");
-    expect(testing).toContain('href="https://playwright.dev/docs/test-webserver"');
-    expect(testing).toContain('href="/guide/server-functions"');
-    expect(testing).toContain("JavaScript");
     const alchemy = await render("/platforms/alchemy");
     expect(alchemy).toContain("profile");
     expect(alchemy).toContain('href="https://alchemy.run/');
     const lifetime = await text("/advanced/request-runtime-and-lifetimes");
     for (const contract of [
       "Effect.acquireRelease",
-      "createFetchHandler",
+      "Layer.effect",
       "Effect.scoped",
-      "makeHttpEffect",
+      "Layer.succeed",
     ]) {
       expect(lifetime).toContain(contract);
     }
+    const lifetimeHtml = await render("/ja/advanced/request-runtime-and-lifetimes");
+    expect(lifetimeHtml).toContain('href="/ja/api-reference/http#capture"');
+    expect(lifetimeHtml).toContain('href="/ja/api-reference/http#handler"');
   });
 
   it.each(["en", "ja"] as const)(

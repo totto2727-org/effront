@@ -1,49 +1,116 @@
-## Test a persisted change in the browser {#pages}
+Test Route, Page, Layout, and Server Function behavior through a running application with Playwright.
+Effront does not provide a public Vitest harness for Page/Layout rendering or Server Function requests.
 
-For a profile editor, test the complete save flow with an isolated test account and data store:
+<span id="production"></span>
 
-1. Open the profile URL directly and check its initial name.
-2. Enter a different name and submit the form.
-3. Check both the submission feedback and the updated name on the page.
-4. Reload and check that the saved name remains.
+## Use the runnable example {#tools}
 
-Checking after reload distinguishes a stored change from local UI state.
-Also reach the page through an application link and Back/Forward navigation, asserting that the URL and displayed data agree.
-Keep a rejected-update case that checks the error feedback and confirms the stored data did not change.
+The tests below target the [Alchemy example application](https://github.com/totto2727-org/effront/tree/main/examples/alchemy).
+Its [maintained Playwright setup](https://github.com/totto2727-org/effront/tree/main/tests/e2e-alchemy) builds the example and starts a local workerd host without Cloudflare authentication.
+The setup is a repository reference, not a test helper distributed with Effront.
 
-## Test rules below the Server Function {#services}
+Follow the [setup and execution instructions](https://github.com/totto2727-org/effront/blob/main/docs/TESTING.md#native-alchemy-integration) to run the reference application.
+Save each code block below as the named file beside `alchemy.e2e.ts` in that test package, then rerun its browser suite.
+The existing [Playwright configuration](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts) supplies `baseURL` and manages the server lifecycle.
+For your own application, replace the URLs, selectors, and expected values with your application's outputs.
 
-Put shared business logic in functions or Effect services that Pages and Server Functions call, then test those functions or services directly.
-An Effront Server Function cannot be invoked as an ordinary function in the server graph.
-Keep its [form submission](/en/guide/server-functions) in the browser test to exercise the request and rendering path.
+## Test Route responses {#routes}
 
-Use smaller tests for blank names, unauthorized edits, and failed writes.
-Assert the result and stored state, not only whether the function succeeded.
-For authorization, submit a record ID the caller does not own and verify rejection on the server.
-A hidden or disabled edit button does not test that boundary.
+The example registers `/` and `/about` with `EFFRONT.Routes.make().page(...)`.
+Check route availability and missing-route status through HTTP requests.
+Save as `routes.e2e.ts`:
 
-An Effect Layer can supply predictable service responses and failures, as described in [Effect Layers](https://effect.website/docs/requirements-management/layers/) and [Effront services](/en/guide/effect).
-A test double does not verify the real database or external API adapter, so cover that adapter separately with an integration test against a test instance.
+```ts
+import { expect, test } from "@playwright/test";
 
-## Verify the release artifact {#production}
+test("registered routes return HTML and unknown routes return 404", async ({ request }) => {
+  for (const path of ["/", "/about"]) {
+    const response = await request.get(path);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("text/html");
+  }
 
-Run the important journey against the built application in its target runtime, using test data and credentials.
-Follow your [host's setup guide](../platforms.md#support) to run its production entry point, rather than a development server or a preview in a different runtime.
+  const missing = await request.get("/not-a-route");
+  expect(missing.status()).toBe(404);
+});
+```
 
-Include checks for the boundaries the application uses:
+The assertions exercise the routes in the built application, including its configured middleware.
+See the example's [route registration](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/entry.effront.tsx).
 
-- **Direct entry:** the requested page delivers HTML, CSS, and images, and becomes interactive after JavaScript loads.
-- **Missing resources:** unknown page and asset URLs return the expected 404 responses.
-- **Progressive forms:** Server Function forms submit and display the resulting page with JavaScript disabled.
-- **Streaming:** delayed content completes, and navigating away before it completes leaves the chosen destination visible.
-- **Browser fallback:** in supported browsers without the Navigation API, links work through full-document navigation.
-- **Secret handling:** recognizable synthetic server secrets are absent from HTML and Flight responses. Never use real credentials as test markers.
+## Test Page output and hydration {#pages}
 
-## Isolate data and automate startup {#tools}
+`HomePage` renders a greeting from the application's `Host` service and includes a client counter.
+Save as `page.e2e.ts`:
 
-Give each test a known initial state and separate records so concurrent tests cannot overwrite one another's data.
-[Playwright](https://playwright.dev/docs/intro) can drive the browser and manage application startup and shutdown through [webServer](https://playwright.dev/docs/test-webserver).
-A runner such as [Vitest](https://vitest.dev/guide/) can cover isolated logic.
+```ts
+import { expect, test } from "@playwright/test";
 
-Keep input combinations in the smaller tests and browser coverage focused on complete journeys and integration failures.
-For a regression, add the smallest test that detects the failure and rerun the affected browser journey.
+test("HomePage renders service data and hydrates its counter", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Hello, world!");
+  await expect(page.getByTestId("kv-greeting")).toHaveText("Hello from Alchemy KV");
+
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Count: 0", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
+});
+```
+
+The greeting checks server-rendered data.
+The increment checks the client component after hydration.
+The fixed example's [maintained test](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/alchemy.e2e.ts) waits for `networkidle` before interacting with its client controls.
+
+## Test Layout retention across navigation {#layouts}
+
+`RootLayout` wraps both Pages in a shared [`Shell`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/components/shell.tsx).
+Verify that the Page changes while the original navigation element remains connected.
+Save as `layout.e2e.ts`:
+
+```ts
+import { expect, test } from "@playwright/test";
+
+test("RootLayout retains its navigation when the Page changes", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  const navigation = await page.getByRole("navigation").elementHandle();
+  if (!navigation) throw new Error("Expected the shared navigation");
+
+  await page.getByRole("link", { name: "About", exact: true }).click();
+  await expect(page).toHaveURL(/\/about$/);
+  await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("About");
+  await expect(page.getByTestId("label")).toHaveText("Effront + Alchemy");
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Home" })).toBeVisible();
+  expect(await navigation.evaluate((element) => element.isConnected)).toBe(true);
+});
+```
+
+The DOM identity check detects a remount even when the replacement navigation looks identical.
+Run this retention check in Chromium, which supports the Navigation API used for client navigation.
+A full-document navigation replaces the layout DOM.
+
+<span id="services"></span>
+
+## Test a Server Function through its client {#server-functions}
+
+The example's [`GreetingAction`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/client.tsx) submits `greet("Ada")` through a Client Component.
+The [`greet` Server Function](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/server.ts) reads the request's `Host` service and returns the greeting.
+Save as `server-function.e2e.ts`:
+
+```ts
+import { expect, test } from "@playwright/test";
+
+test("the Server Function returns a greeting to its client", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  const result = page.getByTestId("action-greeting");
+  await expect(result).toHaveText("");
+
+  await page.getByRole("button", { name: "Read KV through a Server Function" }).click();
+  await expect(result).toHaveText("Hello from Alchemy KV, Ada!");
+});
+```
+
+The button click exercises the browser request, server execution, and returned value.
+A direct call to an Effront Server Function in a server-side Vitest test rejects with a `TypeError`.
+The test covers a read operation, without a persistence or authorization check.

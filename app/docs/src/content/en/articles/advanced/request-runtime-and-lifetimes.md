@@ -1,49 +1,41 @@
-A Fetch handler can return a `Response` while a delayed component is still rendering.
-Effront keeps request-scoped resources alive through the response body, not just through the handler call.
+Let Effront manage resources needed by one request.
+Give shared resources and background work separate owners.
 
-## A Response can outlive its handler {#response-lifetime}
+## Choose the resource owner {#resource-design}
 
-Returning headers does not finish a streamed response.
-Suspense content and Flight data can still need application services after the handler's Promise resolves.
-Effront closes the request Scope and runs registered cleanup when the body finishes, fails, or is cancelled.
-If there is no body, or response creation fails, acquired resources are released without waiting for a stream.
+| Resource use                              | Owner                                           | Release point                                         |
+| ----------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| One request                               | Request Scope                                   | Streamed-body completion, failure, or cancellation    |
+| Several requests, such as a database pool | Host owner outside the application Layer        | After every response that uses the resource has ended |
+| Work after the response ends              | Background work, via a host-supported mechanism | When that work finishes                               |
 
-This is why closing a connection in a `finally` block around the handler call is too early: later rendering may still use it.
+For a shared database pool, register each borrowed connection's return with the request Scope.
+Leave pool disposal to the host owner.
+See the [external-service ownership contract](/en/api-reference/http#capture) for host-provided services.
 
-## Application services belong to each request {#request-layer}
+> [!NOTE]
+> A detached Promise does not extend a request service's lifetime.
+> Give background work its own resources.
 
-The Layer passed to `EFFRONT.make({ routes, layer })` is built per request, including when the host reuses a handler created by `createFetchHandler`.
-It is not a server-wide singleton.
-Request-specific acquisition belongs inside that Layer, with release registered through `Effect.acquireRelease` or an equivalent scoped operation.
-The [service setup example](/en/guide/effect#service) shows the service declaration, `Application.effront<Services>()`, and Layer registration.
+## Acquire request resources in the application Layer {#request-layer}
 
-On Workers, acquisition can read that request's `env`, execution context, and original `Request` through the [Workers context accessors](/en/platforms/cloudflare#context).
-Opening a resource at module load time does not give it this request ownership.
-
-## Delayed rendering uses the same services {#render-scope}
-
-Pages, Layouts, Components, and Server Functions use the application services for the request being handled.
-A delayed render does not need to acquire the same resource again while the response is streaming.
-Each request has its own rendering Scope.
-Aborting the render stream interrupts unfinished rendering work.
-
-Rendering must run through the application's Routes.
-Rendering outside its request runtime, or without required Middleware active, produces a `TypeError` rather than a usable service context.
+Effront builds the Layer passed to `EFFRONT.make({ routes, layer })` for each request.
+Place request-specific acquisition in `Layer.effect` and register cleanup with `Effect.acquireRelease`.
+The [service setup example](/en/guide/effect#service) shows how to declare a service and register its Layer.
 
 > [!WARNING]
-> Workers bindings are not automatically serialized into Flight or HTML, but values placed in JSX, Client Component props, or Server Function results can reach the browser.
-> Only deliberately public values belong in those outputs.
+> Create request-specific mutable state during acquisition.
+> A reused `Layer.succeed(Service, object)` supplies the same object across requests.
 
-## Request-owned and host-owned resources {#resource-design}
+## Keep resources alive through the response body {#response-lifetime}
 
-A Fetch wrapper must preserve body streaming and cancellation.
-A custom native HTTP integration must retain the request Scope through body completion, failure, or cancellation.
-Wrapping only response creation in `Effect.scoped` closes it too early.
+<span id="render-scope"></span>
 
-Host-owned services supplied outside the application Layer have a different owner.
-`makeHttpEffect` captures references to them but neither acquires them nor extends their lifetime.
-Their owner must keep them alive while requests use them.
-Request cleanup does not dispose them.
+A delayed component can still use request services after the handler returns a `Response`.
+Let the request Scope run the registered cleanup when the streamed body ends.
+For buffered or empty responses, or if response creation fails, Effront releases acquired resources without waiting for body consumption.
 
-Work that must outlive a response needs a host-supported background-work mechanism and resources owned by that work.
-Starting a Promise or storing a request service in an outer variable does not extend that service's lifetime.
+> [!WARNING]
+> Do not close request-owned resources in a `finally` block around the handler call.
+> An `Effect.scoped` block around response creation alone also releases resources before the streamed body finishes.
+> For custom HTTP hosts, follow the [request Scope and response-body contract](/en/api-reference/http#handler).

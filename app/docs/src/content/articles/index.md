@@ -15,7 +15,6 @@ React Server Components によるページの描画と、Server Functions によ
 ## 次のガイドを選ぶ {#next}
 
 - [Markdown](./guide/markdown.md) で記事を表示し、[スタイリング](./guide/styling.md)で Tailwind CSS を追加します。
-- サービスの生存期間と画面の更新は[実行時の契約](./advanced.md)で確認できます。
 - 処理とブラウザー上の動作を検証するには、[アプリケーションのテスト](./best-practices/testing.md)を参照してください。
 - オプションや型は [API reference](./api-reference.md) で調べられます。
 - 実装を読むには、[アーキテクチャの実装解説](/architecture/implementation/overview)に進んでください。

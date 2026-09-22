@@ -66,8 +66,11 @@ test("styling distinguishes default setup from optional theme and plugin configu
     await expect(article.locator(`h2#${id}`)).toBeVisible();
   }
   await expect(article).toContainText(/スタイルシート[^。]*CSS import[^。]*不要/);
-  const defaults = article.locator("pre code").filter({ hasText: "effrontTailwind()" });
-  await expect(defaults).toContainText(/^\s*const\s+\w+\s*=\s*\[effrontTailwind\(\)\]/m);
+  const defaults = article.locator("pre code").filter({
+    hasText: "plugins: [effront(), effrontServer(), effrontTailwind()]",
+  });
+  await expect(defaults).toContainText("plugins: [effront(), effrontServer(), effrontTailwind()]");
+  await expect(article).not.toContainText("stylingPlugins");
   await expect(defaults).not.toContainText("stylesheet:");
   await expect(article.locator("pre code").filter({ hasText: "--color-brand" })).toBeVisible();
   await expect(article.locator("h2#scope")).toHaveText(/必要に応じて/);
@@ -310,8 +313,11 @@ test("native Flight navigation follows the retired URL while preserving the shel
   await page.waitForLoadState("networkidle");
   const search = await page.getByRole("textbox", { name: "ガイドを絞り込む" }).elementHandle();
   // Simulate an inbound bookmark link without putting the retired URL back in authored navigation.
-  await page.locator('article a[href="/platforms#support"]').evaluate((link) => {
-    link.setAttribute("href", "/advanced/production-startup");
+  await page.locator("article").evaluate((article) => {
+    const link = document.createElement("a");
+    link.href = "/advanced/production-startup";
+    link.textContent = "Legacy production setup";
+    article.append(link);
   });
   const flight = page.waitForResponse(
     (response) =>

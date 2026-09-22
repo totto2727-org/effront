@@ -93,4 +93,22 @@ Page の React 19.3 ViewTransition 境界を設定します。
 `effront-page` は予約済みです。
 表示中の Page で明示的な `enabled` を変更すると、ローカル状態がリセットされる場合があります。
 実行中に reduced-motion 設定が変わっても、境界と Page 内の入力状態は保持されます。
-リンクの遷移タイプは [ページ遷移](/ja/advanced/client-navigation#transition-scope) を参照してください。
+各 Page は自身の設定に従うため、遷移先で無効にしていても、有効な遷移元の Page はアニメーションする場合があります。
+Page のアニメーションは、その後の Suspense の内容表示をすべて対象にはしません。
+表示時にアニメーションさせる内容には、別の [React ViewTransition](https://react.dev/reference/react/ViewTransition) を使ってください。
+
+アンカーでアプリケーション独自の遷移タイプを追加できます。
+
+```tsx
+<a href="/photos/2" data-effront-transition-types="photo-next">
+  Next photo
+</a>
+```
+
+| リンクの遷移タイプ | 契約                                                                                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 適用範囲           | 属性は push と replace でタイプを追加します。後から戻る・進むを操作しても再適用しません。                                                                      |
+| クラスの対応付け   | `enter: { "photo-next": "photo-fade" }` などの設定で CSS クラスを選びます。対応する View Transition 疑似要素のスタイルはアプリケーション側で用意してください。 |
+| 予約名             | 属性内の `navigation`、`navigation-*`、`server-function`、`hmr-refresh` は無視します。                                                                         |
+
+Page とアプリケーションの設定例は[クライアントナビゲーション](/ja/advanced/client-navigation#transition-scope)を参照してください。

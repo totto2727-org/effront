@@ -1,50 +1,116 @@
-## 保存した変更をブラウザーで確かめる {#pages}
+実行中のアプリケーションに Playwright でアクセスし、Route、Page、Layout、Server Function の動作をテストします。
+Effront は、Page / Layout の描画や Server Function のリクエストを Vitest で検証する公開テストハーネスを提供していません。
 
-プロフィール編集なら、独立したテスト用アカウントとデータ保存先で、保存までの一連の操作を検証します。
+<span id="production"></span>
 
-1. プロフィールの URL を直接開き、変更前の名前を確認します。
-2. 別の名前を入力してフォームを送信します。
-3. 送信結果の案内と、ページに表示された更新後の名前の両方を確認します。
-4. 再読み込みし、保存した名前が残っていることを確認します。
+## 実行できるサンプルを使う {#tools}
 
-再読み込み後の確認で、保存された変更とローカルな UI の状態を区別できます。
-アプリケーション内のリンクや戻る・進むからもページを開き、URL と表示データが一致することを検証します。
-更新が拒否されるケースも残し、エラーの案内と、保存データが変わっていないことを確認します。
+以下のテストは [Alchemy サンプルアプリケーション](https://github.com/totto2727-org/effront/tree/main/examples/alchemy)を対象にしています。
+[保守されている Playwright のテスト構成](https://github.com/totto2727-org/effront/tree/main/tests/e2e-alchemy)でサンプルをビルドし、Cloudflare の認証なしでローカルの workerd ホストを起動できます。
+この構成はリポジトリー内の参照例であり、Effront に付属するテストヘルパーではありません。
 
-## Server Function が呼び出す業務ルールをテストする {#services}
+[セットアップと実行の手順](https://github.com/totto2727-org/effront/blob/main/docs/TESTING.md#native-alchemy-integration)に従ってサンプルを実行してください。
+以下のコードブロックを指定したファイル名でテストパッケージの `alchemy.e2e.ts` と同じディレクトリーに保存し、ブラウザーテストを再実行します。
+既存の [Playwright 設定](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts)が `baseURL` とサーバーの起動・終了を管理します。
+自分のアプリケーションで使う場合は、URL、セレクター、期待値をアプリケーションの出力に合わせて変更してください。
 
-共有する業務処理は、Page や Server Function から呼び出す関数や Effect のサービスに置き、それらを直接テストします。
-Effront の Server Function 自体は、サーバーグラフ内で通常の関数として呼び出せません。
-リクエストと描画の経路を検証するため、[フォーム送信](/guide/server-functions)はブラウザーテストに残します。
+## Route の応答をテストする {#routes}
 
-空の名前、権限のない編集、書き込みの失敗は、小さなテストで確かめます。
-関数が成功したかだけでなく、結果と保存データを検証してください。
-認可のテストでは、呼び出したユーザーが所有していないレコード ID を送信し、サーバー側で拒否されることを確認します。
-編集ボタンを隠したり無効にしたりするだけでは、この境界をテストできません。
+サンプルは `EFFRONT.Routes.make().page(...)` で `/` と `/about` を登録しています。
+HTTP リクエストで、登録したルートの応答と未登録ルートのステータスを確認します。
+`routes.e2e.ts` として保存してください。
 
-Effect の Layer で、再現可能なサービスの応答や失敗を提供できます。
-提供方法は [Effect Layers](https://effect.website/docs/requirements-management/layers/) と [Effront のサービス](/guide/effect)を参照してください。
-代替実装では実際のデータベースや外部 API のアダプターを検証できないため、テスト用の接続先を使う連携テストで別途確かめます。
+```ts
+import { expect, test } from "@playwright/test";
 
-## 公開用の成果物を検証する {#production}
+test("registered routes return HTML and unknown routes return 404", async ({ request }) => {
+  for (const path of ["/", "/about"]) {
+    const response = await request.get(path);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("text/html");
+  }
 
-ビルドしたアプリケーションを対象の実行環境で動かし、テスト用データと認証情報で重要な一連の操作を確認します。
-開発サーバーや別の runtime で動く preview ではなく、[実行環境のセットアップガイド](../platforms.md#support)に従って本番用のエントリーポイントを起動します。
+  const missing = await request.get("/not-a-route");
+  expect(missing.status()).toBe(404);
+});
+```
 
-アプリケーションが使う境界に応じて、次の確認を含めます。
+ビルドしたアプリケーションに対して、設定済みのミドルウェアを含むルートの応答を検証します。
+登録内容はサンプルの[ルート定義](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/entry.effront.tsx)を参照してください。
 
-- **URL の直接表示:** 対象のページで HTML、CSS、画像が配信され、JavaScript の読み込み後に操作できる。
-- **存在しないリソース:** 未定義のページやアセットの URL が、期待する 404 応答を返す。
-- **プログレッシブなフォーム:** JavaScript が無効でも Server Function のフォームを送信でき、結果のページが表示される。
-- **ストリーミング:** 遅れて届く内容を表示でき、届く前に別のページへ移動した場合は選んだ移動先が表示され続ける。
-- **ブラウザーのフォールバック:** サポート対象に Navigation API 非対応のブラウザーを含む場合、ドキュメント全体の読み込みでリンクが動作する。
-- **秘密値の扱い:** 識別しやすい架空のサーバー秘密値が HTML や Flight レスポンスに含まれない。実際の認証情報をテストの目印に使わないでください。
+## Page の出力とハイドレーションをテストする {#pages}
 
-## データを分離し、起動を自動化する {#tools}
+`HomePage` はアプリケーションの `Host` サービスから取得した挨拶と、クライアント側のカウンターを描画します。
+`page.e2e.ts` として保存してください。
 
-各テストの初期状態を決め、同時実行時に互いのデータを上書きしないよう、レコードを分離します。
-[Playwright](https://playwright.dev/docs/intro) でブラウザーを操作し、[webServer](https://playwright.dev/docs/test-webserver) でアプリケーションの起動と終了を管理できます。
-個別の処理は [Vitest](https://vitest.dev/guide/) などのテストランナーで検証できます。
+```ts
+import { expect, test } from "@playwright/test";
 
-入力の組み合わせは小さなテストで網羅し、ブラウザーテストは一連の操作と連携の失敗に集中させます。
-回帰テストには不具合を検出できる最小のテストを追加し、影響を受けた一連のブラウザー操作も再実行してください。
+test("HomePage renders service data and hydrates its counter", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Hello, world!");
+  await expect(page.getByTestId("kv-greeting")).toHaveText("Hello from Alchemy KV");
+
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Count: 0", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
+});
+```
+
+挨拶の表示で、サーバー側で描画したデータを確認します。
+カウンターの増加で、ハイドレーション後のクライアントコンポーネントを確認します。
+この固定サンプルの[既存のテスト](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/alchemy.e2e.ts)は、クライアント側の操作前に `networkidle` を待ちます。
+
+## 画面遷移で Layout が維持されることをテストする {#layouts}
+
+`RootLayout` は両方の Page を共通の [`Shell`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/components/shell.tsx)で囲みます。
+画面遷移で Page が切り替わっても、元のナビゲーション要素が DOM に接続されたままであることを検証します。
+`layout.e2e.ts` として保存してください。
+
+```ts
+import { expect, test } from "@playwright/test";
+
+test("RootLayout retains its navigation when the Page changes", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  const navigation = await page.getByRole("navigation").elementHandle();
+  if (!navigation) throw new Error("Expected the shared navigation");
+
+  await page.getByRole("link", { name: "About", exact: true }).click();
+  await expect(page).toHaveURL(/\/about$/);
+  await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("About");
+  await expect(page.getByTestId("label")).toHaveText("Effront + Alchemy");
+  await expect(page.getByRole("navigation").getByRole("link", { name: "Home" })).toBeVisible();
+  expect(await navigation.evaluate((element) => element.isConnected)).toBe(true);
+});
+```
+
+元の DOM 要素を確認することで、同じ見た目のナビゲーションを作り直した場合も検出できます。
+この維持のテストは、クライアントナビゲーションに使う Navigation API に対応した Chromium で実行してください。
+ドキュメント全体のナビゲーションでは、Layout の DOM も置き換わります。
+
+<span id="services"></span>
+
+## クライアント経由で Server Function をテストする {#server-functions}
+
+サンプルの [`GreetingAction`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/client.tsx)は、Client Component から `greet("Ada")` を送信します。
+[`greet` Server Function](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/server.ts)はリクエストの `Host` サービスを読み、挨拶を返します。
+`server-function.e2e.ts` として保存してください。
+
+```ts
+import { expect, test } from "@playwright/test";
+
+test("the Server Function returns a greeting to its client", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  const result = page.getByTestId("action-greeting");
+  await expect(result).toHaveText("");
+
+  await page.getByRole("button", { name: "Read KV through a Server Function" }).click();
+  await expect(result).toHaveText("Hello from Alchemy KV, Ada!");
+});
+```
+
+ボタン操作で、ブラウザーからのリクエスト、サーバー側の実行、戻り値の表示を検証します。
+サーバー側の Vitest テストから Effront の Server Function を直接呼ぶと、`TypeError` で拒否されます。
+このテストは読み取り処理を対象とし、永続化や認可は検証していません。
