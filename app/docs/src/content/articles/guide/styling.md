@@ -9,7 +9,7 @@ Tailwind の標準ユーティリティを使う場合も、独自のテーマ�
 vp add -D @effront/tailwind@0.1.4
 ```
 
-[Getting started](./getting-started.md) の `vite.config.ts` に、スタイル用のプラグインを追加します。
+[Getting started](./getting-started.md) の `vite.config.ts` に、`effrontTailwind()` を追加します。
 
 ```typescript
 // vite.config.ts
@@ -19,12 +19,9 @@ import { effrontTailwind } from "@effront/tailwind";
 import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
-// Added: styling plugins.
-const stylingPlugins = [effrontTailwind()];
-
 export default defineConfig({
-  // Add stylingPlugins.
-  plugins: [effront(), effrontServer(), ...stylingPlugins],
+  // Added: effrontTailwind().
+  plugins: [effront(), effrontServer(), effrontTailwind()],
   server: { host: "127.0.0.1", port: 1340, strictPort: true },
 });
 ```
@@ -60,11 +57,11 @@ vp add -D tailwindcss@4.3.3
 }
 ```
 
-`vite.config.ts` で、先ほどの `stylingPlugins` の宣言を置き換えます。
+`vite.config.ts` で、`effrontTailwind()` にスタイルシートを指定します。
 
 ```typescript
-// vite.config.ts: replace the stylingPlugins declaration.
-const stylingPlugins = [effrontTailwind({ stylesheet: "./src/styles.css" })];
+// vite.config.ts: replace effrontTailwind() in the plugins array.
+effrontTailwind({ stylesheet: "./src/styles.css" });
 ```
 
 パスは Vite root を基準にします。

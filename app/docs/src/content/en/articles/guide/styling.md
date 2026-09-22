@@ -9,7 +9,7 @@ Install the integration:
 vp add -D @effront/tailwind@0.1.4
 ```
 
-In `vite.config.ts` from [Getting started](./getting-started.md), add the styling plugins:
+In `vite.config.ts` from [Getting started](./getting-started.md), add `effrontTailwind()`:
 
 ```typescript
 // vite.config.ts
@@ -19,12 +19,9 @@ import { effrontTailwind } from "@effront/tailwind";
 import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
-// Added: styling plugins.
-const stylingPlugins = [effrontTailwind()];
-
 export default defineConfig({
-  // Add stylingPlugins.
-  plugins: [effront(), effrontServer(), ...stylingPlugins],
+  // Added: effrontTailwind().
+  plugins: [effront(), effrontServer(), effrontTailwind()],
   server: { host: "127.0.0.1", port: 1340, strictPort: true },
 });
 ```
@@ -60,11 +57,11 @@ Create `src/styles.css`:
 }
 ```
 
-In `vite.config.ts`, replace the earlier `stylingPlugins` declaration:
+In `vite.config.ts`, pass the stylesheet to `effrontTailwind()`:
 
 ```typescript
-// vite.config.ts: replace the stylingPlugins declaration.
-const stylingPlugins = [effrontTailwind({ stylesheet: "./src/styles.css" })];
+// vite.config.ts: replace effrontTailwind() in the plugins array.
+effrontTailwind({ stylesheet: "./src/styles.css" });
 ```
 
 The path is relative to the Vite root.

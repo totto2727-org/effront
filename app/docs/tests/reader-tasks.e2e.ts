@@ -249,12 +249,16 @@ for (const reader of locales) {
   }) => {
     await openGuide(page, reader, "/guide/styling");
     await followHeading(page, reader, "setup");
-    const defaults = page.locator("article pre code").filter({ hasText: "effrontTailwind()" });
+    const defaults = page
+      .locator("article pre code")
+      .filter({ hasText: "plugins: [effront(), effrontServer(), effrontTailwind()]" });
     await expect(defaults).toHaveCount(1);
     await expect(defaults).toContainText('from "@effront/tailwind"');
-    await expect(defaults).toContainText(/^\s*const\s+\w+\s*=\s*\[effrontTailwind\(\)\]/m);
+    await expect(defaults).toContainText(
+      "plugins: [effront(), effrontServer(), effrontTailwind()]",
+    );
     await expect(defaults).not.toContainText("stylesheet:");
-    await expect(defaults).toContainText("...stylingPlugins");
+    await expect(page.locator("article")).not.toContainText("stylingPlugins");
     await expect(
       page.locator("article pre code").filter({ hasText: 'className="p-4 text-xl font-bold"' }),
     ).toBeVisible();
