@@ -36,8 +36,7 @@ vp run dev
 ```
 
 CLI が準備完了を示したら、[http://localhost:1337](http://localhost:1337) を開きます。
-トップページに `Hello, world!` と `Hello from Alchemy KV` が表示されます。
-`Count: 0` のクリック、挨拶フォームの送信を試し、**About** から [http://localhost:1337/about](http://localhost:1337/about) に移動します。
+トップページに `Hello, world!` と表示されます。
 
 `src/entry.effront.tsx` の見出しを変更して保存し、開発中の更新を確認します。
 

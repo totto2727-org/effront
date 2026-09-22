@@ -290,7 +290,7 @@ describe("documentation catalog", () => {
         'href="https://github.com/totto2727-org/effront/tree/main/examples/alchemy"',
       );
       expect(alchemy).toContain('href="http://localhost:1337"');
-      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello from Alchemy KV");
+      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello, world!");
       expect(
         readFileSync(new URL("examples/alchemy/src/entry.workers.ts", repository), "utf8"),
       ).toContain('dev: { host: "localhost", port: 1337, strictPort: true }');

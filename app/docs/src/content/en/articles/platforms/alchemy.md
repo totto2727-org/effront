@@ -36,8 +36,7 @@ vp run dev
 ```
 
 Once the CLI reports that it is ready, open [http://localhost:1337](http://localhost:1337).
-The homepage displays `Hello, world!` and `Hello from Alchemy KV`.
-Click `Count: 0`, submit the greeting form, and follow **About** to [http://localhost:1337/about](http://localhost:1337/about).
+The homepage displays `Hello, world!`.
 
 Edit the heading in `src/entry.effront.tsx` and save to check development updates.
 
