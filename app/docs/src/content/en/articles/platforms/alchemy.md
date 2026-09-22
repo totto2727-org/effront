@@ -4,14 +4,15 @@ The host configuration is already included, so you can start the application bef
 ## Prepare the example {#setup}
 
 Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
-The example pins Alchemy to `2.0.0-beta.77`, whose CLI requires a configured Cloudflare profile even for local development.
-Complete the profile setup in the [Alchemy documentation](https://alchemy.run/docs) before starting the app.
+
+> [!IMPORTANT]
+> The example pins Alchemy to `2.0.0-beta.77`, whose CLI requires a configured Cloudflare profile even for local development.
+> Complete the profile setup in the [Alchemy documentation](https://alchemy.run/docs) before starting the app.
 
 ```bash
 git clone https://github.com/totto2727-org/effront.git
 cd effront
 vp install
-vp exec --filter "./packages/*" -- vp pack
 cd examples/alchemy
 ```
 
@@ -38,7 +39,17 @@ vp run dev
 Once the CLI reports that it is ready, open [http://localhost:1337](http://localhost:1337).
 The homepage displays `Hello, world!`.
 
-Edit the heading in `src/entry.effront.tsx` and save to check development updates.
+Change the heading in `src/entry.effront.tsx`, then save to display `Hello, Effront!`:
+
+```tsx
+return (
+  <>
+    {/* Replace the heading text. */}
+    <h1 className="my-5 text-3xl font-bold">Hello, Effront!</h1>
+    {/* Keep the remaining page content unchanged. */}
+  </>
+);
+```
 
 ## Add resources when needed {#capabilities}
 

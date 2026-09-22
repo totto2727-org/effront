@@ -29,7 +29,10 @@ A client call with `"2"` and `"items"` resolves to `{ count: 2, label: "items" }
 The successful handler value determines `Output`.
 It is not re-encoded with the input Schema.
 Inputs and outputs must satisfy [React's serialization contract](https://react.dev/reference/rsc/use-server#serializable-arguments-and-return-values).
-Do not return host bindings or secrets.
+
+> [!WARNING]
+> Do not return host bindings or secrets.
+
 For React components that call the function, see [Server Functions](/en/guide/server-functions).
 
 ## Argument shapes {#arguments}

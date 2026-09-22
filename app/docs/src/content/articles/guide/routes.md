@@ -1,5 +1,5 @@
 `Layout` でページ共通の HTML を、`Page` で各ページの内容を定義し、`Routes` で URL に接続します。
-このガイドではトップページから始めて、URL パラメーターと、専用のレイアウトや読み込み表示を持つセクションを追加します。
+このガイドではトップページから始めて、パスパラメーターと、専用のレイアウトや読み込み表示を持つセクションを追加します。
 
 [はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
 最初の三つのセクションで `src/entry.effront.tsx` の構成要素を説明し、[エントリー全体](#application)でそれらを組み合わせます。
@@ -87,14 +87,16 @@ export default EFFRONT.make({ routes });
 ```
 
 保存して [http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと、RootLayout の `children` の位置に `Home` と表示されます。
-以降の例で `routes` を置き換える際も、import、各定義、default export は残してください。
 
-## URL パラメーターを受け取る {#matching}
+## パスパラメーターを受け取る {#matching}
 
-`effect` の import に `Schema` を追加します。
-既存の `routes` 宣言より前に `ArticlePage` と `ManualPage` を追加し、`routes` 宣言を次のものに置き換えます。
+`src/entry.effront.tsx` で `Schema` を追加し、`routes` より前に二つの Page を定義して、ルート登録を置き換えます。
 
 ```tsx
+// src/entry.effront.tsx: replace the effect import.
+import { Effect, Schema } from "effect";
+
+// Add both Pages immediately before routes.
 const ArticlePage = EFFRONT.Page.make({
   params: Schema.Struct({ slug: Schema.NonEmptyString }),
   render: ({ params }) => Effect.succeed(<h1>{params.slug}</h1>),
@@ -105,6 +107,7 @@ const ManualPage = EFFRONT.Page.make({
   render: ({ params }) => Effect.succeed(<article>{params.path || "Manual"}</article>),
 });
 
+// Replace routes.
 const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/", HomePage)
   .page("/articles/:slug", ArticlePage)
@@ -120,7 +123,9 @@ catch-all は空文字列を含む残りのパスを受け取り、パターン�
 `/manual/*path` が `/manual` も扱うため、`/manual` を別に登録しないでください。
 `/manual/about` や `/manual/:section` のように具体的なパスは、catch-all より優先されます。
 パラメーター名を変えても別のルートにはならず、`/articles/:slug` と `/articles/:id` は競合します。
-`/_effront` と、それに一致しうるパターンは予約領域として残してください。
+
+> [!WARNING]
+> `/_effront` と、それに一致しうるパターンは予約領域として残してください。
 
 Schema は URL デコード済みの文字列を受け取り、デコードした値を `render` に渡します。
 検証や変換には [Effect Schema](https://effect.website/docs/schema/introduction/) を使います。
@@ -130,10 +135,19 @@ GET と HEAD でデコードに失敗すると、クライアントナビゲー�
 
 ## セクションの Layout と読み込み表示を追加する {#mount}
 
-既存の `routes` 宣言より前に `ArticleLayout`、`ArticleLoading`、子グループの `articles` を追加します。
-`routes` 宣言を次のものに置き換え、固定プレフィックスに mount します。
+`src/entry.effront.tsx` の ArticlePage を置き換え、`routes` より前にセクションの定義を追加してルート登録を置き換えます。
 
 ```tsx
+// Replace ArticlePage to make the loading UI visible.
+const ArticlePage = EFFRONT.Page.make({
+  params: Schema.Struct({ slug: Schema.NonEmptyString }),
+  render: Effect.fn("ArticlePage.render")(function* ({ params }) {
+    yield* Effect.sleep("2 seconds");
+    return <h1>{params.slug}</h1>;
+  }),
+});
+
+// Add these definitions immediately before routes.
 const ArticleLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.succeed(
@@ -153,22 +167,12 @@ const articles = EFFRONT.Routes.make({
   loading: ArticleLoading,
 }).page("/:slug", ArticlePage);
 
+// Replace routes, removing the direct /articles/:slug registration.
 const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/", HomePage)
   .page("/manual/*path", ManualPage)
   .mount("/articles", articles);
 ```
 
-[http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello) では、ArticlePage が ArticleLayout、RootLayout の内側に表示されます。
-親にあった `.page("/articles/:slug", ArticlePage)` の登録は残さないでください。
-記事の内容が suspend している間は、ArticleLayout の内側に ArticleLoading が表示されます。
-Loading の `render` は Effect ではなく同期的な ReactNode を返し、すぐに応答が完成する場合は読み込み表示が見えないこともあります。
-
-子の `layout` と `loading` は省略できます。
-mount するグループには Page が必要で、プレフィックスは固定にします。
-動的パラメーターは子の `.page()` パターンで宣言してください。
-定義を複数のモジュールに分ける場合は、一つの `EFFRONT` を export して再利用します。
-別々の `Application.effront()` から作った定義は組み合わせられません。
-
-ナビゲーションには通常のリンクを使います。
-標準のクロスフェードを変更するには、[PageViewTransition の設定](/advanced/client-navigation#transition-scope)を参照してください。
+[http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello) を開きます。
+ArticleLayout の `Articles` の下に `Loading article…` が表示され、2 秒の待機後に読み込み表示が `hello` に置き換わります。

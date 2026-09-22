@@ -9,16 +9,29 @@ Tailwind の標準ユーティリティを使う場合も、独自のテーマ�
 vp add -D @effront/tailwind@0.1.4
 ```
 
-Vite 設定で import し、スタイル用のプラグインを用意します。
+[Getting started](./getting-started.md) の `vite.config.ts` に、スタイル用のプラグインを追加します。
 
 ```typescript
+// vite.config.ts
+import { effrontServer } from "@effront/server/vite";
+// Added: Tailwind integration.
 import { effrontTailwind } from "@effront/tailwind";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite-plus";
 
+// Added: styling plugins.
 const stylingPlugins = [effrontTailwind()];
+
+export default defineConfig({
+  // Add stylingPlugins.
+  plugins: [effront(), effrontServer(), ...stylingPlugins],
+  server: { host: "127.0.0.1", port: 1340, strictPort: true },
+});
 ```
 
-既存の `plugins` 配列に `...stylingPlugins` を追加し、`effront()` とホストのプラグインは残します。
-`effrontTailwind()` は `@tailwindcss/vite` を含むため、別に登録している場合は取り除いてください。
+> [!IMPORTANT]
+> `effrontTailwind()` は `@tailwindcss/vite` を含むため、別に登録している場合は取り除いてください。
+
 スタイルシートや、コンポーネントからの CSS import は不要です。
 
 コンポーネントの JSX でユーティリティを使います。
@@ -47,9 +60,10 @@ vp add -D tailwindcss@4.3.3
 }
 ```
 
-先ほどの `stylingPlugins` の宣言を置き換えます。
+`vite.config.ts` で、先ほどの `stylingPlugins` の宣言を置き換えます。
 
 ```typescript
+// vite.config.ts: replace the stylingPlugins declaration.
 const stylingPlugins = [effrontTailwind({ stylesheet: "./src/styles.css" })];
 ```
 
@@ -67,10 +81,14 @@ Effront が自動で読み込むので、コンポーネントからの import �
 vp add -D @tailwindcss/typography
 ```
 
-`src/styles.css` の既存の import とテーマを残し、次の行を追加します。
+`src/styles.css` の既存の import とテーマを残し、Typography プラグインを追加します。
 
 ```css
+/* src/styles.css: add the plugin after the existing import. */
+@import "tailwindcss";
+/* Added: Typography plugin. */
 @plugin "@tailwindcss/typography";
+/* Keep the existing @theme block below. */
 ```
 
 記事を `<article className="prose">` で囲むと、見出し、段落、リストにスタイルが付きます。

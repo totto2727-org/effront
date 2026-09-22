@@ -43,8 +43,8 @@ export const englishArticleCatalog = [
     headings: [
       { id: "setup", title: "Run the example" },
       { id: "vite", title: "Find the Worker configuration" },
-      { id: "local", title: "Preview the built Worker" },
-      { id: "context", title: "Change an application variable" },
+      { id: "local", title: "Run the built Worker with Wrangler" },
+      { id: "context", title: "Read Worker bindings and request context" },
       { id: "alchemy", title: "Manage resources with Alchemy" },
     ],
     source: "/platforms/cloudflare",
@@ -53,7 +53,7 @@ export const englishArticleCatalog = [
     slug: "/platforms/node",
     title: "Node.js",
     description:
-      "Run the Node.js example in development, preview its build, and start its production server.",
+      "Run the Node.js example in development, then build and start its production server.",
     section: "Platforms",
     headings: [
       { id: "setup", title: "Run the example" },
@@ -66,8 +66,7 @@ export const englishArticleCatalog = [
   {
     slug: "/platforms/bun",
     title: "Bun",
-    description:
-      "Run the Bun example in development, preview its build, and start its production server.",
+    description: "Run the Bun example in development, then build and start its production server.",
     section: "Platforms",
     headings: [
       { id: "setup", title: "Run the example" },
@@ -100,7 +99,7 @@ export const englishArticleCatalog = [
       { id: "pages", title: "Define the Page content" },
       { id: "routes", title: "Connect the Layout and Page with Routes" },
       { id: "application", title: "Run the complete application entry" },
-      { id: "matching", title: "Read URL parameters" },
+      { id: "matching", title: "Read path parameters" },
       { id: "mount", title: "Add a section layout and loading UI" },
     ],
     source: "/guide/routes",
@@ -126,11 +125,12 @@ export const englishArticleCatalog = [
     section: "Guides",
     headings: [
       { id: "identity", title: "Share the application definition" },
-      { id: "state", title: "Return form state" },
+      { id: "forms", title: "Submit a form directly" },
       { id: "application", title: "Render and submit the form" },
-      { id: "forms", title: "Submit without returning state" },
+      { id: "state", title: "Add form state with useActionState" },
       { id: "input", title: "Accept an object argument" },
-      { id: "refresh", title: "Handle updates and failures" },
+      { id: "refresh", title: "Handle updates" },
+      { id: "errors", title: "Handle failures" },
     ],
     source: "/guide/server-functions",
   },

@@ -62,9 +62,10 @@ Effect を事前に作っていても同様です。
 リクエスト Context がない場合は、`TypeError` の defect になります。
 型引数はホストの値を実行時に検証しません。
 
-ホストの値が自動で HTML や Flight にシリアライズされることはありません。
-Page で描画した値や ServerFn が返した値はブラウザーに届く場合があります。
-秘密情報を含めないでください。
+> [!WARNING]
+> ホストの値が自動で HTML や Flight にシリアライズされることはありません。
+> Page で描画した値や ServerFn が返した値はブラウザーに届く場合があります。
+> 秘密情報を含めないでください。
 
 ## Cloudflare の Context 読み取り関数 {#cloudflare}
 

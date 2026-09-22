@@ -29,7 +29,9 @@ if (entry) {
 }
 ```
 
-Use trusted authored Markdown and parser plugins; this integration does not sanitize untrusted submissions.
+> [!WARNING]
+> Use trusted authored Markdown and parser plugins; this integration does not sanitize untrusted submissions.
+
 See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) to load files with `import.meta.glob` and render them with Comark's `MarkdownDocument`.
 
 ## Key features

@@ -9,7 +9,6 @@ Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールし�
 git clone https://github.com/totto2727-org/effront.git
 cd effront
 vp install
-vp exec --filter "./packages/*" -- vp pack
 cd examples/workers
 vp dev
 ```
@@ -22,31 +21,24 @@ vp dev
 
 サンプルには Workers で動かすためのファイルが揃っています。
 
-| ファイル                | 役割                                                                                               |
-| ----------------------- | -------------------------------------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | ページ、ルートレイアウト、ルートを定義します。                                                     |
-| `src/entry.workers.ts`  | `createFetchHandler(application)` で作成した Fetch ハンドラーをエクスポートします。                |
-| `vite.config.ts`        | `effront()` と `effrontCloudflare()`、Tailwind を登録し、開発用とプレビュー用の URL を固定します。 |
-| `wrangler.jsonc`        | Worker のエントリー、互換性設定、`ASSETS` バインディング、アプリケーション変数を定義します。       |
-| `package.json`          | アダプター、Wrangler、アプリケーションの依存パッケージを定義します。                               |
+| ファイル                | 役割                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | ページ、ルートレイアウト、ルートを定義します。                                               |
+| `src/entry.workers.ts`  | `createFetchHandler(application)` で作成した Fetch ハンドラーをエクスポートします。          |
+| `vite.config.ts`        | `effront()` と `effrontCloudflare()`、Tailwind を登録し、開発用の URL を固定します。         |
+| `wrangler.jsonc`        | Worker のエントリー、互換性設定、`ASSETS` バインディング、アプリケーション変数を定義します。 |
+| `package.json`          | アダプター、Wrangler、アプリケーションの依存パッケージを定義します。                         |
 
 ページの内容は `src/entry.effront.tsx` で変更します。
 Wrangler の設定を変更するときは、既存の `nodejs_compat` フラグと `ASSETS` バインディングを保持してください。
 その他のオプションは [Wrangler 設定リファレンス](https://developers.cloudflare.com/workers/wrangler/configuration/) を参照してください。
 
-## ビルド済みの Worker をプレビューする {#local}
+## ビルド済みの Worker を Wrangler で実行する {#local}
 
 開発サーバーを停止し、`examples/workers` で次のコマンドを実行します。
 
 ```bash
 vp build
-vp preview
-```
-
-[http://127.0.0.1:4343](http://127.0.0.1:4343) を開き、カウンターと挨拶フォームを確認します。
-Vite から独立してビルド済みの Worker を動かすには、プレビューを停止し、生成された Wrangler 設定を使います。
-
-```bash
 vp exec wrangler dev --local --config dist/rsc/wrangler.json --ip 127.0.0.1 --port 8787
 ```
 
@@ -54,15 +46,51 @@ vp exec wrangler dev --local --config dist/rsc/wrangler.json --ip 127.0.0.1 --po
 生成された設定は、`wrangler.jsonc` のソースエントリーではなく、ビルド済みの Worker とブラウザー用アセットを読み込みます。
 これらのローカルコマンドはサンプルをデプロイせず、Cloudflare 認証も不要です。
 
-## アプリケーション変数を変更する {#context}
+## Worker のバインディングとリクエスト情報を読む {#context}
 
-`wrangler.jsonc` にある `APP_LABEL` の値を `My Effront App` に変更します。
-`GREETING` とその他の設定はそのままにします。
-`vp dev` を再起動し、[http://127.0.0.1:1343/about](http://127.0.0.1:1343/about) を開くと `My Effront App` が表示されます。
+`createFetchHandler` が処理する Page、Server Function、アプリケーション Layer など、リクエスト内で実行される Effect からアクセサーを使います。
+`API_ORIGIN` 変数を持つ Worker では、次のヘルパーでバインディングとリクエスト URL を読み、監査処理を `waitUntil()` に渡せます。
 
-`src/features/greeting/services.ts` は `getWorkersEnv` で変数を読み取り、`Host` サービスとしてページに提供します。
-`APP_LABEL` は About ページに、`GREETING` はトップページと挨拶の Server Function に使われます。
-リクエストや `waitUntil()` へのアクセスは [Workers コンテキストアクセサー](../api-reference/workers.md) を参照してください。
+```typescript
+import { getWorkersEnv, getWorkersRequestContext } from "@effront/cloudflare/workers";
+import { Effect } from "effect";
+
+type Env = { API_ORIGIN: string };
+
+export const readRequestSettings = Effect.fn("app/readRequestSettings")(function* (
+  recordAccess: (path: string) => Promise<void>,
+) {
+  const env = yield* getWorkersEnv<Env>();
+  const { request, executionContext } = yield* getWorkersRequestContext<Env>();
+  const path = new URL(request.url).pathname;
+  executionContext.waitUntil(recordAccess(path));
+  return { apiOrigin: env.API_ORIGIN, path };
+});
+```
+
+`API_ORIGIN` を Worker に設定し、このヘルパーを Effect 内から呼ぶ際に、自分の `recordAccess` 関数を渡します。
+
+> [!WARNING]
+> 型引数はホストの値を記述するもので、実行時には検証しません。
+> 秘密のバインディングをブラウザーへ表示・返却しないでください。
+
+ファクトリーで `Env` を一度指定すると、アクセサーを呼ぶ際の型引数が不要になります。
+
+```typescript
+import { createWorkersContextAccessors } from "@effront/cloudflare/workers";
+import { Effect } from "effect";
+
+type Env = { API_ORIGIN: string };
+const workers = createWorkersContextAccessors<Env>();
+
+export const currentRequest = Effect.gen(function* () {
+  const env = yield* workers.getWorkersEnv();
+  const { request } = yield* workers.getWorkersRequestContext();
+  return { apiOrigin: env.API_ORIGIN, path: new URL(request.url).pathname };
+});
+```
+
+詳しい契約は [Workers コンテキストのリファレンス](../api-reference/workers.md#cloudflare)を参照してください。
 
 <span id="secrets"></span>
 

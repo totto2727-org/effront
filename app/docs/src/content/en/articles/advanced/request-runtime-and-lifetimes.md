@@ -30,8 +30,9 @@ Aborting the render stream interrupts unfinished rendering work.
 Rendering must run through the application's Routes.
 Rendering outside its request runtime, or without required Middleware active, produces a `TypeError` rather than a usable service context.
 
-Workers bindings are not automatically serialized into Flight or HTML, but values placed in JSX, Client Component props, or Server Function results can reach the browser.
-Only deliberately public values belong in those outputs.
+> [!WARNING]
+> Workers bindings are not automatically serialized into Flight or HTML, but values placed in JSX, Client Component props, or Server Function results can reach the browser.
+> Only deliberately public values belong in those outputs.
 
 ## Request-owned and host-owned resources {#resource-design}
 

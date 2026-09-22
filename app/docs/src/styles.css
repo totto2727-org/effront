@@ -208,6 +208,55 @@ input {
   overflow-wrap: anywhere;
 }
 
+/* Comark alerts use GitHub-style type colors without changing ordinary quotes. */
+.docs-alert {
+  --docs-alert-color: var(--docs-alert-light);
+  margin-block: 1rem;
+  border-inline-start: 0.25rem solid var(--docs-alert-color);
+  padding: 0.5rem 1rem;
+  color: var(--foreground);
+}
+.dark .docs-alert {
+  --docs-alert-color: var(--docs-alert-dark);
+}
+.docs-alert[data-alert="note"] {
+  --docs-alert-light: #0969da;
+  --docs-alert-dark: #4493f8;
+}
+.docs-alert[data-alert="tip"] {
+  --docs-alert-light: #1a7f37;
+  --docs-alert-dark: #3fb950;
+}
+.docs-alert[data-alert="important"] {
+  --docs-alert-light: #8250df;
+  --docs-alert-dark: #ab7df8;
+}
+.docs-alert[data-alert="warning"] {
+  --docs-alert-light: #9a6700;
+  --docs-alert-dark: #d29922;
+}
+.docs-alert[data-alert="caution"] {
+  --docs-alert-light: #cf222e;
+  --docs-alert-dark: #f85149;
+}
+.docs-markdown .docs-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  color: var(--docs-alert-color);
+  font-weight: 600;
+}
+.docs-alert-title svg {
+  flex-shrink: 0;
+}
+.docs-alert-body > :first-child {
+  margin-top: 0;
+}
+.docs-alert-body > :last-child {
+  margin-bottom: 0;
+}
+
 /* Comark's standard Shiki output carries both theme values. The site is dark. */
 .dark .docs-markdown pre.shiki span {
   color: var(--shiki-dark) !important;

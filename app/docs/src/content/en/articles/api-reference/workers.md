@@ -61,9 +61,10 @@ It has no typed failure or service requirement.
 A missing request Context causes a `TypeError` defect.
 Type arguments do not validate host values at runtime.
 
-Host values are not automatically serialized into HTML or Flight.
-Values rendered by a Page or returned by a ServerFn can reach the browser.
-Keep secrets out of those outputs.
+> [!WARNING]
+> Host values are not automatically serialized into HTML or Flight.
+> Values rendered by a Page or returned by a ServerFn can reach the browser.
+> Keep secrets out of those outputs.
 
 ## Cloudflare context readers {#cloudflare}
 

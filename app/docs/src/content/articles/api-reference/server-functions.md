@@ -29,7 +29,10 @@ export const describe = EFFRONT.ServerFn.make({
 成功時のハンドラーの値が `Output` になります。
 入力の Schema による再エンコードは行いません。
 入力と出力は [React のシリアライズ契約](https://react.dev/reference/rsc/use-server#serializable-arguments-and-return-values) を満たす必要があります。
-ホストのバインディングや秘密情報を返さないでください。
+
+> [!WARNING]
+> ホストのバインディングや秘密情報を返さないでください。
+
 関数を呼び出す React コンポーネントは [Server Functions](/ja/guide/server-functions) を参照してください。
 
 ## 引数の形式 {#arguments}

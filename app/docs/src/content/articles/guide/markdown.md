@@ -1,7 +1,7 @@
 Markdown の記事を Effront アプリケーションのページとして表示し、記事へのリンクやローカルアセットの参照を公開 URL に解決できます。
 この例では、`@effront/markdown` と Comark の React レンダラーで記事を表示します。
 
-[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+[はじめに](./getting-started.md)で見出しを `Hello, Effront` に変更し、サンプルを [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
 
 ## 記事を追加する {#setup}
 
@@ -19,10 +19,14 @@ vp add @effront/markdown@0.1.4 @comark/react@0.6.2
 Welcome to the manual.
 ```
 
-Markdown は信頼できる作成者が管理するものに限ってください。
-パーサーは HTML やコンポーネントを受け付けるため、利用者からの投稿をサニタイズする用途には使えません。
+> [!WARNING]
+> Markdown は信頼できる作成者が管理するものに限ってください。
+> パーサーは HTML やコンポーネントを受け付けるため、利用者からの投稿をサニタイズする用途には使えません。
+
 コレクションの import と解析処理はサーバー側のモジュールに置きます。
-Cloudflare Workers では、ホスト設定で `nodejs_compat` を有効にしてください。
+
+> [!IMPORTANT]
+> Cloudflare Workers では、ホスト設定で `nodejs_compat` を有効にしてください。
 
 ## コレクションを読み込む {#collection}
 
@@ -46,14 +50,27 @@ export const manual = createMarkdownCollection({
 取り除かれるのは `.md` 拡張子だけです。
 `index.md` は `/manual` ではなく `/manual/index` になります。
 
-ローカルの画像やダウンロードファイルを使う場合は、`manual` より前に `assets` を定義し、コレクションの `assets` オプションとして渡します。
+ローカルの画像やダウンロードファイルを使う場合は、`src/manual.ts` で `assets` を定義して渡します。
 
 ```typescript
+// src/manual.ts: add before manual.
 const assets = import.meta.glob<string>("./**/*.{svg,png,jpg,pdf}", {
   base: "./content",
   query: "?url",
   import: "default",
   eager: true,
+});
+
+// Replace the manual declaration, adding assets.
+export const manual = createMarkdownCollection({
+  basePath: "/manual",
+  assets,
+  documents: import.meta.glob<string>("./**/*.md", {
+    base: "./content",
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
 });
 ```
 
@@ -61,14 +78,15 @@ const assets = import.meta.glob<string>("./**/*.{svg,png,jpg,pdf}", {
 
 ## 記事を URL で表示する {#render}
 
-[Getting started](./getting-started.md#application) のアプリケーションエントリーで、`EFFRONT`、RootLayout、HomePage、`Effect` の import を残します。
-次の import と Page を追加します。
+[Getting started](./getting-started.md#application) の `src/entry.effront.tsx` に import と `IntroPage` を追加し、ホームページとともに登録します。
 
 ```tsx
+// src/entry.effront.tsx: add to the imports.
 import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import { parseMarkdown } from "@effront/markdown";
 import { manual } from "./manual";
 
+// Add before the default export.
 const IntroPage = EFFRONT.Page.make({
   render: Effect.fn("IntroPage.render")(function* () {
     const collection = yield* manual;
@@ -82,11 +100,8 @@ const IntroPage = EFFRONT.Page.make({
     );
   }),
 });
-```
 
-default export を置き換え、ホームページとともに記事を登録します。
-
-```tsx
+// Replace the default export.
 export default EFFRONT.make({
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", HomePage)
@@ -97,8 +112,7 @@ export default EFFRONT.make({
 [http://127.0.0.1:1340/manual/intro](http://127.0.0.1:1340/manual/intro) を開くと、Layout の内側に記事が表示されます。
 余白や色を加えるには [Styling](./styling.md) を参照してください。
 
-次の記事には `src/content/details.md` を追加し、Page を `/manual/details` に登録します。
-`intro.md` 内の `[Details](./details.md#example)` は `/manual/details#example` に解決されます。
+`src/content/details.md` の Page が `/manual/details` に登録されている場合、`intro.md` 内の `[Details](./details.md#example)` は `/manual/details#example` に解決されます。
 アセットの相対参照は記事のディレクトリを基準に解決され、import 済みの URL を使います。
 解決できない参照は `MarkdownError` になります。
 
@@ -112,17 +126,34 @@ HTTP middleware で要求された記事を検索し、`get()` が `undefined` �
 [Comark の構文](https://comark.dev)で記事を書き、`parseMarkdown(entry)` と [Effront の標準設定](../api-reference/markdown.md#parse)で解析します。
 解析を変えるには、`parseMarkdown(entry, { linkify: false })` のように、第 2 引数に Comark の `ParserOptions` を渡します。
 
-パーサープラグインを追加するには、`comark@0.6.2` を直接の依存関係としてインストールし、プラグインを import します。
+パーサープラグインを追加するには、`comark@0.6.2` を直接の依存関係としてインストールし、`src/entry.effront.tsx` を変更します。
 
-```typescript
+```tsx
+// src/entry.effront.tsx: add to the imports.
 import toc from "comark/plugins/toc";
 
-const document = yield * parseMarkdown(entry, { plugins: [toc()] });
+// Replace IntroPage, keeping its route registration unchanged.
+const IntroPage = EFFRONT.Page.make({
+  render: Effect.fn("IntroPage.render")(function* () {
+    const collection = yield* manual;
+    const entry = collection.get("/manual/intro");
+    if (!entry) throw new TypeError("Registered article is missing");
+    // Add the parser plugin to this call.
+    const document = yield* parseMarkdown(entry, { plugins: [toc()] });
+    return (
+      <article>
+        <MarkdownDocument value={document} />
+      </article>
+    );
+  }),
+});
 ```
 
-この解析の呼び出しで、Page のジェネレーター内にある先ほどの呼び出しを置き換えます。
 追加プラグインは Effront の標準プラグインの後に実行され、標準プラグインを置き換えるものではありません。
 コンポーネントの差し替えには [Comark の React レンダラー](https://comark.dev/rendering/react)を使ってください。
-解析に対応しているだけでは、Math や Mermaid を React で表示できません。
-Comark 0.6.2 はそれらのコンポーネントを自動登録しません。
+
+> [!NOTE]
+> 解析に対応しているだけでは、Math や Mermaid を React で表示できません。
+> Comark 0.6.2 はそれらのコンポーネントを自動登録しません。
+
 オプションと参照解決の規則は [Markdown リファレンス](../api-reference/markdown.md)を参照してください。

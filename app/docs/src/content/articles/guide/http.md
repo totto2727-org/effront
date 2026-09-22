@@ -24,18 +24,22 @@ export const GreetingApi = HttpRouter.use(
 ```
 
 Page や Server Function の URL と重複しないパスを選び、予約領域の `/_effront` は使わないでください。
-`jsonUnsafe` は、この文字列を含むオブジェクトのように、JSON に変換できると分かっている値だけに使います。
-外部入力を受け付けるエンドポイントでは、入力を検証し、失敗を HTTP レスポンスとして処理してください。
+
+> [!WARNING]
+> `jsonUnsafe` は、この文字列を含むオブジェクトのように、JSON に変換できると分かっている値だけに使います。
+> 外部入力を受け付けるエンドポイントでは、入力を検証し、失敗を HTTP レスポンスとして処理してください。
 
 ## ルートとサービスを登録する {#services}
 
 `src/entry.effront.tsx` の `effect` の import に `Layer` を追加し、`GreetingApi` を import します。
-サービスの例の `EFFRONT`、`Greeting`、`routes` を残し、default export を置き換えます。
 
 ```typescript
-import { Layer } from "effect";
+// src/entry.effront.tsx: replace the effect import.
+import { Effect, Layer } from "effect";
+// Add to the imports.
 import { GreetingApi } from "./http";
 
+// Replace the default export.
 const ApplicationLayer = GreetingApi.pipe(Layer.provideMerge(Greeting.layer));
 
 export default EFFRONT.make({ routes, layer: ApplicationLayer });
@@ -56,7 +60,9 @@ export default EFFRONT.make({ routes, layer: ApplicationLayer });
 独自の HTTP リクエストでも、アプリケーションの Layer はリクエストごとに構築されます。
 接続などのスコープ付きリソースは、そのリクエスト内だけで使ってください。
 スコープはレスポンス本文の読み取り完了、失敗、キャンセルまで続きます。
-後のリクエストで使うために、リクエスト固有のサービスをモジュール変数に保存しないでください。
+
+> [!WARNING]
+> 後のリクエストで使うために、リクエスト固有のサービスをモジュール変数に保存しないでください。
 
 ## 共通のレスポンスヘッダーを追加する {#global}
 
@@ -79,14 +85,25 @@ export const ApplicationLayer = Layer.mergeAll(GreetingApi, GlobalHeaders).pipe(
 );
 ```
 
-エントリーモジュール内の `ApplicationLayer` 定義を `import { ApplicationLayer } from "./application-layer"` に置き換え、引き続き `EFFRONT.make` に渡します。
-エントリーモジュールから、使わなくなった `Layer` と `GreetingApi` の import を削除します。
+`src/entry.effront.tsx` で共通の Layer を import し、ローカルの定義と不要な import を削除します。
+
+```typescript
+// src/entry.effront.tsx: replace the effect import to remove Layer.
+import { Effect } from "effect";
+// Replace the GreetingApi import.
+import { ApplicationLayer } from "./application-layer";
+
+// Remove the local ApplicationLayer declaration.
+export default EFFRONT.make({ routes, layer: ApplicationLayer });
+```
+
 `/` と `/api/greeting` の両方に `x-content-type-options: nosniff` が付きます。
 
 `global: true` は Page、Server Function、独自ルート、一致するルートのないリクエストを対象にします。
 一つの Routes グループだけに適用する場合は、[スコープ付き Middleware](/guide/middleware) を使ってください。
 
-この例が変更するのは、後続の Effect が成功して返したレスポンスだけです。
-未登録の URL は `RouteNotFound` で失敗するため、そのエラーを処理してレスポンスを返さない限り、最終的な 404 にヘッダーは付きません。
-ホストが直接配信する静的アセットと、リクエストのサイズ超過に対するランタイムの早期 413 レスポンスは、ルーターを通りません。
-アセットのヘッダーはホスト側で設定してください。
+> [!NOTE]
+> この例が変更するのは、後続の Effect が成功して返したレスポンスだけです。
+> 未登録の URL は `RouteNotFound` で失敗するため、そのエラーを処理してレスポンスを返さない限り、最終的な 404 にヘッダーは付きません。
+> ホストが直接配信する静的アセットと、リクエストのサイズ超過に対するランタイムの早期 413 レスポンスは、ルーターを通りません。
+> アセットのヘッダーはホスト側で設定してください。

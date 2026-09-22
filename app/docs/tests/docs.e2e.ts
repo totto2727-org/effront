@@ -100,9 +100,9 @@ test("Markdown readers can reach the default configuration and find the extensio
     /後に追加[^。]*置き換えにはなりません/,
   );
   await expect(reference).toContainText(/プラグインを削除[^。]*オプションはありません/);
-  await expect(reference.locator("p").filter({ hasText: "sanitizer" })).toContainText(
-    /sanitizer ではありません/,
-  );
+  await expect(
+    reference.locator('[data-alert="warning"]').filter({ hasText: "sanitizer" }),
+  ).toContainText(/sanitizer ではありません/);
   await expect(page.locator('article a[href="https://comark.dev"]')).toBeVisible();
 });
 

@@ -125,8 +125,10 @@ Parsing retains Comark's standard defaults and adds the mdts plugins for footnot
 Applications import Comark's standard `MarkdownDocument` directly and supply their own component mappings.
 The package provides no React renderer factory, forced component mappings, or custom Math/Mermaid SSR replacements.
 
-Content and plugins are trusted authored inputs.
-This integration is not a sanitizer for untrusted submissions.
+> [!WARNING]
+> Content and plugins are trusted authored inputs.
+> This integration is not a sanitizer for untrusted submissions.
+
 Standard Comark document rendering does not automatically register its separate Math/Mermaid components; rich no-JavaScript rendering is tracked in [the roadmap](../../../docs/ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
 
 ## Verification

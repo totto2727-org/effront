@@ -2,16 +2,23 @@
 
 ## サンプルを起動する {#setup}
 
-Node.js 24.11 以降と [Vite+](https://viteplus.dev/) を用意し、[Hello world サンプル](https://github.com/totto2727-org/effront/tree/main/examples/hello-world)を取得します。
+Node.js 24.11 以降と [Vite+](https://viteplus.dev/) がインストールされている状態で、[Hello world サンプル](https://github.com/totto2727-org/effront/tree/main/examples/hello-world)を取得します。
 
 ```bash
 git clone https://github.com/totto2727-org/effront.git
-cd effront/examples/hello-world
+cd effront
 vp install
-node --run dev
+```
+
+続いてサンプルを起動します。
+
+```bash
+cd examples/hello-world
+vp dev
 ```
 
 [http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと、`Hello, world` が表示されます。
+次回以降は `examples/hello-world` で `vp dev` を実行します。
 
 ## サンプルの構成を見る {#application}
 
@@ -31,14 +38,13 @@ node --run dev
 
 ## 表示内容を変える {#run}
 
-`src/entry.effront.tsx` の次の部分を変更します。
+`src/entry.effront.tsx` の見出しを次のように変更します。
 
 ```tsx
-<h1>Hello, world</h1>
-```
-
-```tsx
-<h1>Hello, Effront</h1>
+const HomePage = EFFRONT.Page.make({
+  // 見出しの文字列を変更します。
+  render: () => Effect.succeed(<h1>Hello, Effront</h1>),
+});
 ```
 
 保存すると、ブラウザーの表示が `Hello, Effront` に変わります。

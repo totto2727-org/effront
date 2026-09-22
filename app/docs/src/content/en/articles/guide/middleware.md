@@ -1,12 +1,14 @@
 Effront Middleware runs checks or provides request-specific services around page requests and Server Function calls.
 Use it for shared behavior such as checking authentication or making the current user available to application code.
 
-Continue in the running [Getting started sample](./getting-started.md), which serves [http://127.0.0.1:1340](http://127.0.0.1:1340).
+Continue after changing the heading to `Hello, Effront` in [Getting started](./getting-started.md), with the sample running at [http://127.0.0.1:1340](http://127.0.0.1:1340).
 
 ## Choose the request scope {#reach}
 
 Attach Middleware to Routes for page requests, and to the definition that creates a Server Function for its invocations.
-A protected page does not automatically protect actions rendered on it.
+
+> [!WARNING]
+> A protected page does not automatically protect actions rendered on it.
 
 For policies that also cover custom HTTP endpoints and unmatched requests, use [global HTTP Middleware](/en/guide/http#global).
 Host-served static assets need host-level configuration.
@@ -42,21 +44,14 @@ Use the derived `RequestEFFRONT` to define consumers and Routes for this scope.
 
 ## Apply the service to a Page {#routes}
 
-Create `src/entry.effront.tsx`:
+Update `src/entry.effront.tsx` to use the shared definition and replace the homepage with `/request`:
 
 ```tsx
-import { Effect } from "effect";
+// src/entry.effront.tsx: replace the Application import.
 import { EFFRONT, RequestEFFRONT, RequestInfo } from "./request-scope";
 
-const RootLayout = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.succeed(
-      <html lang="en">
-        <body>{children}</body>
-      </html>,
-    ),
-});
-
+// Remove the local EFFRONT declaration.
+// Replace HomePage with RequestPage.
 const RequestPage = RequestEFFRONT.Page.make({
   render: Effect.fn("RequestPage.render")(function* () {
     const info = yield* RequestInfo;
@@ -64,6 +59,7 @@ const RequestPage = RequestEFFRONT.Page.make({
   }),
 });
 
+// Replace the default export with this route declaration and export.
 const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request", RequestPage);
 
 export default EFFRONT.make({ routes });
@@ -89,12 +85,27 @@ export const Maintenance = EFFRONT.Middleware.make(() =>
 );
 ```
 
-Import `Maintenance` in the entry and replace `RequestEFFRONT.Routes.make(...)` with `RequestEFFRONT.withMiddleware(Maintenance).Routes.make(...)`.
+In `src/entry.effront.tsx`, import and apply `Maintenance` to the Routes:
+
+```tsx
+// src/entry.effront.tsx: add to the imports.
+import { Maintenance } from "./maintenance";
+
+// Replace routes to apply Maintenance.
+const routes = RequestEFFRONT.withMiddleware(Maintenance)
+  .Routes.make({
+    layout: RootLayout,
+  })
+  .page("/request", RequestPage);
+```
+
 Requests now receive status 503 and `Under maintenance` instead of the Page.
 For a conditional check, run `httpEffect` only when the request is allowed.
 
 Authentication follows the same pattern: verify the session, reject invalid requests, and provide the verified user before continuing.
-A username in a cookie or header is not proof of identity.
+
+> [!WARNING]
+> A username in a cookie or header is not proof of identity.
 
 Chained Middleware enters in declaration order and processes responses in reverse order.
 An early response skips the remaining inner handlers.
@@ -119,15 +130,35 @@ export const recordRequest = RequestEFFRONT.ServerFn.make({
 });
 ```
 
-Restore the Routes without `Maintenance`, import `recordRequest` into the Page module, and include this form in its returned JSX:
+In `src/entry.effront.tsx`, remove `Maintenance`, restore the Routes, and add the form to `RequestPage`:
 
 ```tsx
-<form action={recordRequest}>
-  <button type="submit">Record request</button>
-</form>
+// src/entry.effront.tsx: replace the Maintenance import.
+import { recordRequest } from "./record-request";
+
+// Replace RequestPage to include the form.
+const RequestPage = RequestEFFRONT.Page.make({
+  render: Effect.fn("RequestPage.render")(function* () {
+    const info = yield* RequestInfo;
+    return (
+      <>
+        <p>Request URL: {info.url}</p>
+        <form action={recordRequest}>
+          <button type="submit">Record request</button>
+        </form>
+      </>
+    );
+  }),
+});
+
+// Replace routes to remove Maintenance.
+const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request", RequestPage);
 ```
 
 Submitting logs `Form received` with the submission URL, not a value saved from the page request.
-This Middleware only provides data.
-For protected updates, attach actual authentication and authorization checks to the Server Function's definition.
+
+> [!WARNING]
+> This Middleware only provides data.
+> For protected updates, attach actual authentication and authorization checks to the Server Function's definition.
+
 See [Server Functions](/en/guide/server-functions) for returning form state.

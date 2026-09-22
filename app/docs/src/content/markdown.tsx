@@ -6,6 +6,7 @@ import { articleCatalog } from "./catalog";
 import { englishArticleCatalog } from "./en/catalog";
 import { localizedPath, localizeDocumentLink, type DocLocale } from "./locale";
 import type { RenderableDocPage } from "./types";
+import { markdownAlertComponents } from "../components/markdown-alert";
 
 // Vite owns loading. No runtime filesystem access or client-side parser is needed.
 const articles = createMarkdownCollection({
@@ -54,7 +55,7 @@ export const markdownPages: readonly RenderableDocPage[] = articleCatalog.map(
           <MarkdownDocument
             value={document}
             className="docs-markdown"
-            components={{ ProsePre: MarkdownPre }}
+            components={{ ...markdownAlertComponents, ProsePre: MarkdownPre }}
           />
         );
       }),
@@ -79,7 +80,7 @@ export function localizedMarkdownPages(locale: DocLocale): readonly RenderableDo
           <MarkdownDocument
             value={document}
             className="docs-markdown"
-            components={{ ProsePre: MarkdownPre, ProseA: ArticleLink }}
+            components={{ ...markdownAlertComponents, ProsePre: MarkdownPre, ProseA: ArticleLink }}
           />
         );
       }),

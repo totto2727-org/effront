@@ -1,12 +1,14 @@
 Effront の Middleware は、ページのリクエストや Server Function の呼び出しに対して、事前のチェックやリクエスト固有のサービスの提供を行います。
 認証の確認や、アプリケーションから現在のユーザーを参照できるようにする処理などを共通化できます。
 
-[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+[はじめに](./getting-started.md)で見出しを `Hello, Effront` に変更し、サンプルを [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
 
 ## 適用するリクエストを選ぶ {#reach}
 
 ページへのリクエストには Routes に、Server Function の呼び出しにはその関数を作る定義に Middleware を付けます。
-保護されたページに表示しただけでは、アクションは保護されません。
+
+> [!WARNING]
+> 保護されたページに表示しただけでは、アクションは保護されません。
 
 独自の HTTP エンドポイントや、ルートに一致しないリクエストにも適用する場合は、[グローバル HTTP Middleware](/guide/http#global) を使います。
 ホストが直接配信する静的アセットには、ホスト側の設定が必要です。
@@ -42,21 +44,14 @@ export const RequestEFFRONT = EFFRONT.withMiddleware(WithRequestInfo);
 
 ## Page にサービスを適用する {#routes}
 
-`src/entry.effront.tsx` を作成します。
+`src/entry.effront.tsx` で共有の定義を使い、ホームページを `/request` に置き換えます。
 
 ```tsx
-import { Effect } from "effect";
+// src/entry.effront.tsx: replace the Application import.
 import { EFFRONT, RequestEFFRONT, RequestInfo } from "./request-scope";
 
-const RootLayout = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.succeed(
-      <html lang="en">
-        <body>{children}</body>
-      </html>,
-    ),
-});
-
+// Remove the local EFFRONT declaration.
+// Replace HomePage with RequestPage.
 const RequestPage = RequestEFFRONT.Page.make({
   render: Effect.fn("RequestPage.render")(function* () {
     const info = yield* RequestInfo;
@@ -64,6 +59,7 @@ const RequestPage = RequestEFFRONT.Page.make({
   }),
 });
 
+// Replace the default export with this route declaration and export.
 const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request", RequestPage);
 
 export default EFFRONT.make({ routes });
@@ -89,13 +85,28 @@ export const Maintenance = EFFRONT.Middleware.make(() =>
 );
 ```
 
-エントリーで `Maintenance` を import し、`RequestEFFRONT.Routes.make(...)` を `RequestEFFRONT.withMiddleware(Maintenance).Routes.make(...)` に置き換えます。
+`src/entry.effront.tsx` で `Maintenance` を import し、Routes に適用します。
+
+```tsx
+// src/entry.effront.tsx: add to the imports.
+import { Maintenance } from "./maintenance";
+
+// Replace routes to apply Maintenance.
+const routes = RequestEFFRONT.withMiddleware(Maintenance)
+  .Routes.make({
+    layout: RootLayout,
+  })
+  .page("/request", RequestPage);
+```
+
 Page の代わりに、ステータス 503 と `Under maintenance` が返ります。
 条件付きのチェックでは、リクエストを許可する場合にだけ `httpEffect` を実行してください。
 
 認証も同じ流れです。
 セッションを検証し、不正なリクエストを拒否し、続行前に検証済みの利用者を提供します。
-cookie やヘッダーに入ったユーザー名は、本人である証明にはなりません。
+
+> [!WARNING]
+> cookie やヘッダーに入ったユーザー名は、本人である証明にはなりません。
 
 Middleware は宣言順に入り、レスポンスは逆順に処理します。
 途中で応答すると、残りの内側のハンドラーは実行されません。
@@ -120,16 +131,36 @@ export const recordRequest = RequestEFFRONT.ServerFn.make({
 });
 ```
 
-Routes を `Maintenance` なしの定義に戻し、Page のモジュールで `recordRequest` を import して、返す JSX に次のフォームを追加します。
+`src/entry.effront.tsx` で `Maintenance` を削除して Routes を元に戻し、`RequestPage` にフォームを追加します。
 
 ```tsx
-<form action={recordRequest}>
-  <button type="submit">Record request</button>
-</form>
+// src/entry.effront.tsx: replace the Maintenance import.
+import { recordRequest } from "./record-request";
+
+// Replace RequestPage to include the form.
+const RequestPage = RequestEFFRONT.Page.make({
+  render: Effect.fn("RequestPage.render")(function* () {
+    const info = yield* RequestInfo;
+    return (
+      <>
+        <p>Request URL: {info.url}</p>
+        <form action={recordRequest}>
+          <button type="submit">Record request</button>
+        </form>
+      </>
+    );
+  }),
+});
+
+// Replace routes to remove Maintenance.
+const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request", RequestPage);
 ```
 
 送信すると、`Form received` と送信時の URL がログに出ます。
 ページを開いたときの値を保存して使うわけではありません。
-この Middleware はデータを提供するだけです。
-保護が必要な更新には、Server Function の定義に実際の認証と認可のチェックを付けてください。
+
+> [!WARNING]
+> この Middleware はデータを提供するだけです。
+> 保護が必要な更新には、Server Function の定義に実際の認証と認可のチェックを付けてください。
+
 フォームの状態を返す方法は [Server Functions](/guide/server-functions) を参照してください。

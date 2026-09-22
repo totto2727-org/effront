@@ -3,9 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cd ../.. && vp exec --filter \"./packages/*\" -- vp pack && cd examples/hello-world && vp dev",
+    "dev": "vp dev",
     "build": "vp build",
-    "preview": "vp preview",
     "start": "node dist/rsc/server.js"
   },
   "dependencies": {

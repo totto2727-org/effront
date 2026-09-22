@@ -14,13 +14,13 @@
 ### Standard tasks
 
 Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before entering an example.
-For `hello-world/`, run `vp install` and `node --run dev` from that directory instead; its development script bootstraps workspace packages before starting Vite on port 1340.
-Node's script runner avoids Vite task discovery before the initial package build.
+Workspace preparation is separate from development startup; example development commands do not build workspace packages.
 
+- `vp dev` in `hello-world/` starts the minimal Node sample on port 1340 after the root preparation above.
 - `vp run dev` in `alchemy/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
-- `vp dev`, `vp build`, and `vp preview` in `workers/` use standalone Cloudflare hosting, without an Alchemy profile or remote resources.
+- `vp dev` and `vp build` in `workers/` use standalone Cloudflare hosting, without an Alchemy profile or remote resources.
 - `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `workers/` serves the built artifact independently of Vite after `vp build`.
-- `vp dev`, `vp build`, `vp preview`, and `vp run start` in `node/` or `bun/` exercise Vite tooling and the separate built native listener. `PORT` and `HOST` configure production listening.
+- `vp dev`, `vp build`, and `vp run start` in `node/` or `bun/` exercise Vite tooling and the separate built native listener. `PORT` and `HOST` configure production listening.
 - `vp run dev` from `basic/` must resolve to the native Alchemy example when changing the alias.
 - `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host; official CLI acceptance is separate.
 

@@ -31,7 +31,17 @@ export const manual = createMarkdownCollection({
 
 Use the same `base` for both globs so document and asset paths resolve from the same directory.
 For example, `content/guide.md` becomes `/manual/guide`, and `![Logo](./logo.svg)` in that document uses Vite's imported URL for `content/logo.svg`.
-Use `?url&no-inline` when each asset should have a separately fetchable URL.
+When each asset should have a separately fetchable URL, change the asset glob in `manual.ts` to use `?url&no-inline`:
+
+```ts
+// In manual.ts, change only the assets glob's query; keep documents unchanged.
+assets: import.meta.glob<string>("./**/*.{svg,png,jpg,jpeg,gif,webp,pdf}", {
+  base: "./content",
+  query: "?url&no-inline", // Replace "?url" to prevent asset inlining.
+  import: "default",
+  eager: true,
+}),
+```
 
 ### Select a page
 
@@ -68,7 +78,9 @@ export const renderArticle = Effect.fn("renderArticle")(function* (entry: Markdo
 
 Comark renders the parsed document with resolved link and image URLs.
 Supply your own layout and styles.
-Treat Markdown and parser plugins as trusted content, not sanitized user submissions.
+
+> [!WARNING]
+> Treat Markdown and parser plugins as trusted content, not sanitized user submissions.
 
 ## Public API
 

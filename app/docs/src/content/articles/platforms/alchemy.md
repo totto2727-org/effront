@@ -4,14 +4,15 @@
 ## サンプルを準備する {#setup}
 
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールします。
-サンプルは Alchemy を `2.0.0-beta.77` に固定しており、この版の CLI はローカル開発でも Cloudflare profile の設定を必要とします。
-起動前に [Alchemy のドキュメント](https://alchemy.run/docs)に従って profile を設定してください。
+
+> [!IMPORTANT]
+> サンプルは Alchemy を `2.0.0-beta.77` に固定しており、この版の CLI はローカル開発でも Cloudflare profile の設定を必要とします。
+> 起動前に [Alchemy のドキュメント](https://alchemy.run/docs)に従って profile を設定してください。
 
 ```bash
 git clone https://github.com/totto2727-org/effront.git
 cd effront
 vp install
-vp exec --filter "./packages/*" -- vp pack
 cd examples/alchemy
 ```
 
@@ -38,7 +39,17 @@ vp run dev
 CLI が準備完了を示したら、[http://localhost:1337](http://localhost:1337) を開きます。
 トップページに `Hello, world!` と表示されます。
 
-`src/entry.effront.tsx` の見出しを変更して保存し、開発中の更新を確認します。
+`src/entry.effront.tsx` の見出しを次のように変更して保存すると、`Hello, Effront!` が表示されます。
+
+```tsx
+return (
+  <>
+    {/* 見出しの文字列を変更します。 */}
+    <h1 className="my-5 text-3xl font-bold">Hello, Effront!</h1>
+    {/* 他のページ内容は変更しません。 */}
+  </>
+);
+```
 
 ## 必要に応じてリソースを追加する {#capabilities}
 

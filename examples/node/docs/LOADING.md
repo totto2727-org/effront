@@ -9,7 +9,6 @@ Node サンプルの `/loading` で、ページ移動・コンポーネントの
 
 ```sh
 vp install
-vp exec --filter "./packages/*" -- vp pack
 cd examples/node
 vp dev --host 127.0.0.1 --port 4455 --strictPort
 ```

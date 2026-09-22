@@ -2,17 +2,24 @@ Run a minimal Effront application that displays `Hello, world`, then explore the
 
 ## Run the sample {#setup}
 
-Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then clone the [Hello world example](https://github.com/totto2727-org/effront/tree/main/examples/hello-world):
+With Node.js 24.11 or later and [Vite+](https://viteplus.dev/) installed, clone the [Hello world example](https://github.com/totto2727-org/effront/tree/main/examples/hello-world):
 
 ```bash
 git clone https://github.com/totto2727-org/effront.git
-cd effront/examples/hello-world
+cd effront
 vp install
-node --run dev
+```
+
+Then start the sample:
+
+```bash
+cd examples/hello-world
+vp dev
 ```
 
 Open [http://127.0.0.1:1340](http://127.0.0.1:1340).
 The page displays `Hello, world`.
+For later development sessions, run `vp dev` from `examples/hello-world`.
 
 ## Explore the sample {#application}
 
@@ -32,16 +39,13 @@ The page is defined in [`src/entry.effront.tsx`](https://github.com/totto2727-or
 
 ## Change the heading {#run}
 
-In `src/entry.effront.tsx`, replace:
+In `src/entry.effront.tsx`, change the heading:
 
 ```tsx
-<h1>Hello, world</h1>
-```
-
-with:
-
-```tsx
-<h1>Hello, Effront</h1>
+const HomePage = EFFRONT.Page.make({
+  // Replace the heading text.
+  render: () => Effect.succeed(<h1>Hello, Effront</h1>),
+});
 ```
 
 Save the file.

@@ -61,8 +61,10 @@ Comark 0.6.2 は Math/Mermaid の React コンポーネントを自動登録せ�
 そのため、解析対応だけでは完全な SSR 描画を保証しません。
 必要な場合は対応するコンポーネントを指定し、描画結果を検証してください。
 
-対象は信頼できる執筆済み Markdown とプラグインに限ります。
-この parser は sanitizer ではありません。
+> [!WARNING]
+> 対象は信頼できる執筆済み Markdown とプラグインに限ります。
+> この parser は sanitizer ではありません。
+
 parser の例外は、元の例外を `cause` に持つ `MarkdownError` になります。
 
 ## リンク、アセット、MarkdownError {#references}

@@ -43,8 +43,8 @@ export const articleCatalog = [
     headings: [
       { id: "setup", title: "サンプルを起動する" },
       { id: "vite", title: "Worker の設定を確認する" },
-      { id: "local", title: "ビルド済みの Worker をプレビューする" },
-      { id: "context", title: "アプリケーション変数を変更する" },
+      { id: "local", title: "ビルド済みの Worker を Wrangler で実行する" },
+      { id: "context", title: "Worker のバインディングとリクエスト情報を読む" },
       { id: "alchemy", title: "Alchemy でリソースを管理する" },
     ],
     source: "/platforms/cloudflare",
@@ -52,8 +52,7 @@ export const articleCatalog = [
   {
     slug: "/platforms/node",
     title: "Node.js",
-    description:
-      "Node.js サンプルを開発モードで動かし、ビルドのプレビューと本番サーバーの起動を確認します。",
+    description: "Node.js サンプルを開発モードで動かし、ビルドして本番サーバーの起動を確認します。",
     section: "Platforms",
     headings: [
       { id: "setup", title: "サンプルを起動する" },
@@ -66,8 +65,7 @@ export const articleCatalog = [
   {
     slug: "/platforms/bun",
     title: "Bun",
-    description:
-      "Bun サンプルを開発モードで動かし、ビルドのプレビューと本番サーバーの起動を確認します。",
+    description: "Bun サンプルを開発モードで動かし、ビルドして本番サーバーの起動を確認します。",
     section: "Platforms",
     headings: [
       { id: "setup", title: "サンプルを起動する" },
@@ -100,7 +98,7 @@ export const articleCatalog = [
       { id: "pages", title: "Page の内容を定義する" },
       { id: "routes", title: "Routes で Layout と Page を接続する" },
       { id: "application", title: "エントリー全体を組み合わせて動かす" },
-      { id: "matching", title: "URL パラメーターを受け取る" },
+      { id: "matching", title: "パスパラメーターを受け取る" },
       { id: "mount", title: "セクションの Layout と読み込み表示を追加する" },
     ],
     source: "/guide/routes",
@@ -126,11 +124,12 @@ export const articleCatalog = [
     section: "Guides",
     headings: [
       { id: "identity", title: "アプリケーション定義を共有する" },
-      { id: "state", title: "フォームの状態を返す" },
+      { id: "forms", title: "フォームを直接送信する" },
       { id: "application", title: "フォームを表示して送信する" },
-      { id: "forms", title: "状態を返さずに送信する" },
+      { id: "state", title: "useActionState でフォームの状態を加える" },
       { id: "input", title: "オブジェクトを引数に取る" },
-      { id: "refresh", title: "更新と失敗を扱う" },
+      { id: "refresh", title: "更新を扱う" },
+      { id: "errors", title: "失敗を扱う" },
     ],
     source: "/guide/server-functions",
   },

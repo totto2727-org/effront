@@ -9,16 +9,29 @@ Install the integration:
 vp add -D @effront/tailwind@0.1.4
 ```
 
-In your Vite configuration, import and create the styling plugins:
+In `vite.config.ts` from [Getting started](./getting-started.md), add the styling plugins:
 
 ```typescript
+// vite.config.ts
+import { effrontServer } from "@effront/server/vite";
+// Added: Tailwind integration.
 import { effrontTailwind } from "@effront/tailwind";
+import { effront } from "@effront/vite";
+import { defineConfig } from "vite-plus";
 
+// Added: styling plugins.
 const stylingPlugins = [effrontTailwind()];
+
+export default defineConfig({
+  // Add stylingPlugins.
+  plugins: [effront(), effrontServer(), ...stylingPlugins],
+  server: { host: "127.0.0.1", port: 1340, strictPort: true },
+});
 ```
 
-Add `...stylingPlugins` to the existing `plugins` array, keeping `effront()` and your host plugin.
-Remove a separate `@tailwindcss/vite` plugin if present, because `effrontTailwind()` includes it.
+> [!IMPORTANT]
+> Remove a separate `@tailwindcss/vite` plugin if present, because `effrontTailwind()` includes it.
+
 No stylesheet or component-level CSS import is needed.
 
 Use utilities in your component's JSX:
@@ -47,9 +60,10 @@ Create `src/styles.css`:
 }
 ```
 
-Replace the earlier `stylingPlugins` declaration with:
+In `vite.config.ts`, replace the earlier `stylingPlugins` declaration:
 
 ```typescript
+// vite.config.ts: replace the stylingPlugins declaration.
 const stylingPlugins = [effrontTailwind({ stylesheet: "./src/styles.css" })];
 ```
 
@@ -67,10 +81,14 @@ For example, Typography adds styles for article content:
 vp add -D @tailwindcss/typography
 ```
 
-Add this line to `src/styles.css`, keeping the existing import and theme:
+Add the Typography plugin to `src/styles.css`, keeping the existing import and theme:
 
 ```css
+/* src/styles.css: add the plugin after the existing import. */
+@import "tailwindcss";
+/* Added: Typography plugin. */
 @plugin "@tailwindcss/typography";
+/* Keep the existing @theme block below. */
 ```
 
 Wrap the article in `<article className="prose">` to style its headings, paragraphs, and lists.

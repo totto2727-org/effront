@@ -13,19 +13,20 @@ Keep data access on the server and add Client Components only where interaction 
 
 ## Reuse server-rendered UI {#server}
 
-In the application entry from [Routes](./routes.md#application), define `Welcome` and replace `HomePage` with:
+In `src/entry.effront.tsx` from [Routes](./routes.md#application), define `Welcome` and replace `HomePage`:
 
 ```tsx
+// src/entry.effront.tsx: add before HomePage.
 const Welcome = EFFRONT.Component.make({
   render: ({ name }: { readonly name: string }) => Effect.succeed(<p>Hello, {name}.</p>),
 });
 
+// Replace HomePage.
 const HomePage = EFFRONT.Page.make({
   render: () => Effect.succeed(<Welcome name="Ada" />),
 });
 ```
 
-Keep the entry's `Effect` import, `EFFRONT`, RootLayout, and route registration.
 Opening [http://127.0.0.1:1340](http://127.0.0.1:1340) displays `Hello, Ada.`
 For data-backed UI, read [application services](./effect.md) inside the Effect returned by `render`.
 
@@ -47,8 +48,10 @@ export function Counter() {
 Import it in `src/entry.effront.tsx` and replace `HomePage` again:
 
 ```tsx
+// src/entry.effront.tsx: add to the imports.
 import { Counter } from "./components/counter";
 
+// Replace HomePage.
 const HomePage = EFFRONT.Page.make({
   render: () =>
     Effect.succeed(
@@ -61,12 +64,11 @@ const HomePage = EFFRONT.Page.make({
 ```
 
 Open [http://127.0.0.1:1340](http://127.0.0.1:1340) and click `Count: 0` to increment the counter.
-The greeting remains server-rendered.
+The `Welcome` component is rendered on the server.
 
-Keep server-only service imports out of Client Components and the modules they import.
-Pass display values, not services, Requests, or environment objects, as props.
-Those values must be [serializable by React](https://react.dev/reference/rsc/use-client#serializable-types-returned-by-server-components) and safe to disclose to the viewer.
+> [!WARNING]
+> Keep server-only service imports out of Client Components and the modules they import.
+> Pass display values, not services, Requests, or environment objects, as props.
+> Those values must be [serializable by React](https://react.dev/reference/rsc/use-client#serializable-types-returned-by-server-components) and safe to disclose to the viewer.
+
 See React's [`"use client"` reference](https://react.dev/reference/rsc/use-client) for the boundary rules.
-
-For styles, use the [Tailwind integration](/en/guide/styling).
-If you load global CSS manually instead, import it from an exported Client Component that the Layout renders, not only from the application definition module.

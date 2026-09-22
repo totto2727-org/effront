@@ -1,7 +1,7 @@
 Publish Markdown content as pages in your Effront application, with article links and local assets resolved to their public URLs.
 The example renders an article with `@effront/markdown` and Comark's React renderer.
 
-Continue in the running [Getting started sample](./getting-started.md), which serves [http://127.0.0.1:1340](http://127.0.0.1:1340).
+Continue after changing the heading to `Hello, Effront` in [Getting started](./getting-started.md), with the sample running at [http://127.0.0.1:1340](http://127.0.0.1:1340).
 
 ## Add an article {#setup}
 
@@ -19,10 +19,14 @@ Create `src/content/intro.md`:
 Welcome to the manual.
 ```
 
-Keep Markdown under trusted authorship.
-The parser accepts HTML and components and is not a sanitizer for user submissions.
+> [!WARNING]
+> Keep Markdown under trusted authorship.
+> The parser accepts HTML and components and is not a sanitizer for user submissions.
+
 Keep collection imports and parsing in server-side modules.
-On Cloudflare Workers, enable `nodejs_compat` in the host configuration.
+
+> [!IMPORTANT]
+> On Cloudflare Workers, enable `nodejs_compat` in the host configuration.
 
 ## Load the collection {#collection}
 
@@ -45,14 +49,27 @@ export const manual = createMarkdownCollection({
 This maps `intro.md` to `/manual/intro` for lookup, but does not register an application route.
 Only the `.md` extension is removed: `index.md` maps to `/manual/index`, not `/manual`.
 
-If articles use local images or downloads, define `assets` before `manual` and add it as the collection's `assets` option:
+If articles use local images or downloads, update `src/manual.ts` to define and pass `assets`:
 
 ```typescript
+// src/manual.ts: add before manual.
 const assets = import.meta.glob<string>("./**/*.{svg,png,jpg,pdf}", {
   base: "./content",
   query: "?url",
   import: "default",
   eager: true,
+});
+
+// Replace the manual declaration, adding assets.
+export const manual = createMarkdownCollection({
+  basePath: "/manual",
+  assets,
+  documents: import.meta.glob<string>("./**/*.md", {
+    base: "./content",
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
 });
 ```
 
@@ -60,14 +77,15 @@ Include every referenced asset's file type in the glob.
 
 ## Render the article at its URL {#render}
 
-In the application entry from [Getting started](./getting-started.md#application), keep `EFFRONT`, RootLayout, HomePage, and the `Effect` import.
-Add these imports and Page:
+In `src/entry.effront.tsx` from [Getting started](./getting-started.md#application), add the imports, define `IntroPage`, and register it alongside the homepage:
 
 ```tsx
+// src/entry.effront.tsx: add to the imports.
 import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import { parseMarkdown } from "@effront/markdown";
 import { manual } from "./manual";
 
+// Add before the default export.
 const IntroPage = EFFRONT.Page.make({
   render: Effect.fn("IntroPage.render")(function* () {
     const collection = yield* manual;
@@ -81,11 +99,8 @@ const IntroPage = EFFRONT.Page.make({
     );
   }),
 });
-```
 
-Replace the default export to register the article alongside the homepage:
-
-```tsx
+// Replace the default export.
 export default EFFRONT.make({
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", HomePage)
@@ -96,8 +111,7 @@ export default EFFRONT.make({
 Open [http://127.0.0.1:1340/manual/intro](http://127.0.0.1:1340/manual/intro) to see the article inside your Layout.
 Use [Styling](./styling.md) to add spacing and colors.
 
-For a second article, add `src/content/details.md` and register its Page at `/manual/details`.
-`[Details](./details.md#example)` in `intro.md` then resolves to `/manual/details#example`.
+When `src/content/details.md` has a Page registered at `/manual/details`, `[Details](./details.md#example)` in `intro.md` resolves to `/manual/details#example`.
 Relative asset references resolve from the article's directory to their imported URLs.
 Missing references fail with `MarkdownError`.
 
@@ -111,16 +125,33 @@ Collection and parsing failures also use the `MarkdownError` Effect error channe
 Use [Comark syntax](https://comark.dev) with `parseMarkdown(entry)` and [Effront's defaults](../api-reference/markdown.md#parse).
 To change parsing, pass Comark `ParserOptions` as the second argument, for example `parseMarkdown(entry, { linkify: false })`.
 
-To add a parser plugin, install `comark@0.6.2` as a direct dependency and import the plugin:
+To add a parser plugin, install `comark@0.6.2` as a direct dependency and update `src/entry.effront.tsx`:
 
-```typescript
+```tsx
+// src/entry.effront.tsx: add to the imports.
 import toc from "comark/plugins/toc";
 
-const document = yield * parseMarkdown(entry, { plugins: [toc()] });
+// Replace IntroPage, keeping its route registration unchanged.
+const IntroPage = EFFRONT.Page.make({
+  render: Effect.fn("IntroPage.render")(function* () {
+    const collection = yield* manual;
+    const entry = collection.get("/manual/intro");
+    if (!entry) throw new TypeError("Registered article is missing");
+    // Add the parser plugin to this call.
+    const document = yield* parseMarkdown(entry, { plugins: [toc()] });
+    return (
+      <article>
+        <MarkdownDocument value={document} />
+      </article>
+    );
+  }),
+});
 ```
 
-Place this parsing call inside the Page's generator in place of the earlier call.
 Additional plugins run after Effront's defaults, not instead of them.
 For component mappings, use [Comark's React renderer](https://comark.dev/rendering/react).
-Parser support alone does not make Math or Mermaid render in React: Comark 0.6.2 does not automatically register those components.
+
+> [!NOTE]
+> Parser support alone does not make Math or Mermaid render in React: Comark 0.6.2 does not automatically register those components.
+
 See the [Markdown reference](../api-reference/markdown.md) for options and reference-resolution rules.

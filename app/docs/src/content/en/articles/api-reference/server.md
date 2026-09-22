@@ -80,8 +80,10 @@ Mounts must match the actual output directories and URLs when Vite output or `ba
 There are no directory indexes or SPA fallbacks.
 Other filesystem failures remain typed HTTP errors.
 Roots are checked at request time, not validated at startup.
-Deploy trusted directories and manage their symbolic links.
-Effront adds no symlink containment beyond Effect's `HttpStaticServer` path handling.
+
+> [!WARNING]
+> Deploy trusted directories and manage their symbolic links.
+> Effront adds no symlink containment beyond Effect's `HttpStaticServer` path handling.
 
 For an existing Effect HTTP server, obtain the handler with `yield* withAssets(handler, options)` during server construction.
 Do not pass the outer construction Effect as the request handler.

@@ -149,16 +149,27 @@ Input and handler failures flow through the framework's Server Function response
 
 `PageViewTransition` is a request-local Effect reference exported from `@effront/core`.
 `PageViewTransitionConfig` contains `enabled` and the serializable React transition-class settings `default`, `enter`, `exit`, `share`, and `update`.
-Provide application settings through the application Layer:
+To apply settings to the greeting application in [Pages, components, layouts, and loading](#pages-components-layouts-and-loading), update its imports:
 
 ```ts
+// Add PageViewTransition and include Layer in the existing Effect import.
 import { PageViewTransition } from "@effront/core";
-import { Layer } from "effect";
-
-const transitions = Layer.succeed(PageViewTransition, { default: "page-fade" });
+import { Effect, Layer, Schema } from "effect";
+import { EFFRONT } from "./effront";
 ```
 
-Pass this Layer to `EFFRONT.make({ routes, layer: transitions })`, merging it with other application services when needed.
+Then add the settings Layer before the application export and pass it to `EFFRONT.make`:
+
+```ts
+// Add the settings Layer before the existing application export.
+const transitions = Layer.succeed(PageViewTransition, { default: "page-fade" });
+export default EFFRONT.make({
+  routes: EFFRONT.Routes.make({ layout: Document, loading: Pending }).page("/people/:name", Person),
+  layer: transitions, // Add this option; leave the route unchanged.
+});
+```
+
+Merge this Layer with other application services when needed.
 A Page's `viewTransition` setting overrides application settings property by property; transition-type maps replace, rather than deep-merge with, previous maps.
 `Page.make({ viewTransition: false, render })` disables its boundary.
 `viewTransition: { enabled: true }` can re-enable an application opt-out.

@@ -60,8 +60,10 @@ Comark 0.6.2 does not automatically register Math/Mermaid React components or me
 Parser support alone therefore does not establish full SSR rendering.
 Supply those components and verify the result if needed.
 
-Only trusted authored Markdown and trusted plugins are supported.
-This parser is not a sanitizer.
+> [!WARNING]
+> Only trusted authored Markdown and trusted plugins are supported.
+> This parser is not a sanitizer.
+
 Parser exceptions become `MarkdownError` with the original exception in `cause`.
 
 ## Links, assets, and MarkdownError {#references}

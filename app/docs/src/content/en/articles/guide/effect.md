@@ -1,7 +1,7 @@
 Use Effect services to keep application logic separate from the Pages that call it.
 The greeting example gives a Page a replaceable service, with its implementation and lifetime managed through an Effect Layer.
 
-Continue in the running [Getting started sample](./getting-started.md), which serves [http://127.0.0.1:1340](http://127.0.0.1:1340).
+Continue after changing the heading to `Hello, Effront` in [Getting started](./getting-started.md), with the sample running at [http://127.0.0.1:1340](http://127.0.0.1:1340).
 
 ## Use a service in a Page {#service}
 
@@ -23,21 +23,13 @@ export class Greeting extends Context.Service<
 In `src/entry.effront.tsx`, declare `Greeting`, read it in the Page, and provide its Layer:
 
 ```tsx
-import { Effect } from "effect";
-import { Application } from "@effront/core";
+// src/entry.effront.tsx: add to the imports.
 import { Greeting } from "./greeting";
 
+// Replace EFFRONT.
 const EFFRONT = Application.effront<Greeting>();
 
-const RootLayout = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.succeed(
-      <html lang="en">
-        <body>{children}</body>
-      </html>,
-    ),
-});
-
+// Replace HomePage.
 const HomePage = EFFRONT.Page.make({
   render: Effect.fn("HomePage.render")(function* () {
     const greeting = yield* Greeting;
@@ -46,6 +38,7 @@ const HomePage = EFFRONT.Page.make({
   }),
 });
 
+// Replace the default export with this route declaration and export.
 const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 
 export default EFFRONT.make({ routes, layer: Greeting.layer });
@@ -62,10 +55,9 @@ See Effect's [Services](https://effect.website/docs/requirements-management/serv
 
 Effront builds the application Layer for each request.
 Scoped resources remain available through response-body completion, failure, or cancellation, not just until a Page returns JSX.
-Do not cache request-specific service instances in module-level variables.
 
-For a service needed only by selected routes or actions, use [Middleware](/en/guide/middleware).
-Apply that Middleware to the Routes as well as the Page's definition.
+> [!WARNING]
+> Do not cache request-specific service instances in module-level variables.
 
 ## Fix missing-service errors {#missing-services}
 

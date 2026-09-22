@@ -27,6 +27,66 @@ async function followHeading(page: Page, reader: ReaderLocale, id: string) {
 }
 
 for (const reader of locales) {
+  test(`${reader.locale} reader starts with a direct form before adding action state`, async ({
+    page,
+  }) => {
+    await openGuide(page, reader, "/guide/server-functions");
+    expect(
+      await page
+        .locator("article h2")
+        .evaluateAll((headings) => headings.map((heading) => heading.id)),
+    ).toEqual(["identity", "forms", "application", "state", "input", "refresh", "errors"]);
+    await followHeading(page, reader, "forms");
+    const handler = page.locator("article pre code").filter({ hasText: "export const recordName" });
+    await expect(handler).toContainText('Effect.logInfo("Name submitted", { name })');
+    await followHeading(page, reader, "application");
+    await expect(
+      page.locator("article pre code").filter({ hasText: "<form action={recordName}>" }),
+    ).toContainText("Record name");
+    await followHeading(page, reader, "state");
+    const state = page.locator("article pre code").filter({ hasText: "useActionState(greet" });
+    await expect(state).toContainText(
+      'const [state, formAction, pending] = useActionState(greet, { message: "" })',
+    );
+    await expect(state).toContainText("<form action={formAction}>");
+    await expect(state).toContainText("disabled={pending}");
+    await expect(state).toContainText('aria-live="polite"');
+    await expect(page.locator("article")).toContainText("Hello, Ada.");
+    await followHeading(page, reader, "errors");
+    const failure = page.locator("article pre code").filter({ hasText: 'name === "Admin"' });
+    await expect(failure).toContainText('Effect.succeed({ message: "That name is reserved." })');
+    await expect(failure).toContainText("Schema.NonEmptyString");
+    await expect(page.locator("article")).toContainText("That name is reserved.");
+  });
+
+  test(`${reader.locale} reader sees typed caution callouts rather than literal alert markers`, async ({
+    page,
+  }) => {
+    await page.goto(`/${reader.locale}/guide/components`);
+    const warning = page.locator('article [data-alert="warning"]');
+    await expect(warning).toBeVisible();
+    await expect(warning).toContainText("props");
+    await expect(warning).not.toContainText("[!WARNING]");
+    await expect(warning).toHaveCSS("font-style", "normal");
+    await expect(warning.locator(".docs-alert-title")).toHaveText("Warning");
+    await expect(warning.locator("svg")).toBeVisible();
+    const warningBorder = await warning.evaluate(
+      (element) => getComputedStyle(element).borderInlineStartColor,
+    );
+
+    await page.goto(`/${reader.locale}/platforms/alchemy`);
+    const important = page.locator('article [data-alert="important"]');
+    await expect(important).toBeVisible();
+    await expect(important).toContainText("2.0.0-beta.77");
+    await expect(important).not.toContainText("[!IMPORTANT]");
+    await expect(important.locator(".docs-alert-title")).toHaveText("Important");
+    await expect(important.locator("svg")).toBeVisible();
+    const importantBorder = await important.evaluate(
+      (element) => getComputedStyle(element).borderInlineStartColor,
+    );
+    expect(importantBorder).not.toBe(warningBorder);
+  });
+
   test(`${reader.locale} reader finds the clone-and-run sample and its file roles`, async ({
     page,
   }) => {
@@ -34,8 +94,11 @@ for (const reader of locales) {
     await followHeading(page, reader, "setup");
     const commands = page.locator("article pre code").filter({ hasText: "git clone" });
     await expect(commands).toHaveText(
-      "git clone https://github.com/totto2727-org/effront.git\ncd effront/examples/hello-world\nvp install\nnode --run dev",
+      "git clone https://github.com/totto2727-org/effront.git\ncd effront\nvp install",
     );
+    await expect(
+      page.locator("article pre code").filter({ hasText: "cd examples/hello-world" }),
+    ).toHaveText("cd examples/hello-world\nvp dev");
     await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toBeVisible();
     await expect(
       page.locator(
@@ -55,19 +118,28 @@ for (const reader of locales) {
       ).toBeVisible();
     }
     await followHeading(page, reader, "run");
-    await expect(
-      page.locator("article pre code").filter({ hasText: "<h1>Hello, world</h1>" }),
-    ).toBeVisible();
-    await expect(
-      page.locator("article pre code").filter({ hasText: "<h1>Hello, Effront</h1>" }),
-    ).toBeVisible();
+    const headingEdit = page.locator('article pre[data-language="tsx"] code');
+    await expect(headingEdit).toContainText("const HomePage = EFFRONT.Page.make({");
+    await expect(headingEdit).toContainText(
+      "render: () => Effect.succeed(<h1>Hello, Effront</h1>),",
+    );
+    const tokenColors = await headingEdit
+      .locator("span[style]")
+      .evaluateAll((tokens) =>
+        [
+          ...new Set(
+            tokens.map((token) => (token as HTMLElement).style.getPropertyValue("--shiki-dark")),
+          ),
+        ].filter(Boolean),
+      );
+    expect(tokenColors.length).toBeGreaterThan(2);
   });
 
-  for (const [host, example, dev, preview] of [
-    ["node", "node", "http://127.0.0.1:1341", "http://127.0.0.1:4341"],
-    ["bun", "bun", "http://127.0.0.1:1342", "http://127.0.0.1:4342"],
-    ["cloudflare", "workers", "http://127.0.0.1:1343", "http://127.0.0.1:4343"],
-    ["alchemy", "alchemy", "http://localhost:1337", null],
+  for (const [host, example, dev] of [
+    ["node", "node", "http://127.0.0.1:1341"],
+    ["bun", "bun", "http://127.0.0.1:1342"],
+    ["cloudflare", "workers", "http://127.0.0.1:1343"],
+    ["alchemy", "alchemy", "http://localhost:1337"],
   ] as const) {
     test(`${reader.locale} reader runs the existing ${host} example without assembling host configuration`, async ({
       page,
@@ -83,20 +155,54 @@ for (const reader of locales) {
       await followHeading(page, reader, "setup");
       const commands = page.locator("article pre code").filter({ hasText: "git clone" });
       await expect(commands).toContainText(`cd examples/${example}`);
-      await expect(commands).toContainText('vp exec --filter "./packages/*" -- vp pack');
+      await expect(commands).toContainText("vp install");
+      await expect(page.locator("article")).not.toContainText("vp pack");
       await expect(page.locator(`article a[href="${dev}"]`).first()).toBeVisible();
       for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
         await expect(
           page.locator("article table").getByRole("row").filter({ hasText: file }),
         ).toBeVisible();
       }
-      if (preview) {
-        await expect(page.locator(`article a[href="${preview}"]`)).toBeVisible();
-        await expect(page.locator("article pre code").filter({ hasText: "vp preview" })).toHaveText(
-          "vp build\nvp preview",
+      if (host === "cloudflare") {
+        await followHeading(page, reader, "local");
+        await expect(page.locator("article")).not.toContainText("vp preview");
+        await expect(
+          page.locator("article pre code").filter({ hasText: "vp exec wrangler dev" }),
+        ).toHaveText(
+          "vp build\nvp exec wrangler dev --local --config dist/rsc/wrangler.json --ip 127.0.0.1 --port 8787",
         );
+        await expect(page.locator('article a[href="http://127.0.0.1:8787"]')).toBeVisible();
+        await followHeading(page, reader, "context");
+        const context = page.locator("article pre code").filter({ hasText: "readRequestSettings" });
+        await expect(context).toContainText('from "@effront/cloudflare/workers"');
+        await expect(context).toContainText("yield* getWorkersEnv<Env>()");
+        await expect(context).toContainText("yield* getWorkersRequestContext<Env>()");
+        await expect(context).toContainText("executionContext.waitUntil(recordAccess(path))");
+        await expect(page.locator("article")).not.toContainText("My Effront App");
+        const factory = page
+          .locator("article pre code")
+          .filter({ hasText: "createWorkersContextAccessors<Env>()" });
+        await expect(factory).toContainText("const workers = createWorkersContextAccessors<Env>()");
+        await expect(factory).toContainText("yield* workers.getWorkersEnv()");
+        await expect(factory).toContainText("yield* workers.getWorkersRequestContext()");
+        const colors = await factory
+          .locator("span[style]")
+          .evaluateAll((tokens) =>
+            [
+              ...new Set(
+                tokens.map((token) =>
+                  (token as HTMLElement).style.getPropertyValue("--shiki-dark"),
+                ),
+              ),
+            ].filter(Boolean),
+          );
+        expect(colors.length).toBeGreaterThan(2);
       }
       if (host === "node" || host === "bun") {
+        await expect(page.locator("article")).not.toContainText("vp preview");
+        await expect(
+          page.locator("article pre code").filter({ hasText: /^vp build$/ }),
+        ).toBeVisible();
         await followHeading(page, reader, host);
         await expect(
           page.locator("article pre code").filter({ hasText: /^vp run start$/ }),
@@ -127,6 +233,15 @@ for (const reader of locales) {
     await expect(complete).toContainText("EFFRONT.Page.make");
     await expect(complete).toContainText('Routes.make({ layout: RootLayout }).page("/", HomePage)');
     await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toHaveCount(2);
+    await followHeading(page, reader, "matching");
+    await expect(page.locator("article h2#matching")).toHaveText(
+      reader.locale === "en" ? "Read path parameters" : "パスパラメーターを受け取る",
+    );
+    await followHeading(page, reader, "mount");
+    const loading = page.locator("article pre code").filter({ hasText: "ArticleLoading" });
+    await expect(loading).toContainText('yield* Effect.sleep("2 seconds")');
+    await expect(loading).not.toContainText("const HomePage =");
+    await expect(loading).toContainText("loading: ArticleLoading");
   });
 
   test(`${reader.locale} reader distinguishes default Tailwind setup from optional customization`, async ({
@@ -139,9 +254,7 @@ for (const reader of locales) {
     await expect(defaults).toContainText('from "@effront/tailwind"');
     await expect(defaults).toContainText(/^\s*const\s+\w+\s*=\s*\[effrontTailwind\(\)\]/m);
     await expect(defaults).not.toContainText("stylesheet:");
-    await expect(
-      page.locator("article code").filter({ hasText: /^\.\.\.stylingPlugins$/ }),
-    ).toBeVisible();
+    await expect(defaults).toContainText("...stylingPlugins");
     await expect(
       page.locator("article pre code").filter({ hasText: 'className="p-4 text-xl font-bold"' }),
     ).toBeVisible();
@@ -190,9 +303,9 @@ for (const reader of locales) {
     await expect(
       article.locator("code").filter({ hasText: "registerDefaultPlugins: false" }),
     ).toBeVisible();
-    await expect(article.locator("p").filter({ hasText: "sanitizer" })).toContainText(
-      /not a sanitizer|sanitizer ではありません/,
-    );
+    await expect(
+      article.locator('[data-alert="warning"]').filter({ hasText: "sanitizer" }),
+    ).toContainText(/not a sanitizer|sanitizer ではありません/);
     await expect(article.locator("p").filter({ hasText: "Comark 0.6.2" })).toContainText(
       /does not automatically register|自動登録せず/,
     );

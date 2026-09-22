@@ -1,5 +1,5 @@
 Use `Layout` for the HTML shared by pages, `Page` for each page's content, and `Routes` to connect them to URLs.
-This guide starts with a homepage, then adds URL parameters and a section with its own layout and loading UI.
+This guide starts with a homepage, then adds path parameters and a section with its own layout and loading UI.
 
 Use the running [Getting started sample](./getting-started.md) at [http://127.0.0.1:1340](http://127.0.0.1:1340).
 The first three sections explain the parts of `src/entry.effront.tsx`; the [complete entry](#application) puts them together.
@@ -87,14 +87,16 @@ export default EFFRONT.make({ routes });
 ```
 
 Save, then open [http://127.0.0.1:1340](http://127.0.0.1:1340) to see `Home` where RootLayout renders `children`.
-Keep the imports, definitions, and default export when replacing `routes` in the following examples.
 
-## Read URL parameters {#matching}
+## Read path parameters {#matching}
 
-Add `Schema` to the `effect` import.
-Add `ArticlePage` and `ManualPage` before the existing `routes` declaration, then replace that declaration with the one below:
+In `src/entry.effront.tsx`, add `Schema`, define the two Pages before `routes`, and replace the route registration:
 
 ```tsx
+// src/entry.effront.tsx: replace the effect import.
+import { Effect, Schema } from "effect";
+
+// Add both Pages immediately before routes.
 const ArticlePage = EFFRONT.Page.make({
   params: Schema.Struct({ slug: Schema.NonEmptyString }),
   render: ({ params }) => Effect.succeed(<h1>{params.slug}</h1>),
@@ -105,6 +107,7 @@ const ManualPage = EFFRONT.Page.make({
   render: ({ params }) => Effect.succeed(<article>{params.path || "Manual"}</article>),
 });
 
+// Replace routes.
 const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/", HomePage)
   .page("/articles/:slug", ArticlePage)
@@ -120,7 +123,9 @@ A terminal catch-all captures the remaining path, including an empty string, and
 Do not also register `/manual`, because `/manual/*path` already owns that URL.
 More specific paths such as `/manual/about` and `/manual/:section` take precedence over the catch-all.
 Renaming a parameter does not create a distinct route: `/articles/:slug` conflicts with `/articles/:id`.
-Keep `/_effront` and patterns that could match it reserved.
+
+> [!WARNING]
+> Keep `/_effront` and patterns that could match it reserved.
 
 Schemas receive URL-decoded strings and pass their decoded values to `render`.
 Use [Effect Schema](https://effect.website/docs/schema/introduction/) to validate or transform them.
@@ -130,10 +135,19 @@ For the complete matching and decoding contract, see the [routing API reference]
 
 ## Add a section layout and loading UI {#mount}
 
-Add `ArticleLayout`, `ArticleLoading`, and the child `articles` group before the existing `routes` declaration.
-Replace that declaration with the one below to mount the group at a fixed prefix:
+In `src/entry.effront.tsx`, replace ArticlePage, then add the section definitions before `routes` and replace its registration:
 
 ```tsx
+// Replace ArticlePage to make the loading UI visible.
+const ArticlePage = EFFRONT.Page.make({
+  params: Schema.Struct({ slug: Schema.NonEmptyString }),
+  render: Effect.fn("ArticlePage.render")(function* ({ params }) {
+    yield* Effect.sleep("2 seconds");
+    return <h1>{params.slug}</h1>;
+  }),
+});
+
+// Add these definitions immediately before routes.
 const ArticleLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.succeed(
@@ -153,22 +167,12 @@ const articles = EFFRONT.Routes.make({
   loading: ArticleLoading,
 }).page("/:slug", ArticlePage);
 
+// Replace routes, removing the direct /articles/:slug registration.
 const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/", HomePage)
   .page("/manual/*path", ManualPage)
   .mount("/articles", articles);
 ```
 
-At [http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello), ArticlePage appears inside ArticleLayout and RootLayout.
-Do not retain the earlier `.page("/articles/:slug", ArticlePage)` registration on the parent.
-ArticleLoading appears inside ArticleLayout while the article content suspends.
-Its `render` returns a synchronous ReactNode, not an Effect, and an immediate response may not show it visibly.
-
-Child `layout` and `loading` are optional.
-Mounted groups must contain a Page and use a fixed prefix.
-Put dynamic parameters in the child's `.page()` patterns.
-When splitting definitions across modules, export and reuse one `EFFRONT`.
-Definitions from separate `Application.effront()` calls cannot be combined.
-
-Use ordinary links for navigation.
-To change the default crossfade, see [PageViewTransition configuration](/en/advanced/client-navigation#transition-scope).
+Open [http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello).
+ArticleLayout displays `Articles` with `Loading article…` beneath it, then replaces the loading message with `hello` after the two-second delay.

@@ -37,7 +37,20 @@ serve(handler, {
 
 With the [Vite plugin](#api) below, this entry is emitted as `dist/rsc/server.js` and serves the application at `http://127.0.0.1:3000`.
 The asset paths are relative to that compiled file, not the launch directory.
-The Bun variant uses `serve` from `@effront/server/bun` and `BunRuntime.runMain` from `@effect/platform-bun`.
+For Bun, change the imports and launcher in the `src/entry.server.ts` example above, leaving the asset options unchanged:
+
+```ts
+// Replace the Node.js imports in src/entry.server.ts with these Bun imports.
+import { BunRuntime } from "@effect/platform-bun";
+import { serve } from "@effront/server/bun";
+import { Layer } from "effect";
+```
+
+```ts
+// At the end of the existing serve(...) call, replace NodeRuntime.runMain.
+}).pipe(Layer.launch, BunRuntime.runMain);
+```
+
 The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](../../examples/bun/src/entry.server.ts) are complete application examples.
 
 ## Key features
@@ -118,7 +131,10 @@ The subpath also exports `AssetOptions` and `AssetMount`:
 
 The Usage example assumes `dist/client/assets` at `/assets/`.
 Adjust the mounts when changing Vite output directories or base URLs.
-Use trusted deployment/public directories. Their contents and symlinks are your responsibility.
+
+> [!WARNING]
+> Use trusted deployment/public directories. Their contents and symlinks are your responsibility.
+
 Roots are checked on requests, not at startup.
 
 ### Static HTTP behavior

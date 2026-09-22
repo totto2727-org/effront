@@ -176,9 +176,9 @@ describe("documentation catalog", () => {
     const start = await text("/guide/getting-started");
     for (const required of [
       "git clone https://github.com/totto2727-org/effront.git",
-      "cd effront/examples/hello-world",
+      "cd examples/hello-world",
       "vp install",
-      "node --run dev",
+      "vp dev",
       "Hello, world",
       "src/entry.effront.tsx",
       "src/entry.rsc.ts",
@@ -200,6 +200,71 @@ describe("documentation catalog", () => {
     expect(effect).toContain('href="https://effect.website/');
   });
 
+  it.each(["en", "ja"] as const)(
+    "uses Vite+ startup without dependency builds or preview detours in %s examples",
+    async (locale) => {
+      const directory = locale === "en" ? "en/articles" : "articles";
+      for (const guide of [
+        "guide/getting-started",
+        "platforms/node",
+        "platforms/bun",
+        "platforms/cloudflare",
+        "platforms/alchemy",
+      ]) {
+        const source = readFileSync(new URL(`./${directory}/${guide}.md`, import.meta.url), "utf8");
+        expect(source).toContain("vp install");
+        expect(source).toContain(guide === "platforms/alchemy" ? "vp run dev" : "vp dev");
+        expect(source).not.toMatch(/vp pack|vp preview/);
+      }
+      const start = readFileSync(
+        new URL(`./${directory}/guide/getting-started.md`, import.meta.url),
+        "utf8",
+      );
+      expect([...start.matchAll(/```bash\n([\s\S]*?)\n```/g)].map((match) => match[1])).toEqual([
+        "git clone https://github.com/totto2727-org/effront.git\ncd effront\nvp install",
+        "cd examples/hello-world\nvp dev",
+      ]);
+      expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
+      expect(start).toContain("render: () => Effect.succeed(<h1>Hello, Effront</h1>),");
+      const html = await render(`/${locale}/guide/getting-started`);
+      expect(html).toContain('data-language="tsx"');
+      expect(html).toContain("--shiki-dark");
+    },
+  );
+
+  it.each(["en", "ja"] as const)(
+    "renders reader cautions through Comark's default alerts in %s",
+    async (locale) => {
+      for (const [slug, type] of [
+        ["guide/components", "warning"],
+        ["guide/routes", "warning"],
+        ["platforms/cloudflare", "warning"],
+        ["platforms/alchemy", "important"],
+      ] as const) {
+        const html = await render(`/${locale}/${slug}`);
+        expect(html).toContain(`data-alert="${type}"`);
+        expect(html).not.toContain(`[!${type.toUpperCase()}]`);
+      }
+    },
+  );
+
+  it.each(["hello-world", "node", "bun"])(
+    "%s keeps development separate from preparation and uses its native production listener",
+    (example) => {
+      const manifest = JSON.parse(
+        readFileSync(
+          new URL(`../../../../examples/${example}/package.json`, import.meta.url),
+          "utf8",
+        ),
+      ) as { scripts: Record<string, string> };
+      expect(manifest.scripts).toEqual({
+        dev: "vp dev",
+        build: "vp build",
+        start: `${example === "bun" ? "bun" : "node"} dist/rsc/server.js`,
+      });
+    },
+  );
+
   it("describes implemented hosts and separates Bun production from Vite middleware", async () => {
     const platforms = await render("/platforms");
     for (const host of ["cloudflare", "alchemy", "node", "bun"]) {
@@ -216,7 +281,7 @@ describe("documentation catalog", () => {
         "effrontServer()",
         "dist/client/assets",
         "vp dev",
-        "vp preview",
+        "vp build",
         "vp run start",
       ]) {
         expect(native).toContain(required);
@@ -224,12 +289,7 @@ describe("documentation catalog", () => {
       expect(await render(`/platforms/${host}`)).toContain('href="/api-reference/server"');
     }
     const bun = await text("/platforms/bun");
-    for (const required of [
-      "Bun 1.4.2",
-      "@effect/platform-node",
-      "@effect/platform-bun",
-      "Node 互換",
-    ]) {
+    for (const required of ["Bun 1.4.2", "@effect/platform-node", "@effect/platform-bun"]) {
       expect(bun).toContain(required);
     }
     const testing = await render("/best-practices/testing");
@@ -266,11 +326,14 @@ describe("documentation catalog", () => {
           "utf8",
         );
         expect(config).toContain(`server: { host: "127.0.0.1", port: ${port}, strictPort: true }`);
-        expect(config).toContain(
-          `preview: { host: "127.0.0.1", port: ${port + 3000}, strictPort: true }`,
-        );
-        for (const value of [port, port + 3000]) {
-          expect(html).toContain(`href="http://127.0.0.1:${value}"`);
+        expect(html).toContain(`href="http://127.0.0.1:${port}"`);
+        expect(config).not.toContain("preview:");
+        expect(prose).not.toContain("vp preview");
+        if (slug === "cloudflare") {
+          expect(prose).toContain(
+            "vp build\nvp exec wrangler dev --local --config dist/rsc/wrangler.json --ip 127.0.0.1 --port 8787",
+          );
+          expect(html).toContain('href="http://127.0.0.1:8787"');
         }
         expect(html).toContain(
           `href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"`,
@@ -282,7 +345,8 @@ describe("documentation catalog", () => {
           );
         }
         expect(prose).toContain(`cd examples/${example}`);
-        expect(prose).toContain("vp exec --filter &quot;./packages/*&quot; -- vp pack");
+        expect(prose).toContain("vp install");
+        expect(prose).not.toContain("vp pack");
         expect(prose).not.toContain("vp add");
       }
       const alchemy = await render(`/${locale}/platforms/alchemy`);

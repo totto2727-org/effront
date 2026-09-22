@@ -1,7 +1,7 @@
 Effect のサービスを使うと、アプリケーションのロジックを、それを呼び出す Page から分離できます。
 挨拶を返す例では、実装を差し替えられるサービスを Page に提供し、その実装と生存期間を Effect の Layer で管理します。
 
-[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+[はじめに](./getting-started.md)で見出しを `Hello, Effront` に変更し、サンプルを [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
 
 ## Page でサービスを使う {#service}
 
@@ -23,21 +23,13 @@ export class Greeting extends Context.Service<
 `src/entry.effront.tsx` で `Greeting` を宣言し、Page から読み取り、その Layer を提供します。
 
 ```tsx
-import { Effect } from "effect";
-import { Application } from "@effront/core";
+// src/entry.effront.tsx: add to the imports.
 import { Greeting } from "./greeting";
 
+// Replace EFFRONT.
 const EFFRONT = Application.effront<Greeting>();
 
-const RootLayout = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.succeed(
-      <html lang="en">
-        <body>{children}</body>
-      </html>,
-    ),
-});
-
+// Replace HomePage.
 const HomePage = EFFRONT.Page.make({
   render: Effect.fn("HomePage.render")(function* () {
     const greeting = yield* Greeting;
@@ -46,6 +38,7 @@ const HomePage = EFFRONT.Page.make({
   }),
 });
 
+// Replace the default export with this route declaration and export.
 const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 
 export default EFFRONT.make({ routes, layer: Greeting.layer });
@@ -62,10 +55,9 @@ export default EFFRONT.make({ routes, layer: Greeting.layer });
 
 Effront はリクエストごとにアプリケーションの Layer を構築します。
 スコープ内で確保したリソースは、Page が JSX を返した時点ではなく、レスポンス本文の読み取り完了、失敗、キャンセルまで利用できます。
-リクエスト固有のサービスインスタンスをモジュール変数にキャッシュしないでください。
 
-特定のルートやアクションだけで使うサービスには [Middleware](/guide/middleware) を使います。
-Page の定義に加えて、Routes にもその Middleware を適用してください。
+> [!WARNING]
+> リクエスト固有のサービスインスタンスをモジュール変数にキャッシュしないでください。
 
 ## サービス不足の型エラーを直す {#missing-services}
 

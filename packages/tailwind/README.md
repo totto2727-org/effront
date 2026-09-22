@@ -65,8 +65,13 @@ The path is resolved relative to the Vite root.
 The selected stylesheet is loaded automatically; do not import it manually.
 An empty path throws `TypeError`.
 
+In the Usage configuration, replace the no-options call:
+
 ```ts
-effrontTailwind({ stylesheet: "./src/styles.css" });
+export default defineConfig({
+  // Replace effrontTailwind() with the explicit stylesheet selection.
+  plugins: [effrontTailwind({ stylesheet: "./src/styles.css" }), effront(), effrontAlchemy()],
+});
 ```
 
 Keep Tailwind's import in the selected file, followed by custom theme or plugin configuration:
@@ -82,7 +87,14 @@ Keep Tailwind's import in the selected file, followed by custom theme or plugin 
 This example makes `text-brand` and `bg-brand` available.
 
 To add a Tailwind plugin, install the chosen package and configure it in the selected stylesheet according to its documentation.
-For example, `@tailwindcss/typography` uses `@plugin "@tailwindcss/typography";` and provides the `prose` class.
+For example, after installing `@tailwindcss/typography`, add its directive to the stylesheet above to make the `prose` class available:
+
+```css
+@import "tailwindcss";
+/* Add this directive after the import; keep the existing @theme block. */
+@plugin "@tailwindcss/typography";
+```
+
 Typography is one optional plugin, not a requirement for Effront or Markdown.
 The [Markdown stylesheet](../../examples/markdown/src/styles.css) demonstrates Typography configuration, while the [documentation stylesheet](../../app/docs/src/styles.css) adds theme definitions.
 Tailwind syntax and supported directives are documented in the [official Vite integration guide](https://tailwindcss.com/docs/installation/using-vite).

@@ -13,19 +13,20 @@
 
 ## サーバー側の表示を再利用する {#server}
 
-[Routes](./routes.md#application) のアプリケーションエントリーで `Welcome` を定義し、`HomePage` を置き換えます。
+[Routes](./routes.md#application) の `src/entry.effront.tsx` で `Welcome` を定義し、`HomePage` を置き換えます。
 
 ```tsx
+// src/entry.effront.tsx: add before HomePage.
 const Welcome = EFFRONT.Component.make({
   render: ({ name }: { readonly name: string }) => Effect.succeed(<p>Hello, {name}.</p>),
 });
 
+// Replace HomePage.
 const HomePage = EFFRONT.Page.make({
   render: () => Effect.succeed(<Welcome name="Ada" />),
 });
 ```
 
-既存の `Effect` の import、`EFFRONT`、RootLayout、ルート登録は残します。
 [http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと `Hello, Ada.` と表示されます。
 データを使う場合は、`render` が返す Effect の中で[アプリケーションサービス](./effect.md)を読み取ります。
 
@@ -47,8 +48,10 @@ export function Counter() {
 `src/entry.effront.tsx` で import し、`HomePage` を再び置き換えます。
 
 ```tsx
+// src/entry.effront.tsx: add to the imports.
 import { Counter } from "./components/counter";
 
+// Replace HomePage.
 const HomePage = EFFRONT.Page.make({
   render: () =>
     Effect.succeed(
@@ -61,12 +64,11 @@ const HomePage = EFFRONT.Page.make({
 ```
 
 [http://127.0.0.1:1340](http://127.0.0.1:1340) を開いて `Count: 0` をクリックすると、カウンターが増えます。
-挨拶は引き続きサーバー側で描画します。
+`Welcome` コンポーネントはサーバー側で描画されます。
 
-Client Component とその import 先から、サーバー専用のサービスを import しないでください。
-props には表示に使う値を渡し、サービス、Request、環境オブジェクトは渡しません。
-値は [React がシリアライズできるもの](https://react.dev/reference/rsc/use-client#serializable-types-returned-by-server-components)で、閲覧者に公開してよいものに限ります。
+> [!WARNING]
+> Client Component とその import 先から、サーバー専用のサービスを import しないでください。
+> props には表示に使う値を渡し、サービス、Request、環境オブジェクトは渡しません。
+> 値は [React がシリアライズできるもの](https://react.dev/reference/rsc/use-client#serializable-types-returned-by-server-components)で、閲覧者に公開してよいものに限ります。
+
 境界の規則は React の [`"use client"` リファレンス](https://react.dev/reference/rsc/use-client)を参照してください。
-
-スタイルには [Tailwind 統合](/guide/styling)を使えます。
-代わりにグローバル CSS を手動で読み込む場合は、アプリケーション定義モジュールだけでなく、Layout が表示する export 済み Client Component から import してください。

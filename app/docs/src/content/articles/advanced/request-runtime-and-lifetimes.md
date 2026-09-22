@@ -31,8 +31,9 @@ Page、Layout、Component、Server Function は、処理中のリクエストの
 レンダーはアプリケーションの Routes を通して実行する必要があります。
 リクエスト runtime の外や、必要な Middleware が有効でない場所でレンダーすると、サービスを利用できるコンテキストは得られず、`TypeError` になります。
 
-Workers のバインディングが自動的に Flight や HTML へシリアライズされることはありませんが、JSX、Client Component の props、Server Function の戻り値に含めた値は、ブラウザーへ届く可能性があります。
-これらの出力には、公開すると決めた値だけを含めてください。
+> [!WARNING]
+> Workers のバインディングが自動的に Flight や HTML へシリアライズされることはありませんが、JSX、Client Component の props、Server Function の戻り値に含めた値は、ブラウザーへ届く可能性があります。
+> これらの出力には、公開すると決めた値だけを含めてください。
 
 ## リクエスト所有とホスト所有のリソース {#resource-design}
 

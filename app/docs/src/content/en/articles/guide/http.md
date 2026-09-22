@@ -23,18 +23,22 @@ export const GreetingApi = HttpRouter.use(
 ```
 
 Choose a path that does not overlap Page or Server Function URLs, and leave `/_effront` reserved.
-Use `jsonUnsafe` only when the value is known to be JSON-serializable, as this string-valued object is.
-For endpoints that accept external input, validate it and handle failures as HTTP responses.
+
+> [!WARNING]
+> Use `jsonUnsafe` only when the value is known to be JSON-serializable, as this string-valued object is.
+> For endpoints that accept external input, validate it and handle failures as HTTP responses.
 
 ## Register the route and its service {#services}
 
 In `src/entry.effront.tsx`, add `Layer` to the `effect` import and import `GreetingApi`.
-Keep `EFFRONT`, `Greeting`, and `routes` from the services example, then replace the default export:
 
 ```typescript
-import { Layer } from "effect";
+// src/entry.effront.tsx: replace the effect import.
+import { Effect, Layer } from "effect";
+// Add to the imports.
 import { GreetingApi } from "./http";
 
+// Replace the default export.
 const ApplicationLayer = GreetingApi.pipe(Layer.provideMerge(Greeting.layer));
 
 export default EFFRONT.make({ routes, layer: ApplicationLayer });
@@ -54,7 +58,9 @@ The existing `/` Page still displays the greeting.
 
 The application Layer is built for each request, including custom HTTP requests.
 Keep connections and other scoped resources within that request, whose scope lasts through response-body completion, failure, or cancellation.
-Do not save request-specific services in module-level variables for later requests.
+
+> [!WARNING]
+> Do not save request-specific services in module-level variables for later requests.
 
 ## Add a shared response header {#global}
 
@@ -77,14 +83,25 @@ export const ApplicationLayer = Layer.mergeAll(GreetingApi, GlobalHeaders).pipe(
 );
 ```
 
-In the entry module, replace the local `ApplicationLayer` definition with `import { ApplicationLayer } from "./application-layer"` and continue passing it to `EFFRONT.make`.
-Remove the now-unused `Layer` and `GreetingApi` imports from the entry module.
+In `src/entry.effront.tsx`, import the shared Layer and remove the local definition and unused imports:
+
+```typescript
+// src/entry.effront.tsx: replace the effect import to remove Layer.
+import { Effect } from "effect";
+// Replace the GreetingApi import.
+import { ApplicationLayer } from "./application-layer";
+
+// Remove the local ApplicationLayer declaration.
+export default EFFRONT.make({ routes, layer: ApplicationLayer });
+```
+
 Both `/` and `/api/greeting` now include `x-content-type-options: nosniff`.
 
 `global: true` covers Pages, Server Functions, custom routes, and unmatched requests.
 Use [scoped Middleware](/en/guide/middleware) for a policy limited to one Routes group.
 
-This example maps only successful downstream responses.
-An unmatched request fails with `RouteNotFound`, so its final 404 does not receive the header unless you handle that error and return a response.
-Host-served static assets and the runtime's early oversized-request 413 response bypass the router entirely.
-Configure asset headers on the host.
+> [!NOTE]
+> This example maps only successful downstream responses.
+> An unmatched request fails with `RouteNotFound`, so its final 404 does not receive the header unless you handle that error and return a response.
+> Host-served static assets and the runtime's early oversized-request 413 response bypass the router entirely.
+> Configure asset headers on the host.
