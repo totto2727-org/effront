@@ -5,10 +5,12 @@ Effront の Middleware は、ページのリクエストや Server Function の�
 
 ## 適用するリクエストを選ぶ {#reach}
 
-ページへのリクエストには Routes に、Server Function の呼び出しにはその関数を作る定義に Middleware を付けます。
+Middleware を適用できる対象:
 
-> [!WARNING]
-> 保護されたページに表示しただけでは、アクションは保護されません。
+- ルート
+- Server Function
+
+共通の Middleware 適用済みアプリケーション定義から Routes と Server Function を作成すると、同じ Middleware をそれぞれに適用できます。
 
 独自の HTTP エンドポイントや、ルートに一致しないリクエストにも適用する場合は、[グローバル HTTP Middleware](/guide/http#global) を使います。
 ホストが直接配信する静的アセットには、ホスト側の設定が必要です。
@@ -105,9 +107,6 @@ Page の代わりに、ステータス 503 と `Under maintenance` が返りま�
 認証も同じ流れです。
 セッションを検証し、不正なリクエストを拒否し、続行前に検証済みの利用者を提供します。
 
-> [!WARNING]
-> cookie やヘッダーに入ったユーザー名は、本人である証明にはなりません。
-
 Middleware は宣言順に入り、レスポンスは逆順に処理します。
 途中で応答すると、残りの内側のハンドラーは実行されません。
 一つのチェーンに同じ Middleware を二度追加しないでください。
@@ -158,9 +157,5 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 
 送信すると、`Form received` と送信時の URL がログに出ます。
 ページを開いたときの値を保存して使うわけではありません。
-
-> [!WARNING]
-> この Middleware はデータを提供するだけです。
-> 保護が必要な更新には、Server Function の定義に実際の認証と認可のチェックを付けてください。
 
 フォームの状態を返す方法は [Server Functions](/guide/server-functions) を参照してください。

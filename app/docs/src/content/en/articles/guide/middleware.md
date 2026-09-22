@@ -5,10 +5,12 @@ Continue after changing the heading to `Hello, Effront` in [Getting started](./g
 
 ## Choose the request scope {#reach}
 
-Attach Middleware to Routes for page requests, and to the definition that creates a Server Function for its invocations.
+You can apply Middleware to:
 
-> [!WARNING]
-> A protected page does not automatically protect actions rendered on it.
+- Routes
+- Server Functions
+
+Create Routes and Server Functions from a shared middleware-equipped application definition to apply the same Middleware to both.
 
 For policies that also cover custom HTTP endpoints and unmatched requests, use [global HTTP Middleware](/en/guide/http#global).
 Host-served static assets need host-level configuration.
@@ -104,9 +106,6 @@ For a conditional check, run `httpEffect` only when the request is allowed.
 
 Authentication follows the same pattern: verify the session, reject invalid requests, and provide the verified user before continuing.
 
-> [!WARNING]
-> A username in a cookie or header is not proof of identity.
-
 Chained Middleware enters in declaration order and processes responses in reverse order.
 An early response skips the remaining inner handlers.
 Do not add the same Middleware twice to a chain.
@@ -156,9 +155,5 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 ```
 
 Submitting logs `Form received` with the submission URL, not a value saved from the page request.
-
-> [!WARNING]
-> This Middleware only provides data.
-> For protected updates, attach actual authentication and authorization checks to the Server Function's definition.
 
 See [Server Functions](/en/guide/server-functions) for returning form state.
