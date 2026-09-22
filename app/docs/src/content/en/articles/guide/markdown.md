@@ -47,7 +47,8 @@ export const manual = createMarkdownCollection({
 ```
 
 This maps `intro.md` to `/manual/intro` for lookup, but does not register an application route.
-Only the `.md` extension is removed: `index.md` maps to `/manual/index`, not `/manual`.
+The file extension (`.md`) is omitted.
+`index.md` is not treated specially and uses a URL such as `/manual/index`.
 
 If articles use local images or downloads, update `src/manual.ts` to define and pass `assets`:
 

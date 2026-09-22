@@ -47,8 +47,8 @@ export const manual = createMarkdownCollection({
 ```
 
 これで `intro.md` を `/manual/intro` として検索できますが、アプリケーションのルートはまだ登録されません。
-取り除かれるのは `.md` 拡張子だけです。
-`index.md` は `/manual` ではなく `/manual/index` になります。
+ファイル名の拡張子（`.md`）は省略されます。
+また、`index.md` は特別扱いされず、`/manual/index` のような URL で表示されます。
 
 ローカルの画像やダウンロードファイルを使う場合は、`src/manual.ts` で `assets` を定義して渡します。
 
