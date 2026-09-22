@@ -58,6 +58,7 @@ Scoped resources remain available through response-body completion, failure, or 
 
 > [!WARNING]
 > Do not cache request-specific service instances in module-level variables.
+> This can share user data across requests or reuse resources already released when the original request ended.
 
 ## Fix missing-service errors {#missing-services}
 
