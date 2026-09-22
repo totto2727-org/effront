@@ -282,6 +282,45 @@ for (const reader of locales) {
     page,
   }) => {
     await openGuide(page, reader, "/guide/markdown");
+    const collectionScope = page
+      .locator('article [data-alert="note"]')
+      .filter({ hasText: "TanStack Markdown" });
+    await expect(collectionScope).toBeVisible();
+    await expect(collectionScope.locator(".docs-alert-title")).toHaveText("Note");
+    await expect(collectionScope).toContainText(
+      reader.locale === "en"
+        ? "Markdown files loaded at build time"
+        : "ビルド時に読み込んだ Markdown ファイル",
+    );
+    await expect(collectionScope).toContainText(
+      reader.locale === "en"
+        ? "Markdown received from external sources at runtime"
+        : "実行時に外部から受け取る Markdown",
+    );
+    await expect(collectionScope).toContainText(
+      reader.locale === "en" ? "implement your own endpoint and rendering" : "独自のエンドポイント",
+    );
+    for (const href of ["https://comark.dev/", "https://tanstack.com/markdown/latest"]) {
+      await expect(collectionScope.locator(`a[href="${href}"]`)).toBeVisible();
+    }
+    await followHeading(page, reader, "collection");
+    const mappings = page
+      .locator('article [data-alert="note"]')
+      .filter({ hasText: "content/manual.md" });
+    await expect(mappings).toBeVisible();
+    await expect(mappings).toContainText(reader.locale === "en" ? "is omitted" : "省略され");
+    await expect(mappings).toContainText(
+      reader.locale === "en"
+        ? "index.md is not treated specially"
+        : "index.md は特別扱いされません",
+    );
+    await expect(mappings).toContainText("content/");
+    await expect(mappings).toContainText("basePath");
+    await expect(mappings).toContainText('"/"');
+    await expect(mappings.locator("li")).toHaveText([
+      "content/manual.md → /manual",
+      "content/manual/index.md → /manual/index",
+    ]);
     await followHeading(page, reader, "authoring");
     const article = page.locator("article");
     await expect(article.locator("code").filter({ hasText: "linkify: false" })).toBeVisible();

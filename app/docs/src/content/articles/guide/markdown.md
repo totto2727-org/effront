@@ -19,9 +19,9 @@ vp add @effront/markdown@0.1.4 @comark/react@0.6.2
 Welcome to the manual.
 ```
 
-> [!WARNING]
-> Markdown は信頼できる作成者が管理するものに限ってください。
-> パーサーは HTML やコンポーネントを受け付けるため、利用者からの投稿をサニタイズする用途には使えません。
+> [!NOTE]
+> このコレクションは、ビルド時に読み込んだ Markdown ファイルを扱います。
+> 実行時に外部から受け取る Markdown を表示する場合は、独自のエンドポイントと、[Comark](https://comark.dev/) や [TanStack Markdown](https://tanstack.com/markdown/latest) を使った描画処理を実装してください。
 
 コレクションの import と解析処理はサーバー側のモジュールに置きます。
 
@@ -47,8 +47,13 @@ export const manual = createMarkdownCollection({
 ```
 
 これで `intro.md` を `/manual/intro` として検索できますが、アプリケーションのルートはまだ登録されません。
-ファイル名の拡張子（`.md`）は省略されます。
-また、`index.md` は特別扱いされず、`/manual/index` のような URL で表示されます。
+
+> [!NOTE]
+> ファイル名の拡張子（`.md`）は省略され、`index.md` は特別扱いされません。
+> コンテンツのルートを `content/`、`basePath` を `"/"` とした場合、対応は次のようになります。
+>
+> - `content/manual.md` → `/manual`
+> - `content/manual/index.md` → `/manual/index`
 
 ローカルの画像やダウンロードファイルを使う場合は、`src/manual.ts` で `assets` を定義して渡します。
 

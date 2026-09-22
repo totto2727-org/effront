@@ -19,9 +19,9 @@ Create `src/content/intro.md`:
 Welcome to the manual.
 ```
 
-> [!WARNING]
-> Keep Markdown under trusted authorship.
-> The parser accepts HTML and components and is not a sanitizer for user submissions.
+> [!NOTE]
+> This collection works with Markdown files loaded at build time.
+> To display Markdown received from external sources at runtime, implement your own endpoint and rendering with [Comark](https://comark.dev/) or [TanStack Markdown](https://tanstack.com/markdown/latest).
 
 Keep collection imports and parsing in server-side modules.
 
@@ -47,8 +47,13 @@ export const manual = createMarkdownCollection({
 ```
 
 This maps `intro.md` to `/manual/intro` for lookup, but does not register an application route.
-The file extension (`.md`) is omitted.
-`index.md` is not treated specially and uses a URL such as `/manual/index`.
+
+> [!NOTE]
+> The file extension (`.md`) is omitted, and `index.md` is not treated specially.
+> With `content/` as the content root and `basePath: "/"`, the mappings are:
+>
+> - `content/manual.md` → `/manual`
+> - `content/manual/index.md` → `/manual/index`
 
 If articles use local images or downloads, update `src/manual.ts` to define and pass `assets`:
 

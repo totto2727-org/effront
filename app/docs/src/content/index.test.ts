@@ -447,6 +447,34 @@ describe("documentation catalog", () => {
     },
   );
 
+  it.each(["en", "ja"])(
+    "%s explains the selected Markdown collection and ordinary index paths",
+    async (locale) => {
+      const html = await render(`/${locale}/guide/markdown`);
+      const prose = await text(`/${locale}/guide/markdown`);
+      expect(html).toContain('data-alert="note"');
+      expect(html).toContain('href="https://comark.dev/"');
+      expect(html).toContain('href="https://tanstack.com/markdown/latest"');
+      expect(prose).toContain(
+        locale === "en"
+          ? "Markdown files loaded at build time"
+          : "ビルド時に読み込んだ Markdown ファイル",
+      );
+      expect(prose).toContain(
+        locale === "en"
+          ? "Markdown received from external sources at runtime"
+          : "実行時に外部から受け取る Markdown",
+      );
+      expect(prose).toContain(
+        locale === "en" ? "implement your own endpoint and rendering" : "独自のエンドポイント",
+      );
+      expect(prose).toContain("content/");
+      expect(prose).toContain("basePath");
+      expect(prose).toContain("content/manual.md → /manual");
+      expect(prose).toContain("content/manual/index.md → /manual/index");
+    },
+  );
+
   it("keeps Markdown caveats and server-only highlighting visible", async () => {
     const html = await render("/guide/markdown");
     expect(html).toContain('href="/guide/getting-started#application"');
