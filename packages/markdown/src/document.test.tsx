@@ -38,11 +38,28 @@ describe("MarkdownDocument", () => {
     expect(html).not.toContain("katex");
   });
 
-  it("appends the caller class and preserves caller component overrides", async () => {
-    const html = await render("$x$", "article-prose", {
-      Math: ({ content }: { content: string }) => <output data-custom-math="">{content}</output>,
-    });
-    expect(html).toContain('class="comark-content effront-markdown article-prose"');
-    expect(html).toContain('<output data-custom-math="">x</output>');
-  });
+  it.each(["Math", "math", "ProseMath"])(
+    "appends the caller class and preserves the %s component override",
+    async (name) => {
+      const html = await render("$x$", "article-prose", {
+        [name]: ({ content }: { content: string }) => (
+          <output data-custom-math="">{content}</output>
+        ),
+      });
+      expect(html).toContain('class="comark-content effront-markdown article-prose"');
+      expect(html).toContain('<output data-custom-math="">x</output>');
+      expect(html).not.toContain('class="math');
+    },
+  );
+
+  it.each(["Mermaid", "mermaid", "ProseMermaid"])(
+    "preserves the %s component override instead of the default diagram leaf",
+    async (name) => {
+      const html = await render("```mermaid\nflowchart LR\n  A --> B\n```", undefined, {
+        [name]: () => <output data-custom-diagram="">Custom diagram</output>,
+      });
+      expect(html).toContain('<output data-custom-diagram="">Custom diagram</output>');
+      expect(html).not.toContain('class="mermaid');
+    },
+  );
 });
