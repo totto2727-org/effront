@@ -672,10 +672,9 @@ describe("documentation catalog", () => {
     expect(html).toContain("MarkdownError");
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
-    expect(englishReference).toMatch(
-      /does not automatically register Math\/Mermaid React components/i,
-    );
-    expect(englishReference).toMatch(/does not establish full SSR rendering/i);
+    expect(englishReference).toMatch(/default Math\/Mermaid through client wrappers/i);
+    expect(englishReference).toMatch(/itself is not a Client Component/i);
+    expect(englishReference).toMatch(/Completed math and diagram SSR is not guaranteed/i);
   });
 
   it("retains all seven authored architecture chapters under their implementation group", () => {

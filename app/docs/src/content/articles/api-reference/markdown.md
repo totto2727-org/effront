@@ -61,6 +61,7 @@ Effront は Comark 標準の Math/Mermaid を client ラッパー経由で登録
 両方をサーバー描画可能なコンポーネントに差し替えると、描画される文書からこれらの client leaf がなくなります。
 KaTeX のスタイルとフォントには `@effront/markdown/styles.css` を一度読み込み、本文・レイアウト・alert・配色はアプリケーションで定義します。
 既定の数式・図にはブラウザーの JavaScript が必要で、無効時は Math が `...`、Mermaid が空になります。
+既定の対応表では、完成済みの数式・図の SSR を保証しません。
 Mermaid は上流のテーマ、無効入力時の挙動、SVG 内のスタイルと外部フォント読み込みを維持し、Effront はそれらを隔離・書換えしません。
 
 > [!WARNING]

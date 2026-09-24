@@ -60,6 +60,7 @@ Effront registers Comark's default Math/Mermaid through client wrappers; `Markdo
 Replacing both rich mappings with server-renderable components removes those client leaves from the rendered document.
 Import `@effront/markdown/styles.css` once for KaTeX styles and fonts; define prose, layout, alerts, and colors in the application.
 The default rich components require browser JavaScript: without it Math shows `...` and Mermaid remains empty.
+Completed math and diagram SSR is not guaranteed by the default mappings.
 Mermaid retains upstream theme and invalid-input behavior, including embedded SVG styles and remote font imports; Effront does not isolate or rewrite them.
 
 > [!WARNING]

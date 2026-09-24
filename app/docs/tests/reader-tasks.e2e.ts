@@ -354,9 +354,18 @@ for (const reader of locales) {
     await expect(
       article.locator('[data-alert="warning"]').filter({ hasText: "sanitizer" }),
     ).toContainText(/not a sanitizer|sanitizer ではありません/);
-    await expect(article.locator("p").filter({ hasText: "Comark 0.6.2" })).toContainText(
-      /does not automatically register|自動登録せず/,
+    const rendering = article.locator("p").filter({ hasText: "@effront/markdown/document" });
+    await expect(rendering).toContainText(
+      /registers Comark's default Math\/Mermaid|Comark 標準の Math\/Mermaid/,
     );
+    await expect(rendering).toContainText(
+      /itself is not a Client Component|自体は Client Component ではありません/,
+    );
+    await expect(rendering).toContainText("@effront/markdown/styles.css");
+    await expect(rendering).toContainText(
+      /define prose, layout, alerts, and colors in the application|本文・レイアウト・alert・配色はアプリケーションで定義/,
+    );
+    await expect(rendering).toContainText(/SSR is not guaranteed|SSR を保証しません/);
     await expect(article.locator('a[href="https://comark.dev"]')).toBeVisible();
     await expect(article.locator('a[href="https://comark.dev/rendering/react"]')).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", reader.locale);
