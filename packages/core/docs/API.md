@@ -122,7 +122,8 @@ Creating a Page with `Scoped.Page` requires that scope but does not activate it.
 ## Server Functions
 
 `ServerFn.make({ input, handler })` creates a React Server Function whose input Schema validates encoded arguments before its Effect handler runs in the active request.
-`input` accepts one Schema for a unary function or a tuple of Schemas for positional arguments.
+`input` accepts one Schema for a unary function or a tuple of Schemas for positional arguments; omit it or use `input: []` for a zero-argument function.
+A zero-argument function rejects extra native arguments, including an explicit `undefined`, before its handler runs.
 Use a separate `"use server"` module and the same shared application identity as your routes:
 
 ```ts

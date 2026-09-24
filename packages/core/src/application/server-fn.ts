@@ -51,14 +51,17 @@ interface ServerFunction<
 }
 
 type ServerFnOptions<Input, Output, Error, Services> = {
-  readonly input: Input;
   readonly handler: (
     ...args: ServerFnArguments<Input, "Type">
   ) => Effect.Effect<Output, Error, Services>;
-};
+} & ([Input] extends [readonly []] ? { readonly input?: Input } : { readonly input: Input });
 
 export type ServerFnFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <const Input extends ServerFnInput<AvailableServices>, Output, Error>(
+  readonly make: <
+    const Input extends ServerFnInput<AvailableServices> = readonly [],
+    Output = never,
+    Error = never,
+  >(
     options: ServerFnOptions<Input, Output, Error, AvailableServices>,
   ) => ServerFunction<ServerFnArguments<Input, "Encoded">, Output, ApplicationServices>;
 };
@@ -95,7 +98,7 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
   middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
 ): ServerFnFactory<ApplicationServices, AvailableServices> => ({
-  make: ({ input, handler }) => {
+  make: ({ input = [], handler }) => {
     const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
     const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));
     const serverFunction = (...untrustedArgs: ServerFnArguments<typeof input, "Encoded">) => {
@@ -103,7 +106,7 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
       const effect = decode(Array.isArray(input) ? untrustedArgs : [untrustedArgs[0]]).pipe(
         // Normalization preserves the positional Type mapping, which the generic branch erases.
         Effect.flatMap((args: ReadonlyArray<unknown>) =>
-          handler(...(args as ServerFnArguments<typeof input, "Type">)),
+          handler(...(args as Parameters<typeof handler>)),
         ),
         Effect.mapError((cause) => new ServerFnOperationError({ cause })),
       );

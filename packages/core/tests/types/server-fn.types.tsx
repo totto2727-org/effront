@@ -1,5 +1,6 @@
 import { Context, Effect, Option, Schema } from "effect";
 import { useActionState } from "react";
+import { expectTypeOf } from "vitest";
 
 import { Application } from "../../src/application/effront";
 
@@ -58,6 +59,32 @@ const noArgs = EFFRONT.ServerFn.make({ input: [], handler: () => Effect.void });
 void noArgs();
 // @ts-expect-error An empty schema list declares no arguments.
 void noArgs("extra");
+
+const omittedInput = EFFRONT.ServerFn.make({ handler: () => Effect.succeed("done") });
+expectTypeOf<Parameters<typeof omittedInput>>().toEqualTypeOf<[]>();
+expectTypeOf<ReturnType<typeof omittedInput>>().toEqualTypeOf<Promise<string>>();
+void omittedInput();
+// @ts-expect-error Omitted input declares no arguments.
+void omittedInput("extra");
+EFFRONT.ServerFn.make({
+  // @ts-expect-error A handler cannot require arguments without an input schema.
+  handler: (value: string) => Effect.succeed(value),
+});
+// @ts-expect-error An explicitly declared input schema must be provided at runtime.
+EFFRONT.ServerFn.make<typeof Schema.String, string>({ handler: (value) => Effect.succeed(value) });
+// @ts-expect-error An explicitly declared positional schema list must be provided at runtime.
+EFFRONT.ServerFn.make<readonly [typeof Schema.String], string>({
+  handler: (value) => Effect.succeed(value),
+});
+declare const optionalSchema: typeof Schema.String | undefined;
+EFFRONT.ServerFn.make({
+  // @ts-expect-error Narrow uncertain schema presence before declaring a Server Function.
+  input: optionalSchema,
+  handler: () => Effect.void,
+});
+const failingWithoutInput = EFFRONT.ServerFn.make({ handler: () => Effect.fail("failure") });
+expectTypeOf<Parameters<typeof failingWithoutInput>>().toEqualTypeOf<[]>();
+void failingWithoutInput();
 
 class DecoderService extends Context.Service<DecoderService, object>()(
   "effront/tests/types/server-fn/DecoderService",
