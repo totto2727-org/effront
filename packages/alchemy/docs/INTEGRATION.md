@@ -86,8 +86,8 @@ Both approaches use the official CLI and do not require a manually registered ru
 
 ## Compatibility
 
-The integration pins Alchemy and its Cloudflare runtime to `2.0.0-beta.77` and the Effect family to `4.0.0-rc.112`.
-This Alchemy version uses `Config.string`, which is incompatible with rc.113's renamed API despite its broad declared range.
+The integration pins Alchemy and its Cloudflare runtime to `2.0.0-beta.79` and the Effect family to `4.0.0-rc.116`.
+Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, whose `Config.string` call is incompatible with Effect rc.116. Beta.79 uses rc.12 and passed the local Worker browser suite.
 Keep one coherent Effect version across native bridge, core, platform layers and SQL dependencies.
 The local workerd compatibility date is `2026-09-01`, supported by the pinned runtime.
 

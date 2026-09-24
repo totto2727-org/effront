@@ -20,10 +20,12 @@
     "@effect/platform-node": "catalog:",
     "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
     "@types/bun": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
+    "tailwindcss": "catalog:",
     "vite-plus": "catalog:"
   },
   "engines": {

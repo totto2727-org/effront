@@ -42,7 +42,7 @@ An isolated empty-profile CLI check previously failed with `Provider 'Cloudflare
 
 - Consumers register `effront()` and `effrontAlchemy()` separately. Keep `application` exclusively in `effront({ application })` and Alchemy options limited to `worker`.
 - Register `effront()` before `effrontAlchemy()` and set the native bridge before the host captures its input. Do not import or invoke `@effront/vite` from the adapter implementation.
-- Keep Alchemy and Cloudflare runtime at `2.0.0-beta.77` with the coherent Effect `4.0.0-rc.112` family until a deliberate compatibility review. Beta.77 uses `Config.string`, which is incompatible with rc.113's renamed API despite its broad dependency range.
+- Keep Alchemy and Cloudflare runtime at `2.0.0-beta.79` with the coherent Effect `4.0.0-rc.116` family. Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, which calls removed `Config.string`; beta.79 uses rc.12 and passed the local Alchemy Worker browser suite.
 - Capability selection belongs to consumers. The temporary server-development compiler subtracts deployment-only exports, never enumerates allowed features, leaves `optimizeDeps` unchanged, and has no version-number gate. Retain its removal TODO and do not claim untested remote product behavior.
 - Preserve React/Effect deduplication. The pinned development host limitation is documented in `docs/INTEGRATION.md`; do not infer working development from a successful production build.
 - Keep default SSR output inside the RSC artifact while preserving explicit output directories. The host must package explicitly relocated modules together.

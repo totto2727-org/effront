@@ -25,14 +25,22 @@
     "registry": "https://registry.npmjs.org/",
     "tag": "latest"
   },
-  "dependencies": {
-    "@tailwindcss/vite": "catalog:",
-    "tailwindcss": "catalog:"
-  },
   "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "tailwindcss": "catalog:",
     "vite": "catalog:"
   },
   "peerDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "tailwindcss": "catalog:",
     "vite": "*"
+  },
+  "peerDependenciesMeta": {
+    "@tailwindcss/vite": {
+      "optional": true
+    },
+    "tailwindcss": {
+      "optional": true
+    }
   }
 }

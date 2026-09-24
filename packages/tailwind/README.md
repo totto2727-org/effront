@@ -14,7 +14,7 @@ import { effront } from "@effront/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
+  plugins: [await effrontTailwind({ root: import.meta.dirname }), effront(), effrontAlchemy()],
 });
 ```
 
@@ -34,7 +34,7 @@ See the [Alchemy navigation component](../../examples/alchemy/src/components/she
 
 ## Key features
 
-- Includes the official `@tailwindcss/vite` plugin and Tailwind CSS 4.
+- Loads the application's own `@tailwindcss/vite` plugin when both it and `tailwindcss` are declared.
 - Loads a generated stylesheet or your selected CSS file without manual imports.
 - Supports Tailwind class updates and custom stylesheet HMR.
 
@@ -47,16 +47,16 @@ See the [Alchemy navigation component](../../examples/alchemy/src/components/she
 Install the integration:
 
 ```bash
-vp add -D @effront/tailwind@0.1.4
+vp add -D @effront/tailwind@0.1.4 @tailwindcss/vite@4.3.3 tailwindcss@4.3.3
 ```
 
 ## API
 
-### `effrontTailwind(options?: EffrontTailwindOptions)`
+### `effrontTailwind(options?: EffrontTailwindOptions): Promise<PluginOption[]>`
 
-Returns the Tailwind Vite plugins and loads CSS for rendered `"use client"` components, as in Usage.
+Await this function in your Vite configuration. It loads the application's own Tailwind Vite plugin when both packages are declared and installed; otherwise ordinary CSS still works without Tailwind. A single declared package produces a warning; declared but missing installations fail configuration.
 Register it once; do not also register `@tailwindcss/vite`.
-Omitting `stylesheet` generates the default Tailwind stylesheet.
+Omitting `stylesheet` generates the default Tailwind stylesheet only when Tailwind is enabled. Set `root` to the application package directory, for example `import.meta.dirname`, so imported Vite configurations work from another working directory.
 
 ### `EffrontTailwindOptions.stylesheet`
 
@@ -70,7 +70,11 @@ In the Usage configuration, replace the no-options call:
 ```ts
 export default defineConfig({
   // Replace effrontTailwind() with the explicit stylesheet selection.
-  plugins: [effrontTailwind({ stylesheet: "./src/styles.css" }), effront(), effrontAlchemy()],
+  plugins: [
+    await effrontTailwind({ root: import.meta.dirname, stylesheet: "./src/styles.css" }),
+    effront(),
+    effrontAlchemy(),
+  ],
 });
 ```
 

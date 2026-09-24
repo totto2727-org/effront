@@ -31,7 +31,7 @@ See [compatibility limits](docs/INTEGRATION.md#compatibility) before changing Al
 
 ## Prerequisites
 
-- **Compatibility**: Alchemy and its Cloudflare runtime `2.0.0-beta.77`, with a coherent Effect `4.0.0-rc.112` family across the application and host.
+- **Compatibility**: Alchemy and its Cloudflare runtime `2.0.0-beta.79`, with a coherent Effect `4.0.0-rc.116` family across the application and host.
 - **Host**: A configured Cloudflare profile is required for the pinned CLI, including local planning.
 
 ## Setup
@@ -39,7 +39,7 @@ See [compatibility limits](docs/INTEGRATION.md#compatibility) before changing Al
 Install the adapter and matching host dependencies:
 
 ```sh
-vp add @effront/alchemy@0.1.4 alchemy@2.0.0-beta.77 effect@4.0.0-rc.112 @effront/core@0.1.4 @effront/vite@0.1.4
+vp add @effront/alchemy@0.1.4 alchemy@2.0.0-beta.79 effect@4.0.0-rc.116 @effront/core@0.1.4 @effront/vite@0.1.4
 ```
 
 Use the [core runtime peer requirements](../core/README.md#setup) for React and `@effect/platform-browser`.

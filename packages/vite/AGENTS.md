@@ -8,6 +8,7 @@
 ## Architecture
 
 - Keep the portable compiler integration separate from host registration. The host adapter supplies the runtime, and `serverHandler: false` prevents this package from installing another HTTP handler.
+- Register Effect Schema's JIT at the RSC host entry before evaluating the application; browser and SSR entries register independently. Effect's compiler must retain interpreter fallback under workerd's dynamic-function restrictions.
 - Keep `@effront/core/internal/*` as a version-matched integration contract rather than an application API.
 - Raw-import HMR must retain actual `?raw` modules while filtering queryless watch nodes. Deleting a raw file must invalidate live importers so native glob discovery updates.
 

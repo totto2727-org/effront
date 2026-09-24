@@ -74,6 +74,19 @@ export type EffrontViteOptions = {
 export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   const rscEntry = options.rsc ?? "./src/entry.workers.ts";
   const application = options.application ?? "./src/entry.effront.tsx";
+  let resolvedRscEntry: string;
+  const schemaJit: Plugin = {
+    name: "effront:schema-jit",
+    enforce: "pre",
+    configResolved(config) {
+      resolvedRscEntry = resolve(config.root, rscEntry);
+    },
+    transform(code, id) {
+      if (this.environment.name !== "rsc" || id.split("?", 1)[0] !== resolvedRscEntry) return;
+      // Register the compiler before the application module constructs or captures parsers.
+      return `import "effect/unstable/schema/SchemaJITCompiler/enable";\n${code}`;
+    },
+  };
   const applicationAlias: Plugin = {
     name: "effront:application-entry",
     config: (config): UserConfig => ({
@@ -86,6 +99,7 @@ export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   };
 
   return [
+    schemaJit,
     rawAssetUpdates(),
     react({ compiler: true }),
     rsc({

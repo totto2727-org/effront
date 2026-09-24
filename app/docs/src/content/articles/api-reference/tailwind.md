@@ -1,6 +1,6 @@
 ## effrontTailwind {#plugin}
 
-`@effront/tailwind` の `effrontTailwind(options?: EffrontTailwindOptions): PluginOption[]` は、`@tailwindcss/vite` を含み、Tailwind CSS 4 のスタイルシートを一つ自動で読み込みます。
+`@effront/tailwind` の `effrontTailwind(options?: EffrontTailwindOptions): Promise<PluginOption[]>` は、アプリケーションで宣言した `@tailwindcss/vite` と `tailwindcss` を読み込み、スタイルシートを一つ追加します。
 アプリケーションの Effront プラグインとホストアダプターに加えて、一度だけ登録します。
 
 ```typescript
@@ -10,12 +10,12 @@ import { effrontTailwind } from "@effront/tailwind";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [effront(), effrontCloudflare(), effrontTailwind()],
+  plugins: [effront(), effrontCloudflare(), await effrontTailwind({ root: import.meta.dirname })],
 });
 ```
 
 `@tailwindcss/vite` を別に登録しないでください。
-オプションなしでは Tailwind の既定スタイルシートを生成します。
+両パッケージを宣言してインストールした場合、Tailwind の既定スタイルシートを生成します。宣言がない場合は通常の CSS 処理を維持し、片方だけ宣言した場合は警告します。`root` の既定値はカレントディレクトリです。
 CSS ファイルやコンポーネントからの CSS インポートは不要です。
 開発中のクラスとスタイルシートの変更は HMR で反映されます。
 インストールとアプリケーションの例は [スタイリング](../guide/styling.md) を参照してください。
@@ -37,7 +37,7 @@ CSS ファイルやコンポーネントからの CSS インポートは不要�
 ```
 
 このインポートには、アプリケーションの依存関係に `tailwindcss` が必要です。
-たとえば `vp add -D tailwindcss@4.3.3` で追加します。
+アプリケーションで `vp add -D @tailwindcss/vite@4.3.3 tailwindcss@4.3.3` を実行します。
 指定したファイルは生成エントリーを置き換えるため、コンポーネントからの追加インポートは不要です。
 [`@theme`](https://tailwindcss.com/docs/theme) や [`@plugin`](https://tailwindcss.com/docs/functions-and-directives) ディレクティブを記述できます。
 Typography などのプラグインは別途インストールします。

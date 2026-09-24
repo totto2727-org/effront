@@ -1,3 +1,4 @@
+import "effect/unstable/schema/SchemaJITCompiler/enable";
 import { NodeHttpServer } from "@effect/platform-node";
 import { createServer } from "node:http";
 import { Effect, Layer } from "effect";

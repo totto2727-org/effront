@@ -63,7 +63,7 @@ The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](..
 
 - Node.js 22 or later for Vite tooling, and Node.js or Bun 1.4.2 or later for the production server.
 - Bun 1.3.13 cannot parse the pinned React SSR output; use the documented newer Bun runtime.
-- Matching Effect and platform package versions, currently `4.0.0-rc.112`.
+- Matching Effect and platform package versions, currently `4.0.0-rc.116`.
 - Effront core and Vite integration with their matching React peers.
 
 ## Setup
@@ -71,10 +71,10 @@ The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](..
 Install the adapter and Node.js platform dependencies:
 
 ```sh
-vp add @effront/server@0.1.4 @effect/platform-node@4.0.0-rc.112 effect@4.0.0-rc.112
+vp add @effront/server@0.1.4 @effect/platform-node@4.0.0-rc.116 effect@4.0.0-rc.116
 ```
 
-For Bun production, additionally install `@effect/platform-bun@4.0.0-rc.112`.
+For Bun production, additionally install `@effect/platform-bun@4.0.0-rc.116`.
 The `/vite` tooling entry needs `@effect/platform-node` even when the production application uses Bun.
 Install the [Vite integration and its peers](../vite/README.md#setup) separately.
 
@@ -142,7 +142,7 @@ Roots are checked on requests, not at startup.
 - Only GET and HEAD requests use static assets. Other methods reach the application.
 - A missing client asset returns 404. A public-file miss falls through to the application.
 - Public mounts serve exact files, without directory indexes or SPA fallback. Flight and Server Function requests bypass them.
-- MIME types, weak ETags, conditional requests, path decoding, normalization, and traversal handling follow Effect `4.0.0-rc.112`'s `HttpStaticServer`.
+- MIME types, weak ETags, conditional requests, path decoding, normalization, and traversal handling follow Effect `4.0.0-rc.116`'s `HttpStaticServer`.
 - HEAD and 304 do not open file streams. The host owns stream completion and cancellation. Caller-provided `HttpPlatform` or ETag services do not change asset responses.
 - Satisfiable single byte ranges return 206. Unsupported, multipart, and unsafe-integer ranges are ignored.
 - An unsatisfiable single range returns 416 with `Content-Range`, but without asset cache or validator headers.

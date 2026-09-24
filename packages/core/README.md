@@ -69,7 +69,7 @@ npm install --save-dev @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35
 For the current compatibility baseline, install matching runtime peers:
 
 ```sh
-npm install effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112 react@19.3.0 react-dom@19.3.0
+npm install effect@4.0.0-rc.116 @effect/platform-browser@4.0.0-rc.116 react@19.3.0 react-dom@19.3.0
 ```
 
 ## API

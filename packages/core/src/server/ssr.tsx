@@ -1,3 +1,4 @@
+import "effect/unstable/schema/SchemaJITCompiler/enable";
 import { createFromReadableStream, getClientEntryUrl } from "@vitejs/plugin-rsc/ssr";
 import { use } from "react";
 import { renderToReadableStream } from "react-dom/server.edge";
