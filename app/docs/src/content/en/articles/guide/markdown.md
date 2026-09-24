@@ -1,12 +1,12 @@
 Publish Markdown content as pages in your Effront application, with article links and local assets resolved to their public URLs.
-The example renders an article with `@effront/markdown` and Comark's React renderer.
+The example renders an article with `@effront/markdown` and its configured Comark-based React renderer.
 
 ## Add an article {#setup}
 
 Install the collection/parser and React renderer in your application:
 
 ```bash
-vp add @effront/markdown@0.1.4 @comark/react@0.6.2
+vp add @effront/markdown@0.1.4
 ```
 
 Create `src/content/intro.md`:
@@ -85,7 +85,8 @@ In `src/entry.effront.tsx` from [Getting started](./getting-started.md#applicati
 
 ```tsx
 // src/entry.effront.tsx: add to the imports.
-import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
 import { parseMarkdown } from "@effront/markdown";
 import { manual } from "./manual";
 
@@ -113,7 +114,8 @@ export default EFFRONT.make({
 ```
 
 Open `/manual/intro` to see the article inside your Layout.
-Use [Styling](./styling.md) to add spacing and colors.
+The imported CSS supplies KaTeX styles/fonts and minimal math/diagram sizing, not a prose theme.
+Use [Styling](./styling.md) to define article spacing, alerts, and colors in your application.
 
 When `src/content/details.md` has a Page registered at `/manual/details`, `[Details](./details.md#example)` in `intro.md` resolves to `/manual/details#example`.
 Relative asset references resolve from the article's directory to their imported URLs.
@@ -153,9 +155,10 @@ const IntroPage = EFFRONT.Page.make({
 ```
 
 Additional plugins run after Effront's defaults, not instead of them.
-For component mappings, use [Comark's React renderer](https://comark.dev/rendering/react).
+Pass `components` to override mappings as described in [Comark's React renderer](https://comark.dev/rendering/react).
 
 > [!NOTE]
-> Parser support alone does not make Math or Mermaid render in React: Comark 0.6.2 does not automatically register those components.
+> Effront registers Comark's default Math and Mermaid through client wrappers; the document itself remains server-renderable.
+> Completed equations and diagrams require browser JavaScript, and upstream Mermaid SVG styles and font imports remain unchanged.
 
 See the [Markdown reference](../api-reference/markdown.md) for options and reference-resolution rules.

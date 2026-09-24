@@ -291,6 +291,11 @@ for (const reader of locales) {
     page,
   }) => {
     await openGuide(page, reader, "/guide/markdown");
+    const rendererExample = page
+      .locator("article pre code")
+      .filter({ hasText: "import { MarkdownDocument }" });
+    await expect(rendererExample).toContainText('from "@effront/markdown/document"');
+    await expect(rendererExample).toContainText('import "@effront/markdown/styles.css"');
     const collectionScope = page
       .locator('article [data-alert="note"]')
       .filter({ hasText: "TanStack Markdown" });

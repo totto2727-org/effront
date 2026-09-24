@@ -6,7 +6,7 @@ Markdown の記事を Effront アプリケーションのページとして表�
 コレクションとパーサー、React レンダラーをアプリケーションにインストールします。
 
 ```bash
-vp add @effront/markdown@0.1.4 @comark/react@0.6.2
+vp add @effront/markdown@0.1.4
 ```
 
 `src/content/intro.md` を作成します。
@@ -85,7 +85,8 @@ export const manual = createMarkdownCollection({
 
 ```tsx
 // src/entry.effront.tsx: add to the imports.
-import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
 import { parseMarkdown } from "@effront/markdown";
 import { manual } from "./manual";
 
@@ -113,7 +114,8 @@ export default EFFRONT.make({
 ```
 
 ブラウザーで `/manual/intro` を開くと、Layout の内側に記事が表示されます。
-余白や色を加えるには [Styling](./styling.md) を参照してください。
+読み込む CSS は KaTeX のスタイル・フォントと数式・図の最小限のサイズ制御だけを提供し、本文のテーマは含みません。
+記事の余白・alert・配色は、[Styling](./styling.md) を参考にアプリケーション側で定義してください。
 
 `src/content/details.md` の Page が `/manual/details` に登録されている場合、`intro.md` 内の `[Details](./details.md#example)` は `/manual/details#example` に解決されます。
 アセットの相対参照は記事のディレクトリを基準に解決され、import 済みの URL を使います。
@@ -153,10 +155,10 @@ const IntroPage = EFFRONT.Page.make({
 ```
 
 追加プラグインは Effront の標準プラグインの後に実行され、標準プラグインを置き換えるものではありません。
-コンポーネントの差し替えには [Comark の React レンダラー](https://comark.dev/rendering/react)を使ってください。
+コンポーネントの差し替えには、[Comark の React レンダラー](https://comark.dev/rendering/react)と同様に `components` を渡してください。
 
 > [!NOTE]
-> 解析に対応しているだけでは、Math や Mermaid を React で表示できません。
-> Comark 0.6.2 はそれらのコンポーネントを自動登録しません。
+> Effront は Comark 標準の Math と Mermaid を client ラッパー経由で登録しますが、文書自体はサーバー描画可能です。
+> 完成済みの数式・図にはブラウザーの JavaScript が必要で、上流の Mermaid SVG スタイルとフォント読み込みは変更しません。
 
 オプションと参照解決の規則は [Markdown リファレンス](../api-reference/markdown.md)を参照してください。
