@@ -5,6 +5,7 @@ import type { AnyMiddleware } from "../application/middleware";
 import type { RenderRuntimeContext } from "../application/render-runtime";
 import type { FlightPayload, ServerFnResult } from "../rsc/flight";
 import type { RouteTreeModel } from "../rsc/route-tree";
+import { nextErrorDigest } from "./error-digest";
 
 type FlightStream = ReadableStream<Uint8Array>;
 
@@ -38,11 +39,14 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
         readonly result: ServerFnResult;
         readonly temporaryReferences?: ReturnType<typeof createTemporaryReferenceSet>;
       }): Effect.fn.Return<FlightRender, never, Services | Scope.Scope> {
+        const errorDigest = yield* nextErrorDigest;
         const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
         const release = Scope.close(renderScope, Exit.void);
         return yield* Effect.gen(function* () {
-          const runtime = yield* FiberSet.makeRuntimePromise<Services>().pipe(Scope.provide(renderScope));
+          const runtime = yield* FiberSet.makeRuntimePromise<Services>().pipe(
+            Scope.provide(renderScope),
+          );
           const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
           const { renderToReadableStream } = yield* Effect.promise(
             () => import("@vitejs/plugin-rsc/rsc/server"),
@@ -51,8 +55,11 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
             renderToReadableStream(result, {
               onError: (error: unknown) => {
                 if (!signal.aborted) {
-                  void runtime(Effect.logError(error));
+                  void runtime(
+                    Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)),
+                  );
                 }
+                return errorDigest;
               },
               signal,
               temporaryReferences,
@@ -73,6 +80,7 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
         never,
         Services | Scope.Scope
       > {
+        const errorDigest = yield* nextErrorDigest;
         const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
         const release = Scope.close(renderScope, Exit.void);
@@ -89,8 +97,11 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
             return renderToReadableStream(payload, {
               onError: (error: unknown) => {
                 if (!signal.aborted) {
-                  void runtime(Effect.logError(error));
+                  void runtime(
+                    Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)),
+                  );
                 }
+                return errorDigest;
               },
               signal,
               temporaryReferences,

@@ -1,15 +1,17 @@
 import { beforeEach, expect, it } from "@effect/vitest";
-import { Deferred, Effect, Exit, Fiber, Layer, MutableRef } from "effect";
+import { Deferred, Effect, Exit, Fiber, Layer, MutableRef, Stream } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import { vi } from "vitest";
 import { encodeReply } from "@vitejs/plugin-rsc/browser";
 
 import { BrowserEffectRunner } from "../../src/client/browser-effect-runner";
 import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer";
-import { FlightClient } from "../../src/client/flight-client";
+import { FlightClient, FlightLoadError } from "../../src/client/flight-client";
 import { NavigationApi } from "../../src/client/navigation-api";
 import { RouteLoader } from "../../src/client/route-loader";
 import { RouteRefresher } from "../../src/client/route-refresh";
+import { stream } from "../../src/client/query";
+import { ServerFnTransportError } from "../../src/rsc/server-fn-error";
 import type { FlightPayload } from "../../src/rsc/flight";
 import type { RouteTreeModel } from "../../src/rsc/route-tree";
 
@@ -67,11 +69,11 @@ const makeFlight = (id: string, value: unknown, release: Effect.Effect<void>) =>
   resolvedUrl: new URL(firstEntry.url),
 });
 
-const invokeServerFn = (id: string) => {
+const invokeServerFn = (id: string, args: ReadonlyArray<unknown> = []) => {
   if (reactClient.serverCallback === undefined) {
     throw new TypeError("Expected the React Server Function callback to be installed.");
   }
-  return reactClient.serverCallback(id, []);
+  return reactClient.serverCallback(id, args);
 };
 
 beforeEach(() => {
@@ -97,6 +99,114 @@ const listen = Effect.fnUntraced(function* (
   const running = yield* Layer.launch(callServerLayer).pipe(Effect.forkScoped);
   yield* Effect.raceFirst(Deferred.await(installed), Fiber.join(running));
 });
+
+for (const outcome of ["Success", "TransportFailure", "EarlyStop"] as const) {
+  it.effect(`keeps a streaming query's Flight resource until ${outcome}`, () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const completed = yield* Deferred.make<void, FlightLoadError>();
+        const released = yield* Deferred.make<void>();
+        const received = yield* Deferred.make<void>();
+        let releaseCount = 0;
+        const value = new ReadableStream<string>({
+          start(controller) {
+            controller.enqueue("card");
+            controller.close();
+          },
+        });
+        yield* listen(
+          Layer.mergeAll(
+            BrowserEffectRunner.layer,
+            BrowserRenderer.layerTest({
+              commit: () => undefined,
+              initialize: () => undefined,
+              navigate: () => {
+                throw new TypeError("Unexpected navigation render.");
+              },
+              refresh: () => {
+                throw new TypeError("Queries must not refresh routes.");
+              },
+            }),
+            NavigationApi.layerTest({
+              getCurrentEntry: () => firstEntry,
+              getCurrentUrl: () => firstEntry.url,
+              getTransition: () => null,
+              navigate: () => {
+                throw new TypeError("Unexpected navigation.");
+              },
+              reloadDocument: () => undefined,
+              replaceDocument: () => undefined,
+              subscribe: () => () => undefined,
+            }),
+            FlightClient.layerTest({
+              loadQuery: (request) => {
+                expect(request._tag).toBe("Query");
+                return Effect.succeed({
+                  _tag: "Query" as const,
+                  completed: Deferred.await(completed),
+                  payload: { _tag: "Success" as const, value },
+                  release: Effect.sync(() => {
+                    releaseCount += 1;
+                  }).pipe(Effect.andThen(Deferred.succeed(released, undefined))),
+                });
+              },
+            }),
+            RouteLoader.layerTest({
+              invalidate: () => undefined,
+              prepareRefresh: () => () => undefined,
+            }),
+            RouteRefresher.layerTest({}),
+          ),
+        );
+        const read = stream(
+          (...args: ReadonlyArray<unknown>) =>
+            invokeServerFn("stream", args) as Promise<ReadableStream<string>>,
+        );
+        const values: Array<string> = [];
+        const source = read("input").pipe(
+          Stream.tap((item) =>
+            Effect.sync(() => {
+              values.push(item);
+              Deferred.doneUnsafe(received, Effect.void);
+            }),
+          ),
+        );
+        const consumer = yield* Stream.runDrain(
+          outcome === "EarlyStop" ? source.pipe(Stream.take(1)) : source,
+        ).pipe(Effect.forkScoped);
+        yield* Deferred.await(received);
+        expect(values).toEqual(["card"]);
+        if (outcome === "EarlyStop") {
+          yield* Fiber.join(consumer);
+        } else {
+          yield* Effect.yieldNow;
+          expect(consumer.pollUnsafe()).toBeUndefined();
+          expect(releaseCount).toBe(0);
+          if (outcome === "Success") {
+            yield* Deferred.succeed(completed, undefined);
+            yield* Fiber.join(consumer);
+          } else {
+            yield* Deferred.fail(
+              completed,
+              new FlightLoadError({
+                cause: new Error("lost after the last item"),
+                reason: "RequestFailed",
+              }),
+            );
+            expect(yield* Effect.flip(Fiber.join(consumer))).toBeInstanceOf(ServerFnTransportError);
+          }
+        }
+        yield* Deferred.await(released);
+        expect(releaseCount).toBe(1);
+      }).pipe(
+        Effect.provideService(
+          HttpClient.HttpClient,
+          HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
+        ),
+      ),
+    ),
+  );
+}
 
 it.effect("aborts Server Function argument encoding when the invocation is cancelled", () =>
   Effect.gen(function* () {

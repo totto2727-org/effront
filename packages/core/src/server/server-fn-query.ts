@@ -7,14 +7,10 @@ import type { EFFRONTIdentity } from "../application/effront-identity";
 import type { AnyMiddleware } from "../application/middleware";
 import { ServerFnIdHeader, type ServerFnResult } from "../rsc/flight";
 import { serverFnResponse } from "./server-fn-outcome";
-import {
-  decodeServerFnCall,
-  ServerFnRequestError,
-  validateOrigin,
-} from "./server-fn-request";
+import { decodeServerFnCall, ServerFnRequestError, validateOrigin } from "./server-fn-request";
 
 export type PreparedServerFnQuery<Services> = {
-  readonly execute: Effect.Effect<ServerFnResult, never, Services>;
+  readonly execute: Effect.Effect<ServerFnResult, never, Services | Scope.Scope>;
   readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
   readonly temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
 };
@@ -35,7 +31,11 @@ const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
 
   const signal = yield* Effect.abortSignal;
   const webRequest = yield* HttpServerRequest.toWeb(request, { signal });
-  const { operation, temporaryReferences } = yield* decodeServerFnCall(webRequest, actionId, identity);
+  const { operation, temporaryReferences } = yield* decodeServerFnCall(
+    webRequest,
+    actionId,
+    identity,
+  );
   return {
     execute: serverFnResponse(operation.effect),
     middleware: operation.middleware,
@@ -51,10 +51,14 @@ export const prepareServerFnQuery = <Services>(
     Effect.catchCause((cause) => {
       if (Cause.hasInterrupts(cause)) return Effect.interrupt;
       const failure = Option.getOrUndefined(Cause.findErrorOption(cause));
-      return Effect.fail(failure instanceof ServerFnRequestError ? failure : new ServerFnRequestError({
-        cause: Cause.squash(cause),
-        message: "Failed to prepare the Server Function query.",
-        status: 500,
-      }));
+      return Effect.fail(
+        failure instanceof ServerFnRequestError
+          ? failure
+          : new ServerFnRequestError({
+              cause: Cause.squash(cause),
+              message: "Failed to prepare the Server Function query.",
+              status: 500,
+            }),
+      );
     }),
   );

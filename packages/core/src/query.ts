@@ -1,4 +1,4 @@
-export { query, queryAtom } from "./client/query";
+export { query, queryAtom, stream, streamAtom } from "./client/query";
 export {
   ServerFnDefect,
   ServerFnInputError,

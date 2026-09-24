@@ -1,8 +1,9 @@
-import { Context, Effect, Option, Schema } from "effect";
+import { Context, Effect, Option, Schema, Stream } from "effect";
 import { useActionState } from "react";
 import { expectTypeOf } from "vitest";
 
 import { Application } from "../../src/application/effront";
+import { query, stream, streamAtom, type ServerFnError } from "../../src/query";
 
 const EFFRONT = Application.effront();
 const State = Schema.Struct({ count: Schema.Finite });
@@ -103,4 +104,26 @@ const ProvideDecoder = EFFRONT.Middleware.make<{ provides: DecoderService }>((op
 EFFRONT.withMiddleware(ProvideDecoder).ServerFn.make({
   input: [Schema.String, ServiceSchema],
   handler: (first, second) => Effect.succeed(first + second),
+});
+
+const streaming = EFFRONT.ServerFn.make({
+  handler: () => Effect.succeed(Stream.make("one", "two")),
+});
+const streamedPromise: Promise<ReadableStream<string>> = streaming();
+void streamedPromise;
+const readStreaming = stream(streaming);
+const streamValue: Stream.Stream<string, ServerFnError> = readStreaming();
+void streamValue;
+void streamAtom(streaming);
+// @ts-expect-error Streaming functions must use stream, not query.
+void query(streaming);
+// @ts-expect-error Value functions must use query, not stream.
+void stream(omittedInput);
+// @ts-expect-error A Stream must handle its own error channel.
+EFFRONT.ServerFn.make({
+  handler: () => Effect.succeed(Stream.fail("unhandled")),
+});
+// @ts-expect-error A Server Function cannot return either a Stream or a plain value.
+EFFRONT.ServerFn.make({
+  handler: (): Effect.Effect<Stream.Stream<number> | number> => Effect.succeed(1),
 });

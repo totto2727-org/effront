@@ -1,4 +1,4 @@
-import { Effect, MutableRef, Schema } from "effect";
+import { Deferred, Effect, Exit, MutableRef, Schema } from "effect";
 import { addTransitionType, startTransition } from "react";
 import {
   createTemporaryReferenceSet,
@@ -40,15 +40,20 @@ export const installCallServer = Effect.gen(function* () {
   const routeLoader = yield* RouteLoader;
   const routeRefresher = yield* RouteRefresher;
   const latestInvocationOrder = MutableRef.make(0);
-  const settleInvocation = (invocationResult: PromiseWithResolvers<unknown>, result: ServerFnResult) => {
+  const settleInvocation = (
+    invocationResult: PromiseWithResolvers<unknown>,
+    result: ServerFnResult,
+  ) => {
     switch (result._tag) {
       case "Success":
         invocationResult.resolve(result.value);
         return;
       case "Failure":
-        invocationResult.reject(result.error._tag === "ServerFnInputError"
-          ? new ServerFnInputError({ detail: result.error.detail })
-          : new ServerFnDefect({ detail: result.error.detail, digest: result.error.digest }));
+        invocationResult.reject(
+          result.error._tag === "ServerFnInputError"
+            ? new ServerFnInputError({ detail: result.error.detail })
+            : new ServerFnDefect({ detail: result.error.detail, digest: result.error.digest }),
+        );
         return;
     }
   };
@@ -171,30 +176,42 @@ export const installCallServer = Effect.gen(function* () {
       try: () => encodeReply([...args], { signal, temporaryReferences }),
       catch: (cause) => transportError(cause),
     });
-    const resource = yield* flightClient.loadQuery({
-      _tag: "Query",
-      body,
-      destination: new URL(ServerFnQueryPath, navigationApi.getCurrentUrl()),
-      id,
-      temporaryReferences,
-    }).pipe(Effect.mapError(transportError));
+    const resource = yield* flightClient
+      .loadQuery({
+        _tag: "Query",
+        body,
+        destination: new URL(ServerFnQueryPath, navigationApi.getCurrentUrl()),
+        id,
+        temporaryReferences,
+      })
+      .pipe(Effect.mapError(transportError));
     if (resource._tag === "Document") {
       yield* resource.release;
-      return yield* transportError(new Error("A query response cannot request document navigation."));
+      return yield* transportError(
+        new Error("A query response cannot request document navigation."),
+      );
     }
     settleInvocation(invocationResult, resource.payload);
-    yield* resource.completed.pipe(Effect.ignore, Effect.ensuring(resource.release));
+    yield* resource.completed.pipe(Effect.ensuring(resource.release));
   });
 
   yield* Effect.sync(() => {
     setServerCallback((id, args) => {
       const invocationResult = Promise.withResolvers<unknown>();
       const query = matchServerFnQuery(args);
-      const operation = query === null
-        ? callServer(id, args, invocationResult).pipe(Effect.mapError(invocationError))
-        : callQuery(id, query.args, invocationResult).pipe(Effect.mapError(invocationError));
-      void run(operation, query === null ? undefined : { signal: query.signal })
-        .catch((cause) => invocationResult.reject(invocationError(cause)));
+      let operation =
+        query === null
+          ? callServer(id, args, invocationResult).pipe(Effect.mapError(invocationError))
+          : callQuery(id, query.args, invocationResult).pipe(Effect.mapError(invocationError));
+      if (query?._tag === "Stream") {
+        const completed = query.completed;
+        operation = operation.pipe(
+          Effect.onExit((exit) => Deferred.done(completed, Exit.mapError(exit, invocationError))),
+        );
+      }
+      void run(operation, query === null ? undefined : { signal: query.signal }).catch((cause) =>
+        invocationResult.reject(invocationError(cause)),
+      );
       return invocationResult.promise;
     });
   });

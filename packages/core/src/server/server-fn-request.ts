@@ -1,4 +1,4 @@
-import { Cause, Effect, Schema } from "effect";
+import { Cause, Effect, Schema, type Scope } from "effect";
 import { HttpServerRequest } from "effect/unstable/http";
 
 import type { EFFRONTIdentity } from "../application/effront-identity";
@@ -45,12 +45,20 @@ const normalizeServerFnFailure = <Output, Error, Services>(
   );
 
 type ServerFnOperation<ApplicationServices> = {
-  readonly effect: Effect.Effect<unknown, ServerFnExecutionError | ServerFnInputError | ServerFnOperationError, ApplicationServices>;
+  readonly effect: Effect.Effect<
+    unknown,
+    ServerFnExecutionError | ServerFnInputError | ServerFnOperationError,
+    ApplicationServices
+  >;
   readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
 };
 
 export type PreparedServerFnRequest<ApplicationServices> = {
-  readonly execute: Effect.Effect<RequestOutcome, ServerFnRequestError, ApplicationServices>;
+  readonly execute: Effect.Effect<
+    RequestOutcome,
+    ServerFnRequestError,
+    ApplicationServices | Scope.Scope
+  >;
   readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
 };
 
@@ -245,7 +253,9 @@ const prepareProgressiveServerFn = Effect.fnUntraced(function* <ApplicationServi
       Effect.catchCause((cause) =>
         Cause.hasInterrupts(cause)
           ? Effect.interrupt
-          : Effect.fail(requestError("The Server Function form action failed.", 500, Cause.squash(cause))),
+          : Effect.fail(
+              requestError("The Server Function form action failed.", 500, Cause.squash(cause)),
+            ),
       ),
     );
     const decodedFormState = yield* Effect.tryPromise({

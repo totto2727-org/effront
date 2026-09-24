@@ -1,21 +1,22 @@
 // Vite replaces `import.meta.env.DEV` at compile time.
-import { Cause, Clock, Effect, Option } from "effect";
+import { Cause, Effect, Option } from "effect";
 
+import { isServerFnStream } from "../application/server-fn";
 import type { ServerFnResult } from "../rsc/flight";
 import { ServerFnInputError, serverFnErrorDetail } from "../rsc/server-fn-error";
 import type { RequestOutcome } from "./request-outcome";
-
-let digestSequence = 0;
-const nextDigest = Effect.map(Clock.currentTimeMillis, (now) => {
-  digestSequence += 1;
-  return `${now.toString(36)}-${digestSequence.toString(36)}`;
-});
+import { serverFnStream } from "./server-fn-stream";
+import { nextErrorDigest } from "./error-digest";
 
 export const serverFnResponse = Effect.fnUntraced(function* <Output, Error, Requirements>(
   operation: Effect.Effect<Output, Error, Requirements>,
 ) {
   const exit = yield* Effect.exit(operation);
   if (exit._tag === "Success") {
+    if (isServerFnStream<Requirements>(exit.value)) {
+      const readable = yield* serverFnStream(exit.value);
+      return { _tag: "Success", value: readable } satisfies ServerFnResult;
+    }
     return { _tag: "Success", value: exit.value } satisfies ServerFnResult;
   }
   if (Cause.hasInterrupts(exit.cause)) {
@@ -31,7 +32,7 @@ export const serverFnResponse = Effect.fnUntraced(function* <Output, Error, Requ
     } satisfies ServerFnResult;
   }
 
-  const digest = yield* nextDigest;
+  const digest = yield* nextErrorDigest;
   yield* Effect.logError("Server Function failed.", exit.cause).pipe(
     Effect.annotateLogs("serverFnDigest", digest),
   );
