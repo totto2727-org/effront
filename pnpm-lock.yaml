@@ -472,6 +472,9 @@ importers:
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.63.0
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.2
