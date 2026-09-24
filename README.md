@@ -31,7 +31,7 @@ Choose `--platform bun` for Bun, `--platform cloudflare` for standalone Cloudfla
 | Render Markdown with file-relative links and images              | [Markdown](packages/markdown/README.md#usage)      |
 | Apply utility styles to server-rendered and hydrated components  | [Tailwind](packages/tailwind/README.md#usage)      |
 
-The [standalone Workers example](examples/workers/README.md#usage) demonstrates the non-Alchemy adapter with framework features. The [Alchemy example](examples/alchemy) adds resource capabilities. Both are separate from the one-page starters.
+The [standalone Cloudflare starter](examples/cloudflare) demonstrates the non-Alchemy host. For routes, services, and Server Functions beyond the minimal application, use the [Alchemy-based Basic example](examples/alchemy).
 
 ## Key features
 

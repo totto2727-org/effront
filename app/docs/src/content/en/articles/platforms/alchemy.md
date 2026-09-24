@@ -1,5 +1,5 @@
-Start with the [one-page Alchemy-managed Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/minimal/alchemy-cloudflare) or `vp create effront -- my-app --platform alchemy-cloudflare`.
-This guide uses the richer [Alchemy example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) to demonstrate resource capabilities. Its host configuration is already included.
+Start with the [minimal Alchemy-managed Cloudflare example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy-cloudflare) or `vp create effront -- my-app --platform alchemy-cloudflare`.
+For navigation, counters, KV-backed services, and Server Functions, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy).
 
 ## Prepare the example {#setup}
 
@@ -13,44 +13,32 @@ Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
 git clone https://github.com/totto2727-org/effront.git
 cd effront
 vp install
-cd examples/alchemy
+cd examples/alchemy-cloudflare
 ```
 
 ## Find the application and resource definitions {#worker}
 
-For the initial setup, focus on these files rather than recreating its configuration:
+The one-page example already contains the host configuration:
 
-| File                    | Role                                                                             |
-| ----------------------- | -------------------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | Defines the pages, root layout, and routes. Start here to change page content.   |
-| `src/entry.workers.ts`  | Declares the Worker, connects the application, and sets development port `1337`. |
-| `alchemy.run.ts`        | Defines the Stack, uses local management state, and outputs the Worker's URL.    |
-| `vite.config.ts`        | Registers `effront()` and `effrontAlchemy()` alongside Tailwind.                 |
-| `package.json`          | Pins dependencies and defines `dev` as `alchemy dev`.                            |
+| File                    | Role                                                                    |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | Defines the document layout, one page, and its `/` route.               |
+| `src/entry.workers.ts`  | Declares the Worker and defers loading the application until a request. |
+| `alchemy.run.ts`        | Defines the Stack and outputs the Worker's URL.                         |
+| `vite.config.ts`        | Registers `effront()` and `effrontAlchemy()`.                           |
+| `package.json`          | Defines `dev` as `alchemy dev`.                                         |
 
 ## Start development {#stack}
 
-From `examples/alchemy`, run:
+From `examples/alchemy-cloudflare`, run:
 
 ```bash
 vp run dev
 ```
 
-Once the CLI reports that it is ready, open [http://localhost:1337](http://localhost:1337).
-The homepage displays `Hello, world!`.
-
-Change the heading in `src/entry.effront.tsx`, then save to display `Hello, Effront!`:
-
-```tsx
-return (
-  <>
-    {/* Replace the heading text. */}
-    <h1 className="my-5 text-3xl font-bold">Hello, Effront!</h1>
-    {/* Keep the remaining page content unchanged. */}
-  </>
-);
-```
+Open the local URL printed by Alchemy when the CLI reports that it is ready. The single page displays `Hello, world`.
+Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>` and save.
 
 ## Add resources when needed {#capabilities}
 
-For additional resources, see [Alchemy's resource APIs](https://alchemy.run/docs) and the [Effront Alchemy API reference](../api-reference/alchemy.md).
+The minimal Worker does not declare a KV binding or a fixed development port. For resource-backed application services, follow [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy), [Alchemy's resource APIs](https://alchemy.run/docs), and the [Effront Alchemy API reference](../api-reference/alchemy.md).

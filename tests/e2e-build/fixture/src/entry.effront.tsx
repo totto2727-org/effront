@@ -5,12 +5,12 @@ import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { manual } from "../content";
 import { ManualShell } from "./manual-shell";
 import { pages } from "./manual-pages";
-import { Application } from "@effront/core";
+import { EFFRONT } from "./effront";
 import { getWorkersEnv, getWorkersRequestContext } from "./host";
 import { Counter } from "./counter";
+import { GreetingAction } from "./greeting-action";
+import { HostLive } from "./greeting-host";
 import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";
-
-const EFFRONT = Application.effront();
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -43,6 +43,7 @@ const HomePage = EFFRONT.Page.make({
         </p>
         <p>React Server Components on Workers, powered by Effect.</p>
         <Counter />
+        <GreetingAction />
       </>
     );
   }),
@@ -147,6 +148,7 @@ const ManualPage = Manual.Page.make({
 });
 
 export default EFFRONT.make({
+  layer: HostLive,
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", HomePage)
     .page("/about", AboutPage)

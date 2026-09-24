@@ -26,7 +26,7 @@ Node.js 用の最小構成にはページが一つあり、主なファイルは
 | `vite.config.ts`        | Effront の開発とビルドを設定します。                          |
 | `package.json`          | 依存パッケージと、サンプルを実行するコマンドを定義します。    |
 
-ページの実装は、生成したプロジェクトの `src/entry.effront.tsx` にあります（[Node サンプルのソース](https://github.com/totto2727-org/effront/blob/main/examples/minimal/node/src/entry.effront.tsx)でも確認できます）。
+ページの実装は、生成したプロジェクトの `src/entry.effront.tsx` にあります（[Node サンプルのソース](https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx)でも確認できます）。
 `HomePage` が見出しの表示内容、`RootLayout` が外側の HTML、`Routes` が `/` とページの対応を定義しています。
 
 ## 表示内容を変える {#run}

@@ -35,7 +35,7 @@ The native host owns the request scope and retains streaming resources until EOF
 Buffered responses can release request services as soon as response construction finishes.
 Do not acquire request-scoped connections in the Alchemy Worker construction Effect: Alchemy's isolate scope has no normal teardown hook.
 
-`examples/alchemy/src/entry.workers.ts` demonstrates the full dependency path:
+`examples/alchemy/src/entry.workers.ts` demonstrates the full dependency path in the richer Alchemy Basic application (`examples/basic` is a local alias). The [minimal Alchemy Cloudflare starter](../../../examples/alchemy-cloudflare/) does not declare KV:
 
 1. Declare `Cloudflare.KV.Namespace("Cache")` as infrastructure.
 2. Resolve `Cloudflare.KV.ReadWriteNamespace(Cache)` inside the native Worker's construction Effect.
@@ -127,4 +127,5 @@ The source links track upstream main; the compatibility findings above were chec
 ## Alternative host
 
 `examples/basic` is a relative symlink to `examples/alchemy`, the default native Alchemy sample.
-For Cloudflare Workers without Alchemy, use [`examples/workers`](../../../examples/workers/README.md), which uses a static application import, `createFetchHandler`, and Wrangler bindings.
+For Cloudflare Workers without Alchemy, use the [minimal standalone Cloudflare example](../../../examples/cloudflare/), which imports its one-page application into `createFetchHandler` and has a Wrangler configuration without application bindings.
+Binding and Server Function behavior is covered by the independent [Workers test fixture](../../../tests/e2e-build/fixture/).

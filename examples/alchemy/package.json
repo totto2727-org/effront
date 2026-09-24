@@ -9,6 +9,7 @@
     "@effect/platform-browser": "catalog:",
     "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
+    "@tanstack/react-query": "catalog:",
     "alchemy": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",

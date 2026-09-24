@@ -1,9 +1,7 @@
+import { Application } from "@effront/core";
 import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-import { GreetingAction } from "./features/greeting/client";
-import { Host, HostLive } from "./features/greeting/services";
-import { Counter } from "./components/counter";
-import { Shell } from "./components/shell";
+
+const EFFRONT = Application.effront();
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -11,50 +9,17 @@ const RootLayout = EFFRONT.Layout.make({
       <html lang="en">
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Effront Bun</title>
+          <title>Hello, world</title>
         </head>
-        <body className="m-8 bg-slate-50 font-sans text-blue-950">
-          <Shell>{children}</Shell>
-        </body>
+        <body>{children}</body>
       </html>,
     ),
 });
 
 const HomePage = EFFRONT.Page.make({
-  render: Effect.fn("HomePage.render")(function* () {
-    const host = yield* Host;
-    return (
-      <>
-        <h1 className="my-5 text-3xl font-bold">Hello, world!</h1>
-        <p className="my-4" data-testid="greeting">
-          {host.greeting}
-        </p>
-        <p className="my-4">React Server Components on Bun, powered by Effect.</p>
-        <Counter />
-        <GreetingAction />
-      </>
-    );
-  }),
-});
-
-const AboutPage = EFFRONT.Page.make({
-  render: Effect.fn("AboutPage.render")(function* () {
-    const host = yield* Host;
-    return (
-      <>
-        <h1 className="my-5 text-3xl font-bold">About</h1>
-        <p className="my-4" data-testid="label">
-          {host.label}
-        </p>
-        <a className="text-blue-700 underline" href="/">
-          Back home
-        </a>
-      </>
-    );
-  }),
+  render: () => Effect.succeed(<h1>Hello, world</h1>),
 });
 
 export default EFFRONT.make({
-  layer: HostLive,
-  routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage).page("/about", AboutPage),
+  routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage),
 });

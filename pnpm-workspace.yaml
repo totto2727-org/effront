@@ -2,8 +2,8 @@ packages:
   - app/*
   - packages/*
   - tests/*
+  - tests/e2e-server/fixtures/*
   - examples/*
-  - examples/minimal/*
   - "!examples/basic"
 
 catalog:

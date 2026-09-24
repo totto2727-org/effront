@@ -346,7 +346,7 @@ describe("documentation catalog", () => {
     }
     expect(start).not.toContain("vp add");
     expect(await render("/guide/getting-started")).toContain(
-      'href="https://github.com/totto2727-org/effront/blob/main/examples/minimal/node/src/entry.effront.tsx"',
+      'href="https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx"',
     );
     const effect = await render("/guide/effect");
     for (const contract of ["Context.Service", "Layer", "Application.effront"]) {
@@ -404,7 +404,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["minimal/node", "minimal/bun", "node", "bun"])(
+  it.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
     (example) => {
       const manifest = JSON.parse(
@@ -472,7 +472,7 @@ describe("documentation catalog", () => {
       for (const [slug, example] of [
         ["node", "node"],
         ["bun", "bun"],
-        ["cloudflare", "workers"],
+        ["cloudflare", "cloudflare"],
       ] as const) {
         const html = await render(`/${locale}/platforms/${slug}`);
         const prose = await text(`/${locale}/platforms/${slug}`);
@@ -499,6 +499,13 @@ describe("documentation catalog", () => {
             "",
           );
         }
+        const application = readFileSync(
+          new URL(`examples/${example}/src/entry.effront.tsx`, repository),
+          "utf8",
+        );
+        expect(application).toContain("<h1>Hello, world</h1>");
+        expect(application).not.toContain("Count: 0");
+        expect(prose).not.toContain("Count: 0");
         expect(prose).toContain(`cd examples/${example}`);
         expect(prose).toContain("vp install");
         expect(prose).not.toContain("vp pack");
@@ -506,13 +513,24 @@ describe("documentation catalog", () => {
       }
       const alchemy = await render(`/${locale}/platforms/alchemy`);
       expect(alchemy).toContain(
-        'href="https://github.com/totto2727-org/effront/tree/main/examples/alchemy"',
+        'href="https://github.com/totto2727-org/effront/tree/main/examples/alchemy-cloudflare"',
       );
-      expect(alchemy).toContain('href="http://localhost:1337"');
-      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello, world!");
+      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello, world");
+      expect(await text(`/${locale}/platforms/alchemy`)).toContain(
+        "cd examples/alchemy-cloudflare",
+      );
       expect(
-        readFileSync(new URL("examples/alchemy/src/entry.workers.ts", repository), "utf8"),
-      ).toContain('dev: { host: "localhost", port: 1337, strictPort: true }');
+        readFileSync(
+          new URL("examples/alchemy-cloudflare/src/entry.effront.tsx", repository),
+          "utf8",
+        ),
+      ).toContain("<h1>Hello, world</h1>");
+      expect(
+        readFileSync(
+          new URL("examples/alchemy-cloudflare/src/entry.workers.ts", repository),
+          "utf8",
+        ),
+      ).toContain("makeApplicationHttpEffect");
       const chooser = await render(`/${locale}/platforms`);
       for (const id of ["setup", "entries", "assets", "node", "bun"]) {
         expect(chooser).toContain(`id="${id}"`);
@@ -568,7 +586,7 @@ describe("documentation catalog", () => {
         expect(html).not.toContain("127.0.0.1:1340");
       }
       const config = readFileSync(
-        new URL("../../../../examples/minimal/node/vite.config.ts", import.meta.url),
+        new URL("../../../../examples/node/vite.config.ts", import.meta.url),
         "utf8",
       );
       expect(config).not.toContain("server:");

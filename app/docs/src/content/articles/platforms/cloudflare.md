@@ -1,5 +1,5 @@
-まずは[一画面の単独 Cloudflare 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/minimal/cloudflare)または `vp create effront -- my-app --platform cloudflare` から始められます。
-このガイドでは、独立したホストアダプターと Wrangler ビルドを確認するための[機能紹介用 Workers サンプル](https://github.com/totto2727-org/effront/tree/main/examples/workers)を扱います。
+まずは[最小構成の単独 Cloudflare サンプル](https://github.com/totto2727-org/effront/tree/main/examples/cloudflare)または `vp create effront -- my-app --platform cloudflare` から始められます。
+このガイドでは一画面のサンプルを起動します。ナビゲーションやカウンター、リソースを使う Server Function は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) を参照してください。
 
 ## サンプルを起動する {#setup}
 
@@ -9,33 +9,33 @@ Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールし�
 git clone https://github.com/totto2727-org/effront.git
 cd effront
 vp install
-cd examples/workers
+cd examples/cloudflare
 vp dev
 ```
 
 Vite が表示するローカル URL を開きます。
-トップページに `Hello, world!` と `Hello from Cloudflare Workers` が表示されます。
-`Count: 0` をクリックしてカウンターが増えることを確認します。
+一画面に `Hello, world` と表示されます。
 
 ## Worker の設定を確認する {#vite}
 
 サンプルには Workers で動かすためのファイルが揃っています。
 
-| ファイル                | 役割                                                                                         |
-| ----------------------- | -------------------------------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | ページ、ルートレイアウト、ルートを定義します。                                               |
-| `src/entry.workers.ts`  | `createFetchHandler(application)` で作成した Fetch ハンドラーをエクスポートします。          |
-| `vite.config.ts`        | `effront()` と `effrontCloudflare()`、Tailwind を登録し、開発用の URL を固定します。         |
-| `wrangler.jsonc`        | Worker のエントリー、互換性設定、`ASSETS` バインディング、アプリケーション変数を定義します。 |
-| `package.json`          | アダプター、Wrangler、アプリケーションの依存パッケージを定義します。                         |
+| ファイル                | 役割                                                                                |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | HTML レイアウト、一つのページ、`/` ルートを定義します。                             |
+| `src/entry.workers.ts`  | `createFetchHandler(application)` で作成した Fetch ハンドラーをエクスポートします。 |
+| `vite.config.ts`        | `effront()` と `effrontCloudflare()` を登録します。                                 |
+| `wrangler.jsonc`        | Worker のエントリー、互換性の日付、`nodejs_compat` フラグを定義します。             |
+| `package.json`          | アダプター、Wrangler、アプリケーションの依存パッケージを定義します。                |
 
 ページの内容は `src/entry.effront.tsx` で変更します。
-Wrangler の設定を変更するときは、既存の `nodejs_compat` フラグと `ASSETS` バインディングを保持してください。
+Wrangler の設定を変更するときは `nodejs_compat` フラグを保持してください。最小構成にはアプリケーション変数や `ASSETS` バインディングはありません。
+`APP_LABEL` のようなバインディングを追加する場合は `wrangler.jsonc` に `vars: { APP_LABEL: "Greeting Worker" }` を定義し、リクエスト中の Effect から `getWorkersEnv<{ APP_LABEL: string }>()` で読みます。`src/entry.workers.ts` の Fetch エントリーがアプリケーションを `createFetchHandler` に渡し、リクエストコンテキストを提供します。
 その他のオプションは [Wrangler 設定リファレンス](https://developers.cloudflare.com/workers/wrangler/configuration/) を参照してください。
 
 ## ビルド済みの Worker を Wrangler で実行する {#local}
 
-開発サーバーを停止し、`examples/workers` で次のコマンドを実行します。
+開発サーバーを停止し、`examples/cloudflare` で次のコマンドを実行します。
 
 ```bash
 vp build

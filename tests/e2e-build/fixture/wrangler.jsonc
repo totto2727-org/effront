@@ -3,6 +3,6 @@
   "main": "src/entry.workers.ts",
   "compatibility_date": "2026-09-10",
   "compatibility_flags": ["nodejs_compat"],
-  "vars": { "APP_LABEL": "Workers fixture" },
+  "vars": { "APP_LABEL": "Workers fixture", "GREETING": "Hello from fixture" },
   "assets": { "binding": "ASSETS" },
 }

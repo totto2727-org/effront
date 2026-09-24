@@ -79,13 +79,13 @@ Vite uses normal configuration discovery from the application directory.
 ### SSR output and static assets
 
 VitePlus builds the graph-specific outputs.
-Wrangler runs the generated `examples/workers/dist/rsc/wrangler.json` using `--local`.
+Wrangler runs the generated `examples/cloudflare/dist/rsc/wrangler.json` using `--local`.
 The adapter nests SSR output inside the Worker upload root, by default at `dist/rsc/ssr`, so Wrangler attaches dynamically loaded SSR modules.
 A sibling `dist/ssr` can compile successfully but fail at runtime because Wrangler has not attached it to the Worker.
 
 Cloudflare owns static assets.
-The example config supplies the assets binding and runtime variables, while the generated Wrangler config supplies the built client asset directory.
-The example omits `run_worker_first`, using Cloudflare's default asset-first routing.
+The test fixture under `tests/e2e-build/` supplies an assets binding and runtime variables, while the generated Wrangler config supplies the built client asset directory.
+The fixture omits `run_worker_first`, using Cloudflare's default asset-first routing.
 Worker-first routing is an application choice when protecting asset requests or overriding a conflicting static URL.
 Changing Wrangler runtime variables must not require rebuilding the application.
 

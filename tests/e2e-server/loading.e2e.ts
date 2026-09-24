@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-// This feature belongs to the Node sample. Existing server.e2e.ts still covers Bun.
+// This feature belongs to the Node fixture. Existing server.e2e.ts still covers Bun.
 test.beforeEach(async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === "bun", "Loading playground is owned by the Node example");
+  test.skip(testInfo.project.name === "bun", "Loading playground is owned by the Node fixture");
   await page.goto("/loading");
   // Match the existing host suite: SSR buttons may be visible before dev modules hydrate.
   await page.waitForLoadState("networkidle");

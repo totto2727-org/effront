@@ -12,15 +12,13 @@
     "@effect/platform-node": "catalog:",
     "@effront/core": "workspace:*",
     "@effront/server": "workspace:*",
-    "@tanstack/react-query": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@effect/platform-node": "catalog:",
-    "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",

@@ -1,5 +1,5 @@
-Start with the [one-page standalone Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/minimal/cloudflare) or `vp create effront -- my-app --platform cloudflare`.
-This guide covers the separate [standalone Workers feature example](https://github.com/totto2727-org/effront/tree/main/examples/workers), which exercises the independent host adapter and its Wrangler build.
+Start with the [minimal standalone Cloudflare example](https://github.com/totto2727-org/effront/tree/main/examples/cloudflare) or `vp create effront -- my-app --platform cloudflare`.
+This guide runs the one-page example. For navigation, counters, and resource-backed Server Functions, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy).
 
 ## Run the example {#setup}
 
@@ -9,33 +9,33 @@ Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then run:
 git clone https://github.com/totto2727-org/effront.git
 cd effront
 vp install
-cd examples/workers
+cd examples/cloudflare
 vp dev
 ```
 
 Open the local URL printed by Vite.
-The homepage displays `Hello, world!` and `Hello from Cloudflare Workers`.
-Click `Count: 0` to check that the counter increments.
+The single page displays `Hello, world`.
 
 ## Find the Worker configuration {#vite}
 
 The example includes the files needed to run on Workers:
 
-| File                    | Role                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | Defines the pages, root layout, and routes.                                                    |
-| `src/entry.workers.ts`  | Exports the Fetch handler created by `createFetchHandler(application)`.                        |
-| `vite.config.ts`        | Registers `effront()` and `effrontCloudflare()`, adds Tailwind, and fixes the development URL. |
-| `wrangler.jsonc`        | Sets the Worker entry, compatibility settings, `ASSETS` binding, and application variables.    |
-| `package.json`          | Lists the adapter, Wrangler, and application dependencies.                                     |
+| File                    | Role                                                                    |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | Defines the document layout, one page, and its `/` route.               |
+| `src/entry.workers.ts`  | Exports the Fetch handler created by `createFetchHandler(application)`. |
+| `vite.config.ts`        | Registers `effront()` and `effrontCloudflare()`.                        |
+| `wrangler.jsonc`        | Sets the Worker entry, compatibility date, and `nodejs_compat` flag.    |
+| `package.json`          | Lists the adapter, Wrangler, and application dependencies.              |
 
 Edit page content in `src/entry.effront.tsx`.
-Keep the existing `nodejs_compat` flag and `ASSETS` binding when changing Wrangler settings.
+Keep the `nodejs_compat` flag when changing Wrangler settings. The minimal example does not declare application variables or an `ASSETS` binding.
+To add a binding such as `APP_LABEL`, define `vars: { APP_LABEL: "Greeting Worker" }` in `wrangler.jsonc`, then read it inside a request Effect with `getWorkersEnv<{ APP_LABEL: string }>()`. The Fetch entry in `src/entry.workers.ts` passes the application to `createFetchHandler`, which supplies the request context.
 See the [Wrangler configuration reference](https://developers.cloudflare.com/workers/wrangler/configuration/) for other options.
 
 ## Run the built Worker with Wrangler {#local}
 
-Stop development, then run these commands from `examples/workers`:
+Stop development, then run these commands from `examples/cloudflare`:
 
 ```bash
 vp build

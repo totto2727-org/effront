@@ -26,7 +26,7 @@ The Node.js starter has one page and five principal files:
 | `vite.config.ts`        | Configures Effront development and builds.                          |
 | `package.json`          | Lists dependencies and commands for running the example.            |
 
-The page is defined in `src/entry.effront.tsx` of the generated project (also available in the [Node example](https://github.com/totto2727-org/effront/blob/main/examples/minimal/node/src/entry.effront.tsx)).
+The page is defined in `src/entry.effront.tsx` of the generated project (also available in the [Node example](https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx)).
 `HomePage` contains the displayed heading, `RootLayout` provides the surrounding HTML, and `Routes` makes the page available at `/`.
 
 ## Change the heading {#run}

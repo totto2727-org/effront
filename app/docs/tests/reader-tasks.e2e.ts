@@ -98,7 +98,7 @@ for (const reader of locales) {
     );
     await expect(
       page.locator(
-        'article a[href="https://github.com/totto2727-org/effront/blob/main/examples/minimal/node/src/entry.effront.tsx"]',
+        'article a[href="https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx"]',
       ),
     ).toBeVisible();
     await followHeading(page, reader, "application");
@@ -131,11 +131,11 @@ for (const reader of locales) {
     expect(tokenColors.length).toBeGreaterThan(2);
   });
 
-  for (const [host, example, dev] of [
-    ["node", "node", null],
-    ["bun", "bun", null],
-    ["cloudflare", "workers", null],
-    ["alchemy", "alchemy", "http://localhost:1337"],
+  for (const [host, example] of [
+    ["node", "node"],
+    ["bun", "bun"],
+    ["cloudflare", "cloudflare"],
+    ["alchemy", "alchemy-cloudflare"],
   ] as const) {
     test(`${reader.locale} reader runs the existing ${host} example without assembling host configuration`, async ({
       page,
@@ -153,8 +153,14 @@ for (const reader of locales) {
       await expect(commands).toContainText(`cd examples/${example}`);
       await expect(commands).toContainText("vp install");
       await expect(page.locator("article")).not.toContainText("vp pack");
-      if (dev) {
-        await expect(page.locator(`article a[href="${dev}"]`).first()).toBeVisible();
+      await expect(page.locator("article")).not.toContainText("Count: 0");
+      await expect(page.locator("article")).not.toContainText("cd examples/workers");
+      if (host === "alchemy") {
+        await expect(page.locator("article")).toContainText(
+          reader.locale === "en"
+            ? "local URL printed by Alchemy"
+            : "Alchemy が表示するローカル URL",
+        );
       } else {
         await expect(page.locator("article")).toContainText(
           reader.locale === "en" ? "local URL printed by Vite" : "Vite が表示するローカル URL",

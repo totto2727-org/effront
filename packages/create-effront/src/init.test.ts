@@ -33,7 +33,7 @@ for (const platform of platforms) {
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
     for (const example of examples) {
       const source = await readFile(
-        new URL(`../../../examples/minimal/${example}/src/entry.effront.tsx`, import.meta.url),
+        new URL(`../../../examples/${example}/src/entry.effront.tsx`, import.meta.url),
         "utf8",
       );
       expect(application).toBe(source);

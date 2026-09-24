@@ -206,6 +206,7 @@ for (const accept of ["text/html", "text/x-component"]) {
 
 test("hydrates and follows Markdown links with Flight while retaining shared layout state", async ({
   page,
+  request,
 }) => {
   await page.goto("/manual");
   await page.waitForLoadState("networkidle");
@@ -229,7 +230,12 @@ test("hydrates and follows Markdown links with Flight while retaining shared lay
       .click();
     const flight = await flightPromise;
     expect(flight.status()).toBe(200);
-    expect(await flight.text()).toContain(destination.title);
+    const flightBody = await request.get(destination.path, {
+      headers: { Accept: "text/x-component" },
+    });
+    expect(flightBody.status()).toBe(200);
+    expect(flightBody.headers()["content-type"]).toContain("text/x-component");
+    expect(await flightBody.text()).toContain(destination.title);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(destination.title);
     const url = new URL(page.url());
     expect(url.pathname).toBe(destination.path);

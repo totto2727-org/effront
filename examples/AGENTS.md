@@ -2,11 +2,10 @@
 
 ## Repository structure
 
-- `minimal/node/`, `minimal/bun/`, `minimal/cloudflare/`, and `minimal/alchemy-cloudflare/`: minimal Node, Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers starters. Their `src/entry.effront.tsx` files must remain byte-identical; only hosting and infrastructure management differ.
+- `node/`, `bun/`, `cloudflare/`, and `alchemy-cloudflare/`: minimal Node, Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers starters. Their `src/entry.effront.tsx` files must remain byte-identical; only hosting and infrastructure management differ.
 - `alchemy/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
 - `markdown/`: feature-rich native Alchemy consumer of file-relative Markdown routing and assets.
-- `workers/`: feature-rich standalone Cloudflare integration without Alchemy, separate from the minimal standalone Cloudflare starter.
-- `node/` and `bun/`: feature-rich native Effect HTTP regression consumers with separate production runtimes.
+- The feature-rich native Node/Bun applications are test-owned fixtures under `../tests/e2e-server/fixtures/`, not public examples.
 - `basic -> alchemy`: relative symlink, not a separate workspace package; preserve its exclusion in `pnpm-workspace.yaml`.
 
 See [example selection](README.md) for runnable commands and the distinction between platform starters and feature demonstrations.
@@ -18,14 +17,12 @@ See [example selection](README.md) for runnable commands and the distinction bet
 Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before entering an example.
 Workspace preparation is separate from development startup; example development commands do not build workspace packages.
 
-- `vp dev` in `minimal/node/` and `minimal/bun/` starts the minimal Vite host on an available port after root preparation. Use `vp build` followed by `vp run start` for their separate Node and Bun native production listeners; set `PORT` or `HOST` to override the server defaults.
-- `vp dev` in `minimal/cloudflare/` starts the minimal standalone Cloudflare Worker on an available Vite port; `vp build` emits its Worker artifact without Alchemy.
-- `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `minimal/cloudflare/` serves the built artifact independently of Vite after `vp build`.
-- `vp run dev` in `minimal/alchemy-cloudflare/` starts the minimal Alchemy-managed Worker without a fixed development port.
+- `vp dev` in `node/` and `bun/` starts the minimal Vite host on an available port after root preparation. Use `vp build` followed by `vp run start` for their separate Node and Bun native production listeners; set `PORT` or `HOST` to override the server defaults.
+- `vp dev` in `cloudflare/` starts the minimal standalone Cloudflare Worker on an available Vite port; `vp build` emits its Worker artifact without Alchemy.
+- `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `cloudflare/` serves the built artifact independently of Vite after `vp build`.
+- `vp run dev` in `alchemy-cloudflare/` starts the minimal Alchemy-managed Worker without a fixed development port.
 - `vp run dev` in `alchemy/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
-- `vp dev` and `vp build` in `workers/` use standalone Cloudflare hosting, without an Alchemy profile or remote resources. Vite chooses an available development port.
-- `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `workers/` serves the built artifact independently of Vite after `vp build`.
-- `vp dev`, `vp build`, and `vp run start` in `node/` or `bun/` exercise Vite tooling and the separate built native listener. `PORT` and `HOST` configure production listening.
+- `vp dev`, `vp build`, and `vp run start` in `../tests/e2e-server/fixtures/node/` or `../tests/e2e-server/fixtures/bun/` exercise the feature-rich native regression applications. `PORT` and `HOST` configure production listening.
 - `vp run dev` from `basic/` must resolve to the native Alchemy example when changing the alias.
 - `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host; official CLI acceptance is separate.
 
@@ -43,7 +40,7 @@ Workspace preparation is separate from development startup; example development 
 
 ## Package-specific rules
 
-- Keep all four `minimal/*` starters limited to one heading and host configuration; verify their documented startup without adding Counter, Server Functions, or styling.
+- Keep all four flat starters limited to one heading and host configuration; verify their documented startup without adding Counter, Server Functions, or styling.
 - Keep feature showcases focused: introductory routes, Counter, Server Function, and framework features with Tailwind utilities, not custom transition demos or CSS.
 - Put feature-independent React UI in `components/`; avoid redundant `Example` name prefixes.
 - Group greeting behavior under `features/greeting/`: `server.ts` for Server Functions, `client.tsx` for feature UI, and `services.ts` for capabilities/services. Keep client/server directives in separate files, without re-export barrels.
@@ -55,6 +52,6 @@ Workspace preparation is separate from development startup; example development 
 - When changing native host wiring or profile prerequisites: [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md).
 - When changing Markdown rendering or assets: [Markdown guide](../packages/markdown/docs/GUIDE.md).
 - When changing standalone host boundaries: [Workers architecture](../docs/WORKERS.md).
-- When exploring or changing Node Loading/Suspense examples: [playground guide](node/docs/LOADING.md).
+- When exploring or changing the native Node Loading/Suspense regression fixture: [playground guide](../tests/e2e-server/fixtures/node/docs/LOADING.md).
 
 _This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._

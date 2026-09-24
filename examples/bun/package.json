@@ -18,9 +18,9 @@
   },
   "devDependencies": {
     "@effect/platform-node": "catalog:",
-    "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
     "@types/bun": "catalog:",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
