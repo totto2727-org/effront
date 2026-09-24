@@ -69,6 +69,7 @@ export function MarkdownMermaid({
 
   // oxlint-disable react(set-state-in-effect)
   useEffect(() => {
+    if (import.meta.env.SSR) return;
     let cancelled = false;
     void import("beautiful-mermaid")
       .then(({ renderMermaidSVG, THEMES }) => {
