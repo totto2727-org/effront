@@ -1,0 +1,46 @@
+{
+  "name": "@effront/vercel",
+  "version": "0.1.4",
+  "description": "Vite-native Vercel Build Output integration for Effront on Node.js.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/totto2727-org/effront.git",
+    "directory": "packages/vercel"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
+  },
+  "devDependencies": {
+    "@effect/platform-node": "catalog:",
+    "@effront/core": "workspace:*",
+    "@effront/server": "workspace:*",
+    "@effront/vite": "workspace:*",
+    "effect": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@effect/platform-node": "catalog:",
+    "@effront/core": "workspace:^",
+    "@effront/server": "workspace:^",
+    "@effront/vite": "workspace:^",
+    "effect": "catalog:",
+    "vite": "*"
+  }
+}
