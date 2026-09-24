@@ -50,6 +50,15 @@ for (const theme of ["light", "dark"] as const) {
     page,
   }, testInfo) => {
     await page.goto("/en/guide/components");
+    // This is an authored alert from the actual RSC route, before the fixture adds
+    // the remaining alert types. It verifies icon rendering through the actual RSC route.
+    const renderedAlert = page.locator('article [data-alert="warning"]');
+    await expect(renderedAlert).toBeVisible();
+    await expect(renderedAlert.locator(".docs-alert-title svg")).toBeVisible();
+    await expect(renderedAlert.locator(".docs-alert-title svg")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
     // Render the production parser/component fixture under the real site stylesheet,
     // without adding a fixture route to the public documentation application.
     await page.locator("article").evaluate((article, html) => {

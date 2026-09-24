@@ -1,21 +1,21 @@
 import type { ReactNode } from "react";
-import { Info, Lightbulb, MessageSquareWarning, OctagonAlert, TriangleAlert } from "lucide-react";
+import { MarkdownAlertIcon } from "./markdown-alert-icon";
 
 const alerts = {
-  note: { title: "Note", Icon: Info },
-  tip: { title: "Tip", Icon: Lightbulb },
-  important: { title: "Important", Icon: MessageSquareWarning },
-  warning: { title: "Warning", Icon: TriangleAlert },
-  caution: { title: "Caution", Icon: OctagonAlert },
+  note: { title: "Note", icon: "info" },
+  tip: { title: "Tip", icon: "lightbulb" },
+  important: { title: "Important", icon: "message-square-warning" },
+  warning: { title: "Warning", icon: "triangle-alert" },
+  caution: { title: "Caution", icon: "octagon-alert" },
 } as const;
 
 function alertComponent(type: keyof typeof alerts) {
-  const { title, Icon } = alerts[type];
+  const { title, icon } = alerts[type];
   return function MarkdownAlert({ children }: { children?: ReactNode }) {
     return (
       <aside className="docs-alert" data-alert={type} aria-label={title}>
         <p className="docs-alert-title">
-          <Icon size={16} aria-hidden="true" />
+          <MarkdownAlertIcon name={icon} />
           {title}
         </p>
         <div className="docs-alert-body">{children}</div>
