@@ -217,7 +217,7 @@ describe("ServerFn.make", () => {
         const error = yield* Effect.flip(
           invocationEffect(Reflect.apply(action, null, args), getEFFRONTIdentity(EFFRONT)),
         );
-        expect(error).toMatchObject({ _tag: "ServerFnOperationError" });
+        expect(error).toMatchObject({ _tag: "ServerFnInputError" });
       }
       expect(invoked).toBe(false);
     }),
@@ -238,7 +238,7 @@ describe("ServerFn.make", () => {
         const error = yield* Effect.flip(
           invocationEffect(Reflect.apply(action, null, args), getEFFRONTIdentity(EFFRONT)),
         );
-        expect(error).toMatchObject({ _tag: "ServerFnOperationError" });
+        expect(error).toMatchObject({ _tag: "ServerFnInputError" });
       }
       expect(invoked).toBe(false);
     }),

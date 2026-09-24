@@ -27,6 +27,40 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
   "effront/server/flight-renderer/FlightRenderer",
   {
     make: Effect.succeed({
+      renderQuery: Effect.fnUntraced(function* <Services>({
+        middleware,
+        renderRuntime,
+        result,
+        temporaryReferences,
+      }: {
+        readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
+        readonly renderRuntime: RenderRuntimeContext;
+        readonly result: ServerFnResult;
+        readonly temporaryReferences?: ReturnType<typeof createTemporaryReferenceSet>;
+      }): Effect.fn.Return<FlightRender, never, Services | Scope.Scope> {
+        const parentScope = yield* Effect.scope;
+        const renderScope = yield* Scope.fork(parentScope);
+        const release = Scope.close(renderScope, Exit.void);
+        return yield* Effect.gen(function* () {
+          const runtime = yield* FiberSet.makeRuntimePromise<Services>().pipe(Scope.provide(renderScope));
+          const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
+          const { renderToReadableStream } = yield* Effect.promise(
+            () => import("@vitejs/plugin-rsc/rsc/server"),
+          );
+          const stream = renderRuntime.bind(runtime, middleware, () =>
+            renderToReadableStream(result, {
+              onError: (error: unknown) => {
+                if (!signal.aborted) {
+                  void runtime(Effect.logError(error));
+                }
+              },
+              signal,
+              temporaryReferences,
+            }),
+          );
+          return { release, signal, stream } satisfies FlightRender;
+        }).pipe(Effect.onError(() => release));
+      }),
       render: Effect.fnUntraced(function* <Services>({
         formState,
         middleware,

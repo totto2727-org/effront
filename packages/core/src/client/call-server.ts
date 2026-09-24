@@ -12,6 +12,9 @@ import { FlightClient } from "./flight-client";
 import { NavigationApi } from "./navigation-api";
 import { RouteLoader } from "./route-loader";
 import { RouteRefresher } from "./route-refresh";
+import { ServerFnQueryPath, type ServerFnResult } from "../rsc/flight";
+import { ServerFnDefect, ServerFnInputError } from "../rsc/server-fn-error";
+import { invocationError, matchServerFnQuery, transportError } from "./server-fn-protocol";
 
 class ServerFnCallError extends Schema.TaggedError<ServerFnCallError>()("ServerFnCallError", {
   cause: Schema.Defect(),
@@ -37,6 +40,18 @@ export const installCallServer = Effect.gen(function* () {
   const routeLoader = yield* RouteLoader;
   const routeRefresher = yield* RouteRefresher;
   const latestInvocationOrder = MutableRef.make(0);
+  const settleInvocation = (invocationResult: PromiseWithResolvers<unknown>, result: ServerFnResult) => {
+    switch (result._tag) {
+      case "Success":
+        invocationResult.resolve(result.value);
+        return;
+      case "Failure":
+        invocationResult.reject(result.error._tag === "ServerFnInputError"
+          ? new ServerFnInputError({ detail: result.error.detail })
+          : new ServerFnDefect({ detail: result.error.detail, digest: result.error.digest }));
+        return;
+    }
+  };
   const selectRefreshSource = (invocation: ServerFnInvocation): ServerFnRefreshSource => {
     if (
       MutableRef.get(latestInvocationOrder) !== invocation.order ||
@@ -74,7 +89,7 @@ export const installCallServer = Effect.gen(function* () {
     const temporaryReferences = createTemporaryReferenceSet();
     const signal = yield* Effect.abortSignal;
     const body = yield* Effect.tryPromise({
-      try: () => encodeReply(args, { signal, temporaryReferences }),
+      try: () => encodeReply([...args], { signal, temporaryReferences }),
       catch: (cause) => new ServerFnCallError({ cause, message: "Failed to encode arguments." }),
     });
     const resource = yield* flightClient
@@ -105,19 +120,7 @@ export const installCallServer = Effect.gen(function* () {
         message: "Server Function response was incomplete.",
       });
     }
-    switch (serverFnResult._tag) {
-      case "Failure":
-        invocationResult.reject(
-          new ServerFnCallError({
-            cause: serverFnResult.error,
-            message: "Server Function execution failed.",
-          }),
-        );
-        break;
-      case "Success":
-        invocationResult.resolve(serverFnResult.value);
-        break;
-    }
+    settleInvocation(invocationResult, serverFnResult);
     // React registered its Action reactions before the request completed. Registering EFFRONT's
     // continuation after settlement lets React close that Action before the refresh Transition.
     yield* Effect.promise(() =>
@@ -157,10 +160,41 @@ export const installCallServer = Effect.gen(function* () {
     ).pipe(Effect.ensuring(resource.release), Effect.forkScoped({ startImmediately: true }));
   });
 
+  const callQuery = Effect.fnUntraced(function* (
+    id: string,
+    args: ReadonlyArray<unknown>,
+    invocationResult: PromiseWithResolvers<unknown>,
+  ) {
+    const temporaryReferences = createTemporaryReferenceSet();
+    const signal = yield* Effect.abortSignal;
+    const body = yield* Effect.tryPromise({
+      try: () => encodeReply([...args], { signal, temporaryReferences }),
+      catch: (cause) => transportError(cause),
+    });
+    const resource = yield* flightClient.loadQuery({
+      _tag: "Query",
+      body,
+      destination: new URL(ServerFnQueryPath, navigationApi.getCurrentUrl()),
+      id,
+      temporaryReferences,
+    }).pipe(Effect.mapError(transportError));
+    if (resource._tag === "Document") {
+      yield* resource.release;
+      return yield* transportError(new Error("A query response cannot request document navigation."));
+    }
+    settleInvocation(invocationResult, resource.payload);
+    yield* resource.completed.pipe(Effect.ignore, Effect.ensuring(resource.release));
+  });
+
   yield* Effect.sync(() => {
     setServerCallback((id, args) => {
       const invocationResult = Promise.withResolvers<unknown>();
-      void run(callServer(id, args, invocationResult)).catch(invocationResult.reject);
+      const query = matchServerFnQuery(args);
+      const operation = query === null
+        ? callServer(id, args, invocationResult).pipe(Effect.mapError(invocationError))
+        : callQuery(id, query.args, invocationResult).pipe(Effect.mapError(invocationError));
+      void run(operation, query === null ? undefined : { signal: query.signal })
+        .catch((cause) => invocationResult.reject(invocationError(cause)));
       return invocationResult.promise;
     });
   });

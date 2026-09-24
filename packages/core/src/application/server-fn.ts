@@ -2,17 +2,18 @@ import { Array, Effect, Predicate, Schema } from "effect";
 
 import { attachEFFRONTMember, type EFFRONTIdentity, type EFFRONTMember } from "./effront-identity";
 import type { AnyMiddleware } from "./middleware";
+import { ServerFnInputError } from "../rsc/server-fn-error";
 
 const ServerFnInvocationTypeId: unique symbol = Symbol.for("effront/ServerFnInvocation");
 
-class ServerFnOperationError extends Schema.TaggedError<ServerFnOperationError>()(
+export class ServerFnOperationError extends Schema.TaggedError<ServerFnOperationError>()(
   "ServerFnOperationError",
   { cause: Schema.Defect() },
 ) {}
 
 type ServerFnInvocation<ApplicationServices> = {
   readonly [ServerFnInvocationTypeId]: {
-    readonly effect: Effect.Effect<unknown, ServerFnOperationError, ApplicationServices>;
+    readonly effect: Effect.Effect<unknown, ServerFnInputError | ServerFnOperationError, ApplicationServices>;
     readonly identity: EFFRONTIdentity<ApplicationServices>;
     readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
   };
@@ -23,7 +24,7 @@ type ServerFnInvocationMatch<ApplicationServices> =
   | { readonly _tag: "IdentityMismatch" }
   | {
       readonly _tag: "Match";
-      readonly effect: Effect.Effect<unknown, ServerFnOperationError, ApplicationServices>;
+      readonly effect: Effect.Effect<unknown, ServerFnInputError | ServerFnOperationError, ApplicationServices>;
       readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
     };
 
@@ -104,11 +105,13 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
     const serverFunction = (...untrustedArgs: ServerFnArguments<typeof input, "Encoded">) => {
       // Unary functions still ignore extra native arguments and decode undefined when omitted.
       const effect = decode(Array.isArray(input) ? untrustedArgs : [untrustedArgs[0]]).pipe(
+        Effect.mapError((cause) => new ServerFnInputError({ detail: { message: cause.message, name: cause.name } })),
         // Normalization preserves the positional Type mapping, which the generic branch erases.
         Effect.flatMap((args: ReadonlyArray<unknown>) =>
-          handler(...(args as Parameters<typeof handler>)),
+          handler(...(args as Parameters<typeof handler>)).pipe(
+            Effect.mapError((cause) => new ServerFnOperationError({ cause })),
+          ),
         ),
-        Effect.mapError((cause) => new ServerFnOperationError({ cause })),
       );
       const unavailable = Promise.reject<Effect.Success<typeof effect>>(directInvocationError());
       void unavailable.catch(() => undefined);
