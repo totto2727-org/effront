@@ -1,4 +1,5 @@
-[Node.js サンプル](https://github.com/totto2727-org/effront/tree/main/examples/node)を開発モードで動かし、ビルド後に Node.js の HTTP サーバーを起動します。
+まずは[一画面の Node.js 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/hello-world)または `pnpm create effront my-app --platform node` から始められます。
+このガイドでは、ナビゲーションとサーバー動作を確認できる[機能紹介用の Node.js サンプル](https://github.com/totto2727-org/effront/tree/main/examples/node)を使います。
 
 ## サンプルを起動する {#setup}
 

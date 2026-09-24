@@ -1,17 +1,15 @@
 {
-  "name": "effront-hello-world-example",
+  "name": "effront-hello-world-cloudflare-example",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp build",
-    "start": "node dist/rsc/server.js"
+    "dev": "alchemy dev"
   },
   "dependencies": {
     "@effect/platform-browser": "catalog:",
-    "@effect/platform-node": "catalog:",
+    "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
-    "@effront/server": "workspace:*",
+    "alchemy": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

@@ -1,5 +1,5 @@
-Use the [Alchemy example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) to develop an Effront application with a Cloudflare Worker managed by Alchemy.
-The host configuration is already included, so you can start the application before changing its pages.
+Start with the [one-page Alchemy-native Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare) or `pnpm create effront my-app --platform cloudflare`.
+This guide uses the richer [Alchemy example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) to demonstrate resource capabilities. Its host configuration is already included.
 
 ## Prepare the example {#setup}
 

@@ -1,4 +1,5 @@
-[Bun サンプル](https://github.com/totto2727-org/effront/tree/main/examples/bun)を開発モードで動かし、ビルド後に Bun の HTTP サーバーを起動します。
+まずは[一画面の Bun 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-bun)または `pnpm create effront my-app --platform bun` から始められます。
+このガイドでは、ナビゲーションとサーバー動作を確認できる[機能紹介用の Bun サンプル](https://github.com/totto2727-org/effront/tree/main/examples/bun)を使います。
 
 ## サンプルを起動する {#setup}
 

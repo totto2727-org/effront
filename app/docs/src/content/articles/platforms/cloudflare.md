@@ -1,5 +1,5 @@
-[Cloudflare Workers サンプル](https://github.com/totto2727-org/effront/tree/main/examples/workers)を Vite でローカル実行し、ビルド済みの Worker を Wrangler で確認します。
-このサンプルは `@effront/cloudflare` を使い、Alchemy は必要ありません。
+まずは[一画面の Alchemy 管理 Cloudflare 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare)または `pnpm create effront my-app --platform cloudflare` から始められます。
+このガイドでは、独立したホストアダプターと Wrangler ビルドを確認するために、Alchemy を使わない[別の Workers サンプル](https://github.com/totto2727-org/effront/tree/main/examples/workers)を扱います。
 
 ## サンプルを起動する {#setup}
 

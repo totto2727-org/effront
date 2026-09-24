@@ -1,4 +1,5 @@
-Run the [Node.js example](https://github.com/totto2727-org/effront/tree/main/examples/node) in development, then build and start its Node.js HTTP server.
+Start with the [one-page Node.js starter](https://github.com/totto2727-org/effront/tree/main/examples/hello-world) or `pnpm create effront my-app --platform node`.
+This guide uses the richer [Node.js example](https://github.com/totto2727-org/effront/tree/main/examples/node) to demonstrate navigation and server behavior in development and production.
 
 ## Run the example {#setup}
 

@@ -6,6 +6,19 @@ Effront is a fork of [effective-rsc](https://github.com/nikhilsnayak/effective-r
 Implementation of this fork started from upstream commit [`ed886996d1d3780b94166af4f798c53416d547c8`](https://github.com/nikhilsnayak/effective-rsc/commit/ed886996d1d3780b94166af4f798c53416d547c8).
 See [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and subsequent incorporation history.
 
+## Quick start
+
+Create a one-page Node.js application, install its dependencies, and start the development server:
+
+```sh
+pnpm create effront my-app --platform node
+cd my-app
+pnpm install
+pnpm dev
+```
+
+Choose `--platform bun` for Bun or `--platform cloudflare` for an Alchemy-native Cloudflare Worker. The Cloudflare option requires a configured Alchemy Cloudflare profile, including for `alchemy dev`. Each starter uses the same application code; only host entries, configuration, and dependencies differ. See [Getting started](app/docs/src/content/en/articles/guide/getting-started.md) and the [starter examples](examples/hello-world).
+
 ## Usage
 
 | To…                                                              | Use…                                               |
@@ -18,7 +31,7 @@ See [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and subse
 | Render Markdown with file-relative links and images              | [Markdown](packages/markdown/README.md#usage)      |
 | Apply utility styles to server-rendered and hydrated components  | [Tailwind](packages/tailwind/README.md#usage)      |
 
-The [standalone Workers example](examples/workers/README.md#usage) combines the runtime, tooling, and styling integrations in a small application.
+The [standalone Workers example](examples/workers/README.md#usage) demonstrates the optional non-Alchemy adapter alongside runtime, tooling, and styling integrations. It is distinct from the Alchemy-native Cloudflare starter.
 
 ## Key features
 

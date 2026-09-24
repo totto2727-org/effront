@@ -1,15 +1,15 @@
 {
-  "name": "effront-hello-world-example",
+  "name": "effront-hello-world-bun-example",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vp dev",
     "build": "vp build",
-    "start": "node dist/rsc/server.js"
+    "start": "bun dist/rsc/server.js"
   },
   "dependencies": {
     "@effect/platform-browser": "catalog:",
-    "@effect/platform-node": "catalog:",
+    "@effect/platform-bun": "catalog:",
     "@effront/core": "workspace:*",
     "@effront/server": "workspace:*",
     "effect": "catalog:",
@@ -17,11 +17,16 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@effect/platform-node": "catalog:",
     "@effront/vite": "workspace:*",
+    "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
     "vite-plus": "catalog:"
+  },
+  "engines": {
+    "bun": ">=1.4.2"
   }
 }

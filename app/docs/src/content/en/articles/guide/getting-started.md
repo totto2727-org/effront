@@ -2,29 +2,23 @@ Run a minimal Effront application that displays `Hello, world`, then explore the
 
 ## Run the sample {#setup}
 
-With Node.js 24.11 or later and [Vite+](https://viteplus.dev/) installed, clone the [Hello world example](https://github.com/totto2727-org/effront/tree/main/examples/hello-world):
+Install Node.js 24.11 or later, [pnpm](https://pnpm.io/installation), and [Vite+](https://viteplus.dev/), then create a Node.js starter:
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
-vp install
+pnpm create effront my-app --platform node
+cd my-app
+pnpm install
+pnpm dev
 ```
 
-Then start the sample:
+Open the local URL printed by the development server. The page displays `Hello, world`.
+Choose `--platform bun` for Bun or `--platform cloudflare` for a Cloudflare Worker managed by Alchemy. The latter requires a configured Alchemy Cloudflare profile even for local development. All three starters contain the same page code; only the host setup differs.
 
-```bash
-cd examples/hello-world
-vp dev
-```
-
-Open [http://127.0.0.1:1340](http://127.0.0.1:1340).
-The page displays `Hello, world`.
-For later development sessions, run `vp dev` from `examples/hello-world`.
+If you are working within the Effront repository instead, run `vp install` at its root and start the matching [Node](https://github.com/totto2727-org/effront/tree/main/examples/hello-world), [Bun](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-bun), or [Cloudflare](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare) example.
 
 ## Explore the sample {#application}
 
-The example has one page and uses Node.js to run locally.
-Its five files have these roles:
+The Node.js starter has one page and five principal files:
 
 | File                    | Purpose                                                             |
 | ----------------------- | ------------------------------------------------------------------- |
@@ -34,7 +28,7 @@ Its five files have these roles:
 | `vite.config.ts`        | Configures Effront development and builds.                          |
 | `package.json`          | Lists dependencies and commands for running the example.            |
 
-The page is defined in [`src/entry.effront.tsx`](https://github.com/totto2727-org/effront/blob/main/examples/hello-world/src/entry.effront.tsx).
+The page is defined in `src/entry.effront.tsx` of the generated project (also available in the [Node example](https://github.com/totto2727-org/effront/blob/main/examples/hello-world/src/entry.effront.tsx)).
 `HomePage` contains the displayed heading, `RootLayout` provides the surrounding HTML, and `Routes` makes the page available at `/`.
 
 ## Change the heading {#run}

@@ -1,5 +1,5 @@
-Run the [Cloudflare Workers example](https://github.com/totto2727-org/effront/tree/main/examples/workers) locally with Vite, then check the built Worker with Wrangler.
-The example uses `@effront/cloudflare` and does not require Alchemy.
+Start with the [one-page Alchemy-native Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare) or `pnpm create effront my-app --platform cloudflare`.
+This guide covers the separate [standalone Workers example](https://github.com/totto2727-org/effront/tree/main/examples/workers), which uses `@effront/cloudflare` without Alchemy to exercise the independent host adapter and its Wrangler build.
 
 ## Run the example {#setup}
 

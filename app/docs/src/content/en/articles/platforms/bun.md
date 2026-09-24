@@ -1,4 +1,5 @@
-Run the [Bun example](https://github.com/totto2727-org/effront/tree/main/examples/bun) in development, then build and start its Bun HTTP server.
+Start with the [one-page Bun starter](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-bun) or `pnpm create effront my-app --platform bun`.
+This guide uses the richer [Bun example](https://github.com/totto2727-org/effront/tree/main/examples/bun) to demonstrate navigation and server behavior in development and production.
 
 ## Run the example {#setup}
 

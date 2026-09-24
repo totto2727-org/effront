@@ -87,19 +87,15 @@ for (const reader of locales) {
     expect(importantBorder).not.toBe(warningBorder);
   });
 
-  test(`${reader.locale} reader finds the clone-and-run sample and its file roles`, async ({
+  test(`${reader.locale} reader finds the create-and-run starter and its file roles`, async ({
     page,
   }) => {
     await openGuide(page, reader, "/guide/getting-started");
     await followHeading(page, reader, "setup");
-    const commands = page.locator("article pre code").filter({ hasText: "git clone" });
+    const commands = page.locator("article pre code").filter({ hasText: "pnpm create effront" });
     await expect(commands).toHaveText(
-      "git clone https://github.com/totto2727-org/effront.git\ncd effront\nvp install",
+      "pnpm create effront my-app --platform node\ncd my-app\npnpm install\npnpm dev",
     );
-    await expect(
-      page.locator("article pre code").filter({ hasText: "cd examples/hello-world" }),
-    ).toHaveText("cd examples/hello-world\nvp dev");
-    await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toBeVisible();
     await expect(
       page.locator(
         'article a[href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"]',

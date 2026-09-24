@@ -318,7 +318,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("keeps conceptual guides host-neutral and links the clone-and-run quickstart", async () => {
+  it("keeps conceptual guides host-neutral and links the create-and-run quickstart", async () => {
     for (const slug of [
       "/guide/routes",
       "/guide/components",
@@ -331,10 +331,10 @@ describe("documentation catalog", () => {
     }
     const start = await text("/guide/getting-started");
     for (const required of [
-      "git clone https://github.com/totto2727-org/effront.git",
-      "cd examples/hello-world",
-      "vp install",
-      "vp dev",
+      "pnpm create effront my-app --platform node",
+      "cd my-app",
+      "pnpm install",
+      "pnpm dev",
       "Hello, world",
       "src/entry.effront.tsx",
       "src/entry.rsc.ts",
@@ -368,7 +368,9 @@ describe("documentation catalog", () => {
       ]) {
         const source = readFileSync(new URL(`./${directory}/${guide}.md`, import.meta.url), "utf8");
         expect(source).toContain("vp install");
-        expect(source).toContain(guide === "platforms/alchemy" ? "vp run dev" : "vp dev");
+        if (guide !== "guide/getting-started") {
+          expect(source).toContain(guide === "platforms/alchemy" ? "vp run dev" : "vp dev");
+        }
         expect(source).not.toMatch(/vp pack|vp preview/);
       }
       const start = readFileSync(
@@ -376,8 +378,7 @@ describe("documentation catalog", () => {
         "utf8",
       );
       expect([...start.matchAll(/```bash\n([\s\S]*?)\n```/g)].map((match) => match[1])).toEqual([
-        "git clone https://github.com/totto2727-org/effront.git\ncd effront\nvp install",
-        "cd examples/hello-world\nvp dev",
+        "pnpm create effront my-app --platform node\ncd my-app\npnpm install\npnpm dev",
       ]);
       expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
       expect(start).toContain("render: () => Effect.succeed(<h1>Hello, Effront</h1>),");
@@ -555,7 +556,6 @@ describe("documentation catalog", () => {
     "gives executable guide steps the running sample's explicit origin in %s",
     async (locale) => {
       for (const [guide, path] of [
-        ["getting-started", ""],
         ["routes", ""],
         ["components", ""],
         ["effect", ""],
@@ -581,7 +581,7 @@ describe("documentation catalog", () => {
     async (slug) => {
       const html = await render(slug);
       const root = new URL("../../../../packages/", import.meta.url);
-      for (const name of readdirSync(root)) {
+      for (const name of readdirSync(root).filter((name) => name !== "create-effront")) {
         const manifest = JSON.parse(
           readFileSync(new URL(`${name}/package.json`, root), "utf8"),
         ) as {

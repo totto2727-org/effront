@@ -1,0 +1,40 @@
+{
+  "name": "create-effront",
+  "version": "0.1.4",
+  "description": "Create a minimal Effront application for Node.js, Bun, or Alchemy Cloudflare Workers.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/totto2727-org/effront.git",
+    "directory": "packages/create-effront"
+  },
+  "bin": {
+    "create-effront": "./bin/create-effront.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "templates",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/init.d.ts",
+      "default": "./dist/init.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

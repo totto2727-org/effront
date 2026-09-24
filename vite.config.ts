@@ -18,7 +18,7 @@ export default defineConfig({
   fmt: { ignorePatterns },
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
-    ignorePatterns,
+    ignorePatterns: [...ignorePatterns, "packages/create-effront/templates/**"],
     options: { typeAware: true, typeCheck: true },
   },
 });
