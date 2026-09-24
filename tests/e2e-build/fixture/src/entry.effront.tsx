@@ -148,11 +148,37 @@ const ManualPage = Manual.Page.make({
   }),
 });
 
+const ServerMath = ({ content }: { readonly content: string }) => (
+  <span data-testid="server-math">Server math: {content}</span>
+);
+
+const ServerMermaid = ({ content }: { readonly content: string }) => (
+  <pre data-testid="server-mermaid">Server diagram: {content}</pre>
+);
+
+const ServerOverridesPage = EFFRONT.Page.make({
+  render: Effect.fn(function* () {
+    const collection = yield* manual;
+    const entry = collection.get("/manual");
+    if (!entry) throw new TypeError("The server-only Markdown fixture requires /manual content");
+    const document = yield* parseMarkdown(entry);
+    return (
+      <article data-testid="server-only-markdown">
+        <MarkdownDocument
+          value={document}
+          components={{ Math: ServerMath, Mermaid: ServerMermaid }}
+        />
+      </article>
+    );
+  }),
+});
+
 export default EFFRONT.make({
   layer: HostLive,
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", HomePage)
     .page("/about", AboutPage)
+    .page("/manual-server-only", ServerOverridesPage)
     .mount("/transitions", transitionRoutes)
     .mount("/manual", Manual.Routes.make({ layout: ManualLayout }).page("/*path", ManualPage)),
 });

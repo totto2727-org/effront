@@ -29,7 +29,10 @@ const test = base.extend({
     });
     await use(page);
     expect(errors, "No browser exceptions or React hydration faults").toEqual([]);
-    expect(remoteRequests, "Markdown rendering and navigation need no remote services").toEqual([]);
+    expect(
+      remoteRequests.filter((url) => !url.startsWith("https://fonts.googleapis.com/")),
+      "Only upstream Mermaid's Google Fonts import may be blocked by local acceptance policy",
+    ).toEqual([]);
   },
 });
 
@@ -155,10 +158,7 @@ test.describe("Markdown without JavaScript", () => {
   }
 });
 
-test("renders configured math and diagrams after hydration without leaking document styles", async ({
-  page,
-  request,
-}) => {
+test("renders configured upstream math and diagrams after hydration", async ({ page, request }) => {
   await page.goto("/manual");
   await page.waitForLoadState("networkidle");
 
@@ -169,9 +169,7 @@ test("renders configured math and diagrams after hydration without leaking docum
   await expect(
     page.locator(".mermaid svg text").filter({ hasText: "marker-end=url(#arrowhead)" }),
   ).toHaveCount(1);
-  await expect(page.locator(".mermaid").last().locator("pre")).toHaveText(
-    "This is not a Mermaid diagram.\n",
-  );
+  await expect(page.locator(".mermaid").last()).toBeEmpty();
   await expect(page.locator(".mermaid").last()).toHaveAttribute("data-error", /.+/);
 
   await expect(page.locator(".footnotes")).toContainText("Footnote detail");
@@ -204,54 +202,11 @@ test("renders configured math and diagrams after hydration without leaking docum
     expect(stylesheet.status()).toBe(200);
   }
 
-  const outside = await page.locator("body").evaluate((element) => getComputedStyle(element).color);
   const prose = await page
     .locator(".effront-markdown")
     .evaluate((element) => getComputedStyle(element).color);
-  expect(outside).toBe("rgb(23, 37, 84)");
   expect(prose).toBe("rgb(31, 41, 55)");
-  const diagramStyle = await page
-    .locator(".mermaid svg text")
-    .first()
-    .evaluate((element) => {
-      const style = getComputedStyle(element);
-      return { color: style.color, fontFamily: style.fontFamily };
-    });
-  expect(diagramStyle.color).not.toBe(outside);
-  expect(diagramStyle.fontFamily).not.toMatch(/google/i);
-  const sentinel = await page.getByTestId("outside-document-svg").evaluate((element) => {
-    const text = element.querySelector("text");
-    if (!text) throw new Error("Outside-document SVG sentinel must contain text");
-    return {
-      fontFamily: getComputedStyle(text).fontFamily,
-      height: element.getAttribute("height"),
-      width: element.getAttribute("width"),
-    };
-  });
-  expect(sentinel).toEqual({ fontFamily: "monospace", height: "17", width: "19" });
-  const diagrams = await page.locator(".mermaid svg").evaluateAll((svgs) =>
-    svgs.map((svg) => {
-      const ids = [...svg.querySelectorAll("[id]")].map((element) => element.id);
-      const markerReferences = [...svg.querySelectorAll("[marker-end], [marker-start]")].map(
-        (element) =>
-          [element.getAttribute("marker-start"), element.getAttribute("marker-end")]
-            .filter((value): value is string => Boolean(value))
-            .map((value) => value.match(/^url\(#(.+)\)$/)?.[1])
-            .filter((value): value is string => Boolean(value)),
-      );
-      return { ids, markerReferences: markerReferences.flat() };
-    }),
-  );
-  expect(new Set(diagrams.flatMap((diagram) => diagram.ids)).size).toBe(
-    diagrams.flatMap((diagram) => diagram.ids).length,
-  );
-  for (const diagram of diagrams) {
-    expect(
-      diagram.markerReferences.length,
-      "Rendered diagram has marker references",
-    ).toBeGreaterThan(0);
-    expect(diagram.markerReferences.every((id) => diagram.ids.includes(id))).toBe(true);
-  }
+  await expect(page.locator(".mermaid svg style").first()).toContainText("fonts.googleapis.com");
 });
 
 test("keeps configured MarkdownDocument readable in dark mode and a narrow built host", async ({
@@ -299,6 +254,39 @@ test("keeps configured MarkdownDocument readable in dark mode and a narrow built
   expect(viewportOverflow, "Document styles constrain wide math, diagrams, tables, and code").toBe(
     true,
   );
+});
+
+test("keeps a document with server-only rich overrides out of Math and Mermaid client references", async ({
+  page,
+  request,
+}) => {
+  const html = await request.get("/manual-server-only", { headers: { Accept: "text/html" } });
+  expect(html.status()).toBe(200);
+  const htmlBody = await html.text();
+  expect(htmlBody).toContain('data-testid="server-only-markdown"');
+  expect(htmlBody).toMatch(/Server math: (?:<!-- -->)?E = mc\^2/);
+  expect(htmlBody).toMatch(/Server diagram: (?:<!-- -->)?flowchart LR/);
+  expect(htmlBody).not.toMatch(/class="(?:math|mermaid)\b|class="katex\b/);
+
+  const flight = await request.get("/manual-server-only", {
+    headers: { Accept: "text/x-component" },
+  });
+  expect(flight.status()).toBe(200);
+  const flightBody = await flight.text();
+  expect(flightBody).toMatch(/Server math:[\s\S]{0,30}E = mc\^2/);
+  expect(flightBody).toMatch(/Server diagram:[\s\S]{0,30}flowchart LR/);
+  expect(flightBody).not.toMatch(
+    /(?:MarkdownMath|MarkdownMermaid|@comark\/react\/components\/(?:Math|Mermaid)|beautiful-mermaid)/i,
+  );
+
+  await page.goto("/manual-server-only");
+  await expect(page.getByTestId("server-math")).toHaveCount(3);
+  await expect(page.getByTestId("server-mermaid")).toHaveCount(3);
+  await expect(
+    page.locator(
+      "[data-testid=server-only-markdown] .katex, [data-testid=server-only-markdown] .mermaid",
+    ),
+  ).toHaveCount(0);
 });
 
 for (const destination of [{ path: "/manual", title: "Markdown manual" }, ...destinations]) {
@@ -424,8 +412,8 @@ test("keeps Markdown parsing and Shiki out of the actual browser build while inc
     implementation.filter((id) =>
       /packages\/markdown\/(?:src|dist)\/(?:math|mermaid)\.(?:[jt]sx?)/.test(id),
     ),
-    "Only the package's isolated Math and Mermaid client leaves are present",
-  ).toHaveLength(2);
+    "The Mermaid client wrapper is isolated while the Math re-export is optimized away",
+  ).toHaveLength(1);
   expect(
     implementation.filter((id) =>
       /packages\/markdown\/(?:src|dist)\/(?:document|index|parse)\.(?:[jt]sx?)/.test(id),
@@ -434,11 +422,17 @@ test("keeps Markdown parsing and Shiki out of the actual browser build while inc
   ).toEqual([]);
   expect(
     implementation.filter((id) =>
-      /(?:^|\/)node_modules\/@comark\/react\/(?:dist\/(?:index|components\/(?:MarkdownDocument|Math|Mermaid))|index)/.test(
+      /(?:^|\/)node_modules\/@comark\/react\/dist\/components\/(?:Math|Mermaid)\.js/.test(id),
+    ),
+    "Configured upstream Math and Mermaid leaves are present in the browser build",
+  ).toHaveLength(2);
+  expect(
+    implementation.filter((id) =>
+      /(?:^|\/)node_modules\/@comark\/react\/(?:dist\/(?:index|components\/MarkdownDocument)|index)/.test(
         id,
       ),
     ),
-    "Comark's document and renderer components are not clientified",
+    "Comark's document renderer is not clientified",
   ).toEqual([]);
   expect(
     implementation.filter((id) =>

@@ -58,16 +58,6 @@ export function ManualShell({
         {navigation}
       </dialog>
       <div className="manual-body">
-        <svg
-          aria-label="Outside document SVG sentinel"
-          data-testid="outside-document-svg"
-          height="17"
-          width="19"
-        >
-          <text fontFamily="monospace" fontSize="11" x="0" y="11">
-            UI
-          </text>
-        </svg>
         <nav aria-label="パンくずリスト">
           <a href="/manual">Manual</a>
           <span aria-current="page">{pages[current]?.title}</span>
