@@ -24,7 +24,7 @@ $$
 
 ```mermaid
 flowchart LR
-  Markdown --> React --> HTML
+  Markdown -->|"marker-end=url(#arrowhead)"| React --> HTML
 ```
 
 ```mermaid
@@ -52,3 +52,9 @@ const message: string = "Hello Markdown";
 
 > [!NOTE]
 > Markdown links point to source files, not hand-written website routes.
+
+> [!WARNING]
+> Warnings remain readable with the document's dark palette.
+
+> [!CAUTION]
+> Cautions remain readable with the document's dark palette.

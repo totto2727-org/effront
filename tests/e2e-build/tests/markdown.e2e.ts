@@ -82,7 +82,7 @@ test.describe("Markdown without JavaScript", () => {
     await expect(page.locator('blockquote[as="note"]')).toContainText(
       "Markdown links point to source files, not hand-written website routes.",
     );
-    await expect(page.locator("blockquote")).not.toContainText("[!NOTE]");
+    expect(await page.locator("blockquote").allTextContents()).not.toContain("[!NOTE]");
     await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toBeVisible();
   });
 
@@ -166,6 +166,9 @@ test("renders configured math and diagrams after hydration without leaking docum
   await expect(page.locator(".math .katex")).toHaveCount(2);
   await expect(page.locator(".math").last()).toHaveText("...");
   await expect(page.locator(".mermaid svg")).toHaveCount(2);
+  await expect(
+    page.locator(".mermaid svg text").filter({ hasText: "marker-end=url(#arrowhead)" }),
+  ).toHaveCount(1);
   await expect(page.locator(".mermaid").last().locator("pre")).toHaveText(
     "This is not a Mermaid diagram.\n",
   );
@@ -262,6 +265,34 @@ test("keeps configured MarkdownDocument readable in dark mode and a narrow built
   await expect(page.locator(".math .katex").first()).toBeVisible();
   await expect(page.locator(".mermaid svg")).toHaveCount(2);
   await expect(page.locator(".effront-markdown")).toHaveCSS("color", "rgb(230, 237, 243)");
+  const alertColors = await page
+    .locator('blockquote[as="warning"], blockquote[as="caution"]')
+    .evaluateAll((alerts) =>
+      alerts.map((alert) => {
+        const style = getComputedStyle(alert);
+        return { background: style.backgroundColor, color: style.color };
+      }),
+    );
+  expect(alertColors).toEqual([
+    { background: "rgb(52, 26, 0)", color: "rgb(139, 148, 158)" },
+    { background: "rgb(52, 26, 0)", color: "rgb(139, 148, 158)" },
+  ]);
+  const contrast = (foreground: [number, number, number], background: [number, number, number]) => {
+    const luminance = (color: [number, number, number]) =>
+      color
+        .map((channel) => channel / 255)
+        .map((channel) =>
+          channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+        )
+        .reduce((total, channel, index) => total + channel * [0.2126, 0.7152, 0.0722][index]!, 0);
+    const first = luminance(foreground);
+    const second = luminance(background);
+    return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+  };
+  expect(
+    contrast([139, 148, 158], [52, 26, 0]),
+    "Dark warning and caution text meets WCAG AA",
+  ).toBeGreaterThanOrEqual(4.5);
   const viewportOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth <= window.innerWidth,
   );
