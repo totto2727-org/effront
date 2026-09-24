@@ -57,7 +57,8 @@ export const coreRuntimeSources = {
   flightRuntime: {
     path: "packages/core/src/server/flight-renderer.tsx",
     language: "tsx",
-    code: `        const parentScope = yield* Effect.scope;
+    code: `        const errorDigest = yield* nextErrorDigest;
+        const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
         const release = Scope.close(renderScope, Exit.void);
         return yield* Effect.gen(function* () {
@@ -73,8 +74,11 @@ export const coreRuntimeSources = {
             return renderToReadableStream(payload, {
               onError: (error: unknown) => {
                 if (!signal.aborted) {
-                  void runtime(Effect.logError(error));
+                  void runtime(
+                    Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)),
+                  );
                 }
+                return errorDigest;
               },
               signal,
               temporaryReferences,
@@ -152,7 +156,8 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   serverFnBrand: {
     path: "packages/core/src/application/server-fn.ts",
     language: "typescript",
-    code: `      const unavailable = Promise.reject<Effect.Success<typeof effect>>(directInvocationError());
+    code: `      const unavailable =
+        Promise.reject<ServerFnWireValue<Effect.Success<typeof effect>>>(directInvocationError());
       void unavailable.catch(() => undefined);
 
       return Object.assign(unavailable, {

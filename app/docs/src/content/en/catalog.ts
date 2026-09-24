@@ -135,6 +135,37 @@ export const englishArticleCatalog = [
     source: "/guide/server-functions",
   },
   {
+    slug: "/guide/query-server-functions",
+    title: "Query Server Functions",
+    description:
+      "Read one server value from a Client Component without refreshing the current route.",
+    section: "Guides",
+    headings: [
+      { id: "call", title: "Call a query" },
+      { id: "atom", title: "Keep a reactive result" },
+      { id: "atom-setup", title: "Set up optional atom integration" },
+      { id: "errors", title: "Handle typed failures" },
+      { id: "cancellation", title: "Cancellation and request lifetime" },
+      { id: "provenance", title: "Design provenance" },
+    ],
+    source: "/guide/query-server-functions",
+  },
+  {
+    slug: "/guide/stream-server-functions",
+    title: "Stream Server Functions",
+    description:
+      "Render progressive server results without turning the read into a route-refreshing mutation.",
+    section: "Guides",
+    headings: [
+      { id: "server", title: "Return a stream" },
+      { id: "client", title: "Consume chunks" },
+      { id: "lifetime", title: "Failures, cancellation, and lifetime" },
+      { id: "choose", title: "Choose query, stream, or mutation" },
+      { id: "provenance", title: "Design provenance" },
+    ],
+    source: "/guide/stream-server-functions",
+  },
+  {
     slug: "/guide/effect",
     title: "Application services",
     description: "A guide to structuring application logic and dependencies with Effect services.",

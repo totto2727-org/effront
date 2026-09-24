@@ -21,6 +21,9 @@ Choose the other packages for hosting, Markdown, or styling.
 | `@effront/markdown`                | `createMarkdownCollection`, `parseMarkdown`, `MarkdownError`   | [Markdown](./api-reference/markdown.md)                                                  |
 | `@effront/tailwind`                | `effrontTailwind`                                              | [Tailwind](./api-reference/tailwind.md)                                                  |
 
+| `@effront/core/query` | `query`, `queryAtom`, `stream`, `streamAtom`, typed Server Function errors | [Query Server Functions](/en/guide/query-server-functions), [Stream Server Functions](/en/guide/stream-server-functions) |
+| `@effront/vercel/vite` | Vercel build integration | Vercel adapter |
+
 Runtime imports from `@effront/core` require the `react-server` condition.
 Keep them in the application graph configured by `effront()`, not in a host process with `react-server` enabled globally.
 For application setup, see [Getting started](/en/guide/getting-started) and [Platforms](/en/platforms).

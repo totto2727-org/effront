@@ -20,6 +20,9 @@ Effront の API は、アプリケーションの定義、実行環境への接�
 | `@effront/markdown`                | `createMarkdownCollection`、`parseMarkdown`、`MarkdownError`          | [Markdown](./api-reference/markdown.md)                                                      |
 | `@effront/tailwind`                | `effrontTailwind`                                                     | [Tailwind](./api-reference/tailwind.md)                                                      |
 
+| `@effront/core/query` | `query`、`queryAtom`、`stream`、`streamAtom`、型付き Server Function error | [Query Server Function](/ja/guide/query-server-functions)、[Stream Server Function](/ja/guide/stream-server-functions) |
+| `@effront/vercel/vite` | Vercel のビルド統合 | Vercel adapter |
+
 `@effront/core` の実行時インポートには `react-server` 条件が必要です。
 ホストプロセス全体でこの条件を有効にせず、`effront()` が構成するアプリケーショングラフ内で使用してください。
 アプリケーションのセットアップは [はじめに](/ja/guide/getting-started) と [プラットフォーム](/ja/platforms) を参照してください。
