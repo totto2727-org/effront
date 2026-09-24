@@ -27,6 +27,17 @@ flowchart LR
   Markdown --> React --> HTML
 ```
 
+```mermaid
+flowchart TD
+  Isolated --> Diagram
+```
+
+Invalid inline mathematics: $\not-a-katex-command{$.
+
+```mermaid
+This is not a Mermaid diagram.
+```
+
 ```typescript
 const message: string = "Hello Markdown";
 ```

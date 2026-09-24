@@ -1,5 +1,5 @@
-import { MarkdownDocument as ComarkMarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
+import { MarkdownDocument } from "@effront/markdown/document";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { manual } from "../content";
@@ -11,6 +11,7 @@ import { Counter } from "./counter";
 import { GreetingAction } from "./greeting-action";
 import { HostLive } from "./greeting-host";
 import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";
+import { MarkdownHeading } from "./markdown-heading";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -141,7 +142,7 @@ const ManualPage = Manual.Page.make({
     const document = yield* parseMarkdown(entry);
     return (
       <article className="comark" data-markdown-page={entry.url} data-doc-page={entry.url}>
-        <ComarkMarkdownDocument value={document} />
+        <MarkdownDocument value={document} components={{ h1: MarkdownHeading }} />
       </article>
     );
   }),
