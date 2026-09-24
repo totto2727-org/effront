@@ -3,7 +3,7 @@
 ## Repository structure
 
 - `packages/`: core runtime, provider adapters, build integrations, Markdown support, and development tooling; consult a package's local `AGENTS.md` for its unique constraints.
-- `examples/`: native Alchemy and standalone Workers consumers; `basic -> alchemy` is an alias excluded from workspace discovery.
+- `examples/`: Workers, Node, Bun, Alchemy, and focused showcase consumers. The `basic -> alchemy` alias is excluded from workspace discovery.
 - `app/docs/`: the framework's own SSR documentation application.
 - `tests/`: independent browser integration packages, distinct from package-owned unit and integration tests.
 - [Documentation index](docs/INDEX.md): cross-package architecture, testing, release policy, roadmap, and upstream provenance only; single-owner guides belong under that package's `docs/`.
@@ -45,7 +45,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 - Core exposes host-neutral native Effect HTTP and a compatibility Web Fetch boundary. Provider-specific code belongs in adapters, never core.
 - Keep browser, RSC, SSR, and tooling graphs explicit. Only RSC resolves `react-server`; Cloudflare hosts execute RSC and SSR in workerd without Node fallback, while `@effront/server` executes separate RSC and SSR graphs in Node or Bun.
 - Scope application services to a request and retain their lifetimes through response completion, error, or cancellation. Never implicitly serialize host bindings or execution context into Flight/HTML.
-- Preserve native React RSC and Server Function protocols. Native Node/Bun hosting belongs in `@effront/server`; AWS/Vercel hosting remains deferred. Do not restore the removed upstream Bun/Rspack runtime or imply unverified runtime behavior.
+- Preserve native React RSC and Server Function protocols. Native Node/Bun hosting belongs in `@effront/server`; the Vite-native Vercel Build Output adapter lives in `@effront/vercel`, while AWS hosting remains deferred. Do not restore the removed upstream Bun/Rspack runtime or imply unverified deployment behavior.
 
 ## Development tools
 

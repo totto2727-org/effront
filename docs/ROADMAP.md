@@ -1,11 +1,11 @@
 # Effront roadmap
 
-| Area                                                                         | Status                                                                                 |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [HTML and Flight static generation](#static-site-generation-html-and-flight) | Planned, with no SSG or static-host guarantee                                          |
-| [Markdown collections](#markdown-rendering-and-content-collections)          | Initial collections and SSR implemented; typed metadata and extensible loaders planned |
-| [Page View Transitions](#page-view-transitions)                              | Implemented                                                                            |
-| [Server runtime adapters](#server-runtime-adapters)                          | Node and Bun implemented; AWS and Vercel deferred                                      |
+| Area                                                                         | Status                                                                                               |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [HTML and Flight static generation](#static-site-generation-html-and-flight) | Planned, with no SSG or static-host guarantee                                                        |
+| [Markdown collections](#markdown-rendering-and-content-collections)          | Initial collections and SSR implemented; typed metadata and extensible loaders planned               |
+| [Page View Transitions](#page-view-transitions)                              | Implemented                                                                                          |
+| [Server runtime adapters](#server-runtime-adapters)                          | Node and Bun implemented; Vercel Build Output adapter implemented and locally verified; AWS deferred |
 
 Planned designs below are not public APIs or compatibility guarantees.
 
@@ -131,4 +131,5 @@ Status: native Node and Bun HTTP hosting, static assets, and the separate Vite h
 - Successful builds and HTTP 200 responses do not establish browser hydration, Server Function, navigation, or end-to-end HMR correctness. Check those workflows, assets, and resource lifetimes through each real host before claiming their guarantees.
 
 Performance improvements from avoiding Fetch conversion or reusing host services remain unmeasured hypotheses, not documented throughput or allocation guarantees.
-AWS and Vercel hosting remain deferred.
+The Vite-native [`@effront/vercel`](../packages/vercel/README.md) adapter packages bundled RSC/SSR graphs and static assets as Vercel Build Output API v3 for Node.js 22. Local artifact and Node HTTP tests verify the output, but hosted deployment, platform routing, limits, and disconnect propagation still require separately authorized Vercel validation.
+AWS hosting remains deferred.

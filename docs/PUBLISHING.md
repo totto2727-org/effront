@@ -1,7 +1,7 @@
 # npm publication
 
 All public libraries release together at version `0.1.4` with public access and the `latest` dist-tag.
-The release includes `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@effront/markdown`, `@effront/tailwind`, `@effront/alchemy`, and `@effront/server`.
+The release includes `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@effront/markdown`, `@effront/tailwind`, `@effront/alchemy`, `@effront/server`, and `@effront/vercel`.
 
 ## Prepare a release
 
@@ -59,3 +59,7 @@ See [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md).
 `@effront/server` has separate Node, Bun, Vite, and assets entry points.
 The owner must perform its first publication if needed and configure its Trusted Publisher before relying on automated releases.
 Node and Bun host peers are optional; applications must install the peer required by their selected entry, and Vite tooling requires the Node platform peer.
+
+## Vercel adapter release boundary
+
+`@effront/vercel` participates in the same package release and requires its own first publication and npm Trusted Publisher configuration before the publishing workflow can release it. This package emits Build Output API artifacts locally; publication does not authorize or verify a hosted Vercel deployment.
