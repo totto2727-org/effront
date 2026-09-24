@@ -8,6 +8,8 @@ import { ServerApplication } from "./server/application";
 import type { HtmlRenderError } from "./server/html-renderer";
 import type { ServerFnRequestFailure } from "./server/server-fn-request";
 
+export { RenderErrorObserver } from "./server/render-error-observer";
+
 type HttpRequirements<Requirements> =
   | Scope.Scope
   | HttpServerRequest.HttpServerRequest

@@ -205,6 +205,13 @@ A declared `Content-Length` that is invalid or exceeds 10 MiB receives a 413 res
 HEAD returns an empty body while retaining response metadata.
 The [Alchemy adapter](../../alchemy/README.md#usage) defers application loading until a native Worker request.
 
+`RenderErrorObserver`, also exported from `@effront/core/http`, is an optional request-local `Context.Reference<(() => void) | undefined>` whose default is `undefined`.
+Hosts can provide an idempotent, non-throwing callback with `Effect.provideService(RenderErrorObserver, callback)` around an individual handler evaluation.
+The RSC and HTML renderers capture it before streaming and notify it synchronously when React reports a render error, including recoverable errors encoded in an otherwise successful HTTP stream.
+An HTML renderer startup failure also notifies it before returning the typed rendering failure.
+This callback is never serialized and does not change the response status, Flight protocol, request scope ownership, or the framework's default `private, no-store` policy.
+An opt-in host cache must still wait for successful body completion and exclude interrupted, failed, or observer-marked renders before storing a response.
+
 ## Fetch and request context
 
 `@effront/core/workers` exports:

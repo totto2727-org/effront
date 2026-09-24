@@ -5,6 +5,7 @@ import type { AnyMiddleware } from "../application/middleware";
 import type { RenderRuntimeContext } from "../application/render-runtime";
 import type { FlightPayload, ServerFnResult } from "../rsc/flight";
 import type { RouteTreeModel } from "../rsc/route-tree";
+import { RenderErrorObserver } from "./render-error-observer";
 
 type FlightStream = ReadableStream<Uint8Array>;
 
@@ -39,6 +40,7 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
         never,
         Services | Scope.Scope
       > {
+        const onRenderError = yield* RenderErrorObserver;
         const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
         const release = Scope.close(renderScope, Exit.void);
@@ -54,6 +56,7 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
             const payload = { formState, routeTree, serverFnResult } satisfies FlightPayload;
             return renderToReadableStream(payload, {
               onError: (error: unknown) => {
+                onRenderError?.();
                 if (!signal.aborted) {
                   void runtime(Effect.logError(error));
                 }

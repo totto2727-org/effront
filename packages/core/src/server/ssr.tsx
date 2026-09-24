@@ -12,6 +12,7 @@ export const renderHtml = async (
   options: HtmlRenderOptions,
 ): Promise<ReadableStream<Uint8Array>> => {
   const [ssrFlightStream, browserFlightStream] = stream.tee();
+  const onRenderError = options.onRenderError;
   let payload: PromiseLike<FlightPayload> | null = null;
 
   function SsrRoot() {
@@ -24,6 +25,15 @@ export const renderHtml = async (
   const html = await renderToReadableStream(<SsrRoot />, {
     bootstrapScriptContent: `import(${JSON.stringify(getClientEntryUrl())})`,
     formState: options.formState,
+    ...(onRenderError === undefined
+      ? {}
+      : {
+          onError: (error: unknown) => {
+            onRenderError();
+            // Preserve React's default error reporting when observing the render.
+            console.error(error);
+          },
+        }),
     signal: options.signal,
   });
   return html.pipeThrough(injectFlightPayload(browserFlightStream));

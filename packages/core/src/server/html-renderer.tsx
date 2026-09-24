@@ -2,6 +2,7 @@ import { Context, Effect, Layer, Schema, type Scope } from "effect";
 
 import type { FlightPayload } from "../rsc/flight";
 import type { FlightRender } from "./flight-renderer";
+import { RenderErrorObserver } from "./render-error-observer";
 
 declare global {
   interface ImportMeta {
@@ -13,6 +14,7 @@ declare global {
 
 export type HtmlRenderOptions = {
   readonly formState: FlightPayload["formState"];
+  readonly onRenderError?: (() => void) | undefined;
   readonly signal: AbortSignal;
 };
 
@@ -36,6 +38,7 @@ export class HtmlRenderer extends Context.Service<HtmlRenderer>()(
         readonly flight: FlightRender;
         readonly formState: FlightPayload["formState"];
       }): Effect.fn.Return<ReadableStream<Uint8Array>, HtmlRenderError, Scope.Scope> {
+        const onRenderError = yield* RenderErrorObserver;
         const signal = yield* Effect.abortSignal;
         return yield* Effect.tryPromise({
           try: async () => {
@@ -43,9 +46,12 @@ export class HtmlRenderer extends Context.Service<HtmlRenderer>()(
               "ssr",
               "index",
             );
-            return ssr.renderHtml(flight.stream, { formState, signal });
+            return ssr.renderHtml(flight.stream, { formState, onRenderError, signal });
           },
-          catch: (cause) => new HtmlRenderError({ cause }),
+          catch: (cause) => {
+            onRenderError?.();
+            return new HtmlRenderError({ cause });
+          },
         });
       }),
     }),

@@ -45,6 +45,12 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
   make: Effect.gen(function* () {
     const httpClient = yield* HttpClient.HttpClient;
     const initialFlight = yield* InitialFlightStream;
+    // Read this once: a navigated document can contain metadata from a newer deployment.
+    const buildId =
+      typeof document === "undefined"
+        ? undefined
+        : (document.querySelector('meta[name="effront-build-id"]')?.getAttribute("content") ??
+          undefined);
 
     const loadInitial = Effect.gen(function* () {
       const completed = Promise.withResolvers<void>();
@@ -88,8 +94,12 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
                 }),
                 HttpClientRequest.setBody(HttpBody.raw(flightRequest.body)),
               );
+        const requestWithBuildId =
+          buildId === undefined || buildId === ""
+            ? request
+            : request.pipe(HttpClientRequest.setHeader("x-effront-build-id", buildId));
         const requestStartTime = import.meta.env.DEV ? performance.now() : 0;
-        const response = yield* client.execute(request).pipe(
+        const response = yield* client.execute(requestWithBuildId).pipe(
           Scope.provide(responseScope),
           Effect.mapError(
             (cause) =>
