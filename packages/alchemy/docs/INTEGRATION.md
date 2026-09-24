@@ -109,9 +109,14 @@ Preserving an API export is not proof of every cloud product's binding or remote
 Removing all compatibility handling caused HTTP 500 in official CLI development because Node-only workerd code was evaluated inside a Worker.
 The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions and HMR as removal checks.
 
+Effect rc.112 transfers streaming scopes before discarding HEAD bodies.
+Core normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.
+The Fetch client has a guarded compatibility accessor for the pinned rc.112 response implementation because that version lacks the newer public final-response URL property.
+Both behaviors have maintained regression tests and should be revisited together when upgrading Alchemy/Effect.
+
 ### Server dependency optimization in development
 
-The Docs application and native Alchemy example disable server dependency pre-bundling and discovery only for their development RSC and SSR environments:
+The Docs application and native Alchemy example disable automatic server dependency discovery only for their development RSC and SSR environments, while preserving framework-provided explicit pre-bundles:
 
 ```ts
 {
@@ -120,23 +125,18 @@ The Docs application and native Alchemy example disable server dependency pre-bu
   apply: "serve",
   configEnvironment(name) {
     if (name === "rsc" || name === "ssr") {
-      return { optimizeDeps: { noDiscovery: true, include: [] } };
+      return { optimizeDeps: { noDiscovery: true } };
     }
     return undefined;
   },
 }
 ```
 
-This application-owned [TOT-238](https://linear.app/totto2727/issue/TOT-238) mitigation prevents development-time server dependency re-optimization from replacing optimized chunks while a Worker module import is still in flight.
+This application-owned [TOT-238](https://linear.app/totto2727/issue/TOT-238) mitigation prevents automatic server dependency re-optimization from replacing optimized chunks while a Worker module import is still in flight.
 It leaves the client environment, production builds, library consumers, and the adapter's default optimizer behavior unchanged.
-Disabling server optimization can trade startup or transform performance for stable development module generations.
+Disabling automatic discovery can trade startup or transform performance for stable development module generations.
 It is not an upstream fix for the underlying Vite/Worker generation race and does not establish the re-optimization plus repeated-HMR-without-restart acceptance condition.
 Applications that need automatic server dependency discovery must evaluate that tradeoff independently.
-
-Effect rc.112 transfers streaming scopes before discarding HEAD bodies.
-Core normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.
-The Fetch client has a guarded compatibility accessor for the pinned rc.112 response implementation because that version lacks the newer public final-response URL property.
-Both behaviors have maintained regression tests and should be revisited together when upgrading Alchemy/Effect.
 
 ## Verification
 

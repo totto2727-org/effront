@@ -14,7 +14,7 @@ export default defineConfig({
       apply: "serve",
       configEnvironment(name) {
         if (name === "rsc" || name === "ssr") {
-          return { optimizeDeps: { noDiscovery: true, include: [] } };
+          return { optimizeDeps: { noDiscovery: true } };
         }
         return undefined;
       },
