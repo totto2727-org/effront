@@ -63,11 +63,11 @@ Choose the HTTP 404 response before streaming the page, as in the [complete Effr
 
 ### Parse and render the entry
 
-Inside your Page's Effect, call this helper with the selected entry:
+Inside your Page's Effect, parse the selected entry in the server graph, then render it with the browser-safe public document component:
 
 ```tsx
-import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
+import { MarkdownDocument } from "@effront/markdown/document";
 import { Effect } from "effect";
 
 export const renderArticle = Effect.fn("renderArticle")(function* (entry: MarkdownEntry) {
@@ -76,8 +76,19 @@ export const renderArticle = Effect.fn("renderArticle")(function* (entry: Markdo
 });
 ```
 
-Comark renders the parsed document with resolved link and image URLs.
-Supply your own layout and styles.
+Import the scoped stylesheet once from an application stylesheet:
+
+```css
+@import "@effront/markdown/styles.css";
+```
+
+`MarkdownDocument` adds the `effront-markdown` class and supplies responsive typography, code, tables, footnotes, alerts, light/dark colors, KaTeX styling and locally emitted KaTeX fonts without Tailwind.
+Pass `className` to append classes and `components` to override any Comark component mapping, including the built-in `Math` and `Mermaid` mappings.
+
+Math and Mermaid are client leaves rather than making the prose document a Client Component.
+On the server and without JavaScript, Comark Math displays `...` and Mermaid is an empty `.mermaid` container.
+After hydration Math renders KaTeX and Mermaid renders its SVG, so these are not SSR diagram or math renderers.
+The configured Mermaid leaf accepts only known `beautiful-mermaid` theme names, removes its upstream unscoped style block and remote font import, and clears a prior diagram when syntax is invalid.
 
 > [!WARNING]
 > Treat Markdown and parser plugins as trusted content, not sanitized user submissions.

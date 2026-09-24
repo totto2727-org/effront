@@ -6,7 +6,7 @@ export default defineConfig({
     format: "esm",
     platform: "neutral",
     entry: {
-      "*": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.test.tsx"],
+      "*": ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.test.ts", "!src/**/*.test.tsx"],
     },
     dts: true,
     unbundle: true,

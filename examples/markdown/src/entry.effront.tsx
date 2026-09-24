@@ -1,4 +1,4 @@
-import { MarkdownDocument as ComarkMarkdownDocument } from "@comark/react/components/MarkdownDocument";
+import { MarkdownDocument } from "@effront/markdown/document";
 import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
@@ -50,10 +50,10 @@ const ManualPage = Manual.Page.make({
       const document = yield* parseMarkdown(entry);
       return (
         <article
-          className="comark prose prose-slate prose-invert max-w-none prose-a:text-blue-300 prose-blockquote:border-blue-400 prose-pre:bg-slate-800 prose-td:border prose-td:border-slate-600 prose-td:px-4 prose-td:py-1.5 prose-th:border prose-th:border-slate-600 prose-th:px-4 prose-th:py-1.5"
+          className="max-w-none"
           data-markdown-page={entry.url}
         >
-          <ComarkMarkdownDocument value={document} />
+          <MarkdownDocument value={document} />
         </article>
       );
     }),

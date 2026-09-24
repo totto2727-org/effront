@@ -17,8 +17,10 @@ Effront の API は、アプリケーションの定義、実行環境への接�
 | `@effront/cloudflare`              | `effrontCloudflare`、`EffrontCloudflareOptions`                       | [Vite と Cloudflare プラグイン](/ja/api-reference/vite)                                      |
 | `@effront/server/vite`             | `effrontServer`                                                       | [Node.js / Bun サーバー](./api-reference/server.md)                                          |
 | `@effront/alchemy/cloudflare/vite` | `effrontAlchemy`                                                      | [Alchemy](./api-reference/alchemy.md)                                                        |
-| `@effront/markdown`                | `createMarkdownCollection`、`parseMarkdown`、`MarkdownError`          | [Markdown](./api-reference/markdown.md)                                                      |
+| `@effront/markdown`                | `createMarkdownCollection`、`parseMarkdown`、`MarkdownDocument`、`MarkdownError`          | [Markdown](./api-reference/markdown.md)                                                      |
 | `@effront/tailwind`                | `effrontTailwind`                                                     | [Tailwind](./api-reference/tailwind.md)                                                      |
+
+Markdown のレンダラーは `@effront/markdown/document`、そのスコープ済み CSS は `@effront/markdown/styles.css` から読み込みます。
 
 `@effront/core` の実行時インポートには `react-server` 条件が必要です。
 ホストプロセス全体でこの条件を有効にせず、`effront()` が構成するアプリケーショングラフ内で使用してください。

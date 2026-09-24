@@ -18,7 +18,12 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./document": {
+      "types": "./dist/document.d.ts",
+      "default": "./dist/document.js"
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "publishConfig": {
     "access": "public",
@@ -26,14 +31,18 @@
     "tag": "latest"
   },
   "dependencies": {
+    "@comark/react": "catalog:",
     "@effect/platform-node-shared": "catalog:",
+    "beautiful-mermaid": "catalog:",
     "comark": "catalog:",
     "effect": "catalog:",
     "katex": "catalog:",
     "shiki": "catalog:"
   },
+  "peerDependencies": {
+    "react": "catalog:"
+  },
   "devDependencies": {
-    "@comark/react": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react": "catalog:",
