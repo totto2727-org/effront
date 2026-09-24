@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
+
+type MermaidComponent = typeof import("@comark/react/components/Mermaid").Mermaid;
 
 interface MarkdownMermaidProps {
   readonly className?: string;
@@ -12,110 +14,21 @@ interface MarkdownMermaidProps {
   readonly width?: string;
 }
 
-function themeFor(
-  themes: Record<string, { readonly bg: string; readonly fg: string }>,
-  name: string | undefined,
-  fallback: "tokyo-night-light" | "tokyo-night",
-) {
-  return themes[typeof name === "string" && Object.hasOwn(themes, name) ? name : fallback]!;
-}
+/** Lazily loads Comark's Mermaid component without including it in the SSR graph. */
+export function MarkdownMermaid({ className = "", ...props }: MarkdownMermaidProps) {
+  const [Mermaid, setMermaid] = useState<MermaidComponent>();
 
-function isolateSvg(svg: string, prefix: string) {
-  const ids = new Map<string, string>();
-  const withoutStyles = svg.replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, "");
-  if (/<style\b/i.test(withoutStyles))
-    throw new Error("Mermaid output contains an unsupported style block");
-  const withIsolatedIds = withoutStyles.replace(/\sid="([^"]+)"/g, (_, id: string) => {
-    const isolated = `${prefix}-${id}`;
-    ids.set(id, isolated);
-    return ` id="${isolated}"`;
-  });
-  return withIsolatedIds.replace(
-    /\s(marker-(?:start|end))="url\(#([^)]+)\)"/g,
-    (_, attribute: string, id: string) => ` ${attribute}="url(#${ids.get(id) ?? id})"`,
-  );
-}
-
-/**
- * Renders Comark Mermaid source after hydration with only known built-in theme names.
- *
- * `beautiful-mermaid` embeds unscoped CSS and a remote font import in its style block. The block is
- * removed before insertion and this package supplies scoped document styles instead. Invalid source
- * clears any prior diagram and is rendered as escaped text rather than injected HTML.
- */
-export function MarkdownMermaid({
-  className = "",
-  content,
-  height = "auto",
-  theme,
-  "theme-dark": themeDarkAttribute,
-  themeDark,
-  width = "100%",
-}: MarkdownMermaidProps) {
-  const instanceId = useId().replaceAll(":", "-");
-  const [svg, setSvg] = useState<string>();
-  const [error, setError] = useState<string>();
-  const [isDark, setIsDark] = useState(false);
-
-  // oxlint-disable react(set-state-in-effect)
-  useEffect(() => {
-    const html = document.documentElement;
-    const update = () => setIsDark(html.classList.contains("dark"));
-    update();
-    const observer = new MutationObserver(update);
-    observer.observe(html, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  // oxlint-disable react(set-state-in-effect)
   useEffect(() => {
     if (import.meta.env.SSR) return;
     let cancelled = false;
-    void import("beautiful-mermaid")
-      .then(({ renderMermaidSVG, THEMES }) => {
-        if (cancelled) return;
-        try {
-          const rendered = isolateSvg(
-            renderMermaidSVG(
-              content,
-              themeFor(
-                THEMES,
-                isDark ? (themeDark ?? themeDarkAttribute) : theme,
-                isDark ? "tokyo-night" : "tokyo-night-light",
-              ),
-            ),
-            instanceId,
-          );
-          if (!cancelled) {
-            setSvg(rendered);
-            setError(undefined);
-          }
-        } catch (cause) {
-          if (!cancelled) {
-            setSvg(undefined);
-            setError(cause instanceof Error ? cause.message : "Failed to render diagram");
-          }
-        }
-      })
-      .catch((cause: unknown) => {
-        if (!cancelled) {
-          setSvg(undefined);
-          setError(cause instanceof Error ? cause.message : "Failed to load diagram renderer");
-        }
-      });
+    void import("@comark/react/components/Mermaid").then(({ Mermaid }) => {
+      if (!cancelled) setMermaid(() => Mermaid);
+    });
     return () => {
       cancelled = true;
     };
-  }, [content, instanceId, isDark, theme, themeDark, themeDarkAttribute]);
+  }, []);
 
-  return (
-    <div
-      className={`mermaid ${className}`}
-      data-error={error}
-      style={{ display: "flex", justifyContent: "center", width, height }}
-    >
-      {svg ? <div dangerouslySetInnerHTML={{ __html: svg }} /> : null}
-      {error ? <pre>{content}</pre> : null}
-    </div>
-  );
+  if (!Mermaid) return <div className={`mermaid ${className}`} />;
+  return <Mermaid className={className} {...props} />;
 }
