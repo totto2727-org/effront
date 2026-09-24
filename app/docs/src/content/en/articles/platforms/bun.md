@@ -1,4 +1,4 @@
-Start with the [one-page Bun starter](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-bun) or `pnpm create effront my-app --platform bun`.
+Start with the [one-page Bun starter](https://github.com/totto2727-org/effront/tree/main/examples/minimal/bun) or `vp create effront -- my-app --platform bun`.
 This guide uses the richer [Bun example](https://github.com/totto2727-org/effront/tree/main/examples/bun) to demonstrate navigation and server behavior in development and production.
 
 ## Run the example {#setup}
@@ -16,9 +16,9 @@ cd examples/bun
 vp dev
 ```
 
-Open [http://127.0.0.1:1342](http://127.0.0.1:1342).
+Open the local URL printed by Vite.
 The homepage displays `Hello, world!`.
-Click `Count: 0` to check that the counter increments, then follow **About** to [http://127.0.0.1:1342/about](http://127.0.0.1:1342/about).
+Click `Count: 0` to check that the counter increments, then follow **About** to visit the other page.
 
 ## Find the application and server files {#entries}
 
@@ -45,7 +45,7 @@ return (
 );
 ```
 
-The page at [http://127.0.0.1:1342](http://127.0.0.1:1342) updates without restarting the server.
+The page updates without restarting the server.
 
 ## Check the production build locally {#assets}
 

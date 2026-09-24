@@ -1,5 +1,5 @@
-Start with the [one-page Alchemy-native Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare) or `pnpm create effront my-app --platform cloudflare`.
-This guide covers the separate [standalone Workers example](https://github.com/totto2727-org/effront/tree/main/examples/workers), which uses `@effront/cloudflare` without Alchemy to exercise the independent host adapter and its Wrangler build.
+Start with the [one-page standalone Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/minimal/cloudflare) or `vp create effront -- my-app --platform cloudflare`.
+This guide covers the separate [standalone Workers feature example](https://github.com/totto2727-org/effront/tree/main/examples/workers), which exercises the independent host adapter and its Wrangler build.
 
 ## Run the example {#setup}
 
@@ -13,7 +13,7 @@ cd examples/workers
 vp dev
 ```
 
-Open [http://127.0.0.1:1343](http://127.0.0.1:1343).
+Open the local URL printed by Vite.
 The homepage displays `Hello, world!` and `Hello from Cloudflare Workers`.
 Click `Count: 0` to check that the counter increments.
 

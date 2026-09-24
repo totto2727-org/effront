@@ -4,5 +4,4 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   plugins: [effront(), effrontServer()],
-  server: { host: "127.0.0.1", port: 1340, strictPort: true },
 });

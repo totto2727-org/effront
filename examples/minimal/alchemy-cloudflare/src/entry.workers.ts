@@ -6,7 +6,6 @@ export default Cloudflare.Worker(
   "App",
   {
     main: import.meta.url,
-    dev: { port: 1344 },
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
   },

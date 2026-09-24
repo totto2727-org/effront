@@ -1,5 +1,5 @@
-まずは[一画面の Alchemy 管理 Cloudflare 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare)または `pnpm create effront my-app --platform cloudflare` から始められます。
-このガイドでは、独立したホストアダプターと Wrangler ビルドを確認するために、Alchemy を使わない[別の Workers サンプル](https://github.com/totto2727-org/effront/tree/main/examples/workers)を扱います。
+まずは[一画面の単独 Cloudflare 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/minimal/cloudflare)または `vp create effront -- my-app --platform cloudflare` から始められます。
+このガイドでは、独立したホストアダプターと Wrangler ビルドを確認するための[機能紹介用 Workers サンプル](https://github.com/totto2727-org/effront/tree/main/examples/workers)を扱います。
 
 ## サンプルを起動する {#setup}
 
@@ -13,7 +13,7 @@ cd examples/workers
 vp dev
 ```
 
-[http://127.0.0.1:1343](http://127.0.0.1:1343) を開きます。
+Vite が表示するローカル URL を開きます。
 トップページに `Hello, world!` と `Hello from Cloudflare Workers` が表示されます。
 `Count: 0` をクリックしてカウンターが増えることを確認します。
 

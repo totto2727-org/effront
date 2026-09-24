@@ -3,7 +3,7 @@ import { access, copyFile, lstat, mkdir, readdir, readFile, writeFile } from "no
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const platforms = ["node", "bun", "cloudflare"] as const;
+export const platforms = ["node", "bun", "cloudflare", "alchemy-cloudflare"] as const;
 export type Platform = (typeof platforms)[number];
 
 const templates = fileURLToPath(new URL("../templates/", import.meta.url));

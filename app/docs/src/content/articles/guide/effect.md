@@ -1,7 +1,7 @@
 Effect のサービスを使うと、アプリケーションのロジックを、それを呼び出す Page から分離できます。
 挨拶を返す例では、実装を差し替えられるサービスを Page に提供し、その実装と生存期間を Effect の Layer で管理します。
 
-[はじめに](./getting-started.md)で見出しを `Hello, Effront` に変更し、サンプルを [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+[はじめに](./getting-started.md)で見出しを `Hello, Effront` に変更し、開発サーバーに表示された URL でサンプルを起動した状態で進めます。
 
 ## Page でサービスを使う {#service}
 
@@ -44,7 +44,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes, layer: Greeting.layer });
 ```
 
-[http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと `Hello, Ada.` と表示されます。
+開発サーバーに表示された URL を開くと `Hello, Ada.` と表示されます。
 実装を差し替えるには、Page を変えずに、`Greeting` を提供する別の Layer を渡します。
 
 ## サービスのスコープを選ぶ {#lifetime}

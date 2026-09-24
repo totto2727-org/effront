@@ -33,7 +33,7 @@ export async function runCli(args: string[]): Promise<void> {
   const options = parseArgs(args);
   if (options.help) {
     stdout.write(
-      "Usage: pnpm create effront [directory] [--platform node|bun|cloudflare]\nPlatforms: node, bun, cloudflare (Alchemy)\n",
+      `Usage: vp create effront -- [directory] --platform ${platforms.join("|")}\nPlatforms: node, bun, cloudflare (standalone Workers), alchemy-cloudflare (Alchemy-managed Workers)\n`,
     );
     return;
   }
@@ -47,7 +47,7 @@ export async function runCli(args: string[]): Promise<void> {
       directory ||=
         (await prompt.question("Project directory (my-effront-app): ")).trim() || "my-effront-app";
       if (!platform) {
-        const answer = (await prompt.question("Platform (node/bun/cloudflare): ")).trim();
+        const answer = (await prompt.question(`Platform (${platforms.join("/")}): `)).trim();
         if (!isPlatform(answer))
           throw new Error(`Platform must be one of: ${platforms.join(", ")}`);
         platform = answer;
@@ -58,6 +58,6 @@ export async function runCli(args: string[]): Promise<void> {
   }
   const target = await createProject(directory, platform);
   stdout.write(
-    `Created ${platform} Effront project at ${target}\nNext: cd ${directory} && pnpm install && pnpm dev\n`,
+    `Created ${platform} Effront project at ${target}\nNext: cd ${directory} && vp install && vp dev\n`,
   );
 }

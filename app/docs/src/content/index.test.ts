@@ -331,10 +331,10 @@ describe("documentation catalog", () => {
     }
     const start = await text("/guide/getting-started");
     for (const required of [
-      "pnpm create effront my-app --platform node",
+      "vp create effront -- my-app --platform node",
       "cd my-app",
-      "pnpm install",
-      "pnpm dev",
+      "vp install",
+      "vp dev",
       "Hello, world",
       "src/entry.effront.tsx",
       "src/entry.rsc.ts",
@@ -346,7 +346,7 @@ describe("documentation catalog", () => {
     }
     expect(start).not.toContain("vp add");
     expect(await render("/guide/getting-started")).toContain(
-      'href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"',
+      'href="https://github.com/totto2727-org/effront/blob/main/examples/minimal/node/src/entry.effront.tsx"',
     );
     const effect = await render("/guide/effect");
     for (const contract of ["Context.Service", "Layer", "Application.effront"]) {
@@ -378,7 +378,7 @@ describe("documentation catalog", () => {
         "utf8",
       );
       expect([...start.matchAll(/```bash\n([\s\S]*?)\n```/g)].map((match) => match[1])).toEqual([
-        "pnpm create effront my-app --platform node\ncd my-app\npnpm install\npnpm dev",
+        "vp create effront -- my-app --platform node\ncd my-app\nvp install\nvp dev",
       ]);
       expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
       expect(start).toContain("render: () => Effect.succeed(<h1>Hello, Effront</h1>),");
@@ -404,7 +404,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["hello-world", "node", "bun"])(
+  it.each(["minimal/node", "minimal/bun", "node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
     (example) => {
       const manifest = JSON.parse(
@@ -416,7 +416,7 @@ describe("documentation catalog", () => {
       expect(manifest.scripts).toEqual({
         dev: "vp dev",
         build: "vp build",
-        start: `${example === "bun" ? "bun" : "node"} dist/rsc/server.js`,
+        start: `${example.endsWith("bun") ? "bun" : "node"} dist/rsc/server.js`,
       });
     },
   );
@@ -466,13 +466,13 @@ describe("documentation catalog", () => {
   });
 
   it.each(["en", "ja"] as const)(
-    "links runnable platform examples and their configured URLs in %s",
+    "links runnable platform examples without fixing Vite development ports in %s",
     async (locale) => {
       const repository = new URL("../../../../", import.meta.url);
-      for (const [slug, example, port] of [
-        ["node", "node", 1341],
-        ["bun", "bun", 1342],
-        ["cloudflare", "workers", 1343],
+      for (const [slug, example] of [
+        ["node", "node"],
+        ["bun", "bun"],
+        ["cloudflare", "workers"],
       ] as const) {
         const html = await render(`/${locale}/platforms/${slug}`);
         const prose = await text(`/${locale}/platforms/${slug}`);
@@ -480,8 +480,8 @@ describe("documentation catalog", () => {
           new URL(`examples/${example}/vite.config.ts`, repository),
           "utf8",
         );
-        expect(config).toContain(`server: { host: "127.0.0.1", port: ${port}, strictPort: true }`);
-        expect(html).toContain(`href="http://127.0.0.1:${port}"`);
+        expect(config).not.toContain("server:");
+        expect(prose).toMatch(/local URL printed by Vite|Vite が表示するローカル URL/);
         expect(config).not.toContain("preview:");
         expect(prose).not.toContain("vp preview");
         if (slug === "cloudflare") {
@@ -548,31 +548,30 @@ describe("documentation catalog", () => {
         'Routes.make({ layout: RootLayout }).page("/", HomePage)',
       );
       expect(code(sections[3]!)).toContain("export default EFFRONT.make({ routes })");
-      expect(source).toContain("http://127.0.0.1:1340/articles/hello");
+      expect(source).toContain("`/articles/hello`");
     },
   );
 
   it.each(["en", "ja"] as const)(
-    "gives executable guide steps the running sample's explicit origin in %s",
+    "uses the development server's displayed URL rather than a fixed origin in %s",
     async (locale) => {
-      for (const [guide, path] of [
-        ["routes", ""],
-        ["components", ""],
-        ["effect", ""],
-        ["server-functions", ""],
-        ["middleware", "/request"],
-        ["markdown", "/manual/intro"],
-        ["http", "/api/greeting"],
+      for (const guide of [
+        "routes",
+        "components",
+        "effect",
+        "server-functions",
+        "middleware",
+        "markdown",
+        "http",
       ]) {
-        expect(await render(`/${locale}/guide/${guide}`)).toContain(
-          `href="http://127.0.0.1:1340${path}"`,
-        );
+        const html = await render(`/${locale}/guide/${guide}`);
+        expect(html).not.toContain("127.0.0.1:1340");
       }
       const config = readFileSync(
-        new URL("../../../../examples/hello-world/vite.config.ts", import.meta.url),
+        new URL("../../../../examples/minimal/node/vite.config.ts", import.meta.url),
         "utf8",
       );
-      expect(config).toContain('server: { host: "127.0.0.1", port: 1340, strictPort: true }');
+      expect(config).not.toContain("server:");
     },
   );
 

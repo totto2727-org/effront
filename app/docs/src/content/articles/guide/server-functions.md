@@ -2,7 +2,7 @@ Server Function を使うと、フォームや Client Component からサーバ�
 入力はサーバー側で Schema によって検証されます。
 まずフォームから Server Function に名前を直接送り、その後 `useActionState` で応答と送信中の状態を表示します。
 
-[はじめに](./getting-started.md)で見出しを `Hello, Effront` に変更し、サンプルを [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
+[はじめに](./getting-started.md)で見出しを `Hello, Effront` に変更し、開発サーバーに表示された URL でサンプルを起動した状態で進めます。
 
 ## アプリケーション定義を共有する {#identity}
 
@@ -63,7 +63,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-[http://127.0.0.1:1340](http://127.0.0.1:1340) を開いて `Ada` を入力し、**Record name** を選びます。
+開発サーバーに表示された URL を開いて `Ada` を入力し、**Record name** を選びます。
 送信すると、サーバーログに `Name submitted` と出力されます。
 データの保存や完了メッセージの表示は行いません。
 
@@ -140,7 +140,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-[http://127.0.0.1:1340](http://127.0.0.1:1340) を開いて `Ada` を入力し、**Greet** を選びます。
+開発サーバーに表示された URL を開いて `Ada` を入力し、**Greet** を選びます。
 送信後、フォームに `Hello, Ada.` と表示されます。
 
 ## オブジェクトを引数に取る {#input}

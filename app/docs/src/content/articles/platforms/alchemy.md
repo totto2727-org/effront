@@ -1,4 +1,4 @@
-まずは[一画面の Alchemy 管理 Cloudflare 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare)または `pnpm create effront my-app --platform cloudflare` から始められます。
+まずは[一画面の Alchemy 管理 Cloudflare 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/minimal/alchemy-cloudflare)または `vp create effront -- my-app --platform alchemy-cloudflare` から始められます。
 このガイドではリソース機能も示す[Alchemy サンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy)を扱います。ホストの設定は揃っています。
 
 ## サンプルを準備する {#setup}

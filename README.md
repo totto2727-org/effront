@@ -11,13 +11,13 @@ See [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and subse
 Create a one-page Node.js application, install its dependencies, and start the development server:
 
 ```sh
-pnpm create effront my-app --platform node
+vp create effront -- my-app --platform node
 cd my-app
-pnpm install
-pnpm dev
+vp install
+vp dev
 ```
 
-Choose `--platform bun` for Bun or `--platform cloudflare` for an Alchemy-native Cloudflare Worker. The Cloudflare option requires a configured Alchemy Cloudflare profile, including for `alchemy dev`. Each starter uses the same application code; only host entries, configuration, and dependencies differ. See [Getting started](app/docs/src/content/en/articles/guide/getting-started.md) and the [starter examples](examples/hello-world).
+Choose `--platform bun` for Bun, `--platform cloudflare` for standalone Cloudflare Workers, or `--platform alchemy-cloudflare` for an Alchemy-managed Cloudflare Worker. Only the Alchemy option requires a configured Cloudflare profile, including for local development. Every starter uses identical application code; only infrastructure entries, configuration, and dependencies differ. See [Getting started](app/docs/src/content/en/articles/guide/getting-started.md) and the [starter examples](examples/README.md).
 
 ## Usage
 
@@ -31,7 +31,7 @@ Choose `--platform bun` for Bun or `--platform cloudflare` for an Alchemy-native
 | Render Markdown with file-relative links and images              | [Markdown](packages/markdown/README.md#usage)      |
 | Apply utility styles to server-rendered and hydrated components  | [Tailwind](packages/tailwind/README.md#usage)      |
 
-The [standalone Workers example](examples/workers/README.md#usage) demonstrates the optional non-Alchemy adapter alongside runtime, tooling, and styling integrations. It is distinct from the Alchemy-native Cloudflare starter.
+The [standalone Workers example](examples/workers/README.md#usage) demonstrates the non-Alchemy adapter with framework features. The [Alchemy example](examples/alchemy) adds resource capabilities. Both are separate from the one-page starters.
 
 ## Key features
 

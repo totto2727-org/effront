@@ -1,4 +1,4 @@
-Start with the [one-page Alchemy-native Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare) or `pnpm create effront my-app --platform cloudflare`.
+Start with the [one-page Alchemy-managed Cloudflare starter](https://github.com/totto2727-org/effront/tree/main/examples/minimal/alchemy-cloudflare) or `vp create effront -- my-app --platform alchemy-cloudflare`.
 This guide uses the richer [Alchemy example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) to demonstrate resource capabilities. Its host configuration is already included.
 
 ## Prepare the example {#setup}

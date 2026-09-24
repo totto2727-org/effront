@@ -2,19 +2,17 @@
 
 ## サンプルを起動する {#setup}
 
-Node.js 24.11 以降、[pnpm](https://pnpm.io/installation)、[Vite+](https://viteplus.dev/) を用意し、Node.js 用の最小構成を作成します。
+Node.js 24.11 以降と [Vite+](https://viteplus.dev/) を用意し、Node.js 用の最小構成を作成します。
 
 ```bash
-pnpm create effront my-app --platform node
+vp create effront -- my-app --platform node
 cd my-app
-pnpm install
-pnpm dev
+vp install
+vp dev
 ```
 
 開発サーバーが表示するローカル URL を開くと、`Hello, world` が表示されます。
-Bun を使う場合は `--platform bun`、Alchemy 管理の Cloudflare Worker を使う場合は `--platform cloudflare` を指定してください。Cloudflare ではローカル開発にも Alchemy の Cloudflare プロファイルの設定が必要です。三つの最小構成は同じページコードを使用し、ホストの設定だけが異なります。
-
-Effront リポジトリ内で試す場合は、ルートで `vp install` を実行してから、対応する [Node](https://github.com/totto2727-org/effront/tree/main/examples/hello-world)、[Bun](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-bun)、[Cloudflare](https://github.com/totto2727-org/effront/tree/main/examples/hello-world-cloudflare) のサンプルを起動してください。
+Bun を使う場合は `--platform bun`、Alchemy を介さない Cloudflare Workers には `--platform cloudflare`、Alchemy 管理の Cloudflare Workers には `--platform alchemy-cloudflare` を指定します。Alchemy 管理の場合はローカル開発にも Cloudflare プロファイルの設定が必要です。四つの最小構成は同じページコードを使用し、インフラ構成だけが異なります。
 
 ## サンプルの構成を見る {#application}
 
@@ -28,7 +26,7 @@ Node.js 用の最小構成にはページが一つあり、主なファイルは
 | `vite.config.ts`        | Effront の開発とビルドを設定します。                          |
 | `package.json`          | 依存パッケージと、サンプルを実行するコマンドを定義します。    |
 
-ページの実装は、生成したプロジェクトの `src/entry.effront.tsx` にあります（[Node サンプルのソース](https://github.com/totto2727-org/effront/blob/main/examples/hello-world/src/entry.effront.tsx)でも確認できます）。
+ページの実装は、生成したプロジェクトの `src/entry.effront.tsx` にあります（[Node サンプルのソース](https://github.com/totto2727-org/effront/blob/main/examples/minimal/node/src/entry.effront.tsx)でも確認できます）。
 `HomePage` が見出しの表示内容、`RootLayout` が外側の HTML、`Routes` が `/` とページの対応を定義しています。
 
 ## 表示内容を変える {#run}

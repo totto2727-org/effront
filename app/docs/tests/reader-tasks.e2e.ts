@@ -92,13 +92,13 @@ for (const reader of locales) {
   }) => {
     await openGuide(page, reader, "/guide/getting-started");
     await followHeading(page, reader, "setup");
-    const commands = page.locator("article pre code").filter({ hasText: "pnpm create effront" });
+    const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
     await expect(commands).toHaveText(
-      "pnpm create effront my-app --platform node\ncd my-app\npnpm install\npnpm dev",
+      "vp create effront -- my-app --platform node\ncd my-app\nvp install\nvp dev",
     );
     await expect(
       page.locator(
-        'article a[href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"]',
+        'article a[href="https://github.com/totto2727-org/effront/blob/main/examples/minimal/node/src/entry.effront.tsx"]',
       ),
     ).toBeVisible();
     await followHeading(page, reader, "application");
@@ -132,9 +132,9 @@ for (const reader of locales) {
   });
 
   for (const [host, example, dev] of [
-    ["node", "node", "http://127.0.0.1:1341"],
-    ["bun", "bun", "http://127.0.0.1:1342"],
-    ["cloudflare", "workers", "http://127.0.0.1:1343"],
+    ["node", "node", null],
+    ["bun", "bun", null],
+    ["cloudflare", "workers", null],
     ["alchemy", "alchemy", "http://localhost:1337"],
   ] as const) {
     test(`${reader.locale} reader runs the existing ${host} example without assembling host configuration`, async ({
@@ -153,7 +153,13 @@ for (const reader of locales) {
       await expect(commands).toContainText(`cd examples/${example}`);
       await expect(commands).toContainText("vp install");
       await expect(page.locator("article")).not.toContainText("vp pack");
-      await expect(page.locator(`article a[href="${dev}"]`).first()).toBeVisible();
+      if (dev) {
+        await expect(page.locator(`article a[href="${dev}"]`).first()).toBeVisible();
+      } else {
+        await expect(page.locator("article")).toContainText(
+          reader.locale === "en" ? "local URL printed by Vite" : "Vite が表示するローカル URL",
+        );
+      }
       for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
         await expect(
           page.locator("article table").getByRole("row").filter({ hasText: file }),
@@ -228,7 +234,7 @@ for (const reader of locales) {
     await expect(complete).toContainText("EFFRONT.Layout.make");
     await expect(complete).toContainText("EFFRONT.Page.make");
     await expect(complete).toContainText('Routes.make({ layout: RootLayout }).page("/", HomePage)');
-    await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toHaveCount(2);
+    await expect(page.locator("article")).not.toContainText("127.0.0.1:1340");
     await followHeading(page, reader, "matching");
     await expect(page.locator("article h2#matching")).toHaveText(
       reader.locale === "en" ? "Read path parameters" : "パスパラメーターを受け取る",

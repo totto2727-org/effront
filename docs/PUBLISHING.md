@@ -42,7 +42,7 @@ Before merging the publishing workflow, the package owner must ensure that all n
 | GitHub environment | None            |
 
 The owner must perform initial publication if npm requires it, including the first `create-effront` release.
-`pnpm create effront` resolves the published `create-effront` package, so the command is not available to registry consumers before this step.
+`vp create effront` resolves the published `create-effront` package, so the command is not available to registry consumers before this step.
 The workflow uses GitHub-hosted runners and job-scoped `id-token: write`, without long-lived npm tokens.
 Protect `main` and require the CI check before merging.
 Local checks and dry runs do not verify registry trust or package ownership.

@@ -4,9 +4,12 @@ import { Layer } from "effect";
 import { fileURLToPath } from "node:url";
 import { handler } from "./entry.rsc";
 
+const port = process.env["PORT"];
+const hostname = process.env["HOST"];
+
 serve(handler, {
-  port: Number(process.env["PORT"] ?? "1340"),
-  hostname: process.env["HOST"] ?? "127.0.0.1",
+  ...(port ? { port: Number(port) } : {}),
+  ...(hostname ? { hostname } : {}),
   assets: {
     client: {
       root: fileURLToPath(new URL("../client/assets", import.meta.url)),

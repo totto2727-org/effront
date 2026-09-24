@@ -3,6 +3,7 @@ packages:
   - packages/*
   - tests/*
   - examples/*
+  - examples/minimal/*
   - "!examples/basic"
 
 catalog:

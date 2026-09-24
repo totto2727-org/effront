@@ -1,4 +1,4 @@
-まずは[一画面の Node.js 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/hello-world)または `pnpm create effront my-app --platform node` から始められます。
+まずは[一画面の Node.js 最小構成](https://github.com/totto2727-org/effront/tree/main/examples/minimal/node)または `vp create effront -- my-app --platform node` から始められます。
 このガイドでは、ナビゲーションとサーバー動作を確認できる[機能紹介用の Node.js サンプル](https://github.com/totto2727-org/effront/tree/main/examples/node)を使います。
 
 ## サンプルを起動する {#setup}
@@ -14,9 +14,9 @@ cd examples/node
 vp dev
 ```
 
-[http://127.0.0.1:1341](http://127.0.0.1:1341) を開きます。
+Vite が表示するローカル URL を開きます。
 トップページに `Hello, world!` と表示されます。
-`Count: 0` をクリックしてカウンターが増えることを確認し、**About** から [http://127.0.0.1:1341/about](http://127.0.0.1:1341/about) に移動します。
+`Count: 0` をクリックしてカウンターが増えることを確認し、**About** から別のページに移動します。
 
 ## アプリケーションとサーバーのファイルを確認する {#entries}
 
@@ -43,7 +43,7 @@ return (
 );
 ```
 
-サーバーを再起動せずに [http://127.0.0.1:1341](http://127.0.0.1:1341) の表示が更新されます。
+サーバーを再起動せずにページの表示が更新されます。
 
 ## 本番ビルドをローカルで確認する {#assets}
 
