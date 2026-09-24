@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useState } from "react";
 
 type MermaidComponent = typeof import("@comark/react/components/Mermaid").Mermaid;
+type MermaidProps = ComponentProps<MermaidComponent>;
 
-interface MarkdownMermaidProps {
-  readonly className?: string;
-  readonly content: string;
-  readonly height?: string;
-  readonly theme?: string;
-  readonly "theme-dark"?: string;
-  readonly themeDark?: string;
-  readonly width?: string;
+interface MarkdownMermaidProps extends MermaidProps {
+  readonly "theme-dark"?: MermaidProps["themeDark"];
 }
 
 /** Lazily loads Comark's Mermaid component without including it in the SSR graph. */
-export function MarkdownMermaid({ className = "", ...props }: MarkdownMermaidProps) {
+export function MarkdownMermaid({
+  className = "",
+  "theme-dark": themeDarkAttribute,
+  themeDark,
+  ...props
+}: MarkdownMermaidProps) {
   const [Mermaid, setMermaid] = useState<MermaidComponent>();
 
   useEffect(() => {
@@ -30,5 +30,8 @@ export function MarkdownMermaid({ className = "", ...props }: MarkdownMermaidPro
   }, []);
 
   if (!Mermaid) return <div className={`mermaid ${className}`} />;
-  return <Mermaid className={className} {...props} />;
+  const resolvedThemeDark = themeDark ?? themeDarkAttribute;
+  const mermaidProps =
+    resolvedThemeDark === undefined ? props : { ...props, themeDark: resolvedThemeDark };
+  return <Mermaid className={className} {...mermaidProps} />;
 }
