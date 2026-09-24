@@ -41,7 +41,7 @@ See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) t
 - Uses Vite's asset URLs without a runtime filesystem loader or asset-copying step.
 - Preserves Comark's standard document format and typed Effect error handling.
 - Includes footnotes, math, Mermaid parsing, and Shiki highlighting.
-- Provides a configured React document renderer with Math/Mermaid client leaves and scoped styles, without requiring Tailwind.
+- Registers Comark's default Math/Mermaid components through client wrappers and distributes KaTeX CSS/fonts; application styles remain application-owned.
 
 ## Prerequisites
 
@@ -65,6 +65,8 @@ import "@effront/markdown/styles.css";
 ```
 
 Comark, KaTeX, and the diagram renderer are package dependencies; no separate component registration or KaTeX font setup is required.
+Supply your own prose, layout, alert, and color styles.
+The wrappers preserve upstream rendering behavior, including Mermaid's embedded SVG styles and remote font imports.
 
 ## API
 

@@ -64,8 +64,9 @@ See [the package API and example](../packages/markdown/README.md).
 The 2026-09-15 simplification keeps Vite responsible for raw document imports, asset URLs, bundling, and development updates.
 The package prepares collections and parsed documents through typed Effect operations and resolves source-file references to application page URLs or Vite-provided asset URLs.
 The configured `@effront/markdown/document` renderer now supplies Math/Mermaid client leaves while preserving the standard Comark document renderer and user component mappings.
-Its separate stylesheet supplies scoped prose styles and packaged KaTeX fonts without requiring Tailwind.
-The Mermaid leaf removes the upstream global style/font-import fragment and isolates diagram IDs as an explicit presentation policy for trusted content.
+The client leaves reuse Comark's default Math/Mermaid components rather than implementing replacement renderers.
+Its separate stylesheet supplies KaTeX CSS and packaged fonts; applications own prose, layout, alerts, and colors.
+Mermaid's upstream SVG styles, font imports, themes, and invalid-input behavior remain unchanged.
 Ordinary Markdown remains server-renderable, but Math starts as `...` and Mermaid as an empty container until hydration effects run.
 Full no-JavaScript math and diagram rendering remains a future task, rather than a current compatibility guarantee.
 Before adding rich SSR support, verify real RSC, Workers HTML/Flight, hydration, and no-JavaScript browser paths, including user mapping precedence and client dependency/network behavior.

@@ -21,7 +21,8 @@ Choose the other packages for hosting, Markdown, or styling.
 | `@effront/markdown`                | `createMarkdownCollection`, `parseMarkdown`, `MarkdownError`   | [Markdown](./api-reference/markdown.md)                                                  |
 | `@effront/tailwind`                | `effrontTailwind`                                              | [Tailwind](./api-reference/tailwind.md)                                                  |
 
-Import the Markdown renderer from `@effront/markdown/document` and its scoped CSS from `@effront/markdown/styles.css`.
+Import the Markdown renderer from `@effront/markdown/document` and its required KaTeX CSS from `@effront/markdown/styles.css`.
+Define prose, layout, and colors in your application.
 
 Runtime imports from `@effront/core` require the `react-server` condition.
 Keep them in the application graph configured by `effront()`, not in a host process with `react-server` enabled globally.

@@ -53,12 +53,14 @@ No option removes Effront's added plugins.
 `registerDefaultPlugins: false` disables only Comark's defaults.
 Other options, such as `linkify`, follow [Comark](https://comark.dev).
 
-The parsed result is the `value` prop for `MarkdownDocument` from `@comark/react/components/MarkdownDocument`.
+The parsed result is the `value` prop for `MarkdownDocument` from `@effront/markdown/document`.
 Its standard `components` prop supports replacements such as `components={{ ProseA: MyLink }}`.
 See the [Comark React API](https://comark.dev/rendering/react).
-Comark 0.6.2 does not automatically register Math/Mermaid React components or merge `document.meta.components` into renderer mappings.
-Parser support alone therefore does not establish full SSR rendering.
-Supply those components and verify the result if needed.
+Effront registers Comark's default Math/Mermaid through client wrappers; `MarkdownDocument` itself is not a Client Component.
+Replacing both rich mappings with server-renderable components removes those client leaves from the rendered document.
+Import `@effront/markdown/styles.css` once for KaTeX styles and fonts; define prose, layout, alerts, and colors in the application.
+The default rich components require browser JavaScript: without it Math shows `...` and Mermaid remains empty.
+Mermaid retains upstream theme and invalid-input behavior, including embedded SVG styles and remote font imports; Effront does not isolate or rewrite them.
 
 > [!WARNING]
 > Only trusted authored Markdown and trusted plugins are supported.

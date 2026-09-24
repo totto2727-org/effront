@@ -54,12 +54,14 @@ Effront が追加するプラグインを削除するオプションはありま
 `registerDefaultPlugins: false` が無効にするのは Comark 自体の既定プラグインだけです。
 `linkify` など、その他のオプションは [Comark](https://comark.dev) に従います。
 
-解析結果は、`@comark/react/components/MarkdownDocument` の `MarkdownDocument` に `value` prop として渡します。
+解析結果は、`@effront/markdown/document` の `MarkdownDocument` に `value` prop として渡します。
 標準の `components` prop は `components={{ ProseA: MyLink }}` などの置き換えに対応します。
 [Comark React API](https://comark.dev/rendering/react) を参照してください。
-Comark 0.6.2 は Math/Mermaid の React コンポーネントを自動登録せず、`document.meta.components` を renderer の対応表に統合しません。
-そのため、解析対応だけでは完全な SSR 描画を保証しません。
-必要な場合は対応するコンポーネントを指定し、描画結果を検証してください。
+Effront は Comark 標準の Math/Mermaid を client ラッパー経由で登録しますが、`MarkdownDocument` 自体は Client Component ではありません。
+両方をサーバー描画可能なコンポーネントに差し替えると、描画される文書からこれらの client leaf がなくなります。
+KaTeX のスタイルとフォントには `@effront/markdown/styles.css` を一度読み込み、本文・レイアウト・alert・配色はアプリケーションで定義します。
+既定の数式・図にはブラウザーの JavaScript が必要で、無効時は Math が `...`、Mermaid が空になります。
+Mermaid は上流のテーマ、無効入力時の挙動、SVG 内のスタイルと外部フォント読み込みを維持し、Effront はそれらを隔離・書換えしません。
 
 > [!WARNING]
 > 対象は信頼できる執筆済み Markdown とプラグインに限ります。

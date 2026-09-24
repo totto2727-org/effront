@@ -124,11 +124,12 @@ Parsing retains Comark's standard defaults and adds the mdts plugins for footnot
 `parseMarkdown` prepares a Comark document and resolves link/image attributes before rendering.
 `@effront/markdown/document` wraps Comark's direct document-rendering entry point with configurable defaults and an `effront-markdown` wrapper class.
 It does not import the collection/parser entry point or make the whole article a Client Component.
-Only the Math and Mermaid leaves carry `use client`; Mermaid loads its rendering dependency inside an effect so the server does not evaluate the browser rendering dependency.
-The public `@effront/markdown/styles.css` entry supplies scoped document styles and KaTeX CSS.
+Only the Math and Mermaid wrappers carry `use client`; they reuse Comark's default components and keep the Mermaid dependency out of the SSR graph.
+The public `@effront/markdown/styles.css` entry supplies KaTeX CSS, not a document theme.
 The library build copies KaTeX's local fonts and license beside the emitted stylesheet so its relative font URLs survive package publication.
-The configured Mermaid leaf accepts known theme names, removes the upstream global style/font-import fragment, and namespaces diagram IDs and local marker references.
-These transformations implement the default presentation policy for the pinned renderer, not a general SVG sanitizer.
+The wrappers do not filter themes, rewrite SVG styles or IDs, or replace upstream invalid-input behavior.
+Typography, layout, alerts, and colors belong to applications.
+Upstream Mermaid SVG styles and remote font imports are inherited, not isolated or sanitized.
 
 > [!WARNING]
 > Content and plugins are trusted authored inputs.

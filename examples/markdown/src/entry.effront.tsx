@@ -49,7 +49,10 @@ const ManualPage = Manual.Page.make({
       const entry = yield* CurrentEntry;
       const document = yield* parseMarkdown(entry);
       return (
-        <article className="max-w-none" data-markdown-page={entry.url}>
+        <article
+          className="comark prose prose-slate prose-invert max-w-none prose-a:text-blue-300 prose-blockquote:border-blue-400 prose-pre:bg-slate-800 prose-td:border prose-td:border-slate-600 prose-td:px-4 prose-td:py-1.5 prose-th:border prose-th:border-slate-600 prose-th:px-4 prose-th:py-1.5"
+          data-markdown-page={entry.url}
+        >
           <MarkdownDocument value={document} />
         </article>
       );
