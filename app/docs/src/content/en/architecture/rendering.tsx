@@ -103,7 +103,10 @@ export const page: DocPage = {
         <code>server/application.ts</code> attaches <code>Stream.ensuring(flight.release)</code> to
         both response formats and releases Flight if HTML startup fails. Flight startup failure also
         closes the child Scope. React errors are logged through the runner unless its signal is
-        aborted. HTML loading or startup failures become <code>HtmlRenderError</code>, while later
+        aborted. Both RSC and HTML renderers also synchronously notify the optional request-local
+        <code> RenderErrorObserver</code>. This lets a host cache exclude React errors encoded
+        inside a normally completed HTTP 200 stream without serializing the callback into the
+        payload. HTML loading or startup failures become <code>HtmlRenderError</code>, while later
         failures propagate through the response body.
       </p>
       <h2 id="html-eof">Deliver Flight without breaking the HTML stream</h2>

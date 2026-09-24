@@ -1,7 +1,7 @@
 # SSR documentation site
 
 Author English articles at `/en` and Japanese translations at `/ja`.
-The site renders each request through Effront and Alchemy's native Cloudflare integration.
+The site renders cache misses through Effront and Alchemy's native Cloudflare integration and serves complete production HTML and Flight responses from a build-scoped edge cache.
 Unprefixed Japanese URLs remain available for existing bookmarks.
 
 ## Author or change an article
@@ -77,6 +77,9 @@ Content tests check catalog coverage, declared headings, and rendered internal a
 
 Vite imports Markdown at build/development time.
 Parsing runs in the Page Effect with `MarkdownError` in the error channel.
+Each Vite module generation memoizes the locale collections and uses Effect's bounded `Cache` for up to 128 parsed documents, including syntax highlighting.
+Concurrent lookups share in-progress parsing, successful results remain reusable, and failed lookups expire immediately.
+HMR or a new build recreates the collections and parser cache, including their reference resolvers and parser configuration.
 The application does not use a custom parser, runtime filesystem loader, Git execution, or network content loading.
 Only rendered content and navigation metadata cross the client boundary, not the collection or highlighter.
 
@@ -99,6 +102,60 @@ Do not add a route key to the shell or move its state into the Page.
 Document scrolling and heading links use native navigation.
 The deployment stylesheet remains explicitly selected through `effrontTailwind`, without a manual CSS import or extra runtime plugin.
 
+## Production response caching
+
+Caching is explicitly enabled by the docs Worker, not by the general-purpose Effront runtime.
+Core applications retain `Cache-Control: private, no-store` unless they implement their own policy.
+The docs site is public and request-independent: introducing authentication, cookies, experiments, or other personalized rendering requires revisiting this opt-in policy before deployment.
+
+### Edge storage and browser freshness
+
+The Worker uses Cloudflare's actual Cache API rather than assuming a response header will cache HTML or Flight.
+Each synthetic cache URL includes the current Worker build ID, the exact HTML/Flight representation, the original origin, pathname, and full query string.
+Locale prefixes and query variants remain separate, and `Vary: Accept` is retained for HTTP clients but is not the edge key.
+Only successful public GET responses are eligible; POST, HEAD, credentials, cookies, range requests, errors, redirects, and responses setting cookies bypass shared storage.
+
+Stored entries request a one-year edge TTL.
+Responses at the public URL use `public, max-age=0, must-revalidate`, without a long `s-maxage` that could let an intermediary retain an old deployment at that fixed URL.
+The browser therefore returns to the Worker, which can answer from the edge cache without rendering or parsing again.
+This still invokes the Worker for cache lookup, and the Cache API is local to each Cloudflare data center, not a globally replicated or guaranteed-retention store.
+Eviction or cache I/O failure falls back to normal rendering.
+`x-effront-cache: MISS`, `HIT`, or `BYPASS` and `x-effront-build-id` expose the selected behavior for operational checks.
+
+Cache fills retain at most 2 MiB per streamed response while preserving the original Effect response lifetime.
+An entry is written only after successful stream completion; failed, cancelled, or oversized streams are not retained.
+The request-local `RenderErrorObserver` also prevents caching when React encodes a render error inside an otherwise successful HTTP 200 stream.
+Do not replace this with an unscoped `Response.clone()` background reader: it can outlive the rendering services after the client's response closes.
+Hash-named `/assets/*` resources have a separate one-year `immutable` policy via the site's `_headers` file.
+
+### Deployment generations and already-open tabs
+
+The Vite configuration generates one build ID for all environment graphs.
+An optional `EFFRONT_BUILD_ID` can identify an externally versioned build, but must never be reused for different content, renderer settings, or client assets.
+A new build changes the namespace immediately without relying on a CDN purge; old entries can expire naturally.
+Development bypasses response caching and the deployment guard so HMR remains active.
+
+HTML advertises the ID in `meta[name="effront-build-id"]`.
+Effront's browser Flight client captures that initial value once and includes `x-effront-build-id` on subsequent requests.
+In production, missing or mismatched Flight tokens receive `409` with `private, no-store` before either a cache lookup or rendering.
+The existing navigation fallback performs a full document navigation before decoding that Flight response.
+This also protects tabs opened before the build-token feature was deployed.
+Server Function failures are not automatically replayed as navigation or retried, and never enter the public GET cache.
+
+Deploy all Worker graphs and their matching assets together.
+The build guard protects subsequent Flight navigation, not an initial HTML/asset race during a multi-version gradual rollout.
+Do not enable traffic-split deployments without configuring Cloudflare version affinity and retaining the corresponding assets.
+After deployment, verify the returned build ID changes and repeat both HTML and Flight requests in the target data center to observe MISS then HIT.
+The local workerd acceptance suite checks the same Worker and Cache API path without deploying, but cannot establish production routing, asset headers, or cache retention on its own.
+
+Official platform references:
+
+- [Cloudflare Cache API](https://developers.cloudflare.com/workers/runtime-apis/cache/)
+- [Cache topology and invalidation](https://developers.cloudflare.com/workers/reference/how-the-cache-works/)
+- [Worker and Cache API limits](https://developers.cloudflare.com/workers/platform/limits/)
+- [Static asset response headers](https://developers.cloudflare.com/workers/static-assets/headers/)
+- [Static assets and gradual rollouts](https://developers.cloudflare.com/workers/static-assets/routing/advanced/gradual-rollouts/)
+
 ## Consumer compatibility and public packages
 
 The API index must match the Effront manifest version and compatible React, Effect, Alchemy, and Comark versions.
@@ -115,7 +172,7 @@ Vercel and AWS adapters remain deferred.
 ## Architecture source baseline
 
 Keep implementation excerpts in JSX with their exact-string and historical-baseline contract.
-The source of truth is `src/content/architecture-baseline.ts`: core version `0.1.1`, commit `8744ecb236cb4c815c3a0c208e02200f4eeeb3f8`, reviewed `2026-09-16`.
+The source of truth is `src/content/architecture-baseline.ts`: core version `0.1.4`, commit `897b0ff62c1e0f40b5d94b9ce79c2df766b166f3`, reviewed `2026-09-24`.
 This identifies the source selections, not the latest documentation commit or current npm release.
 
 `core.test.tsx` compares every selection with both the current source and the historical Git object, including the baseline package version.
@@ -149,8 +206,10 @@ vp run test:browser
 ```
 
 `tests/vite.config.ts` reuses the production config, Worker entry, styles, routes, and content, adding the local host pattern used by `tests/e2e-alchemy`.
+The direct runtime host explicitly reads `public/_headers`, matching the file-to-asset-config step performed by Alchemy's deployment and local providers; acceptance also checks that the same rules reach `dist/client/_headers`.
 It never evaluates `alchemy.run.ts`, invokes Alchemy planning, accesses cloud state, or deploys.
 Playwright builds the site and runs the built Worker through preview on port `4394`, without server reuse.
+Set `EFFRONT_DOCS_TEST_PORT` to a free port when another worktree is running acceptance.
 This checks the built site's runtime behavior, not official CLI authentication or remote deployment.
 Failure traces and screenshots stay under ignored `app/docs/tmp/`.
 

@@ -67,6 +67,7 @@ const RootLayout = EFFRONT.Layout.make({
           <head>
             <meta charSet="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <meta name="effront-build-id" content={import.meta.env["VITE_EFFRONT_BUILD_ID"]} />
           </head>
           <body>
             <DocsShell

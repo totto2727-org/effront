@@ -2,6 +2,8 @@ import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 
+import { withResponseCache } from "./response-cache";
+
 export default Cloudflare.Worker(
   "Docs",
   {
@@ -15,6 +17,15 @@ export default Cloudflare.Worker(
     const fetch = yield* makeApplicationHttpEffect(() =>
       import("./entry.effront").then((module) => module.default),
     );
-    return { fetch: fetch.pipe(Effect.orDie) };
+    return {
+      // Alchemy evaluates this outer Effect while planning a native deployment.
+      // Vite-only environment values are safe only when the Worker handles a request.
+      fetch: Effect.suspend(() =>
+        withResponseCache(fetch, {
+          buildId: import.meta.env["VITE_EFFRONT_BUILD_ID"],
+          development: import.meta.env.DEV,
+        }),
+      ).pipe(Effect.orDie),
+    };
   }),
 );

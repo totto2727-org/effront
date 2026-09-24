@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import cloudflare from "@alchemy.run/cloudflare-runtime/vite";
 import * as Text from "@alchemy.run/cloudflare-runtime/core/bindings/Text";
@@ -17,6 +18,11 @@ export default defineConfig({
       viteEnvironments: { entry: "rsc", children: ["ssr"] },
       worker: {
         name: "effront-docs-acceptance",
+        // Alchemy's deploy/local providers fold _headers into the asset config.
+        // This direct, authentication-free runtime host must do the same explicitly.
+        assets: {
+          headers: readFileSync(new URL("../public/_headers", import.meta.url), "utf8"),
+        },
         bindings: [
           Text.local("ALCHEMY_STACK_NAME", "effront-docs-acceptance"),
           Text.local("ALCHEMY_STAGE", "test"),
