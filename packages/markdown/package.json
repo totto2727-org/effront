@@ -39,14 +39,14 @@
     "katex": "catalog:",
     "shiki": "catalog:"
   },
-  "peerDependencies": {
-    "react": "catalog:"
-  },
   "devDependencies": {
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
   }
 }

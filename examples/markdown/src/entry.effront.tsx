@@ -49,10 +49,7 @@ const ManualPage = Manual.Page.make({
       const entry = yield* CurrentEntry;
       const document = yield* parseMarkdown(entry);
       return (
-        <article
-          className="max-w-none"
-          data-markdown-page={entry.url}
-        >
+        <article className="max-w-none" data-markdown-page={entry.url}>
           <MarkdownDocument value={document} />
         </article>
       );

@@ -14,31 +14,153 @@
   scroll-margin-top: 1.25rem;
 }
 
-.effront-markdown :where(h1) { font-size: clamp(2rem, 5vw, 2.5rem); margin: 0 0 1rem; }
-.effront-markdown :where(h2) { font-size: clamp(1.5rem, 4vw, 1.875rem); margin: 2.5rem 0 0.875rem; }
-.effront-markdown :where(h3) { font-size: 1.25rem; margin: 2rem 0 0.75rem; }
-.effront-markdown :where(p, ul, ol, blockquote, pre, table, .math.block, .mermaid) { margin: 1rem 0; }
-.effront-markdown :where(ul) { list-style: disc; padding-inline-start: 1.5rem; }
-.effront-markdown :where(ol) { list-style: decimal; padding-inline-start: 1.5rem; }
-.effront-markdown :where(li + li) { margin-top: 0.375rem; }
-.effront-markdown :where(a) { color: var(--effront-markdown-link, #0969da); text-decoration: underline; text-underline-offset: 0.16em; }
-.effront-markdown :where(blockquote) { border-inline-start: 0.25rem solid var(--effront-markdown-border, #d0d7de); margin-inline: 0; padding-inline-start: 1rem; color: var(--effront-markdown-muted, #57606a); }
-.effront-markdown :where(code) { border-radius: 0.25rem; background: var(--effront-markdown-inline-code-background, #f6f8fa); padding: 0.15em 0.35em; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875em; }
-.effront-markdown :where(pre) { max-width: 100%; overflow: auto; border: 1px solid var(--effront-markdown-border, #d0d7de); border-radius: 0.5rem; background: var(--effront-markdown-code-background, #f6f8fa); padding: 1rem; }
-.effront-markdown :where(pre code) { background: transparent; padding: 0; }
-.effront-markdown :where(table) { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; white-space: nowrap; }
-.effront-markdown :where(th, td) { border: 1px solid var(--effront-markdown-border, #d0d7de); padding: 0.5rem 0.75rem; text-align: start; }
-.effront-markdown :where(th) { background: var(--effront-markdown-table-heading-background, #f6f8fa); font-weight: 600; }
-.effront-markdown :where(sup a[href*="footnote"], .footnote-ref) { font-size: 0.75em; font-weight: 700; }
-.effront-markdown :where(.footnotes) { border-top: 1px solid var(--effront-markdown-border, #d0d7de); margin-top: 2rem; padding-top: 1rem; font-size: 0.875rem; }
-.effront-markdown :is(note, tip, important, warning, caution, [data-alert], blockquote[as="note"], blockquote[as="tip"], blockquote[as="important"], blockquote[as="warning"], blockquote[as="caution"]) { display: block; border-inline-start: 0.25rem solid var(--effront-markdown-alert-border, #0969da); border-radius: 0.25rem; background: var(--effront-markdown-alert-background, #ddf4ff); margin: 1rem 0; padding: 0.75rem 1rem; }
-.effront-markdown :is(warning, caution, [data-alert="warning"], [data-alert="caution"], blockquote[as="warning"], blockquote[as="caution"]) { --effront-markdown-alert-border: #bf8700; --effront-markdown-alert-background: #fff8c5; }
-.effront-markdown :where(.math.block) { overflow-x: auto; }
-.effront-markdown :where(.math.inline) { overflow: visible; }
-.effront-markdown :where(.mermaid) { max-width: 100%; overflow-x: auto; }
-.effront-markdown :where(.mermaid svg) { --_text: var(--fg); --_text-sec: var(--muted, var(--fg)); --_text-muted: var(--muted, var(--fg)); --_text-faint: var(--fg); --_line: var(--line, var(--fg)); --_arrow: var(--accent, var(--fg)); --_node-fill: var(--surface, var(--bg)); --_node-stroke: var(--border, var(--fg)); --_group-fill: var(--bg); --_group-hdr: var(--surface, var(--bg)); --_inner-stroke: var(--border, var(--fg)); --_key-badge: var(--surface, var(--bg)); max-width: 100%; height: auto; }
-.effront-markdown :where(.mermaid svg text) { font-family: ui-sans-serif, system-ui, sans-serif; }
-.effront-markdown :where(.mermaid svg .mono) { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.effront-markdown :where(h1) {
+  font-size: clamp(2rem, 5vw, 2.5rem);
+  margin: 0 0 1rem;
+}
+.effront-markdown :where(h2) {
+  font-size: clamp(1.5rem, 4vw, 1.875rem);
+  margin: 2.5rem 0 0.875rem;
+}
+.effront-markdown :where(h3) {
+  font-size: 1.25rem;
+  margin: 2rem 0 0.75rem;
+}
+.effront-markdown :where(p, ul, ol, blockquote, pre, table, .math.block, .mermaid) {
+  margin: 1rem 0;
+}
+.effront-markdown :where(ul) {
+  list-style: disc;
+  padding-inline-start: 1.5rem;
+}
+.effront-markdown :where(ol) {
+  list-style: decimal;
+  padding-inline-start: 1.5rem;
+}
+.effront-markdown :where(li + li) {
+  margin-top: 0.375rem;
+}
+.effront-markdown :where(a) {
+  color: var(--effront-markdown-link, #0969da);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+.effront-markdown :where(blockquote) {
+  border-inline-start: 0.25rem solid var(--effront-markdown-border, #d0d7de);
+  margin-inline: 0;
+  padding-inline-start: 1rem;
+  color: var(--effront-markdown-muted, #57606a);
+}
+.effront-markdown :where(code) {
+  border-radius: 0.25rem;
+  background: var(--effront-markdown-inline-code-background, #f6f8fa);
+  padding: 0.15em 0.35em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875em;
+}
+.effront-markdown :where(pre) {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--effront-markdown-border, #d0d7de);
+  border-radius: 0.5rem;
+  background: var(--effront-markdown-code-background, #f6f8fa);
+  padding: 1rem;
+}
+.effront-markdown :where(pre code) {
+  background: transparent;
+  padding: 0;
+}
+.effront-markdown :where(table) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+.effront-markdown :where(th, td) {
+  border: 1px solid var(--effront-markdown-border, #d0d7de);
+  padding: 0.5rem 0.75rem;
+  text-align: start;
+}
+.effront-markdown :where(th) {
+  background: var(--effront-markdown-table-heading-background, #f6f8fa);
+  font-weight: 600;
+}
+.effront-markdown :where(sup a[href*="footnote"], .footnote-ref) {
+  font-size: 0.75em;
+  font-weight: 700;
+}
+.effront-markdown :where(.footnotes) {
+  border-top: 1px solid var(--effront-markdown-border, #d0d7de);
+  margin-top: 2rem;
+  padding-top: 1rem;
+  font-size: 0.875rem;
+}
+.effront-markdown
+  :is(
+    note,
+    tip,
+    important,
+    warning,
+    caution,
+    [data-alert],
+    blockquote[as="note"],
+    blockquote[as="tip"],
+    blockquote[as="important"],
+    blockquote[as="warning"],
+    blockquote[as="caution"]
+  ) {
+  display: block;
+  border-inline-start: 0.25rem solid var(--effront-markdown-alert-border, #0969da);
+  border-radius: 0.25rem;
+  background: var(--effront-markdown-alert-background, #ddf4ff);
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+}
+.effront-markdown
+  :is(
+    warning,
+    caution,
+    [data-alert="warning"],
+    [data-alert="caution"],
+    blockquote[as="warning"],
+    blockquote[as="caution"]
+  ) {
+  --effront-markdown-alert-border: #bf8700;
+  --effront-markdown-alert-background: #fff8c5;
+}
+.effront-markdown :where(.math.block) {
+  overflow-x: auto;
+}
+.effront-markdown :where(.math.inline) {
+  overflow: visible;
+}
+.effront-markdown :where(.mermaid) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.effront-markdown :where(.mermaid svg) {
+  --_text: var(--fg);
+  --_text-sec: var(--muted, var(--fg));
+  --_text-muted: var(--muted, var(--fg));
+  --_text-faint: var(--fg);
+  --_line: var(--line, var(--fg));
+  --_arrow: var(--accent, var(--fg));
+  --_node-fill: var(--surface, var(--bg));
+  --_node-stroke: var(--border, var(--fg));
+  --_group-fill: var(--bg);
+  --_group-hdr: var(--surface, var(--bg));
+  --_inner-stroke: var(--border, var(--fg));
+  --_key-badge: var(--surface, var(--bg));
+  max-width: 100%;
+  height: auto;
+}
+.effront-markdown :where(.mermaid svg text) {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+.effront-markdown :where(.mermaid svg .mono) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
 
 .dark .effront-markdown,
 .effront-markdown.dark {
@@ -68,7 +190,15 @@
 }
 
 @media (max-width: 640px) {
-  .effront-markdown { font-size: 0.9375rem; }
-  .effront-markdown :where(pre) { border-radius: 0; margin-inline: -0.5rem; padding: 0.75rem; }
-  .effront-markdown :where(th, td) { padding: 0.375rem 0.5rem; }
+  .effront-markdown {
+    font-size: 0.9375rem;
+  }
+  .effront-markdown :where(pre) {
+    border-radius: 0;
+    margin-inline: -0.5rem;
+    padding: 0.75rem;
+  }
+  .effront-markdown :where(th, td) {
+    padding: 0.375rem 0.5rem;
+  }
 }
