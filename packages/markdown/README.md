@@ -32,7 +32,7 @@ if (entry) {
 > [!WARNING]
 > Use trusted authored Markdown and parser plugins; this integration does not sanitize untrusted submissions.
 
-See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) to load files with `import.meta.glob` and render them with Comark's `MarkdownDocument`.
+See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) to load files with `import.meta.glob` and render them with `MarkdownDocument` from `@effront/markdown/document`.
 
 ## Key features
 
@@ -41,12 +41,13 @@ See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) t
 - Uses Vite's asset URLs without a runtime filesystem loader or asset-copying step.
 - Preserves Comark's standard document format and typed Effect error handling.
 - Includes footnotes, math, Mermaid parsing, and Shiki highlighting.
+- Provides a configured React document renderer with Math/Mermaid client leaves and scoped styles, without requiring Tailwind.
 
 ## Prerequisites
 
 - **Content loading**: A Vite application when using `import.meta.glob` to supply document and asset maps.
 - **Server runtime**: Support for `node:path` and `node:url`. Cloudflare Workers requires the `nodejs_compat` compatibility flag.
-- **React rendering**: Compatible React and React DOM installations when using Comark's React renderer.
+- **React rendering**: Compatible React and React DOM installations; Math and Mermaid require browser JavaScript to finish rendering.
 
 ## Setup
 
@@ -56,15 +57,18 @@ Install the collection package and Effect in your application:
 npm install @effront/markdown@0.1.4 effect@4.0.0-rc.112
 ```
 
-For React rendering, also install Comark's renderer:
+For React rendering, import the component and load its stylesheet once in your application:
 
-```bash
-npm install @comark/react@0.6.2
+```tsx
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
 ```
+
+Comark, KaTeX, and the diagram renderer are package dependencies; no separate component registration or KaTeX font setup is required.
 
 ## API
 
-The [public API guide](docs/GUIDE.md#public-api) covers collection options and types, lookups, reference resolution, `parseMarkdown`, `MarkdownError`, and standard Comark component mappings.
+The [public API guide](docs/GUIDE.md#public-api) covers collection options and types, lookups, reference resolution, `parseMarkdown`, `MarkdownError`, and configured document rendering with component overrides.
 It also documents URL encoding, missing-reference failures, and current Math and Mermaid rendering constraints.
 
 ## Development

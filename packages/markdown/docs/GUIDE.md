@@ -82,13 +82,17 @@ Import the scoped stylesheet once from an application stylesheet:
 @import "@effront/markdown/styles.css";
 ```
 
-`MarkdownDocument` adds the `effront-markdown` class and supplies responsive typography, code, tables, footnotes, alerts, light/dark colors, KaTeX styling and locally emitted KaTeX fonts without Tailwind.
+`MarkdownDocument` adds the `effront-markdown` class; the stylesheet supplies responsive typography, code, tables, footnotes, alerts, light/dark colors, KaTeX styling and locally emitted KaTeX fonts without Tailwind.
 Pass `className` to append classes and `components` to override any Comark component mapping, including the built-in `Math` and `Mermaid` mappings.
+Use `html.dark` for the coordinated prose and diagram dark mode.
+The parser's existing Tokyo Night diagram theme defaults remain unchanged.
 
 Math and Mermaid are client leaves rather than making the prose document a Client Component.
-On the server and without JavaScript, Comark Math displays `...` and Mermaid is an empty `.mermaid` container.
+On the server and without JavaScript, Math displays `...` and Mermaid is an empty `.mermaid` container.
 After hydration Math renders KaTeX and Mermaid renders its SVG, so these are not SSR diagram or math renderers.
 The configured Mermaid leaf accepts only known `beautiful-mermaid` theme names, removes its upstream unscoped style block and remote font import, and clears a prior diagram when syntax is invalid.
+Invalid math remains `...`; invalid diagrams show escaped source text with a `data-error` attribute.
+This default styling policy does not sanitize authored SVG style directives or enforce a no-network policy on trusted content.
 
 > [!WARNING]
 > Treat Markdown and parser plugins as trusted content, not sanitized user submissions.
@@ -141,10 +145,11 @@ The mdts defaults add `footnotes()`, `math()`, `mermaid({ theme: "tokyo-night", 
 
 ### Rendering and component mappings
 
-Use `MarkdownDocument` from `@comark/react/components/MarkdownDocument` directly.
-Pass user mappings through its normal `components` prop, for example `<MarkdownDocument value={document} components={{ ProseA: MyLink }} />`.
-Resolved AST URLs reach those components without wrappers or forced link/image mappings.
-Comark 0.6.2 does not automatically register Math or Mermaid React components or merge `document.meta.components`.
+Use `MarkdownDocument` and its `MarkdownDocumentProps` type from `@effront/markdown/document` for the configured renderer, separately from the server-only collection/parser entry point.
+It forwards Comark's document props, adds the default Math/Mermaid mappings, and preserves user mappings through `components`, for example `<MarkdownDocument value={document} components={{ ProseA: MyLink }} />`.
+Resolved AST URLs reach those components without forced link/image mappings.
+The prose renderer can stay in the RSC graph while only the Math/Mermaid leaves hydrate in the browser.
+For a completely application-owned rendering policy, importing `@comark/react/components/MarkdownDocument` directly remains supported; that renderer does not automatically register Math or Mermaid or merge `document.meta.components`.
 Complete Math and Mermaid SSR support is deferred in the [roadmap](../../../docs/ROADMAP.md).
 
 ### Public collection types

@@ -10,7 +10,7 @@ For setup, use [the package README](../README.md), [the consumer guide](GUIDE.md
 Vite discovers documents with `import.meta.glob` and imports their contents with `?raw`.
 Using the same glob `base` gives document and asset keys a shared reference directory.
 Vite also resolves assets with `?url` and owns their development URLs, production emission, and hashing.
-The Markdown package consumes those maps rather than implementing a filesystem loader, asset copier, or bundler.
+The collection consumes those maps rather than implementing a runtime filesystem loader, asset copier, or bundler.
 
 The package maps source files to application URLs while preserving directory hierarchy.
 For example, the keys `./manual.md` and `./manual/guide/deep/details.md` map to `/manual` and `/manual/guide/deep/details` when `basePath` is `/`.
@@ -122,14 +122,20 @@ suffixは文字列として末尾へ追加し、既存URLのqueryを再構成・
 
 Parsing retains Comark's standard defaults and adds the mdts plugins for footnotes, math, Mermaid with Tokyo Night, and Shiki.
 `parseMarkdown` prepares a Comark document and resolves link/image attributes before rendering.
-Applications import Comark's standard `MarkdownDocument` directly and supply their own component mappings.
-The package provides no React renderer factory, forced component mappings, or custom Math/Mermaid SSR replacements.
+`@effront/markdown/document` wraps Comark's direct document-rendering entry point with configurable defaults and an `effront-markdown` wrapper class.
+It does not import the collection/parser entry point or make the whole article a Client Component.
+Only the Math and Mermaid leaves carry `use client`; Mermaid loads its rendering dependency inside an effect so the server does not evaluate the browser rendering dependency.
+The public `@effront/markdown/styles.css` entry supplies scoped document styles and KaTeX CSS.
+The library build copies KaTeX's local fonts and license beside the emitted stylesheet so its relative font URLs survive package publication.
+The configured Mermaid leaf accepts known theme names, removes the upstream global style/font-import fragment, and namespaces diagram IDs and local marker references.
+These transformations implement the default presentation policy for the pinned renderer, not a general SVG sanitizer.
 
 > [!WARNING]
 > Content and plugins are trusted authored inputs.
 > This integration is not a sanitizer for untrusted submissions.
 
-Standard Comark document rendering does not automatically register its separate Math/Mermaid components; rich no-JavaScript rendering is tracked in [the roadmap](../../../docs/ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
+Ordinary prose, syntax highlighting, tables, and footnotes render on the server.
+Math starts as `...` and Mermaid as an empty container until client effects run; rich no-JavaScript rendering remains deferred in [the roadmap](../../../docs/ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
 
 ## Verification
 
