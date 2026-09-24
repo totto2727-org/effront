@@ -8,6 +8,26 @@ const destinations = [
   { path: unicodePath, title: "Unicode page", hash: "details" },
 ];
 
+type FlightClientReference = { moduleId: string; exportName: string };
+
+const flightClientReferences = (body: string): FlightClientReference[] => {
+  const strings = new Map(
+    [...body.matchAll(/^([0-9a-f]+):"((?:\\.|[^"\\])*)"$/gm)].map((match) => [
+      match[1]!,
+      JSON.parse(`"${match[2]!}"`) as string,
+    ]),
+  );
+  return [...body.matchAll(/^[0-9a-f]+:I(\[.*\])$/gm)].flatMap((match) => {
+    const value: unknown = JSON.parse(match[1]!);
+    if (!Array.isArray(value) || typeof value[0] !== "string" || typeof value[2] !== "string")
+      return [];
+    const exportName = value[2].startsWith("$")
+      ? (strings.get(value[2].slice(1)) ?? value[2])
+      : value[2];
+    return [{ moduleId: value[0], exportName }];
+  });
+};
+
 const test = base.extend({
   page: async ({ page, baseURL }, use) => {
     if (!baseURL) throw new TypeError("Markdown acceptance requires a local host baseURL");
@@ -268,16 +288,43 @@ test("keeps a document with server-only rich overrides out of Math and Mermaid c
   expect(htmlBody).toMatch(/Server diagram: (?:<!-- -->)?flowchart LR/);
   expect(htmlBody).not.toMatch(/class="(?:math|mermaid)\b|class="katex\b/);
 
+  const normalFlight = await request.get("/manual", { headers: { Accept: "text/x-component" } });
+  expect(normalFlight.status()).toBe(200);
+  expect(normalFlight.headers()["content-type"]).toContain("text/x-component");
+  const richReferences = flightClientReferences(await normalFlight.text()).filter((reference) =>
+    /^(?:Markdown)?(?:Math|Mermaid)$/.test(reference.exportName),
+  );
+  expect(
+    richReferences.map((reference) => reference.exportName.replace(/^Markdown/, "")).sort(),
+  ).toEqual(["Math", "Mermaid"]);
+  const richModuleIds = new Set(richReferences.map((reference) => reference.moduleId));
+
   const flight = await request.get("/manual-server-only", {
     headers: { Accept: "text/x-component" },
   });
   expect(flight.status()).toBe(200);
+  expect(flight.headers()["content-type"]).toContain("text/x-component");
   const flightBody = await flight.text();
   expect(flightBody).toMatch(/Server math:[\s\S]{0,30}E = mc\^2/);
   expect(flightBody).toMatch(/Server diagram:[\s\S]{0,30}flowchart LR/);
   expect(flightBody).not.toMatch(
     /(?:MarkdownMath|MarkdownMermaid|@comark\/react\/components\/(?:Math|Mermaid)|beautiful-mermaid)/i,
   );
+  const serverReferences = flightClientReferences(flightBody);
+  expect(
+    serverReferences,
+    "The server-only route still includes shared client shell references",
+  ).not.toEqual([]);
+  expect(
+    serverReferences.filter((reference) =>
+      /^(?:Markdown)?(?:Math|Mermaid)$/.test(reference.exportName),
+    ),
+    "Server-only overrides do not register rich client exports",
+  ).toEqual([]);
+  expect(
+    serverReferences.filter((reference) => richModuleIds.has(reference.moduleId)),
+    "Server-only overrides do not retain the normal rich client module IDs",
+  ).toEqual([]);
 
   await page.goto("/manual-server-only");
   await expect(page.getByTestId("server-math")).toHaveCount(3);
@@ -349,23 +396,26 @@ test("hydrates and follows Markdown links with Flight while retaining shared lay
   });
 
   for (const destination of destinations) {
-    const flightPromise = page.waitForResponse(
-      (response) =>
+    let flightContent: Promise<string> | undefined;
+    const flightPromise = page.waitForResponse((response) => {
+      const matches =
         new URL(response.url()).pathname === destination.path &&
-        response.headers()["content-type"]?.includes("text/x-component") === true,
-    );
+        response.headers()["content-type"]?.includes("text/x-component") === true;
+      if (matches) flightContent = response.text();
+      return matches;
+    });
     await page
       .locator("main article")
       .getByRole("link", { name: destination.title, exact: true })
       .click();
     const flight = await flightPromise;
     expect(flight.status()).toBe(200);
-    const flightBody = await request.get(destination.path, {
-      headers: { Accept: "text/x-component" },
-    });
-    expect(flightBody.status()).toBe(200);
-    expect(flightBody.headers()["content-type"]).toContain("text/x-component");
-    expect(await flightBody.text()).toContain(destination.title);
+    expect(flight.headers()["content-type"]).toContain("text/x-component");
+    expect(
+      flightContent,
+      "The matched native Flight response starts reading before navigation",
+    ).toBeDefined();
+    expect(await flightContent).toContain(destination.title);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(destination.title);
     const url = new URL(page.url());
     expect(url.pathname).toBe(destination.path);
