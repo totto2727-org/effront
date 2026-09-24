@@ -214,30 +214,37 @@ const httpLayer = <Services, ApplicationError, Requirements>(
       const QueryLayer = HttpRouter.add("POST", ServerFnQueryPath, (request) =>
         prepareServerFnQuery(request, identity).pipe(
           Effect.flatMap((prepared) =>
-            applyMiddleware(prepared.middleware, Effect.gen(function* () {
-              const result = yield* prepared.execute;
-              const renderer = yield* FlightRenderer;
-              const flight = yield* renderer.renderQuery({
-                result,
-                middleware: prepared.middleware,
-                renderRuntime: identity.renderRuntime,
-                temporaryReferences: prepared.temporaryReferences,
-              });
-              return HttpServerResponse.stream(
-                fromWebStream(flight.stream, { releaseLockOnEnd: true }).pipe(Stream.ensuring(flight.release)),
-                {
-                  contentType: `${FlightMediaType};charset=utf-8`,
-                  headers: DynamicResponseHeaders,
-                  status: 200,
-                },
-              );
-            })),
+            applyMiddleware(
+              prepared.middleware,
+              Effect.gen(function* () {
+                const result = yield* prepared.execute;
+                const renderer = yield* FlightRenderer;
+                const flight = yield* renderer.renderQuery({
+                  result,
+                  middleware: prepared.middleware,
+                  renderRuntime: identity.renderRuntime,
+                  temporaryReferences: prepared.temporaryReferences,
+                });
+                return HttpServerResponse.stream(
+                  fromWebStream(flight.stream, { releaseLockOnEnd: true }).pipe(
+                    Stream.ensuring(flight.release),
+                  ),
+                  {
+                    contentType: `${FlightMediaType};charset=utf-8`,
+                    headers: DynamicResponseHeaders,
+                    status: 200,
+                  },
+                );
+              }),
+            ),
           ),
           Effect.catchTag("ServerFnRequestError", (error) =>
-            Effect.succeed(HttpServerResponse.text(error.message, {
-              headers: DynamicResponseHeaders,
-              status: error.status,
-            })),
+            Effect.succeed(
+              HttpServerResponse.text(error.message, {
+                headers: DynamicResponseHeaders,
+                status: error.status,
+              }),
+            ),
           ),
           HttpEffect.withPreResponseHandler(acceptVaryPreResponseHandler),
         ),

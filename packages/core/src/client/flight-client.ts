@@ -3,7 +3,12 @@ import { Context, Deferred, Effect, Exit, Layer, Schema, Scope, Stream } from "e
 import { HttpBody, HttpClient, HttpClientRequest } from "effect/unstable/http";
 import { createFromReadableStream, createTemporaryReferenceSet } from "@vitejs/plugin-rsc/browser";
 
-import { FlightMediaType, ServerFnIdHeader, type FlightPayload, type ServerFnResult } from "../rsc/flight";
+import {
+  FlightMediaType,
+  ServerFnIdHeader,
+  type FlightPayload,
+  type ServerFnResult,
+} from "../rsc/flight";
 import { InitialFlightStream } from "./initial-flight-stream";
 import { getResponseUrl } from "./response-url";
 
@@ -189,7 +194,8 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
                 }
               : undefined;
         const payload = yield* Effect.tryPromise({
-          try: () => createFromReadableStream<FlightPayload | ServerFnResult>(responseBody, decodeOptions),
+          try: () =>
+            createFromReadableStream<FlightPayload | ServerFnResult>(responseBody, decodeOptions),
           catch: (cause) =>
             new FlightLoadError({
               cause,
