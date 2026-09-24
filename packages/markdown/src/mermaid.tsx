@@ -1,6 +1,5 @@
 "use client";
 
-import { renderMermaidSVG, THEMES } from "beautiful-mermaid";
 import { useEffect, useId, useState } from "react";
 
 interface MarkdownMermaidProps {
@@ -13,8 +12,12 @@ interface MarkdownMermaidProps {
   readonly width?: string;
 }
 
-function themeFor(name: string | undefined, fallback: "tokyo-night-light" | "tokyo-night") {
-  return THEMES[typeof name === "string" && Object.hasOwn(THEMES, name) ? name : fallback]!;
+function themeFor(
+  themes: Record<string, { readonly bg: string; readonly fg: string }>,
+  name: string | undefined,
+  fallback: "tokyo-night-light" | "tokyo-night",
+) {
+  return themes[typeof name === "string" && Object.hasOwn(themes, name) ? name : fallback]!;
 }
 
 function isolateSvg(svg: string, prefix: string) {
@@ -67,24 +70,42 @@ export function MarkdownMermaid({
 
   // oxlint-disable react(set-state-in-effect)
   useEffect(() => {
-    try {
-      setSvg(
-        isolateSvg(
-          renderMermaidSVG(
-            content,
-            themeFor(
-              isDark ? (themeDark ?? themeDarkAttribute) : theme,
-              isDark ? "tokyo-night" : "tokyo-night-light",
+    let cancelled = false;
+    void import("beautiful-mermaid")
+      .then(({ renderMermaidSVG, THEMES }) => {
+        if (cancelled) return;
+        try {
+          const rendered = isolateSvg(
+            renderMermaidSVG(
+              content,
+              themeFor(
+                THEMES,
+                isDark ? (themeDark ?? themeDarkAttribute) : theme,
+                isDark ? "tokyo-night" : "tokyo-night-light",
+              ),
             ),
-          ),
-          instanceId,
-        ),
-      );
-      setError(undefined);
-    } catch (cause) {
-      setSvg(undefined);
-      setError(cause instanceof Error ? cause.message : "Failed to render diagram");
-    }
+            instanceId,
+          );
+          if (!cancelled) {
+            setSvg(rendered);
+            setError(undefined);
+          }
+        } catch (cause) {
+          if (!cancelled) {
+            setSvg(undefined);
+            setError(cause instanceof Error ? cause.message : "Failed to render diagram");
+          }
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setSvg(undefined);
+          setError(cause instanceof Error ? cause.message : "Failed to load diagram renderer");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [content, instanceId, isDark, theme, themeDark, themeDarkAttribute]);
 
   return (
