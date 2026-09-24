@@ -8,6 +8,7 @@ export default Cloudflare.Worker(
   "Docs",
   {
     main: import.meta.url,
+    cache: { enabled: true },
     dev: { port: 1339 },
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },

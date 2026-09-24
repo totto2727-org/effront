@@ -1,274 +1,233 @@
 import { Effect, Stream } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { describe, expect, it } from "vite-plus/test";
-import { RenderErrorObserver } from "@effront/core/http";
 
 import { withResponseCache } from "./response-cache";
 
-class MemoryCache {
-  readonly entries = new Map<string, Response>();
-  readonly keys: Array<string> = [];
-
-  match = async (request: Request) => this.entries.get(request.url)?.clone();
-  put = async (request: Request, response: Response) => {
-    this.keys.push(request.url);
-    this.entries.set(request.url, response.clone());
-  };
-}
-
-const run = async (
+const requiredVary = ["accept", "cookie", "authorization", "x-effront-build-id"];
+const html = () =>
+  HttpServerResponse.text("rendered", {
+    contentType: "text/html",
+    headers: { "cache-control": "private, no-store" },
+  });
+const run = <E>(
   request: Request,
-  cache: MemoryCache,
-  options: {
-    readonly buildId?: string;
-    readonly development?: boolean;
-    readonly maxBodyBytes?: number;
-  } = {},
-  app = Effect.succeed(HttpServerResponse.text("rendered", { contentType: "text/html" })),
+  app: Effect.Effect<HttpServerResponse.HttpServerResponse, E> = Effect.succeed(html()),
+  development = false,
 ) =>
   Effect.runPromise(
-    withResponseCache(app, {
-      buildId: options.buildId ?? "build-a",
-      cache,
-      development: options.development,
-      maxBodyBytes: options.maxBodyBytes,
-    }).pipe(
+    withResponseCache(app, { buildId: "build-a", development }).pipe(
       Effect.provideService(
         HttpServerRequest.HttpServerRequest,
         HttpServerRequest.fromWeb(request),
       ),
     ),
   );
+const expectPolicy = (response: HttpServerResponse.HttpServerResponse, publicResponse: boolean) => {
+  expect(response.headers["cache-control"]).toBe(
+    publicResponse ? "public, max-age=0, must-revalidate" : "private, no-store",
+  );
+  expect(response.headers["cloudflare-cdn-cache-control"]).toBe(
+    publicResponse ? "public, max-age=31536000" : "private, no-store",
+  );
+  expect(response.headers["x-effront-build-id"]).toBe("build-a");
+  expect(response.headers["vary"]?.split(", ")).toEqual(expect.arrayContaining(requiredVary));
+  expect(response.headers["x-effront-cache"]).toBeUndefined();
+};
 
-const web = (response: HttpServerResponse.HttpServerResponse) => HttpServerResponse.toWeb(response);
-
-describe("docs response cache", () => {
-  it("keeps origin, path, search, and build identifier in actual cache keys", async () => {
-    const cache = new MemoryCache();
-    await run(new Request("https://docs.example/guide?a=1"), cache);
-    await run(new Request("https://other.example/guide?a=1"), cache, { buildId: "build-b" });
-    expect(cache.keys).toEqual([
-      "https://docs.example/__effront-response-cache/build-a/html/guide?a=1",
-      "https://other.example/__effront-response-cache/build-b/html/guide?a=1",
-    ]);
-  });
-
-  it("stores a successful GET once and serves the second request as a hit", async () => {
-    const cache = new MemoryCache();
-    const request = new Request("https://docs.example/guide?tab=api");
-
-    const miss = web(await run(request, cache));
-    expect(miss.headers.get("x-effront-cache")).toBe("MISS");
-    expect(miss.headers.get("x-effront-build-id")).toBe("build-a");
-    expect(miss.headers.get("cache-control")).toContain("max-age=0");
-    expect(miss.headers.get("cache-control")).not.toContain("s-maxage");
-    expect(await miss.text()).toBe("rendered");
-
-    const hit = web(await run(request, cache, {}, Effect.die("must not render")));
-    expect(hit.headers.get("x-effront-cache")).toBe("HIT");
-    expect(await hit.text()).toBe("rendered");
-  });
-
-  it("rejects missing or stale Flight build IDs before cache lookup", async () => {
-    const cache = new MemoryCache();
-    const response = web(
-      await run(
-        new Request("https://docs.example/guide", { headers: { accept: "text/x-component" } }),
-        cache,
-      ),
-    );
-
-    expect(response.status).toBe(409);
-    expect(response.headers.get("cache-control")).toBe("private, no-store");
-    expect(response.headers.get("x-effront-cache")).toBe("BYPASS");
-    expect(cache.keys).toEqual([]);
-  });
-
-  it("does not cache unsafe requests or responses", async () => {
-    const cache = new MemoryCache();
-    const request = new Request("https://docs.example/guide", {
-      headers: { cookie: "session=secret" },
-    });
-    const response = web(await run(request, cache));
-    expect(response.headers.get("x-effront-cache")).toBe("BYPASS");
-    expect(cache.keys).toEqual([]);
-
-    const error = web(
-      await run(
-        new Request("https://docs.example/missing"),
-        cache,
-        {},
-        Effect.succeed(HttpServerResponse.text("missing", { status: 404 })),
-      ),
-    );
-    expect(error.headers.get("x-effront-cache")).toBe("BYPASS");
-    expect(error.headers.get("cache-control")).toBe("private, no-store");
-    expect(cache.keys).toEqual([]);
-
-    const redirect = web(
-      await run(
-        new Request("https://docs.example/retired"),
-        cache,
-        {},
-        Effect.succeed(HttpServerResponse.redirect("/current", { status: 308 })),
-      ),
-    );
-    expect(redirect.headers.get("x-effront-cache")).toBe("BYPASS");
-    expect(redirect.headers.get("cache-control")).toBe("private, no-store");
-
-    const cookie = web(
-      await run(
-        new Request("https://docs.example/personal"),
-        cache,
-        {},
-        Effect.succeed(
-          HttpServerResponse.text("personal", {
-            contentType: "text/html",
-            headers: { "set-cookie": "session=private", "cache-control": "public, max-age=600" },
-          }),
-        ),
-      ),
-    );
-    expect(cookie.headers.get("x-effront-cache")).toBe("BYPASS");
-    expect(cookie.headers.get("cache-control")).toBe("private, no-store");
-
-    const localized = web(
-      await run(
-        new Request("https://docs.example/localized"),
-        cache,
-        {},
-        Effect.succeed(
-          HttpServerResponse.text("localized", {
-            contentType: "text/html",
-            headers: { vary: "Accept-Language" },
-          }),
-        ),
-      ),
-    );
-    expect(localized.headers.get("x-effront-cache")).toBe("BYPASS");
-    expect(localized.headers.get("cache-control")).toBe("private, no-store");
-  });
-
-  it("fails open when Cloudflare Cache API reads or writes reject", async () => {
-    const matchFailure = new MemoryCache();
-    matchFailure.match = async () => Promise.reject(new Error("cache unavailable"));
-    const fromMiss = web(
-      await run(new Request("https://docs.example/match-failure"), matchFailure),
-    );
-    expect(fromMiss.headers.get("x-effront-cache")).toBe("MISS");
-    expect(await fromMiss.text()).toBe("rendered");
-
-    const putFailure = new MemoryCache();
-    putFailure.put = async () => Promise.reject(new Error("cache unavailable"));
-    const fromPut = web(await run(new Request("https://docs.example/put-failure"), putFailure));
-    expect(fromPut.headers.get("x-effront-cache")).toBe("MISS");
-    expect(await fromPut.text()).toBe("rendered");
-  });
-
-  it("fills only after a streamed response reaches EOF", async () => {
-    const cache = new MemoryCache();
-    const request = new Request("https://origin.example/stream?variant=eof");
-    const app = Effect.succeed(
-      HttpServerResponse.stream(Stream.fromIterable([new TextEncoder().encode("streamed")]), {
-        contentType: "text/html",
-      }),
-    );
-
-    const miss = web(await run(request, cache, {}, app));
-    expect(await miss.text()).toBe("streamed");
-    expect(cache.keys).toEqual([
-      "https://origin.example/__effront-response-cache/build-a/html/stream?variant=eof",
-    ]);
-
-    const hit = web(await run(request, cache, {}, Effect.die("must not render")));
-    expect(hit.headers.get("x-effront-cache")).toBe("HIT");
-    expect(await hit.text()).toBe("streamed");
-  });
-
-  it("does not cache a successful stream after React reports a deferred render error", async () => {
-    const cache = new MemoryCache();
-    const app = Effect.gen(function* () {
-      const observe = yield* RenderErrorObserver;
-      return HttpServerResponse.stream(
-        Stream.fromEffect(
-          Effect.sync(() => {
-            observe?.();
-            return new TextEncoder().encode("encoded error");
-          }),
-        ),
-        { contentType: "text/html" },
+describe("docs native cache header policy", () => {
+  for (const accept of ["text/html", "text/x-component"]) {
+    it(`opts public ${accept} into edge caching without changing the original response`, async () => {
+      const original = HttpServerResponse.text("rendered", {
+        contentType: `${accept}; charset=utf-8`,
+        headers: { "cache-control": "private, no-store", "x-origin": "preserved" },
+      });
+      const response = await run(
+        new Request("https://docs.example/guide", {
+          headers: { accept, "x-effront-build-id": "build-a" },
+        }),
+        Effect.succeed(original),
       );
+      expectPolicy(response, true);
+      expect(response.body).toBe(original.body);
+      expect(response.headers["x-origin"]).toBe("preserved");
+      expect(original.headers["cache-control"]).toBe("private, no-store");
+      expect(original.headers["cloudflare-cdn-cache-control"]).toBeUndefined();
+      expect(await HttpServerResponse.toWeb(response).text()).toBe("rendered");
     });
-    const response = web(
-      await run(new Request("https://docs.example/render-error"), cache, {}, app),
+  }
+
+  for (const buildId of [undefined, "previous-deployment"]) {
+    it(`rejects ${buildId ?? "missing"} Flight build ID before running the handler`, async () => {
+      const response = await run(
+        new Request("https://docs.example/guide", {
+          headers: {
+            accept: "text/x-component",
+            ...(buildId ? { "x-effront-build-id": buildId } : {}),
+          },
+        }),
+        Effect.die("handler must not run"),
+      );
+      expect(response.status).toBe(409);
+      expectPolicy(response, false);
+      expect(await HttpServerResponse.toWeb(response).text()).toBe("");
+    });
+  }
+
+  it.each(["text/x-component, text/html", "text/x-component; charset=utf-8", "TEXT/X-COMPONENT"])(
+    "does not apply the exact Flight guard to Accept %s",
+    async (accept) => {
+      const response = await run(
+        new Request("https://docs.example/guide", { headers: { accept } }),
+      );
+      expect(response.status).toBe(200);
+      expectPolicy(response, true);
+    },
+  );
+
+  it("development skips the build guard but disables both caches", async () => {
+    const response = await run(
+      new Request("https://docs.example/guide", { headers: { accept: "text/x-component" } }),
+      Effect.succeed(HttpServerResponse.text("flight", { contentType: "text/x-component" })),
+      true,
     );
-    expect(await response.text()).toBe("encoded error");
-    expect(cache.keys).toEqual([]);
+    expect(response.status).toBe(200);
+    expectPolicy(response, false);
   });
 
-  it("does not fill when a streamed response fails, cancels, or exceeds its bound", async () => {
-    const failingCache = new MemoryCache();
-    const failing = web(
-      await run(
-        new Request("https://docs.example/stream-failure"),
-        failingCache,
-        {},
-        Effect.succeed(
-          HttpServerResponse.stream(Stream.fail(new Error("render failed")), {
-            contentType: "text/html",
-          }),
-        ),
-      ),
-    );
-    await expect(failing.text()).rejects.toThrow("render failed");
-    expect(failingCache.keys).toEqual([]);
-
-    const cancelledCache = new MemoryCache();
-    const cancelled = web(
-      await run(
-        new Request("https://docs.example/stream-cancel"),
-        cancelledCache,
-        {},
-        Effect.succeed(HttpServerResponse.stream(Stream.never, { contentType: "text/html" })),
-      ),
-    );
-    await cancelled.body!.cancel();
-    expect(cancelledCache.keys).toEqual([]);
-
-    const oversizedCache = new MemoryCache();
-    const oversized = web(
-      await run(
-        new Request("https://docs.example/stream-large"),
-        oversizedCache,
-        { maxBodyBytes: 3 },
-        Effect.succeed(
-          HttpServerResponse.stream(Stream.succeed(new TextEncoder().encode("large")), {
-            contentType: "text/html",
-          }),
-        ),
-      ),
-    );
-    expect(await oversized.text()).toBe("large");
-    expect(oversizedCache.keys).toEqual([]);
+  it.each(["POST", "PUT", "PATCH", "DELETE", "HEAD"])("disables storage for %s", async (method) => {
+    expectPolicy(await run(new Request("https://docs.example/guide", { method })), false);
   });
 
-  it("bypasses the Cache API during development and skips bodies above the bound", async () => {
-    const cache = new MemoryCache();
-    expect(
-      web(
-        await run(new Request("https://docs.example/guide"), cache, { development: true }),
-      ).headers.get("x-effront-cache"),
-    ).toBe("BYPASS");
-    expect(cache.keys).toEqual([]);
-
-    const large = Effect.succeed(
-      HttpServerResponse.uint8Array(new Uint8Array(9), { contentType: "text/html" }),
+  it.each([
+    ["cookie", "session=private"],
+    ["cookie", ""],
+    ["authorization", "Bearer private"],
+    ["range", "bytes=0-10"],
+  ])("disables storage for request %s=%s", async (name, value) => {
+    expectPolicy(
+      await run(new Request("https://docs.example/guide", { headers: { [name]: value } })),
+      false,
     );
-    expect(
-      web(
-        await run(new Request("https://docs.example/large"), cache, { maxBodyBytes: 8 }, large),
-      ).headers.get("x-effront-cache"),
-    ).toBe("MISS");
-    expect(cache.keys).toEqual([]);
+  });
+
+  it.each([204, 206, 301, 302, 304, 404, 500])(
+    "disables storage for response status %s",
+    async (status) => {
+      const response = await run(
+        new Request("https://docs.example/guide"),
+        Effect.succeed(HttpServerResponse.text("not public", { status, contentType: "text/html" })),
+      );
+      expect(response.status).toBe(status);
+      expectPolicy(response, false);
+    },
+  );
+
+  it.each([
+    ["set-cookie", "session=private"],
+    ["content-range", "bytes 0-10/20"],
+    ["vary", "Accept-Language, *"],
+  ])("disables storage for response %s", async (name, value) => {
+    expectPolicy(
+      await run(
+        new Request("https://docs.example/guide"),
+        Effect.succeed(HttpServerResponse.setHeader(html(), name, value)),
+      ),
+      false,
+    );
+  });
+
+  it("respects native Effect cookies and preserves their serialization", async () => {
+    const original = HttpServerResponse.setCookieUnsafe(html(), "session", "private", {
+      httpOnly: true,
+    });
+    const response = await run(new Request("https://docs.example/guide"), Effect.succeed(original));
+    expectPolicy(response, false);
+    expect(response.cookies).toBe(original.cookies);
+    expect(HttpServerResponse.toWeb(response).headers.get("set-cookie")).toContain(
+      "session=private",
+    );
+  });
+
+  it("preserves other Vary dimensions while deduplicating required fields", async () => {
+    const response = await run(
+      new Request("https://docs.example/guide"),
+      Effect.succeed(
+        HttpServerResponse.setHeader(html(), "vary", "Accept-Language, ACCEPT, Cookie"),
+      ),
+    );
+    expectPolicy(response, true);
+    expect(response.headers["vary"]?.split(", ")).toEqual([
+      "accept-language",
+      "accept",
+      "cookie",
+      "authorization",
+      "x-effront-build-id",
+    ]);
+  });
+
+  it.each(["application/json", "text/plain", "text/html-other", "text/x-component"])(
+    "does not opt unexpected HTML-request content type %s into caching",
+    async (contentType) => {
+      expectPolicy(
+        await run(
+          new Request("https://docs.example/guide"),
+          Effect.succeed(HttpServerResponse.text("other", { contentType })),
+        ),
+        false,
+      );
+    },
+  );
+
+  it("does not cache HTML returned to a Flight request", async () => {
+    expectPolicy(
+      await run(
+        new Request("https://docs.example/guide", {
+          headers: { accept: "text/x-component", "x-effront-build-id": "build-a" },
+        }),
+      ),
+      false,
+    );
+  });
+
+  it("leaves a pending body stream untouched instead of collecting it", async () => {
+    const original = HttpServerResponse.stream(Stream.never, { contentType: "text/html" });
+    const response = await run(
+      new Request("https://docs.example/stream"),
+      Effect.succeed(original),
+    );
+    expectPolicy(response, true);
+    expect(response.body).toBe(original.body);
+  });
+
+  it("preserves stream bytes without wrapping the stream", async () => {
+    const original = HttpServerResponse.stream(
+      Stream.fromIterable([new TextEncoder().encode("first"), new TextEncoder().encode("second")]),
+      { contentType: "text/html" },
+    );
+    const response = await run(
+      new Request("https://docs.example/stream"),
+      Effect.succeed(original),
+    );
+    expect(response.body).toBe(original.body);
+    expect(await HttpServerResponse.toWeb(response).text()).toBe("firstsecond");
+  });
+
+  it("preserves streamed failures", async () => {
+    const original = HttpServerResponse.stream(Stream.fail(new Error("render failed")), {
+      contentType: "text/html",
+    });
+    const response = await run(
+      new Request("https://docs.example/stream"),
+      Effect.succeed(original),
+    );
+    expect(response.body).toBe(original.body);
+    await expect(HttpServerResponse.toWeb(response).text()).rejects.toThrow("render failed");
+  });
+
+  it("propagates handler failures", async () => {
+    await expect(
+      run(new Request("https://docs.example/guide"), Effect.fail(new Error("handler failed"))),
+    ).rejects.toThrow("handler failed");
   });
 });

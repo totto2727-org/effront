@@ -108,53 +108,55 @@ Caching is explicitly enabled by the docs Worker, not by the general-purpose Eff
 Core applications retain `Cache-Control: private, no-store` unless they implement their own policy.
 The docs site is public and request-independent: introducing authentication, cookies, experiments, or other personalized rendering requires revisiting this opt-in policy before deployment.
 
-### Edge storage and browser freshness
+### Native Workers Cache and browser freshness
 
-The Worker uses Cloudflare's actual Cache API rather than assuming a response header will cache HTML or Flight.
-Each synthetic cache URL includes the current Worker build ID, the exact HTML/Flight representation, the original origin, pathname, and full query string.
-Locale prefixes and query variants remain separate, and `Vary: Accept` is retained for HTTP clients but is not the edge key.
-Only successful public GET responses are eligible; POST, HEAD, credentials, cookies, range requests, errors, redirects, and responses setting cookies bypass shared storage.
+`src/entry.workers.ts` enables Cloudflare's [Workers Cache](https://developers.cloudflare.com/workers/cache/) with Alchemy's native `cache: { enabled: true }` option.
+The installed Alchemy provider forwards this to the Worker version's `cacheOptions` metadata; no Cache Rules, custom cache store, `caches.default`, or response buffering is needed.
+Cloudflare serves cache hits before executing the Worker, using tiered caching and request collapsing.
+Workers Cache is distinct from both zone caching and the older Workers Cache API.
 
-Stored entries request a one-year edge TTL.
-Responses at the public URL use `public, max-age=0, must-revalidate`, without a long `s-maxage` that could let an intermediary retain an old deployment at that fixed URL.
-The browser therefore returns to the Worker, which can answer from the edge cache without rendering or parsing again.
-This still invokes the Worker for cache lookup, and the Cache API is local to each Cloudflare data center, not a globally replicated or guaranteed-retention store.
-Eviction or cache I/O failure falls back to normal rendering.
-`x-effront-cache: MISS`, `HIT`, or `BYPASS` and `x-effront-build-id` expose the selected behavior for operational checks.
+The docs response policy uses native Effect HTTP header transforms:
 
-Cache fills retain at most 2 MiB per streamed response while preserving the original Effect response lifetime.
-An entry is written only after successful stream completion; failed, cancelled, or oversized streams are not retained.
-The request-local `RenderErrorObserver` also prevents caching when React encodes a render error inside an otherwise successful HTTP 200 stream.
-Do not replace this with an unscoped `Response.clone()` background reader: it can outlive the rendering services after the client's response closes.
-Hash-named `/assets/*` resources have a separate one-year `immutable` policy via the site's `_headers` file.
+- `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
+- `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
+- `Vary: Accept, Cookie, Authorization, X-Effront-Build-Id` partitions HTML/Flight and prevents a public cache hit from bypassing credential checks or the old-client guard.
+
+Workers Cache explicitly honors `Vary`, unlike assumptions made about zone caching.
+Its default key includes the path, full query string and Worker version, so `/en`, `/ja`, query variants and deployments are isolated without synthetic URLs or a purge job.
+Do not enable cross-version caching.
+The request hostname is not part of the native key; this site must continue to render the same public content across its hostnames.
+
+Only public GET 200 HTML/Flight responses opt into the long edge TTL.
+Development, credential-bearing requests, cookie-setting responses, non-200 responses and non-GET methods receive `private, no-store` in both cache-control headers.
+Cloudflare can satisfy HEAD and Range from a cached GET itself; these do not imply execution of the origin's HEAD/Range branch.
+HTTP caching does not inspect React's serialized payload: a render error encoded inside a normally completed HTTP 200 can be cached.
+This policy does not add a core rendering observer or claim to exclude such application-level errors; verify authored pages before deployment and roll out a corrected version if necessary.
+Response streams and their Effect scopes remain unchanged.
+Hash-named `/assets/*` resources retain their one-year `immutable` policy via `_headers`.
+
+Enabling Workers Cache changes billing: cache hits consume no Worker CPU, but all requests, including static assets, are billed at the standard Workers request rate.
+See [Workers Cache pricing](https://developers.cloudflare.com/workers/cache/#pricing) before enabling the production deployment.
 
 ### Deployment generations and already-open tabs
 
-The Vite configuration generates one build ID for all environment graphs.
-An optional `EFFRONT_BUILD_ID` can identify an externally versioned build, but must never be reused for different content, renderer settings, or client assets.
-A new build changes the namespace immediately without relying on a CDN purge; old entries can expire naturally.
-Development bypasses response caching and the deployment guard so HMR remains active.
+Cloudflare isolates each deployed Worker version automatically.
+The separate Vite build ID exists only for client/Flight compatibility, not for cache storage.
+An optional `EFFRONT_BUILD_ID` must never be reused for different content or client assets.
+HTML advertises that ID in `meta[name="effront-build-id"]`; the Flight client captures it once and sends `x-effront-build-id` on subsequent requests.
+Missing or mismatched production Flight tokens receive `409` and `private, no-store`; the existing navigation fallback reloads the document before decoding Flight.
+Including the token in `Vary` prevents the pre-Worker cache from returning a different client's compatible response instead of this rejection.
+Server Function requests are not cached or automatically replayed.
+Development disables the policy and guard so edits remain visible.
 
-HTML advertises the ID in `meta[name="effront-build-id"]`.
-Effront's browser Flight client captures that initial value once and includes `x-effront-build-id` on subsequent requests.
-In production, missing or mismatched Flight tokens receive `409` with `private, no-store` before either a cache lookup or rendering.
-The existing navigation fallback performs a full document navigation before decoding that Flight response.
-This also protects tabs opened before the build-token feature was deployed.
-Server Function failures are not automatically replayed as navigation or retried, and never enter the public GET cache.
+Deploy all Worker graphs and matching assets together.
+The Flight guard does not solve initial HTML/asset races during multi-version gradual rollouts; those still require [version affinity and matching static assets](https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/version-affinity/#static-assets).
 
-Deploy all Worker graphs and their matching assets together.
-The build guard protects subsequent Flight navigation, not an initial HTML/asset race during a multi-version gradual rollout.
-Do not enable traffic-split deployments without configuring Cloudflare version affinity and retaining the corresponding assets.
-After deployment, verify the returned build ID changes and repeat both HTML and Flight requests in the target data center to observe MISS then HIT.
-The local workerd acceptance suite checks the same Worker and Cache API path without deploying, but cannot establish production routing, asset headers, or cache retention on its own.
+The authentication-free local acceptance host verifies real rendered HTML/Flight, outgoing policy headers, navigation, and static asset headers, not the managed Cloudflare cache in front of the Worker.
+After an authorized deployment, repeat HTML and Flight GETs and inspect Cloudflare's `Cf-Cache-Status: MISS` then `HIT`, correct content types and bodies, and the absence of the consumed `Cloudflare-CDN-Cache-Control` header.
+Repeat with credentials and a missing/stale Flight token, then deploy changed content and verify the new article and an already-open tab.
+These production cache and deployment-transition observations are not established by local tests.
 
-Official platform references:
-
-- [Cloudflare Cache API](https://developers.cloudflare.com/workers/runtime-apis/cache/)
-- [Cache topology and invalidation](https://developers.cloudflare.com/workers/reference/how-the-cache-works/)
-- [Worker and Cache API limits](https://developers.cloudflare.com/workers/platform/limits/)
-- [Static asset response headers](https://developers.cloudflare.com/workers/static-assets/headers/)
-- [Static assets and gradual rollouts](https://developers.cloudflare.com/workers/static-assets/routing/advanced/gradual-rollouts/)
+Official specifications: [configuration and header precedence](https://developers.cloudflare.com/workers/cache/configuration/), [cache keys and version isolation](https://developers.cloudflare.com/workers/cache/cache-keys/), [limitations](https://developers.cloudflare.com/workers/cache/limitations/), and [static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/).
 
 ## Consumer compatibility and public packages
 
@@ -172,7 +174,7 @@ Vercel and AWS adapters remain deferred.
 ## Architecture source baseline
 
 Keep implementation excerpts in JSX with their exact-string and historical-baseline contract.
-The source of truth is `src/content/architecture-baseline.ts`: core version `0.1.4`, commit `897b0ff62c1e0f40b5d94b9ce79c2df766b166f3`, reviewed `2026-09-24`.
+The source of truth is `src/content/architecture-baseline.ts`: core version `0.1.1`, commit `8744ecb236cb4c815c3a0c208e02200f4eeeb3f8`, reviewed `2026-09-16`.
 This identifies the source selections, not the latest documentation commit or current npm release.
 
 `core.test.tsx` compares every selection with both the current source and the historical Git object, including the baseline package version.

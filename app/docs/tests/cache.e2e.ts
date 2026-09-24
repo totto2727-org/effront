@@ -2,121 +2,73 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { buildHeaders } from "./cache-headers";
 
-// These probes go through the built Alchemy Worker and workerd's real Cache API.
-// A fresh build ID isolates each run from persistent local cache data.
+// Local workerd validates the origin policy, not native Workers Cache HIT behavior.
+// Native caching runs before the Worker and requires a real deployment to verify
+// HITs, exact Vary partitioning, and version isolation. Cloudflare strips its CDN
+// header on egress, while this local origin exposes it for policy assertions.
+const expectPolicy = (headers: Record<string, string>, publicResponse: boolean) => {
+  expect(headers["cache-control"]).toBe(
+    publicResponse ? "public, max-age=0, must-revalidate" : "private, no-store",
+  );
+  expect(headers["cloudflare-cdn-cache-control"]).toBe(
+    publicResponse ? "public, max-age=31536000" : "private, no-store",
+  );
+  expect(headers["x-effront-build-id"]).toBeTruthy();
+  expect(headers["vary"]?.toLowerCase().split(/\s*,\s*/)).toEqual(
+    expect.arrayContaining(["accept", "cookie", "authorization", "x-effront-build-id"]),
+  );
+};
+
 for (const locale of ["en", "ja"]) {
   for (const accept of ["text/html", "text/x-component"]) {
-    test(`edge cache reuses complete ${locale} ${accept} bytes`, async ({ request }) => {
-      const headers = { ...(await buildHeaders(request)), Accept: accept };
-      const path = `/${locale}/guide/markdown?cache-contract=bytes`;
-      const first = await request.get(path, { headers });
-      expect(first.status()).toBe(200);
-      expect(first.headers()["x-effront-cache"]).toBe("MISS");
-      expect(first.headers()["content-type"]).toContain(accept);
-      expect(first.headers()["cache-control"]).toContain("max-age=0");
-      expect(first.headers()["cache-control"]).toContain("must-revalidate");
-      expect(first.headers()["vary"]?.toLowerCase()).toContain("accept");
-      const bytes = await first.body();
-      expect(bytes.length).toBeGreaterThan(100);
-
-      await expect
-        .poll(async () => {
-          const response = await request.get(path, { headers });
-          expect(response.headers()["content-type"]).toContain(accept);
-          expect(await response.body()).toEqual(bytes);
-          return response.headers()["x-effront-cache"];
-        })
-        .toBe("HIT");
-    });
+    for (const query of ["one", "two"]) {
+      test(`origin serves ${locale} ${accept} with public policy for query ${query}`, async ({
+        request,
+      }) => {
+        const headers = { ...(await buildHeaders(request)), Accept: accept };
+        const response = await request.get(`/${locale}/guide/markdown?cache-contract=${query}`, {
+          headers,
+        });
+        expect(response.status()).toBe(200);
+        expect(response.headers()["content-type"]).toContain(accept);
+        expectPolicy(response.headers(), true);
+        const body = await response.text();
+        expect(body).toContain(`/${locale}/guide/markdown`);
+        if (accept === "text/html") expect(body).toContain(`lang="${locale}"`);
+        else expect(body).not.toContain("<!DOCTYPE html>");
+      });
+    }
   }
 }
 
-test("alternating HTML, Flight and locales cannot reuse the other representation", async ({
-  request,
-}) => {
-  const token = await buildHeaders(request);
-  const variants = [
-    { locale: "en", accept: "text/html" },
-    { locale: "ja", accept: "text/x-component" },
-    { locale: "en", accept: "text/x-component" },
-    { locale: "ja", accept: "text/html" },
-  ];
-  const bodies = new Map<string, string>();
-  for (const round of [0, 1]) {
-    for (const { locale, accept } of variants) {
-      const key = `${locale}:${accept}`;
-      const response = await request.get(
-        `/${locale}/guide/getting-started?cache-contract=alternating`,
-        {
-          headers: { ...token, Accept: accept },
-        },
-      );
-      expect(response.status()).toBe(200);
-      expect(response.headers()["content-type"]).toContain(accept);
-      const body = await response.text();
-      // Both formats contain locale-specific route metadata, not just translated prose.
-      expect(body).toContain(`/${locale}/guide/getting-started`);
-      if (accept === "text/html") expect(body).toContain(`lang="${locale}"`);
-      if (round === 0) bodies.set(key, body);
-      else expect(body).toBe(bodies.get(key));
-    }
-  }
-  expect(bodies.get("en:text/html")).not.toBe(bodies.get("ja:text/html"));
-  expect(bodies.get("en:text/x-component")).not.toBe(bodies.get("ja:text/x-component"));
-});
-
-test("query variants have separate edge entries", async ({ request }) => {
-  const headers = { ...(await buildHeaders(request)), Accept: "text/html" };
-  for (const query of ["one", "two"]) {
-    const response = await request.get(`/en/guide/routes?cache-contract=query&value=${query}`, {
-      headers,
-    });
-    expect(response.status()).toBe(200);
-    expect(response.headers()["x-effront-cache"]).toBe("MISS");
-    await response.body();
-  }
-});
-
 for (const buildId of [undefined, "previous-deployment"]) {
-  test(`Flight with ${buildId ?? "missing"} build token is rejected before cache lookup`, async ({
-    request,
-  }) => {
-    const path = `/en/guide/markdown?cache-contract=guard-${buildId ?? "missing"}`;
-    await request.get(path, {
-      headers: { ...(await buildHeaders(request)), Accept: "text/x-component" },
-    });
-    const response = await request.get(path, {
+  test(`origin rejects Flight with ${buildId ?? "missing"} build token`, async ({ request }) => {
+    const response = await request.get("/en/guide/markdown", {
       headers: {
         Accept: "text/x-component",
         ...(buildId ? { "x-effront-build-id": buildId } : {}),
       },
     });
     expect(response.status()).toBe(409);
-    expect(response.headers()["cache-control"]).toBe("private, no-store");
-    expect(response.headers()["x-effront-cache"]).not.toBe("HIT");
+    expectPolicy(response.headers(), false);
     expect(response.headers()["content-type"]).toBeUndefined();
     expect(await response.body()).toHaveLength(0);
   });
 }
 
 for (const name of ["Cookie", "Authorization"]) {
-  test(`private request bypasses a warmed public entry (${name})`, async ({ request }) => {
+  test(`origin marks ${name} requests private`, async ({ request }) => {
     const headers = { [name]: name === "Cookie" ? "session=private" : "Bearer private" };
-    const path = "/en/guide/markdown?cache-contract=private";
-    await request.get(path);
-    const response = await request.get(path, { headers });
+    const response = await request.get("/en/guide/markdown", { headers });
     expect(response.status()).toBe(200);
-    expect(response.headers()["x-effront-cache"]).toBe("BYPASS");
-    expect(response.headers()["cache-control"]).toBe("private, no-store");
+    expectPolicy(response.headers(), false);
   });
 }
 
-test("POST cannot read a warmed document cache", async ({ request }) => {
-  const path = "/en/guide/markdown?cache-contract=post";
-  await request.get(path);
-  const response = await request.post(path, { data: "not-a-server-function" });
-  expect(response.headers()["x-effront-cache"]).not.toBe("HIT");
+test("origin marks invalid POST private", async ({ request }) => {
+  const response = await request.post("/en/guide/markdown", { data: "not-a-server-function" });
   expect(response.status()).not.toBe(200);
+  expectPolicy(response.headers(), false);
 });
 
 test("a tab from another deployment performs a document navigation before Flight decoding", async ({

@@ -57,8 +57,7 @@ export const coreRuntimeSources = {
   flightRuntime: {
     path: "packages/core/src/server/flight-renderer.tsx",
     language: "tsx",
-    code: `        const onRenderError = yield* RenderErrorObserver;
-        const parentScope = yield* Effect.scope;
+    code: `        const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
         const release = Scope.close(renderScope, Exit.void);
         return yield* Effect.gen(function* () {
@@ -73,7 +72,6 @@ export const coreRuntimeSources = {
             const payload = { formState, routeTree, serverFnResult } satisfies FlightPayload;
             return renderToReadableStream(payload, {
               onError: (error: unknown) => {
-                onRenderError?.();
                 if (!signal.aborted) {
                   void runtime(Effect.logError(error));
                 }
@@ -427,10 +425,6 @@ export const coreRuntimePages: readonly DocPage[] = [
           <code>Stream.ensuring(flight.release)</code>{" "}
           を付け、HTML開始時の失敗でもFlightを解放します。 Flight開始時の失敗も子Scopeを閉じます。
           Reactのエラーは、signalがabortされていなければ実行関数を通して記録します。
-          RSCとHTMLのレンダラーは、任意のリクエスト単位の <code>RenderErrorObserver</code>{" "}
-          にも同期的に通知します。HTTP
-          200の正常終了ストリームへ埋め込まれたReactエラーも検知できるため、
-          ホスト側のキャッシュはその描画結果を保存対象から除外できます。通知関数はペイロードへ含めません。
           HTMLの読み込みや開始時の失敗は <code>HtmlRenderError</code>{" "}
           になり、その後の失敗は応答本文を通して伝わります。
         </p>
