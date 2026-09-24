@@ -169,6 +169,7 @@ export const installCallServer = Effect.gen(function* () {
     id: string,
     args: ReadonlyArray<unknown>,
     invocationResult: PromiseWithResolvers<unknown>,
+    kind: "Query" | "Stream",
   ) {
     const temporaryReferences = createTemporaryReferenceSet();
     const signal = yield* Effect.abortSignal;
@@ -191,8 +192,16 @@ export const installCallServer = Effect.gen(function* () {
         new Error("A query response cannot request document navigation."),
       );
     }
-    settleInvocation(invocationResult, resource.payload);
-    yield* resource.completed.pipe(Effect.ensuring(resource.release));
+    if (kind === "Stream") {
+      settleInvocation(invocationResult, resource.payload);
+    }
+    yield* resource.completed.pipe(
+      Effect.mapError((error) => transportError(error.cause)),
+      Effect.ensuring(resource.release),
+    );
+    if (kind === "Query") {
+      settleInvocation(invocationResult, resource.payload);
+    }
   });
 
   yield* Effect.sync(() => {
@@ -202,7 +211,9 @@ export const installCallServer = Effect.gen(function* () {
       let operation =
         query === null
           ? callServer(id, args, invocationResult).pipe(Effect.mapError(invocationError))
-          : callQuery(id, query.args, invocationResult).pipe(Effect.mapError(invocationError));
+          : callQuery(id, query.args, invocationResult, query._tag).pipe(
+              Effect.mapError(invocationError),
+            );
       if (query?._tag === "Stream") {
         const completed = query.completed;
         operation = operation.pipe(

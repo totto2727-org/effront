@@ -10,7 +10,7 @@ import { FlightClient, FlightLoadError } from "../../src/client/flight-client";
 import { NavigationApi } from "../../src/client/navigation-api";
 import { RouteLoader } from "../../src/client/route-loader";
 import { RouteRefresher } from "../../src/client/route-refresh";
-import { stream } from "../../src/client/query";
+import { query, stream } from "../../src/client/query";
 import { ServerFnTransportError } from "../../src/rsc/server-fn-error";
 import type { FlightPayload } from "../../src/rsc/flight";
 import type { RouteTreeModel } from "../../src/rsc/route-tree";
@@ -195,6 +195,93 @@ for (const outcome of ["Success", "TransportFailure", "EarlyStop"] as const) {
             );
             expect(yield* Effect.flip(Fiber.join(consumer))).toBeInstanceOf(ServerFnTransportError);
           }
+        }
+        yield* Deferred.await(released);
+        expect(releaseCount).toBe(1);
+      }).pipe(
+        Effect.provideService(
+          HttpClient.HttpClient,
+          HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
+        ),
+      ),
+    ),
+  );
+}
+
+for (const outcome of ["Success", "LateTransportFailure"] as const) {
+  it.effect(`settles a value query only after full Flight ${outcome}`, () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const started = yield* Deferred.make<void>();
+        const completed = yield* Deferred.make<void, FlightLoadError>();
+        const released = yield* Deferred.make<void>();
+        let releaseCount = 0;
+        yield* listen(
+          Layer.mergeAll(
+            BrowserEffectRunner.layer,
+            BrowserRenderer.layerTest({
+              commit: () => undefined,
+              initialize: () => undefined,
+              navigate: () => {
+                throw new TypeError("Unexpected navigation render.");
+              },
+              refresh: () => {
+                throw new TypeError("Queries must not refresh routes.");
+              },
+            }),
+            NavigationApi.layerTest({
+              getCurrentEntry: () => firstEntry,
+              getCurrentUrl: () => firstEntry.url,
+              getTransition: () => null,
+              navigate: () => {
+                throw new TypeError("Unexpected navigation.");
+              },
+              reloadDocument: () => undefined,
+              replaceDocument: () => undefined,
+              subscribe: () => () => undefined,
+            }),
+            FlightClient.layerTest({
+              loadQuery: () =>
+                Deferred.succeed(started, undefined).pipe(
+                  Effect.as({
+                    _tag: "Query" as const,
+                    completed: Deferred.await(completed),
+                    payload: { _tag: "Success" as const, value: "card" },
+                    release: Effect.sync(() => {
+                      releaseCount += 1;
+                    }).pipe(Effect.andThen(Deferred.succeed(released, undefined))),
+                  }),
+                ),
+            }),
+            RouteLoader.layerTest({
+              invalidate: () => undefined,
+              prepareRefresh: () => () => undefined,
+            }),
+            RouteRefresher.layerTest({}),
+          ),
+        );
+        const read = query(
+          (...args: ReadonlyArray<unknown>) => invokeServerFn("value", args) as Promise<string>,
+        );
+        const consumer = yield* read().pipe(Effect.forkScoped);
+        yield* Deferred.await(started);
+        yield* Effect.yieldNow;
+        expect(consumer.pollUnsafe()).toBeUndefined();
+        expect(releaseCount).toBe(0);
+        if (outcome === "Success") {
+          yield* Deferred.succeed(completed, undefined);
+          expect(yield* Fiber.join(consumer)).toBe("card");
+        } else {
+          yield* Deferred.fail(
+            completed,
+            new FlightLoadError({
+              cause: new Error("lost after initial model"),
+              reason: "RequestFailed",
+            }),
+          );
+          const error = yield* Effect.flip(Fiber.join(consumer));
+          expect(error).toBeInstanceOf(ServerFnTransportError);
+          expect(error.detail?.message).toContain("lost after initial model");
         }
         yield* Deferred.await(released);
         expect(releaseCount).toBe(1);
