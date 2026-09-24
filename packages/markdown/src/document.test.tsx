@@ -20,11 +20,12 @@ const render = async (
   components?: MarkdownDocumentProps["components"],
 ) => {
   const value = await Effect.runPromise(parseMarkdown(entry(content)));
-  return new Response(
-    await renderToReadableStream(
-      <MarkdownDocument className={className} components={components} value={value} />,
-    ),
-  ).text();
+  const documentProps = {
+    value,
+    ...(className ? { className } : {}),
+    ...(components ? { components } : {}),
+  };
+  return new Response(await renderToReadableStream(<MarkdownDocument {...documentProps} />)).text();
 };
 
 describe("MarkdownDocument", () => {

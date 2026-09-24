@@ -31,9 +31,8 @@ function isolateSvg(svg: string, prefix: string) {
     return ` id="${isolated}"`;
   });
   return withIsolatedIds.replace(
-    /(marker-(?:start|end)="?)url\(#([^)]+)\)/g,
-    (_, attribute: string, id: string) =>
-      ids.has(id) ? `${attribute}url(#${ids.get(id)})` : `${attribute}url(#${id})`,
+    /\s(marker-(?:start|end))="url\(#([^)]+)\)"/g,
+    (_, attribute: string, id: string) => ` ${attribute}="url(#${ids.get(id) ?? id})"`,
   );
 }
 

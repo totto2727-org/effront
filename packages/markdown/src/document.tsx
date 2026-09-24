@@ -15,12 +15,18 @@ export type { MarkdownDocumentProps } from "@comark/react/components/MarkdownDoc
  * so server HTML and pages loaded without JavaScript contain their documented loading placeholders.
  */
 export function MarkdownDocument({ className, components, ...props }: MarkdownDocumentProps) {
+  const hasOverride = (name: "Math" | "Mermaid") =>
+    Boolean(components?.[`Prose${name}`] ?? components?.[name.toLowerCase()] ?? components?.[name]);
+  const defaults = {
+    ...(hasOverride("Math") ? {} : { Math: MarkdownMath }),
+    ...(hasOverride("Mermaid") ? {} : { Mermaid: MarkdownMermaid }),
+  };
   const rendererProps = {
     ...props,
     ...(className
       ? { className: ["effront-markdown", className].join(" ") }
       : { className: "effront-markdown" }),
-    components: { Math: MarkdownMath, Mermaid: MarkdownMermaid, ...components },
+    components: { ...defaults, ...components },
   } as MarkdownDocumentProps;
   return <ComarkMarkdownDocument {...rendererProps} />;
 }

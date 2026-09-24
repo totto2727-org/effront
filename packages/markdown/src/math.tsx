@@ -13,9 +13,9 @@ export function MarkdownMath({ content, className = "" }: MarkdownMathProps) {
   const isInline = className.includes("inline");
   const [html, setHtml] = useState("...");
 
+  // oxlint-disable react(set-state-in-effect)
   useEffect(() => {
     try {
-      // oxlint-disable-next-line react(set-state-in-effect)
       setHtml(katex.renderToString(content, { displayMode: !isInline, throwOnError: true }));
     } catch {
       setHtml("...");
