@@ -65,7 +65,9 @@ describe("MarkdownDocument", () => {
 
   it("renders entirely server-side rich-component replacements without configured leaves", async () => {
     const html = await render("$x$\n\n```mermaid\nflowchart LR\n  A --> B\n```", undefined, {
-      ProseMath: ({ content }: { content: string }) => <output data-server-math="">{content}</output>,
+      ProseMath: ({ content }: { content: string }) => (
+        <output data-server-math="">{content}</output>
+      ),
       ProseMermaid: () => <output data-server-mermaid="">Diagram</output>,
     });
     expect(html).toContain('<output data-server-math="">x</output>');
