@@ -15,6 +15,7 @@ export function MarkdownMath({ content, className = "" }: MarkdownMathProps) {
 
   useEffect(() => {
     try {
+      // oxlint-disable-next-line react(set-state-in-effect)
       setHtml(katex.renderToString(content, { displayMode: !isInline, throwOnError: true }));
     } catch {
       setHtml("...");
@@ -22,5 +23,10 @@ export function MarkdownMath({ content, className = "" }: MarkdownMathProps) {
   }, [content, isInline]);
 
   const Element = isInline ? "span" : "div";
-  return <Element className={`math ${isInline ? "inline" : "block"}`} dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <Element
+      className={`math ${isInline ? "inline" : "block"}`}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }

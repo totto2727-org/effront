@@ -1,20 +1,21 @@
-import { cpSync, readFileSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { cpSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
 
 const packageRoot = resolve(fileURLToPath(new URL(".", import.meta.url)));
-const katexFonts = resolve(packageRoot, "node_modules/katex/dist/fonts");
+const require = createRequire(import.meta.url);
+const katexRoot = dirname(require.resolve("katex/package.json"));
+const katexFonts = resolve(katexRoot, "dist/fonts");
+const katexLicense = resolve(katexRoot, "LICENSE");
 
 const katexFontAssets = {
   name: "effront-markdown-katex-fonts",
   closeBundle() {
-    cpSync(katexFonts, resolve(packageRoot, "dist/fonts"), { recursive: true });
-  },
-  generateBundle() {
-    for (const font of readdirSync(katexFonts)) {
-      this.emitFile({ fileName: `fonts/${font}`, source: readFileSync(resolve(katexFonts, font)), type: "asset" });
-    }
+    const dist = resolve(packageRoot, "dist");
+    cpSync(katexFonts, resolve(dist, "fonts"), { recursive: true });
+    cpSync(katexLicense, resolve(dist, "KaTeX-LICENSE"));
   },
 };
 

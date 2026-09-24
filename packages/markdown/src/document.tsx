@@ -14,16 +14,13 @@ export type { MarkdownDocumentProps } from "@comark/react/components/MarkdownDoc
  * Math and Mermaid are interactive Comark components. Their output is populated after hydration,
  * so server HTML and pages loaded without JavaScript contain their documented loading placeholders.
  */
-export function MarkdownDocument({
-  className,
-  components,
-  ...props
-}: MarkdownDocumentProps) {
-  return (
-    <ComarkMarkdownDocument
-      {...props}
-      className={["effront-markdown", className].filter(Boolean).join(" ") || undefined}
-      components={{ Math: MarkdownMath, Mermaid: MarkdownMermaid, ...components }}
-    />
-  );
+export function MarkdownDocument({ className, components, ...props }: MarkdownDocumentProps) {
+  const rendererProps = {
+    ...props,
+    ...(className
+      ? { className: ["effront-markdown", className].join(" ") }
+      : { className: "effront-markdown" }),
+    components: { Math: MarkdownMath, Mermaid: MarkdownMermaid, ...components },
+  } as MarkdownDocumentProps;
+  return <ComarkMarkdownDocument {...rendererProps} />;
 }

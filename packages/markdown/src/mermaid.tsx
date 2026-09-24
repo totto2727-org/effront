@@ -20,14 +20,17 @@ function themeFor(name: string | undefined, fallback: "tokyo-night-light" | "tok
 function isolateSvg(svg: string, prefix: string) {
   const ids = new Map<string, string>();
   const withoutStyles = svg.replace(/<style\b[^>]*>[\s\S]*?<\/style>/g, "");
-  if (/<style\b/i.test(withoutStyles)) throw new Error("Mermaid output contains an unsupported style block");
+  if (/<style\b/i.test(withoutStyles))
+    throw new Error("Mermaid output contains an unsupported style block");
   const withIsolatedIds = withoutStyles.replace(/\sid="([^"]+)"/g, (_, id: string) => {
     const isolated = `${prefix}-${id}`;
     ids.set(id, isolated);
     return ` id="${isolated}"`;
   });
-  return withIsolatedIds.replace(/(marker-(?:start|end)="?)url\(#([^)]+)\)/g, (_, attribute: string, id: string) =>
-    ids.has(id) ? `${attribute}url(#${ids.get(id)})` : `${attribute}url(#${id})`,
+  return withIsolatedIds.replace(
+    /(marker-(?:start|end)="?)url\(#([^)]+)\)/g,
+    (_, attribute: string, id: string) =>
+      ids.has(id) ? `${attribute}url(#${ids.get(id)})` : `${attribute}url(#${id})`,
   );
 }
 
@@ -52,6 +55,7 @@ export function MarkdownMermaid({
   const [error, setError] = useState<string>();
   const [isDark, setIsDark] = useState(false);
 
+  // oxlint-disable react(set-state-in-effect)
   useEffect(() => {
     const html = document.documentElement;
     const update = () => setIsDark(html.classList.contains("dark"));
@@ -61,6 +65,7 @@ export function MarkdownMermaid({
     return () => observer.disconnect();
   }, []);
 
+  // oxlint-disable react(set-state-in-effect)
   useEffect(() => {
     try {
       setSvg(
@@ -68,7 +73,7 @@ export function MarkdownMermaid({
           renderMermaidSVG(
             content,
             themeFor(
-              isDark ? themeDark ?? themeDarkAttribute : theme,
+              isDark ? (themeDark ?? themeDarkAttribute) : theme,
               isDark ? "tokyo-night" : "tokyo-night-light",
             ),
           ),
