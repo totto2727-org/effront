@@ -115,7 +115,6 @@ The upstream CLI, Bun server/filesystem hosting, Rspack build machinery, develop
 Git preserves their history.
 The original Workers milestone did not deliver Node/Bun adapters or establish their compatibility.
 The subsequent `@effront/server` package hosts native Effect HTTP separately and is not validated by the Workers evidence.
-The later `@effront/vercel` adapter packages Vite output for a Node.js Vercel function; it does not restore the original Bun/Rspack adapter, and hosted deployment is not established by these Workers checks.
 D1, KV, R2, authentication integrations, and production deployment were outside that original milestone.
 
 ## Official references

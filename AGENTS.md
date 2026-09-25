@@ -45,7 +45,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 - Core exposes host-neutral native Effect HTTP and a compatibility Web Fetch boundary. Provider-specific code belongs in adapters, never core.
 - Keep browser, RSC, SSR, and tooling graphs explicit. Only RSC resolves `react-server`; Cloudflare hosts execute RSC and SSR in workerd without Node fallback, while `@effront/server` executes separate RSC and SSR graphs in Node or Bun.
 - Scope application services to a request and retain their lifetimes through response completion, error, or cancellation. Never implicitly serialize host bindings or execution context into Flight/HTML.
-- Preserve native React RSC and Server Function protocols. Native Node/Bun hosting belongs in `@effront/server`; the Vite-native Vercel Build Output adapter lives in `@effront/vercel`, while AWS hosting remains deferred. Do not restore the removed upstream Bun/Rspack runtime or imply unverified deployment behavior.
+- Preserve native React RSC and Server Function protocols. Native Node/Bun hosting belongs in `@effront/server`; AWS/Vercel hosting remains deferred. Do not restore the removed upstream Bun/Rspack runtime or imply unverified runtime behavior.
 
 ## Development tools
 
