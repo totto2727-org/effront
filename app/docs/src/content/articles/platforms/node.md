@@ -1,6 +1,3 @@
-まずは[最小構成の Node.js サンプル](https://github.com/totto2727-org/effront/tree/main/examples/node)または `vp create effront -- my-app --platform node` から始められます。
-ナビゲーションやカウンターなど一画面の構成を超える機能は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic) を参照してください。以前の高機能な Node.js アプリケーションは[サーバーテスト専用の fixture](https://github.com/totto2727-org/effront/tree/main/tests/e2e-server/fixtures/node)として保持しています。
-
 ## サンプルを起動する {#setup}
 
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールします。

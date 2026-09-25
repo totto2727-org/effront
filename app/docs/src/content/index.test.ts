@@ -475,7 +475,7 @@ describe("documentation catalog", () => {
   });
 
   it.each(["en", "ja"] as const)(
-    "links runnable platform examples without fixing Vite development ports in %s",
+    "checks generated platform guides without fixing Vite development ports in %s",
     async (locale) => {
       const repository = new URL("../../../../", import.meta.url);
       for (const [slug, example] of [
@@ -499,9 +499,6 @@ describe("documentation catalog", () => {
           );
           expect(html).toContain('href="http://127.0.0.1:8787"');
         }
-        expect(html).toContain(
-          `href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"`,
-        );
         for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
           expect(prose).toContain(file);
           expect(readFileSync(new URL(`examples/${example}/${file}`, repository), "utf8")).not.toBe(

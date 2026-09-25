@@ -1,6 +1,3 @@
-まずは[最小構成の単独 Cloudflare サンプル](https://github.com/totto2727-org/effront/tree/main/examples/cloudflare)または `vp create effront -- my-app --platform cloudflare` から始められます。
-このガイドでは一画面のサンプルを起動します。ナビゲーションやカウンター、リソースを使う Server Function は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic) を参照してください。
-
 ## サンプルを起動する {#setup}
 
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールし、次を実行します。
@@ -28,9 +25,7 @@ Vite が表示するローカル URL を開きます。
 | `package.json`          | アダプター、Wrangler、アプリケーションの依存パッケージを定義します。                |
 
 ページの内容は `src/entry.effront.tsx` で変更します。
-Wrangler の設定を変更するときは `nodejs_compat` フラグを保持してください。最小構成にはアプリケーション変数や `ASSETS` バインディングはありません。
-`APP_LABEL` のようなバインディングを追加する場合は `wrangler.jsonc` に `vars: { APP_LABEL: "Greeting Worker" }` を定義し、リクエスト中の Effect から `getWorkersEnv<{ APP_LABEL: string }>()` で読みます。`src/entry.workers.ts` の Fetch エントリーがアプリケーションを `createFetchHandler` に渡し、リクエストコンテキストを提供します。
-その他のオプションは [Wrangler 設定リファレンス](https://developers.cloudflare.com/workers/wrangler/configuration/) を参照してください。
+Wrangler の設定を変更するときは `nodejs_compat` フラグを保持してください。
 
 ## ビルド済みの Worker を Wrangler で実行する {#local}
 

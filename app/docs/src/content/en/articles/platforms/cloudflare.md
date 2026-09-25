@@ -1,6 +1,3 @@
-Start with the [minimal standalone Cloudflare example](https://github.com/totto2727-org/effront/tree/main/examples/cloudflare) or `vp create effront -- my-app --platform cloudflare`.
-This guide runs the one-page example. For navigation, counters, and resource-backed Server Functions, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic).
-
 ## Run the example {#setup}
 
 Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then run:
@@ -28,9 +25,7 @@ The example includes the files needed to run on Workers:
 | `package.json`          | Lists the adapter, Wrangler, and application dependencies.              |
 
 Edit page content in `src/entry.effront.tsx`.
-Keep the `nodejs_compat` flag when changing Wrangler settings. The minimal example does not declare application variables or an `ASSETS` binding.
-To add a binding such as `APP_LABEL`, define `vars: { APP_LABEL: "Greeting Worker" }` in `wrangler.jsonc`, then read it inside a request Effect with `getWorkersEnv<{ APP_LABEL: string }>()`. The Fetch entry in `src/entry.workers.ts` passes the application to `createFetchHandler`, which supplies the request context.
-See the [Wrangler configuration reference](https://developers.cloudflare.com/workers/wrangler/configuration/) for other options.
+Keep the `nodejs_compat` flag when changing Wrangler settings.
 
 ## Run the built Worker with Wrangler {#local}
 

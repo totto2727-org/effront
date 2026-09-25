@@ -1,6 +1,3 @@
-Start with the [minimal Node.js example](https://github.com/totto2727-org/effront/tree/main/examples/node) or `vp create effront -- my-app --platform node`.
-For navigation, counters, and other features beyond the one-page starter, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic). The richer Node.js application is retained only as a [server test fixture](https://github.com/totto2727-org/effront/tree/main/tests/e2e-server/fixtures/node).
-
 ## Run the example {#setup}
 
 Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
