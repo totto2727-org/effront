@@ -155,10 +155,13 @@ const IntroPage = EFFRONT.Page.make({
 ```
 
 Additional plugins run after Effront's defaults, not instead of them.
-Pass `components` to override mappings as described in [Comark's React renderer](https://comark.dev/rendering/react).
+Effront provides Markdown rendering components and minimal CSS for Math and Mermaid, based on Comark's default components.
+Use `components` to override the default components.
+See [Comark's React renderer](https://comark.dev/rendering/react) for component props and configuration.
 
-> [!NOTE]
-> Effront registers Comark's default Math and Mermaid through client wrappers; the document itself remains server-renderable.
-> Completed equations and diagrams require browser JavaScript, and upstream Mermaid SVG styles and font imports remain unchanged.
+> [!WARNING]
+> Math and Mermaid currently require client-side JavaScript and do not support SSR.
+> The server skips rendering equations and diagrams and emits only placeholders.
+> If you need SSR, implement server-renderable replacements and supply them through `components`.
 
 See the [Markdown reference](../api-reference/markdown.md) for options and reference-resolution rules.

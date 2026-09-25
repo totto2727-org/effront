@@ -673,9 +673,13 @@ describe("documentation catalog", () => {
     expect(html).toContain("MarkdownError");
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
-    expect(englishReference).toContain("component unchanged");
-    expect(englishReference).toMatch(/itself is not a Client Component/i);
-    expect(englishReference).toMatch(/without adding defaults or converting.*theme-dark/i);
+    expect(englishReference).toMatch(
+      /exports Markdown rendering components[\s\S]*based on Comark[\s\S]*override the default components/,
+    );
+    expect(englishReference).toContain(
+      "Math and Mermaid currently require client-side JavaScript and do not support SSR.",
+    );
+    expect(englishReference).toContain("implement server-renderable replacements");
   });
 
   it("retains all seven authored architecture chapters under their implementation group", () => {

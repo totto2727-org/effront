@@ -156,10 +156,13 @@ const IntroPage = EFFRONT.Page.make({
 ```
 
 追加プラグインは Effront の標準プラグインの後に実行され、標準プラグインを置き換えるものではありません。
-コンポーネントの差し替えには、[Comark の React レンダラー](https://comark.dev/rendering/react)と同様に `components` を渡してください。
+Effront は Markdown レンダリング用のコンポーネントと Math・Mermaid 向けの最小限の CSS を提供し、コンポーネントは Comark のデフォルトコンポーネントをベースにしています。
+`components` を指定すると、既定のコンポーネントを上書きできます。
+各コンポーネントの props や設定の詳細は [Comark の React レンダラー](https://comark.dev/rendering/react)を参照してください。
 
-> [!NOTE]
-> Effront は Comark 標準の Math と Mermaid を client ラッパー経由で登録しますが、文書自体はサーバー描画可能です。
-> 完成済みの数式・図にはブラウザーの JavaScript が必要で、上流の Mermaid SVG スタイルとフォント読み込みは変更しません。
+> [!WARNING]
+> 現状、Math と Mermaid はクライアント JavaScript が必須であり、SSR に対応していません。
+> サーバー側では数式と図のレンダリングをスキップし、プレースホルダーのみを出力します。
+> SSR が必要な場合は、サーバーでレンダリングできるコンポーネントを独自に実装し、`components` で差し替えてください。
 
 オプションと参照解決の規則は [Markdown リファレンス](../api-reference/markdown.md)を参照してください。

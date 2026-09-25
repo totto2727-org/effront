@@ -387,6 +387,7 @@ export const englishArticleCatalog = [
     headings: [
       { id: "collection", title: "createMarkdownCollection" },
       { id: "parse", title: "parseMarkdown" },
+      { id: "rendering", title: "Markdown rendering" },
       { id: "references", title: "Links, assets, and MarkdownError" },
     ],
     source: "/api-reference/markdown",

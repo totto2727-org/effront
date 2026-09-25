@@ -53,19 +53,27 @@ No option removes Effront's added plugins.
 `registerDefaultPlugins: false` disables only Comark's defaults.
 Other options, such as `linkify`, follow [Comark](https://comark.dev).
 
-The parsed result is the `value` prop for `MarkdownDocument` from `@effront/markdown/document`.
-Its standard `components` prop supports replacements such as `components={{ ProseA: MyLink }}`.
-See the [Comark React API](https://comark.dev/rendering/react).
-`MarkdownDocumentProps` is exported from `@effront/markdown/document`; `className` appends classes and `components` overrides the default `Math` and `Mermaid` mappings.
-`Math` from `@effront/markdown/math` re-exports Comark's component unchanged.
-`Mermaid` from `@effront/markdown/mermaid` accepts upstream props, including `content`, `className`, `width`, `height`, `theme`, and `themeDark`, without adding defaults or converting `theme-dark`.
-Both rich components are client leaves; `MarkdownDocument` itself is not a Client Component.
-
 > [!WARNING]
 > Only trusted authored Markdown and trusted plugins are supported.
 > This parser is not a sanitizer.
 
 Parser exceptions become `MarkdownError` with the original exception in `cause`.
+
+## Markdown rendering {#rendering}
+
+Effront exports Markdown rendering components and minimal CSS for Math and Mermaid.
+Use `MarkdownDocument` from `@effront/markdown/document`, `Math` from `@effront/markdown/math`, `Mermaid` from `@effront/markdown/mermaid`, and the stylesheet from `@effront/markdown/styles.css`.
+
+The components are based on Comark's default components.
+See the [Comark React API](https://comark.dev/rendering/react) for component props and configuration.
+
+Pass the parsed document to `MarkdownDocument` through its `value` prop.
+Use `components` to override the default components, including Math and Mermaid, for example `components={{ Math: MyMath, Mermaid: MyMermaid }}`.
+
+> [!WARNING]
+> Math and Mermaid currently require client-side JavaScript and do not support SSR.
+> The server skips rendering equations and diagrams and emits only placeholders.
+> If you need SSR, implement server-renderable replacements and supply them through `components`.
 
 ## Links, assets, and MarkdownError {#references}
 

@@ -386,6 +386,7 @@ export const articleCatalog = [
     headings: [
       { id: "collection", title: "createMarkdownCollection" },
       { id: "parse", title: "parseMarkdown" },
+      { id: "rendering", title: "Markdown のレンダリング" },
       { id: "references", title: "リンク、アセット、MarkdownError" },
     ],
     source: "/api-reference/markdown",

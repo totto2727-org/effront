@@ -54,19 +54,27 @@ Effront が追加するプラグインを削除するオプションはありま
 `registerDefaultPlugins: false` が無効にするのは Comark 自体の既定プラグインだけです。
 `linkify` など、その他のオプションは [Comark](https://comark.dev) に従います。
 
-解析結果は、`@effront/markdown/document` の `MarkdownDocument` に `value` prop として渡します。
-標準の `components` prop は `components={{ ProseA: MyLink }}` などの置き換えに対応します。
-[Comark React API](https://comark.dev/rendering/react) を参照してください。
-`MarkdownDocumentProps` は `@effront/markdown/document` から公開され、`className` はクラスを追加し、`components` は既定の `Math` と `Mermaid` の対応を上書きします。
-`@effront/markdown/math` の `Math` は Comark のコンポーネントをそのまま再公開します。
-`@effront/markdown/mermaid` の `Mermaid` は `content`、`className`、`width`、`height`、`theme`、`themeDark` などの上流の props を受け取り、既定値の追加や `theme-dark` の変換を行いません。
-両方のコンポーネントは client leaf ですが、`MarkdownDocument` 自体は Client Component ではありません。
-
 > [!WARNING]
 > 対象は信頼できる執筆済み Markdown とプラグインに限ります。
 > この parser は sanitizer ではありません。
 
 parser の例外は、元の例外を `cause` に持つ `MarkdownError` になります。
+
+## Markdown のレンダリング {#rendering}
+
+Effront は Markdown レンダリング用のコンポーネントと、Math・Mermaid 向けの最小限の CSS を公開しています。
+`MarkdownDocument` は `@effront/markdown/document`、`Math` は `@effront/markdown/math`、`Mermaid` は `@effront/markdown/mermaid`、スタイルシートは `@effront/markdown/styles.css` から利用できます。
+
+これらのコンポーネントは Comark のデフォルトコンポーネントをベースにしています。
+各コンポーネントの props や設定の詳細は [Comark React API](https://comark.dev/rendering/react) を参照してください。
+
+解析したドキュメントを `MarkdownDocument` の `value` prop に渡します。
+`components={{ Math: MyMath, Mermaid: MyMermaid }}` のように `components` を指定すると、Math・Mermaid を含む既定のコンポーネントを上書きできます。
+
+> [!WARNING]
+> 現状、Math と Mermaid はクライアント JavaScript が必須であり、SSR に対応していません。
+> サーバー側では数式と図のレンダリングをスキップし、プレースホルダーのみを出力します。
+> SSR が必要な場合は、サーバーでレンダリングできるコンポーネントを独自に実装し、`components` で差し替えてください。
 
 ## リンク、アセット、MarkdownError {#references}
 

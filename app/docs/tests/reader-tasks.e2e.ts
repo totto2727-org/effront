@@ -365,18 +365,19 @@ for (const reader of locales) {
     await expect(
       article.locator('[data-alert="warning"]').filter({ hasText: "sanitizer" }),
     ).toContainText(/not a sanitizer|sanitizer ではありません/);
+    await followHeading(page, reader, "rendering");
     const rendering = article.locator("p").filter({ hasText: "@effront/markdown/document" });
-    await expect(rendering).toContainText(
-      /default Math and Mermaid mappings|既定の Math と Mermaid の対応/,
-    );
-    await expect(rendering).toContainText(
-      /itself is not a Client Component|自体は Client Component ではありません/,
-    );
     await expect(rendering).toContainText("@effront/markdown/math");
     await expect(rendering).toContainText("@effront/markdown/mermaid");
-    await expect(rendering).toContainText("themeDark");
-    await expect(rendering).toContainText(
-      /without adding defaults or converting theme-dark|既定値の追加や theme-dark の変換を行いません/,
+    await expect(rendering).toContainText("@effront/markdown/styles.css");
+    await expect(article).toContainText("components={{ Math: MyMath, Mermaid: MyMermaid }}");
+    const ssrWarning = article.locator('[data-alert="warning"]').filter({ hasText: "SSR" });
+    await expect(ssrWarning).toContainText(
+      /require client-side JavaScript|クライアント JavaScript が必須/,
+    );
+    await expect(ssrWarning).toContainText(/server skips rendering|レンダリングをスキップ/);
+    await expect(ssrWarning).toContainText(
+      /implement server-renderable replacements|コンポーネントを独自に実装/,
     );
     await expect(article.locator('a[href="https://comark.dev"]')).toBeVisible();
     await expect(article.locator('a[href="https://comark.dev/rendering/react"]')).toBeVisible();

@@ -82,20 +82,18 @@ Import the required KaTeX stylesheet once from an application stylesheet:
 @import "@effront/markdown/styles.css";
 ```
 
-`MarkdownDocument` adds the `effront-markdown` class; the stylesheet supplies KaTeX styling and locally emitted KaTeX fonts.
+Effront provides Markdown rendering components and minimal CSS for Math and Mermaid, including locally emitted KaTeX fonts.
+The rendering components are based on Comark's default components.
+See the [Comark React API](https://comark.dev/rendering/react) for component props and configuration.
+Pass `components` to override the default component mappings, including `Math` and `Mermaid`.
+
 Markdown body styling is not provided.
 Style it in your application or use a library such as Tailwind Typography.
-Pass `className` to append classes and `components` to override any Comark component mapping, including the built-in `Math` and `Mermaid` mappings.
-Comark's Mermaid component observes `html.dark` for diagram theme selection; application prose colors remain independent.
-The parser's existing Tokyo Night diagram theme defaults remain unchanged.
 
-Math and Mermaid are client leaves rather than making the prose document a Client Component.
-On the server and without JavaScript, Math displays `...` and Mermaid is an empty `.mermaid` container.
-After hydration Math renders KaTeX and Mermaid renders its SVG, so these are not SSR diagram or math renderers.
-The client wrappers reuse Comark's Math and Mermaid components rather than implementing their renderers or rewriting generated SVG.
-Theme options and invalid-input behavior follow the installed Comark version.
-The upstream Mermaid renderer includes SVG styles and Google Fonts imports; these are not isolated by this wrapper and can affect other inline SVGs or request remote fonts.
-Applications requiring a different style, network, or invalid-input policy can override the component mapping.
+> [!WARNING]
+> Math and Mermaid currently require client-side JavaScript and do not support SSR.
+> The server skips rendering equations and diagrams and emits only placeholders.
+> If you need SSR, implement server-renderable replacements and supply them through `components`.
 
 > [!WARNING]
 > Treat Markdown and parser plugins as trusted content, not sanitized user submissions.
@@ -151,26 +149,23 @@ The mdts defaults add `footnotes()`, `math()`, `mermaid({ theme: "tokyo-night", 
 Use `MarkdownDocument` and its `MarkdownDocumentProps` type from `@effront/markdown/document` for the configured renderer, separately from the server-only collection/parser entry point.
 It forwards Comark's document props, adds the default Math/Mermaid mappings, and preserves user mappings through `components`, for example `<MarkdownDocument value={document} components={{ ProseA: MyLink }} />`.
 Resolved AST URLs reach those components without forced link/image mappings.
-The prose renderer can stay in the RSC graph while only the Math/Mermaid leaves hydrate in the browser.
-`MarkdownDocument` has no `use client` directive; replacing both rich mappings with server-renderable components removes those client leaves from the rendered document.
 Importing `@comark/react/components/MarkdownDocument` directly remains supported; that renderer does not automatically register Math or Mermaid or merge `document.meta.components`.
 Complete Math and Mermaid SSR support is deferred in the [roadmap](../../../docs/ROADMAP.md).
 
 ### `Math` and `Mermaid`
 
-Import the client leaves directly when rendering rich content outside a Markdown document:
+Import the components directly to render equations and diagrams outside a Markdown document:
 
 ```tsx
 import { Math } from "@effront/markdown/math";
 import { Mermaid } from "@effront/markdown/mermaid";
 
 <Math content="E = mc^2" />;
-<Mermaid content={"flowchart LR\n A --> B"} theme="tokyo-light" themeDark="tokyo-night" />;
+<Mermaid content={"flowchart LR\n A --> B"} />;
 ```
 
-`Math` re-exports Comark's component unchanged.
-`Mermaid` loads Comark's component lazily in the browser under Suspense and forwards props unchanged, using upstream-derived types without defaults or `theme-dark` alias conversion.
 `MarkdownDocument` registers these same exports by default.
+See the [Comark React API](https://comark.dev/rendering/react) for component props and configuration.
 
 ### Public collection types
 
