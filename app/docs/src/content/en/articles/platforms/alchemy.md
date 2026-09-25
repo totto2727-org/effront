@@ -1,6 +1,3 @@
-Start with the [minimal Alchemy-managed Cloudflare example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy-cloudflare) or `vp create effront -- my-app --platform alchemy-cloudflare`.
-For navigation, counters, KV-backed services, and Server Functions, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic).
-
 ## Prepare the example {#setup}
 
 Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
@@ -10,10 +7,9 @@ Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
 > Complete the profile setup in the [Alchemy documentation](https://alchemy.run/docs) before starting the app.
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform alchemy-cloudflare
+cd my-app
 vp install
-cd examples/alchemy-cloudflare
 ```
 
 ## Find the application and resource definitions {#worker}
@@ -30,13 +26,13 @@ The one-page example already contains the host configuration:
 
 ## Start development {#stack}
 
-From `examples/alchemy-cloudflare`, run:
+From the generated project, run:
 
 ```bash
 vp run dev
 ```
 
-Open the local URL printed by Alchemy when the CLI reports that it is ready. The single page displays `Hello, world`.
+When ready, open the local URL printed by Alchemy. The single page displays `Hello, world`.
 Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>` and save.
 
 ## Add resources when needed {#capabilities}

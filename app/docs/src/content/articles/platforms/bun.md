@@ -8,10 +8,9 @@ Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールし�
 Vite の開発サーバーは Node.js を使うため、両方のランタイムを用意してください。
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform bun
+cd my-app
 vp install
-cd examples/bun
 vp dev
 ```
 
@@ -33,7 +32,7 @@ Vite が表示するローカル URL を開きます。一画面に `Hello, worl
 
 ## 本番ビルドをローカルで確認する {#assets}
 
-開発サーバーを停止し、`examples/bun` で次を実行します。
+開発サーバーを停止し、生成したプロジェクトで次を実行します。
 
 ```bash
 vp build

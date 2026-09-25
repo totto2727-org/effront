@@ -6,10 +6,9 @@ This guide runs the one-page example. For navigation, counters, and resource-bac
 Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then run:
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform cloudflare
+cd my-app
 vp install
-cd examples/cloudflare
 vp dev
 ```
 
@@ -35,7 +34,7 @@ See the [Wrangler configuration reference](https://developers.cloudflare.com/wor
 
 ## Run the built Worker with Wrangler {#local}
 
-Stop development, then run these commands from `examples/cloudflare`:
+Stop development, then run these commands from the generated project:
 
 ```bash
 vp build

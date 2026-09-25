@@ -6,13 +6,12 @@ For navigation and richer features, see [Alchemy Basic](https://github.com/totto
 Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
 Also install [Bun 1.4.2 or later](https://bun.sh/docs/installation) for the production server.
 Vite development uses Node.js, so keep both runtimes installed.
-Clone the repository and install its dependencies:
+Create a Bun project and install its dependencies:
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform bun
+cd my-app
 vp install
-cd examples/bun
 vp dev
 ```
 
@@ -35,7 +34,7 @@ Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront
 
 ## Check the production build locally {#assets}
 
-Stop development, then run these commands from `examples/bun`:
+Stop development, then run these commands from the generated project:
 
 ```bash
 vp build

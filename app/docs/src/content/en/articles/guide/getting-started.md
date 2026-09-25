@@ -12,7 +12,7 @@ vp dev
 ```
 
 Open the local URL printed by the development server. The page displays `Hello, world`.
-Choose `--platform bun` for Bun, `--platform cloudflare` for standalone Cloudflare Workers, or `--platform alchemy-cloudflare` for Alchemy-managed Cloudflare Workers. Only the Alchemy option requires a configured Cloudflare profile during local development. All four starters contain identical page code; only their infrastructure setup differs.
+For Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers, see the [Bun](../platforms/bun.md), [Cloudflare Workers](../platforms/cloudflare.md), and [Alchemy](../platforms/alchemy.md) platform guides.
 
 ## Explore the sample {#application}
 

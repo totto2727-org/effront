@@ -6,10 +6,9 @@
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールし、次を実行します。
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform cloudflare
+cd my-app
 vp install
-cd examples/cloudflare
 vp dev
 ```
 
@@ -35,7 +34,7 @@ Wrangler の設定を変更するときは `nodejs_compat` フラグを保持し
 
 ## ビルド済みの Worker を Wrangler で実行する {#local}
 
-開発サーバーを停止し、`examples/cloudflare` で次のコマンドを実行します。
+開発サーバーを停止し、生成したプロジェクトで次のコマンドを実行します。
 
 ```bash
 vp build

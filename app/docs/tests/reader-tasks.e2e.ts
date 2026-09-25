@@ -137,21 +137,25 @@ for (const reader of locales) {
     ["cloudflare", "cloudflare"],
     ["alchemy", "alchemy-cloudflare"],
   ] as const) {
-    test(`${reader.locale} reader runs the existing ${host} example without assembling host configuration`, async ({
+    test(`${reader.locale} reader creates the ${host} starter without assembling host configuration`, async ({
       page,
     }) => {
       await page.goto(`/${reader.locale}/platforms`);
       await page.locator(`article a[href="/${reader.locale}/platforms/${host}"]`).click();
       await expect(page).toHaveURL(`/${reader.locale}/platforms/${host}`);
-      await expect(
-        page.locator(
-          `article a[href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"]`,
-        ),
-      ).toBeVisible();
+      if (host !== "alchemy") {
+        await expect(
+          page.locator(
+            `article a[href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"]`,
+          ),
+        ).toBeVisible();
+      }
       await followHeading(page, reader, "setup");
-      const commands = page.locator("article pre code").filter({ hasText: "git clone" });
-      await expect(commands).toContainText(`cd examples/${example}`);
+      const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
+      await expect(commands).toContainText(`vp create effront -- my-app --platform ${example}`);
+      await expect(commands).toContainText("cd my-app");
       await expect(commands).toContainText("vp install");
+      await expect(page.locator("article")).not.toContainText("git clone");
       await expect(page.locator("article")).not.toContainText("vp pack");
       await expect(page.locator("article")).not.toContainText("Count: 0");
       await expect(page.locator("article")).not.toContainText("cd examples/workers");

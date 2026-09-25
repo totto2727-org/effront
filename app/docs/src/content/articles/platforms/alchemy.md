@@ -1,6 +1,3 @@
-まずは[最小構成の Alchemy 管理 Cloudflare サンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy-cloudflare)または `vp create effront -- my-app --platform alchemy-cloudflare` から始められます。
-ナビゲーション、カウンター、KV を使うサービスや Server Function は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic) を参照してください。
-
 ## サンプルを準備する {#setup}
 
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールします。
@@ -10,10 +7,9 @@ Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールし�
 > 起動前に [Alchemy のドキュメント](https://alchemy.run/docs)に従って profile を設定してください。
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform alchemy-cloudflare
+cd my-app
 vp install
-cd examples/alchemy-cloudflare
 ```
 
 ## アプリケーションとリソースの定義を確認する {#worker}
@@ -30,13 +26,13 @@ cd examples/alchemy-cloudflare
 
 ## 開発サーバーを起動する {#stack}
 
-`examples/alchemy-cloudflare` で次を実行します。
+生成したプロジェクトで次を実行します。
 
 ```bash
 vp run dev
 ```
 
-CLI が準備完了を示したら、Alchemy が表示するローカル URL を開きます。一画面に `Hello, world` と表示されます。
+準備できたら、Alchemy が表示するローカル URL を開きます。一画面に `Hello, world` と表示されます。
 `src/entry.effront.tsx` の `<h1>Hello, world</h1>` を `<h1>Hello, Effront!</h1>` に変えて保存します。
 
 ## 必要に応じてリソースを追加する {#capabilities}

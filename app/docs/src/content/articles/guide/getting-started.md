@@ -12,7 +12,7 @@ vp dev
 ```
 
 開発サーバーが表示するローカル URL を開くと、`Hello, world` が表示されます。
-Bun を使う場合は `--platform bun`、Alchemy を介さない Cloudflare Workers には `--platform cloudflare`、Alchemy 管理の Cloudflare Workers には `--platform alchemy-cloudflare` を指定します。Alchemy 管理の場合はローカル開発にも Cloudflare プロファイルの設定が必要です。四つの最小構成は同じページコードを使用し、インフラ構成だけが異なります。
+Node.js 以外の構成は、[Bun](../platforms/bun.md)、[Cloudflare Workers](../platforms/cloudflare.md)、[Alchemy 管理の Cloudflare Workers](../platforms/alchemy.md)を参照してください。
 
 ## サンプルの構成を見る {#application}
 

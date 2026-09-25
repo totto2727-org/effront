@@ -4,13 +4,12 @@ For navigation, counters, and other features beyond the one-page starter, see [A
 ## Run the example {#setup}
 
 Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
-Clone the repository and install its dependencies:
+Create a Node.js project and install its dependencies:
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform node
+cd my-app
 vp install
-cd examples/node
 vp dev
 ```
 
@@ -32,7 +31,7 @@ Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront
 
 ## Check the production build locally {#assets}
 
-Stop development, then run from `examples/node`:
+Stop development, then run from the generated project:
 
 ```bash
 vp build

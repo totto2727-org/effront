@@ -382,7 +382,21 @@ describe("documentation catalog", () => {
       ]);
       expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
       expect(start).toContain("render: () => Effect.succeed(<h1>Hello, Effront</h1>),");
+      for (const platform of ["bun", "cloudflare", "alchemy"]) {
+        expect(start).toContain(`../platforms/${platform}.md`);
+      }
+      expect(start).not.toMatch(/--platform (bun|cloudflare|alchemy-cloudflare)/);
+      const alchemy = readFileSync(
+        new URL(`./${directory}/platforms/alchemy.md`, import.meta.url),
+        "utf8",
+      );
+      expect(
+        alchemy.startsWith(locale === "en" ? "## Prepare the example" : "## サンプルを準備する"),
+      ).toBe(true);
       const html = await render(`/${locale}/guide/getting-started`);
+      for (const platform of ["bun", "cloudflare", "alchemy"]) {
+        expect(html).toContain(`/platforms/${platform}`);
+      }
       expect(html).toContain('data-language="tsx"');
       expect(html).toContain("--shiki-dark");
     },
@@ -506,19 +520,21 @@ describe("documentation catalog", () => {
         expect(application).toContain("<h1>Hello, world</h1>");
         expect(application).not.toContain("Count: 0");
         expect(prose).not.toContain("Count: 0");
-        expect(prose).toContain(`cd examples/${example}`);
-        expect(prose).toContain("vp install");
+        expect(prose).toContain(`vp create effront -- my-app --platform ${slug}`);
+        expect(prose).toContain("cd my-app\nvp install");
+        expect(prose).not.toContain("git clone");
         expect(prose).not.toContain("vp pack");
         expect(prose).not.toContain("vp add");
       }
       const alchemy = await render(`/${locale}/platforms/alchemy`);
       expect(alchemy).toContain(
-        'href="https://github.com/totto2727-org/effront/tree/main/examples/alchemy-cloudflare"',
+        'href="https://github.com/totto2727-org/effront/tree/main/examples/basic"',
       );
       expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello, world");
       expect(await text(`/${locale}/platforms/alchemy`)).toContain(
-        "cd examples/alchemy-cloudflare",
+        "vp create effront -- my-app --platform alchemy-cloudflare\ncd my-app\nvp install",
       );
+      expect(await text(`/${locale}/platforms/alchemy`)).not.toContain("git clone");
       expect(
         readFileSync(
           new URL("examples/alchemy-cloudflare/src/entry.effront.tsx", repository),
