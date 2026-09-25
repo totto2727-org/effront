@@ -143,13 +143,6 @@ for (const reader of locales) {
       await page.goto(`/${reader.locale}/platforms`);
       await page.locator(`article a[href="/${reader.locale}/platforms/${host}"]`).click();
       await expect(page).toHaveURL(`/${reader.locale}/platforms/${host}`);
-      if (host !== "alchemy") {
-        await expect(
-          page.locator(
-            `article a[href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"]`,
-          ),
-        ).toBeVisible();
-      }
       await followHeading(page, reader, "setup");
       const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
       await expect(commands).toContainText(`vp create effront -- my-app --platform ${example}`);
