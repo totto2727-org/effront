@@ -1,7 +1,6 @@
 `Layout` でページ共通の HTML を、`Page` で各ページの内容を定義し、`Routes` で URL に接続します。
 このガイドではトップページから始めて、パスパラメーターと、専用のレイアウトや読み込み表示を持つセクションを追加します。
 
-[はじめにのサンプル](./getting-started.md)を開発サーバーに表示された URL で起動した状態で進めます。
 最初の三つのセクションで `src/entry.effront.tsx` の構成要素を説明し、[エントリー全体](#application)でそれらを組み合わせます。
 
 ## 共通の Layout を定義する {#layouts}
@@ -86,7 +85,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes });
 ```
 
-保存して開発サーバーに表示された URL を開くと、RootLayout の `children` の位置に `Home` と表示されます。
+保存後、ブラウザーで `/` を開くと、RootLayout の `children` の位置に `Home` と表示されます。
 
 ## パスパラメーターを受け取る {#matching}
 
@@ -114,7 +113,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/manual/*path", ManualPage);
 ```
 
-開発サーバーに表示された URL では、次のパスを開けます。
+ブラウザーでは、次のパスを開けます。
 
 - `/articles/hello` は `hello` と表示します。
 - `/manual/setup/install` は `setup/install` と表示します。
@@ -176,5 +175,5 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .mount("/articles", articles);
 ```
 
-開発サーバーに表示された URL の `/articles/hello` を開きます。
+ブラウザーで `/articles/hello` を開きます。
 ArticleLayout の `Articles` の下に `Loading article…` が表示され、2 秒の待機後に読み込み表示が `hello` に置き換わります。

@@ -1,5 +1,5 @@
 Start with the [minimal standalone Cloudflare example](https://github.com/totto2727-org/effront/tree/main/examples/cloudflare) or `vp create effront -- my-app --platform cloudflare`.
-This guide runs the one-page example. For navigation, counters, and resource-backed Server Functions, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy).
+This guide runs the one-page example. For navigation, counters, and resource-backed Server Functions, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic).
 
 ## Run the example {#setup}
 

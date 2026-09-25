@@ -43,7 +43,7 @@ Alchemy が受け付けるエラーの union はより狭いため、`fetch` を
 
 `makeApplicationHttpEffect` は構築時の Context からサービス参照を捕捉します。
 `applicationHttpEffect` は明示的な `context` オプションを使い、既定値は空の Context です。
-[Alchemy のサンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) では、KV クライアントを使うアプリケーションサービスを捕捉しています。
+[Basic サンプル](https://github.com/totto2727-org/effront/tree/main/examples/basic) では、KV クライアントを使うアプリケーションサービスを捕捉しています。
 
 - 同じキーのサービスが現在のリクエストにある場合、その値を優先します。
 - HTTP サービス、Scope、Layer のメモ化状態、Alchemy の `RuntimeContext`、Worker self、汎用の `Self`、Cloudflare 環境、元の Request、Worker 環境、実行コンテキストは捕捉しません。

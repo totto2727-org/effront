@@ -3,7 +3,7 @@ import { Context, Effect, Layer } from "effect";
 
 /** Capability constructed by Alchemy, consumed only by the request layer. */
 export class CacheClient extends Context.Service<CacheClient, ReadWriteNamespaceClient>()(
-  "examples/alchemy/CacheClient",
+  "examples/basic/CacheClient",
 ) {}
 
 /** Application-facing data has no Cloudflare or Alchemy requirement. */
@@ -13,7 +13,7 @@ export class Host extends Context.Service<
     readonly label: string;
     readonly greeting: string;
   }
->()("examples/alchemy/Host") {}
+>()("examples/basic/Host") {}
 
 /** KV effects execute inside the live request, not during deployment or isolate startup. */
 export const HostLive = Layer.effect(

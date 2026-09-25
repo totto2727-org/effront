@@ -13,7 +13,7 @@ Run commands in the selected example directory after installing workspace depend
 
 For framework features and host-specific integrations, use the larger examples instead:
 
-- [`alchemy/`](alchemy/) demonstrates an Alchemy-managed Worker with request-local KV-backed services.
+- [`basic/`](basic/) demonstrates an Alchemy-managed Worker with request-local KV-backed services.
 - [`markdown/`](markdown/) demonstrates Markdown routing and assets on an Alchemy-managed Worker.
 
-`basic/` is a local alias for the richer Alchemy-based [`alchemy/`](alchemy/) example. The native Node and Bun regression applications live under [`../tests/e2e-server/fixtures/`](../tests/e2e-server/fixtures/), not in the public examples.
+The native Node and Bun regression applications live under [`../tests/e2e-server/fixtures/`](../tests/e2e-server/fixtures/), not in the public examples.

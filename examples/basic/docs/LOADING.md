@@ -1,10 +1,10 @@
 # Loading / Suspense 実験室
 
-Alchemy-managed Cloudflare Worker サンプルの `/loading` では、ページ移動、コンポーネント更新、ブラウザー取得中の表示境界を比較できます。`examples/basic` はこのサンプルへのシンボリックリンクです。
+Alchemy-managed Cloudflare Worker の Basic サンプルの `/loading` では、ページ移動、コンポーネント更新、ブラウザー取得中の表示境界を比較できます。
 
 ## 起動
 
-リポジトリの依存関係とパッケージが準備済みの環境で、`examples/alchemy` から実行します。
+リポジトリの依存関係とパッケージが準備済みの環境で、`examples/basic` から実行します。
 
 ```sh
 vp run dev

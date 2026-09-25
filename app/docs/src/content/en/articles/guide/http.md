@@ -45,7 +45,7 @@ export default EFFRONT.make({ routes, layer: ApplicationLayer });
 ```
 
 `Layer.provideMerge` supplies `Greeting` to the route registration and retains it for the Page.
-Open `/api/greeting` at the URL displayed by the development server.
+Open `/api/greeting`.
 Expect status `200`, content type `application/json`, and:
 
 ```json

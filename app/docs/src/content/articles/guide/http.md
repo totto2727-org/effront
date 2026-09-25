@@ -46,7 +46,7 @@ export default EFFRONT.make({ routes, layer: ApplicationLayer });
 ```
 
 `Layer.provideMerge` はルート登録に `Greeting` を提供し、Page でも使えるように出力に残します。
-開発サーバーに表示された URL の `/api/greeting` を開きます。
+ブラウザーで `/api/greeting` を開きます。
 ステータスは `200`、Content-Type は `application/json`、本文は次の値になります。
 
 ```json

@@ -5,7 +5,7 @@ Effront does not provide a public Vitest harness for Page/Layout rendering or Se
 
 ## Use the runnable example {#tools}
 
-The tests below target the [Alchemy example application](https://github.com/totto2727-org/effront/tree/main/examples/alchemy).
+The tests below target the [Basic example application](https://github.com/totto2727-org/effront/tree/main/examples/basic).
 Its [maintained Playwright setup](https://github.com/totto2727-org/effront/tree/main/tests/e2e-alchemy) builds the example and starts a local workerd host without Cloudflare authentication.
 The setup is a repository reference, not a test helper distributed with Effront.
 
@@ -36,7 +36,7 @@ test("registered routes return HTML and unknown routes return 404", async ({ req
 ```
 
 The assertions exercise the routes in the built application, including its configured middleware.
-See the example's [route registration](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/entry.effront.tsx).
+See the example's [route registration](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/entry.effront.tsx).
 
 ## Test Page output and hydration {#pages}
 
@@ -63,7 +63,7 @@ The fixed example's [maintained test](https://github.com/totto2727-org/effront/b
 
 ## Test Layout retention across navigation {#layouts}
 
-`RootLayout` wraps both Pages in a shared [`Shell`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/components/shell.tsx).
+`RootLayout` wraps both Pages in a shared [`Shell`](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/components/shell.tsx).
 Verify that the Page changes while the original navigation element remains connected.
 Save as `layout.e2e.ts`:
 
@@ -93,8 +93,8 @@ A full-document navigation replaces the layout DOM.
 
 ## Test a Server Function through its client {#server-functions}
 
-The example's [`GreetingAction`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/client.tsx) submits `greet("Ada")` through a Client Component.
-The [`greet` Server Function](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/server.ts) reads the request's `Host` service and returns the greeting.
+The example's [`GreetingAction`](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/features/greeting/client.tsx) submits `greet("Ada")` through a Client Component.
+The [`greet` Server Function](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/features/greeting/server.ts) reads the request's `Host` service and returns the greeting.
 Save as `server-function.e2e.ts`:
 
 ```ts

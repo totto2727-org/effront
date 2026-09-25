@@ -1,5 +1,5 @@
 まずは[最小構成の Bun サンプル](https://github.com/totto2727-org/effront/tree/main/examples/bun)または `vp create effront -- my-app --platform bun` から始められます。
-ナビゲーションなどの高機能な例は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) を参照してください。以前の高機能な Bun アプリケーションは[サーバーテスト専用の fixture](https://github.com/totto2727-org/effront/tree/main/tests/e2e-server/fixtures/bun)として保持しています。
+ナビゲーションなどの高機能な例は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic) を参照してください。以前の高機能な Bun アプリケーションは[サーバーテスト専用の fixture](https://github.com/totto2727-org/effront/tree/main/tests/e2e-server/fixtures/bun)として保持しています。
 
 ## サンプルを起動する {#setup}
 

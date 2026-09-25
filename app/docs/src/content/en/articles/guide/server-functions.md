@@ -1,8 +1,6 @@
 Server Functions let forms and Client Components invoke Effect handlers on the server, where schemas validate their input.
 Start with a form that sends a name directly to a Server Function, then add a reply and pending state with `useActionState`.
 
-Continue after changing the heading to `Hello, Effront` in [Getting started](./getting-started.md), with the sample running at the URL displayed by the development server.
-
 ## Share the application definition {#identity}
 
 Create `src/effront.ts` and import this same `EFFRONT` in the application entry and Server Function modules:
@@ -62,7 +60,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open the URL displayed by the development server, enter `Ada`, and select **Record name**.
+Open `/`, enter `Ada`, and select **Record name**.
 Submission writes `Name submitted` to the server log.
 It does not persist data or display a completion message.
 
@@ -140,7 +138,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open the URL displayed by the development server, enter `Ada`, and select **Greet**.
+Open `/`, enter `Ada`, and select **Greet**.
 The form displays `Hello, Ada.` after submission.
 
 ## Accept an object argument {#input}

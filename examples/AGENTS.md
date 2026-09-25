@@ -3,10 +3,9 @@
 ## Repository structure
 
 - `node/`, `bun/`, `cloudflare/`, and `alchemy-cloudflare/`: minimal Node, Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers starters. Their `src/entry.effront.tsx` files must remain byte-identical; only hosting and infrastructure management differ.
-- `alchemy/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
+- `basic/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
 - `markdown/`: feature-rich native Alchemy consumer of file-relative Markdown routing and assets.
 - The feature-rich native Node/Bun applications are test-owned fixtures under `../tests/e2e-server/fixtures/`, not public examples.
-- `basic -> alchemy`: relative symlink, not a separate workspace package; preserve its exclusion in `pnpm-workspace.yaml`.
 
 See [example selection](README.md) for runnable commands and the distinction between platform starters and feature demonstrations.
 
@@ -21,9 +20,8 @@ Workspace preparation is separate from development startup; example development 
 - `vp dev` in `cloudflare/` starts the minimal standalone Cloudflare Worker on an available Vite port; `vp build` emits its Worker artifact without Alchemy.
 - `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `cloudflare/` serves the built artifact independently of Vite after `vp build`.
 - `vp run dev` in `alchemy-cloudflare/` starts the minimal Alchemy-managed Worker without a fixed development port.
-- `vp run dev` in `alchemy/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
+- `vp run dev` in `basic/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
 - `vp dev`, `vp build`, and `vp run start` in `../tests/e2e-server/fixtures/node/` or `../tests/e2e-server/fixtures/bun/` exercise the feature-rich native regression applications. `PORT` and `HOST` configure production listening.
-- `vp run dev` from `basic/` must resolve to the native Alchemy example when changing the alias.
 - `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host; official CLI acceptance is separate.
 
 ## Architecture

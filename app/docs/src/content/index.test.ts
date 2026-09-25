@@ -246,7 +246,7 @@ describe("documentation catalog", () => {
       ])
         expect(content).toContain(contract);
       for (const path of [
-        "tree/main/examples/alchemy",
+        "tree/main/examples/basic",
         "tree/main/tests/e2e-alchemy",
         "blob/main/tests/e2e-alchemy/playwright.config.ts",
         "blob/main/docs/TESTING.md#native-alchemy-integration",
@@ -571,7 +571,7 @@ describe("documentation catalog", () => {
   );
 
   it.each(["en", "ja"] as const)(
-    "uses the development server's displayed URL rather than a fixed origin in %s",
+    "keeps guide URL instructions concise and host-neutral in %s",
     async (locale) => {
       for (const guide of [
         "routes",
@@ -584,6 +584,7 @@ describe("documentation catalog", () => {
       ]) {
         const html = await render(`/${locale}/guide/${guide}`);
         expect(html).not.toContain("127.0.0.1:1340");
+        expect(html).not.toMatch(/開発サーバー\s*に\s*表示された\s*URL/);
       }
       const config = readFileSync(
         new URL("../../../../examples/node/vite.config.ts", import.meta.url),

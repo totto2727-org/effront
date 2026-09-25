@@ -1,8 +1,6 @@
 Use Effect services to keep application logic separate from the Pages that call it.
 The greeting example gives a Page a replaceable service, with its implementation and lifetime managed through an Effect Layer.
 
-Continue after changing the heading to `Hello, Effront` in [Getting started](./getting-started.md), with the sample running at the URL displayed by the development server.
-
 ## Use a service in a Page {#service}
 
 Create `src/greeting.ts`:
@@ -44,7 +42,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes, layer: Greeting.layer });
 ```
 
-Open the URL displayed by the development server to see `Hello, Ada.`
+Open `/` to see `Hello, Ada.`
 To replace the implementation, pass another Layer that provides `Greeting` without changing the Page.
 
 ## Choose the service scope {#lifetime}

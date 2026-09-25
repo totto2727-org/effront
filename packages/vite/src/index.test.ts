@@ -4,7 +4,7 @@ import { resolveConfig } from "vite";
 import { describe, expect, it } from "vitest";
 import { effront } from "./index";
 
-const root = fileURLToPath(new URL("../../../examples/alchemy/", import.meta.url));
+const root = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 
 describe("Effront entry conventions", () => {
   it("uses entry.workers.ts and entry.effront.tsx without consumer configuration", async () => {

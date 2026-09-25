@@ -27,7 +27,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-開発サーバーに表示された URL を開くと `Hello, Ada.` と表示されます。
+ブラウザーで `/` を開くと `Hello, Ada.` と表示されます。
 データを使う場合は、`render` が返す Effect の中で[アプリケーションサービス](./effect.md)を読み取ります。
 
 ## 操作できる UI を加える {#client-boundary}
@@ -63,7 +63,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-開発サーバーに表示された URL を開いて `Count: 0` をクリックすると、カウンターが増えます。
+ブラウザーで `/` を開いて `Count: 0` をクリックすると、カウンターが増えます。
 `Welcome` コンポーネントはサーバー側で描画されます。
 
 > [!WARNING]

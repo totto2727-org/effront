@@ -1,5 +1,5 @@
 まずは[最小構成の Alchemy 管理 Cloudflare サンプル](https://github.com/totto2727-org/effront/tree/main/examples/alchemy-cloudflare)または `vp create effront -- my-app --platform alchemy-cloudflare` から始められます。
-ナビゲーション、カウンター、KV を使うサービスや Server Function は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) を参照してください。
+ナビゲーション、カウンター、KV を使うサービスや Server Function は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic) を参照してください。
 
 ## サンプルを準備する {#setup}
 
@@ -41,4 +41,4 @@ CLI が準備完了を示したら、Alchemy が表示するローカル URL を
 
 ## 必要に応じてリソースを追加する {#capabilities}
 
-最小構成の Worker は KV バインディングや固定の開発用ポートを定義しません。リソースを使うアプリケーションサービスは [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy)、[Alchemy のリソース API](https://alchemy.run/docs)、[Effront の Alchemy API リファレンス](../api-reference/alchemy.md)を参照してください。
+最小構成の Worker は KV バインディングや固定の開発用ポートを定義しません。リソースを使うアプリケーションサービスは [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic)、[Alchemy のリソース API](https://alchemy.run/docs)、[Effront の Alchemy API リファレンス](../api-reference/alchemy.md)を参照してください。

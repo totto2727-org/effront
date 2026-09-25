@@ -1,5 +1,5 @@
 Start with the [minimal Bun example](https://github.com/totto2727-org/effront/tree/main/examples/bun) or `vp create effront -- my-app --platform bun`.
-For navigation and richer features, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy). The former richer Bun application is retained only as a [server test fixture](https://github.com/totto2727-org/effront/tree/main/tests/e2e-server/fixtures/bun).
+For navigation and richer features, see [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic). The former richer Bun application is retained only as a [server test fixture](https://github.com/totto2727-org/effront/tree/main/tests/e2e-server/fixtures/bun).
 
 ## Run the example {#setup}
 

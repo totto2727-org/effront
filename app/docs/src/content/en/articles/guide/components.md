@@ -27,7 +27,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Opening the URL displayed by the development server shows `Hello, Ada.`
+Open `/` to see `Hello, Ada.`
 For data-backed UI, read [application services](./effect.md) inside the Effect returned by `render`.
 
 ## Add an interactive control {#client-boundary}
@@ -63,7 +63,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open the URL displayed by the development server and click `Count: 0` to increment the counter.
+Open `/` and click `Count: 0` to increment the counter.
 The `Welcome` component is rendered on the server.
 
 > [!WARNING]

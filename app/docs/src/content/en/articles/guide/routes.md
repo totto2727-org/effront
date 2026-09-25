@@ -1,7 +1,6 @@
 Use `Layout` for the HTML shared by pages, `Page` for each page's content, and `Routes` to connect them to URLs.
 This guide starts with a homepage, then adds path parameters and a section with its own layout and loading UI.
 
-Use the running [Getting started sample](./getting-started.md) at the URL displayed by the development server.
 The first three sections explain the parts of `src/entry.effront.tsx`; the [complete entry](#application) puts them together.
 
 ## Define the shared Layout {#layouts}
@@ -86,7 +85,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes });
 ```
 
-Save, then open the URL displayed by the development server to see `Home` where RootLayout renders `children`.
+Save, then open `/` to see `Home` where RootLayout renders `children`.
 
 ## Read path parameters {#matching}
 
@@ -114,7 +113,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/manual/*path", ManualPage);
 ```
 
-At the URL displayed by the development server:
+Open these paths:
 
 - `/articles/hello` displays `hello`.
 - `/manual/setup/install` displays `setup/install`.
@@ -176,5 +175,5 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .mount("/articles", articles);
 ```
 
-Open `/articles/hello` at the URL displayed by the development server.
+Open `/articles/hello`.
 ArticleLayout displays `Articles` with `Loading article…` beneath it, then replaces the loading message with `hello` after the two-second delay.

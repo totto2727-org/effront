@@ -1,5 +1,5 @@
 まずは[最小構成の単独 Cloudflare サンプル](https://github.com/totto2727-org/effront/tree/main/examples/cloudflare)または `vp create effront -- my-app --platform cloudflare` から始められます。
-このガイドでは一画面のサンプルを起動します。ナビゲーションやカウンター、リソースを使う Server Function は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) を参照してください。
+このガイドでは一画面のサンプルを起動します。ナビゲーションやカウンター、リソースを使う Server Function は [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic) を参照してください。
 
 ## サンプルを起動する {#setup}
 

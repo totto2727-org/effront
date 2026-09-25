@@ -18,7 +18,7 @@ export default defineConfig({
 ```
 
 The [minimal Cloudflare application's route](../../examples/cloudflare/src/entry.effront.tsx) renders `Hello, world` at `/`.
-Use its [Vite configuration](../../examples/cloudflare/vite.config.ts) and [platform guide](../../app/docs/src/content/en/articles/platforms/cloudflare.md) to run that application. For counters and navigation, see [Alchemy Basic](../../examples/alchemy/).
+Use its [Vite configuration](../../examples/cloudflare/vite.config.ts) and [platform guide](../../app/docs/src/content/en/articles/platforms/cloudflare.md) to run that application. For counters and navigation, see [Alchemy Basic](../../examples/basic/).
 
 ## Key features
 

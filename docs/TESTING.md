@@ -62,7 +62,7 @@ App-local dev/build and independently owned E2E tasks remain package-local.
 
 ## Native Alchemy integration
 
-`tests/e2e-alchemy` exercises the committed `examples/alchemy` consumer without authenticated infrastructure reconciliation or deployment.
+`tests/e2e-alchemy` exercises the committed `examples/basic` consumer without authenticated infrastructure reconciliation or deployment.
 Its Vite configuration reuses the application config and adds a test-only workerd host with local KV bindings.
 The fixed command builds the example and runs Alchemy's workerd preview without generating or copying application source.
 
