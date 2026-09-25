@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
+import { parseArgs as parseNodeArgs } from "node:util";
 import { createProject, isPlatform, platforms, type Platform } from "./init.js";
 
 export function parseArgs(args: string[]): {
@@ -7,26 +8,25 @@ export function parseArgs(args: string[]): {
   platform: Platform | undefined;
   help?: boolean;
 } {
-  let directory: string | undefined;
-  let platform: Platform | undefined;
-  for (let index = 0; index < args.length; index++) {
-    const arg = args[index];
-    if (arg === "--help" || arg === "-h") return { directory, platform, help: true };
-    if (arg === "--platform") {
-      const value = args[++index];
-      if (!value || !isPlatform(value)) {
-        throw new Error(`--platform must be one of: ${platforms.join(", ")}`);
-      }
-      platform = value;
-    } else if (arg?.startsWith("-")) {
-      throw new Error(`Unknown option: ${arg}`);
-    } else if (arg && !directory) {
-      directory = arg;
-    } else {
-      throw new Error(`Unexpected argument: ${arg}`);
-    }
+  const { positionals, values } = parseNodeArgs({
+    args,
+    allowPositionals: true,
+    strict: true,
+    options: {
+      help: { type: "boolean", short: "h" },
+      platform: { type: "string" },
+    },
+  });
+  if (positionals.length > 1) {
+    throw new Error(`Unexpected argument: ${positionals[1]}`);
   }
-  return { directory, platform };
+  if (values.help) {
+    return { directory: positionals[0], platform: undefined, help: true };
+  }
+  if (values.platform !== undefined && !isPlatform(values.platform)) {
+    throw new Error(`--platform must be one of: ${platforms.join(", ")}`);
+  }
+  return { directory: positionals[0], platform: values.platform as Platform | undefined };
 }
 
 export async function runCli(args: string[]): Promise<void> {
@@ -58,6 +58,6 @@ export async function runCli(args: string[]): Promise<void> {
   }
   const target = await createProject(directory, platform);
   stdout.write(
-    `Created ${platform} Effront project at ${target}\nNext: cd ${directory} && vp install && vp dev\n`,
+    `Created ${platform} Effront project at ${target}\nNext: cd ${directory} && vp install && ${platform === "alchemy-cloudflare" ? "vp run dev" : "vp dev"}\n`,
   );
 }

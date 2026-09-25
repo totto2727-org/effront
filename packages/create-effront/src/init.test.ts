@@ -153,6 +153,22 @@ it("refuses to overwrite an existing project", async () => {
 
 it("rejects an unknown platform and malformed command arguments", () => {
   expect(() => parseArgs(["app", "--platform", "workers"])).toThrow("--platform must be one of");
+  expect(() => parseArgs(["app", "--platform="])).toThrow("--platform must be one of");
   expect(() => parseArgs(["app", "--unknown"])).toThrow("Unknown option");
   expect(() => parseArgs(["first", "second"])).toThrow("Unexpected argument");
+  expect(parseArgs(["app", "--platform=bun"])).toEqual({ directory: "app", platform: "bun" });
+  expect(parseArgs(["-h"])).toMatchObject({ help: true });
+});
+
+it("recommends Alchemy orchestration rather than a direct Vite dev command", async () => {
+  const directory = join(await temporaryDirectory(), "alchemy-app");
+  const output = vi.spyOn(stdout, "write").mockImplementation(() => true);
+  try {
+    await runCli([directory, "--platform", "alchemy-cloudflare"]);
+    expect(output).toHaveBeenCalledWith(
+      expect.stringContaining(`Next: cd ${directory} && vp install && vp run dev`),
+    );
+  } finally {
+    output.mockRestore();
+  }
 });
