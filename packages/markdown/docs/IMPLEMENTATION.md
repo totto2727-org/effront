@@ -125,6 +125,9 @@ Parsing retains Comark's standard defaults and adds the mdts plugins for footnot
 `@effront/markdown/document` wraps Comark's direct document-rendering entry point with configurable defaults and an `effront-markdown` wrapper class.
 It does not import the collection/parser entry point or make the whole article a Client Component.
 Only the Math and Mermaid wrappers carry `use client`; they reuse Comark's default components and keep the Mermaid dependency out of the SSR graph.
+Mermaid uses [`use(browser())`](https://react.dev/reference/react-dom/browser) inside a `Suspense` boundary to leave its fallback on the server, then [`lazy`](https://react.dev/reference/react/lazy) loads the upstream component in the browser.
+React manages loading and retries instead of a wrapper-owned Effect and mounted state.
+The document wrapper merges its default component mappings with the caller's mappings using object spread and leaves component resolution to Comark.
 The public `@effront/markdown/styles.css` entry supplies KaTeX CSS, not a document theme.
 The library build copies KaTeX's local fonts and license beside the emitted stylesheet so its relative font URLs survive package publication.
 The wrappers do not filter themes, rewrite SVG styles or IDs, or replace upstream invalid-input behavior.

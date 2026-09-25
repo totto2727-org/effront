@@ -47,7 +47,7 @@ See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) t
 
 - **Content loading**: A Vite application when using `import.meta.glob` to supply document and asset maps.
 - **Server runtime**: Support for `node:path` and `node:url`. Cloudflare Workers requires the `nodejs_compat` compatibility flag.
-- **React rendering**: Compatible React and React DOM installations; Math and Mermaid require browser JavaScript to finish rendering.
+- **React rendering**: Matching React and React DOM 19.3 installations, including React DOM's `browser` API; Math and Mermaid require browser JavaScript to finish rendering.
 
 ## Setup
 
