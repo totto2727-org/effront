@@ -14,6 +14,7 @@ Run commands in the selected example directory after installing workspace depend
 For framework features and host-specific integrations, use the larger examples instead:
 
 - [`basic/`](basic/) demonstrates an Alchemy-managed Worker with request-local KV-backed services.
+- [`loading/`](loading/) demonstrates Loading and Suspense boundaries, navigation, transitions, and browser-side Query on an Alchemy-managed Worker. Its [experiment guide](loading/docs/LOADING.md) walks through the scenarios.
 - [`markdown/`](markdown/) demonstrates Markdown routing and assets on an Alchemy-managed Worker.
 
 The native Node and Bun regression applications live under [`../tests/e2e-server/fixtures/`](../tests/e2e-server/fixtures/), not in the public examples.

@@ -4,7 +4,6 @@ import { GreetingAction } from "./features/greeting/client";
 import { Host, HostLive } from "./features/greeting/services";
 import { Counter } from "./components/counter";
 import { Shell } from "./components/shell";
-import { loadingRoutes } from "./features/loading/routes";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -57,8 +56,5 @@ const AboutPage = EFFRONT.Page.make({
 
 export default EFFRONT.make({
   layer: HostLive,
-  routes: EFFRONT.Routes.make({ layout: RootLayout })
-    .page("/", HomePage)
-    .page("/about", AboutPage)
-    .mount("/loading", loadingRoutes),
+  routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage).page("/about", AboutPage),
 });

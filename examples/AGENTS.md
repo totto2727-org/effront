@@ -4,6 +4,7 @@
 
 - `node/`, `bun/`, `cloudflare/`, and `alchemy-cloudflare/`: minimal Node, Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers starters. Their `src/entry.effront.tsx` files must remain byte-identical; only hosting and infrastructure management differ.
 - `basic/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
+- `loading/`: native Alchemy Worker demonstrating Loading, Suspense, and browser-side Query without KV.
 - `markdown/`: feature-rich native Alchemy consumer of file-relative Markdown routing and assets.
 - The feature-rich native Node/Bun applications are test-owned fixtures under `../tests/e2e-server/fixtures/`, not public examples.
 
@@ -20,7 +21,7 @@ Workspace preparation is separate from development startup; example development 
 - `vp dev` in `cloudflare/` starts the minimal standalone Cloudflare Worker on an available Vite port; `vp build` emits its Worker artifact without Alchemy.
 - `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `cloudflare/` serves the built artifact independently of Vite after `vp build`.
 - `vp run dev` in `alchemy-cloudflare/` starts the minimal Alchemy-managed Worker without a fixed development port.
-- `vp run dev` in `basic/` or `markdown/` invokes `alchemy dev`; the native Worker owns ports 1337 and 1338 respectively.
+- `vp run dev` in `basic/`, `loading/`, or `markdown/` invokes `alchemy dev`; Basic and Markdown declare Worker ports 1337 and 1338 respectively, while Loading does not fix a development port.
 - `vp dev`, `vp build`, and `vp run start` in `../tests/e2e-server/fixtures/node/` or `../tests/e2e-server/fixtures/bun/` exercise the feature-rich native regression applications. `PORT` and `HOST` configure production listening.
 - `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host; official CLI acceptance is separate.
 
@@ -51,5 +52,6 @@ Workspace preparation is separate from development startup; example development 
 - When changing Markdown rendering or assets: [Markdown guide](../packages/markdown/docs/GUIDE.md).
 - When changing standalone host boundaries: [Workers architecture](../docs/WORKERS.md).
 - When exploring or changing the native Node Loading/Suspense regression fixture: [playground guide](../tests/e2e-server/fixtures/node/docs/LOADING.md).
+- When exploring the independent Alchemy Loading example: [Loading guide](loading/docs/LOADING.md).
 
 _This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._

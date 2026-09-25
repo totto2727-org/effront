@@ -1,16 +1,16 @@
 # Loading / Suspense 実験室
 
-Alchemy-managed Cloudflare Worker の Basic サンプルの `/loading` では、ページ移動、コンポーネント更新、ブラウザー取得中の表示境界を比較できます。
+Alchemy-managed Cloudflare Worker の Loading サンプルの `/loading` では、ページ移動、コンポーネント更新、ブラウザー取得中の表示境界を比較できます。
 
 ## 起動
 
-リポジトリの依存関係とパッケージが準備済みの環境で、`examples/basic` から実行します。
+リポジトリの依存関係とパッケージが準備済みの環境で、`examples/loading` から実行します。
 
 ```sh
 vp run dev
 ```
 
-Alchemy CLI の開発環境にはローカルプロファイルなどの前提条件があります。詳しくは [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) を参照してください。表示された開発 URL の `/loading` を JavaScript 有効のブラウザーで開きます。ポートを決め打ちした Vite サーバーや外部 API は使いません。Worker の KV greeting と About、Counter、Server Function は従来どおり `/` と `/about` にあります。
+Alchemy CLI の開発環境にはローカルプロファイルなどの前提条件があります。詳しくは [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) を参照してください。表示された開発 URL の `/` から実験室へ進むか、`/loading` を JavaScript 有効のブラウザーで開きます。ポートを決め打ちした Vite サーバーや外部 API は使いません。KV greeting、About、Server Function は独立した [Basic サンプル](../../basic/) にあります。
 
 ## 1. ハンドラーのないリンクで Loading
 

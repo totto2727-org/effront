@@ -1,12 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-test("Alchemy Basic loading homepage navigates through the slow route to its completed page", async ({
+test.use({ baseURL: "http://127.0.0.1:4394" });
+
+test("Alchemy Loading homepage navigates through the slow route to its completed page", async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
 
-  await page.goto("/loading");
+  await page.goto("/");
+  await page.getByRole("link", { name: "実験室を開く" }).click();
+  await expect(page).toHaveURL(/\/loading$/);
   await expect(page.getByTestId("loading-layout")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "同じ「待つ」でも境界で見え方が変わる" }),
@@ -19,7 +23,7 @@ test("Alchemy Basic loading homepage navigates through the slow route to its com
   expect(errors).toEqual([]);
 });
 
-test("Alchemy Basic query route fetches the public asset after browser interaction", async ({
+test("Alchemy Loading query route fetches the public asset after browser interaction", async ({
   page,
 }) => {
   const errors: string[] = [];
