@@ -114,8 +114,8 @@ export default EFFRONT.make({
 ```
 
 Open `/manual/intro` to see the article inside your Layout.
-The imported CSS supplies KaTeX styles/fonts and minimal math/diagram sizing, not a prose theme.
-Use [Styling](./styling.md) to define article spacing, alerts, and colors in your application.
+Markdown body styling is not provided.
+Style it in your application or use a library such as Tailwind Typography; see [Styling](./styling.md).
 
 When `src/content/details.md` has a Page registered at `/manual/details`, `[Details](./details.md#example)` in `intro.md` resolves to `/manual/details#example`.
 Relative asset references resolve from the article's directory to their imported URLs.

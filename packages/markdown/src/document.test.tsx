@@ -33,7 +33,7 @@ describe("MarkdownDocument", () => {
     const html = await render("Inline $x$.\n\n```mermaid\nflowchart LR\n  A --> B\n```");
     expect(html).toContain('class="comark-content effront-markdown"');
     expect(html).toContain('<span class="math inline">...</span>');
-    expect(html).toContain('<div class="mermaid "');
+    expect(html).toContain('<div class="mermaid"');
     expect(html).not.toContain("<svg");
     expect(html).not.toContain('class="katex');
   });

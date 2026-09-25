@@ -1,3 +1,3 @@
 "use client";
 
-export { Math as MarkdownMath } from "@comark/react/components/Math";
+export { Math } from "@comark/react/components/Math";

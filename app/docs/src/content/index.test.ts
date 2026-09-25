@@ -603,7 +603,7 @@ describe("documentation catalog", () => {
   );
 
   it.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
-    "%s indexes every public package export and the manifest release version",
+    "%s indexes every public code export and the manifest release version",
     async (slug) => {
       const html = await render(slug);
       const root = new URL("../../../../packages/", import.meta.url);
@@ -617,7 +617,7 @@ describe("documentation catalog", () => {
         };
         expect(html).toContain(manifest.version);
         for (const subpath of Object.keys(manifest.exports).filter(
-          (path) => !path.includes("/internal/"),
+          (path) => !path.includes("/internal/") && !path.endsWith(".css"),
         )) {
           expect(html).toContain(
             subpath === "." ? manifest.name : `${manifest.name}${subpath.slice(1)}`,
@@ -668,13 +668,14 @@ describe("documentation catalog", () => {
     const reference = await render("/api-reference/markdown");
     expect(reference).toContain("sanitizer");
     expect(reference).toContain("Mermaid");
-    expect(reference).toContain("SSR");
+    expect(reference).toContain("@effront/markdown/math");
+    expect(reference).toContain("@effront/markdown/mermaid");
     expect(html).toContain("MarkdownError");
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
-    expect(englishReference).toMatch(/default Math\/Mermaid through client wrappers/i);
+    expect(englishReference).toContain("component unchanged");
     expect(englishReference).toMatch(/itself is not a Client Component/i);
-    expect(englishReference).toMatch(/Completed math and diagram SSR is not guaranteed/i);
+    expect(englishReference).toMatch(/without adding defaults or converting.*theme-dark/i);
   });
 
   it("retains all seven authored architecture chapters under their implementation group", () => {

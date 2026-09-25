@@ -114,8 +114,9 @@ export default EFFRONT.make({
 ```
 
 ブラウザーで `/manual/intro` を開くと、Layout の内側に記事が表示されます。
-読み込む CSS は KaTeX のスタイル・フォントと数式・図の最小限のサイズ制御だけを提供し、本文のテーマは含みません。
-記事の余白・alert・配色は、[Styling](./styling.md) を参考にアプリケーション側で定義してください。
+Markdown 本文のスタイリングは提供しません。
+アプリ側で独自にスタイリングするか、Tailwind Typography などを導入してください。
+[Styling](./styling.md) も参照してください。
 
 `src/content/details.md` の Page が `/manual/details` に登録されている場合、`intro.md` 内の `[Details](./details.md#example)` は `/manual/details#example` に解決されます。
 アセットの相対参照は記事のディレクトリを基準に解決され、import 済みの URL を使います。

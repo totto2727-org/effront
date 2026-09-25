@@ -80,7 +80,7 @@ test.describe("Markdown without JavaScript", () => {
     await footnote.click();
     await expect.poll(() => new URL(page.url()).hash).toBe(footnoteHref);
 
-    // The configured document boundary is client-only: without JavaScript its documented
+    // The rich leaves are client-only: without JavaScript their documented
     // loading states are present, but no browser-only KaTeX or Mermaid output is emitted.
     await expect(page.getByTestId("markdown-heading-override")).toHaveText("Markdown manual");
     await expect(page.locator(".math")).toHaveText(["...", "...", "..."]);
@@ -229,6 +229,18 @@ test("renders configured upstream math and diagrams after hydration", async ({ p
   await expect(page.locator(".mermaid svg style").first()).toContainText("fonts.googleapis.com");
 });
 
+test("renders public Math and Mermaid subpaths with upstream props", async ({ page }) => {
+  await page.goto("/rich-components");
+  await expect(page.locator(".math.inline .katex")).toBeVisible();
+  const diagram = page.locator(".custom-mermaid");
+  await expect(diagram).toHaveCSS("width", "320px");
+  await expect(diagram).toHaveCSS("height", "180px");
+  await expect(diagram.locator("svg")).toBeVisible();
+  await expect(diagram.locator("svg")).toHaveAttribute("style", /#123456/);
+  await page.locator("html").evaluate((element) => element.classList.add("dark"));
+  await expect(diagram.locator("svg")).toHaveAttribute("style", /#abcdef/);
+});
+
 test("keeps configured MarkdownDocument readable in dark mode and a narrow built host", async ({
   page,
 }) => {
@@ -292,11 +304,12 @@ test("keeps a document with server-only rich overrides out of Math and Mermaid c
   expect(normalFlight.status()).toBe(200);
   expect(normalFlight.headers()["content-type"]).toContain("text/x-component");
   const richReferences = flightClientReferences(await normalFlight.text()).filter((reference) =>
-    /^(?:Markdown)?(?:Math|Mermaid)$/.test(reference.exportName),
+    /^(?:Math|Mermaid)$/.test(reference.exportName),
   );
-  expect(
-    richReferences.map((reference) => reference.exportName.replace(/^Markdown/, "")).sort(),
-  ).toEqual(["Math", "Mermaid"]);
+  expect(richReferences.map((reference) => reference.exportName).sort()).toEqual([
+    "Math",
+    "Mermaid",
+  ]);
   const richModuleIds = new Set(richReferences.map((reference) => reference.moduleId));
 
   const flight = await request.get("/manual-server-only", {

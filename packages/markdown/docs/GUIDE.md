@@ -83,8 +83,8 @@ Import the required KaTeX stylesheet once from an application stylesheet:
 ```
 
 `MarkdownDocument` adds the `effront-markdown` class; the stylesheet supplies KaTeX styling and locally emitted KaTeX fonts.
-Define typography, code, table, footnote, alert, responsive layout, and light/dark colors in your application, using plain CSS or your preferred styling library.
-The shared renderer does not impose a prose theme or require Tailwind.
+Markdown body styling is not provided.
+Style it in your application or use a library such as Tailwind Typography.
 Pass `className` to append classes and `components` to override any Comark component mapping, including the built-in `Math` and `Mermaid` mappings.
 Comark's Mermaid component observes `html.dark` for diagram theme selection; application prose colors remain independent.
 The parser's existing Tokyo Night diagram theme defaults remain unchanged.
@@ -155,6 +155,22 @@ The prose renderer can stay in the RSC graph while only the Math/Mermaid leaves 
 `MarkdownDocument` has no `use client` directive; replacing both rich mappings with server-renderable components removes those client leaves from the rendered document.
 Importing `@comark/react/components/MarkdownDocument` directly remains supported; that renderer does not automatically register Math or Mermaid or merge `document.meta.components`.
 Complete Math and Mermaid SSR support is deferred in the [roadmap](../../../docs/ROADMAP.md).
+
+### `Math` and `Mermaid`
+
+Import the client leaves directly when rendering rich content outside a Markdown document:
+
+```tsx
+import { Math } from "@effront/markdown/math";
+import { Mermaid } from "@effront/markdown/mermaid";
+
+<Math content="E = mc^2" />;
+<Mermaid content={"flowchart LR\n A --> B"} theme="tokyo-light" themeDark="tokyo-night" />;
+```
+
+`Math` re-exports Comark's component unchanged.
+`Mermaid` loads Comark's component lazily in the browser under Suspense and forwards props unchanged, using upstream-derived types without defaults or `theme-dark` alias conversion.
+`MarkdownDocument` registers these same exports by default.
 
 ### Public collection types
 

@@ -23,6 +23,14 @@
       "types": "./dist/document.d.ts",
       "default": "./dist/document.js"
     },
+    "./math": {
+      "types": "./dist/math.d.ts",
+      "default": "./dist/math.js"
+    },
+    "./mermaid": {
+      "types": "./dist/mermaid.d.ts",
+      "default": "./dist/mermaid.js"
+    },
     "./styles.css": "./dist/styles.css"
   },
   "publishConfig": {

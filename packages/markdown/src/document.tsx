@@ -1,8 +1,8 @@
 import { MarkdownDocument as ComarkMarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import type { MarkdownDocumentProps } from "@comark/react/components/MarkdownDocument";
 
-import { MarkdownMath } from "./math.tsx";
-import { MarkdownMermaid } from "./mermaid.tsx";
+import { Math } from "./math.tsx";
+import { Mermaid } from "./mermaid.tsx";
 
 import "./styles.css";
 
@@ -19,7 +19,7 @@ export function MarkdownDocument({ className, components, ...props }: MarkdownDo
     <ComarkMarkdownDocument
       {...props}
       className={className ? `effront-markdown ${className}` : "effront-markdown"}
-      components={{ Math: MarkdownMath, Mermaid: MarkdownMermaid, ...components }}
+      components={{ Math, Mermaid, ...components }}
     />
   );
 }

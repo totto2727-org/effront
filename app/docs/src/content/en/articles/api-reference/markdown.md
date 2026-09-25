@@ -56,12 +56,10 @@ Other options, such as `linkify`, follow [Comark](https://comark.dev).
 The parsed result is the `value` prop for `MarkdownDocument` from `@effront/markdown/document`.
 Its standard `components` prop supports replacements such as `components={{ ProseA: MyLink }}`.
 See the [Comark React API](https://comark.dev/rendering/react).
-Effront registers Comark's default Math/Mermaid through client wrappers; `MarkdownDocument` itself is not a Client Component.
-Replacing both rich mappings with server-renderable components removes those client leaves from the rendered document.
-Import `@effront/markdown/styles.css` once for KaTeX styles and fonts; define prose, layout, alerts, and colors in the application.
-The default rich components require browser JavaScript: without it Math shows `...` and Mermaid remains empty.
-Completed math and diagram SSR is not guaranteed by the default mappings.
-Mermaid retains upstream theme and invalid-input behavior, including embedded SVG styles and remote font imports; Effront does not isolate or rewrite them.
+`MarkdownDocumentProps` is exported from `@effront/markdown/document`; `className` appends classes and `components` overrides the default `Math` and `Mermaid` mappings.
+`Math` from `@effront/markdown/math` re-exports Comark's component unchanged.
+`Mermaid` from `@effront/markdown/mermaid` accepts upstream props, including `content`, `className`, `width`, `height`, `theme`, and `themeDark`, without adding defaults or converting `theme-dark`.
+Both rich components are client leaves; `MarkdownDocument` itself is not a Client Component.
 
 > [!WARNING]
 > Only trusted authored Markdown and trusted plugins are supported.

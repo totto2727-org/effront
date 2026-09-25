@@ -65,12 +65,14 @@ import "@effront/markdown/styles.css";
 ```
 
 Comark, KaTeX, and the diagram renderer are package dependencies; no separate component registration or KaTeX font setup is required.
-Supply your own prose, layout, alert, and color styles.
+Markdown body styling is not provided.
+Style it in your application or use a library such as Tailwind Typography.
 The wrappers preserve upstream rendering behavior, including Mermaid's embedded SVG styles and remote font imports.
 
 ## API
 
 The [public API guide](docs/GUIDE.md#public-api) covers collection options and types, lookups, reference resolution, `parseMarkdown`, `MarkdownError`, and configured document rendering with component overrides.
+Use `Math` from `@effront/markdown/math` and `Mermaid` from `@effront/markdown/mermaid` to render individual rich-content leaves with upstream props.
 It also documents URL encoding, missing-reference failures, and current Math and Mermaid rendering constraints.
 
 ## Development

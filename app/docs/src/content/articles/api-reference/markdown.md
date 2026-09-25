@@ -57,12 +57,10 @@ Effront が追加するプラグインを削除するオプションはありま
 解析結果は、`@effront/markdown/document` の `MarkdownDocument` に `value` prop として渡します。
 標準の `components` prop は `components={{ ProseA: MyLink }}` などの置き換えに対応します。
 [Comark React API](https://comark.dev/rendering/react) を参照してください。
-Effront は Comark 標準の Math/Mermaid を client ラッパー経由で登録しますが、`MarkdownDocument` 自体は Client Component ではありません。
-両方をサーバー描画可能なコンポーネントに差し替えると、描画される文書からこれらの client leaf がなくなります。
-KaTeX のスタイルとフォントには `@effront/markdown/styles.css` を一度読み込み、本文・レイアウト・alert・配色はアプリケーションで定義します。
-既定の数式・図にはブラウザーの JavaScript が必要で、無効時は Math が `...`、Mermaid が空になります。
-既定の対応表では、完成済みの数式・図の SSR を保証しません。
-Mermaid は上流のテーマ、無効入力時の挙動、SVG 内のスタイルと外部フォント読み込みを維持し、Effront はそれらを隔離・書換えしません。
+`MarkdownDocumentProps` は `@effront/markdown/document` から公開され、`className` はクラスを追加し、`components` は既定の `Math` と `Mermaid` の対応を上書きします。
+`@effront/markdown/math` の `Math` は Comark のコンポーネントをそのまま再公開します。
+`@effront/markdown/mermaid` の `Mermaid` は `content`、`className`、`width`、`height`、`theme`、`themeDark` などの上流の props を受け取り、既定値の追加や `theme-dark` の変換を行いません。
+両方のコンポーネントは client leaf ですが、`MarkdownDocument` 自体は Client Component ではありません。
 
 > [!WARNING]
 > 対象は信頼できる執筆済み Markdown とプラグインに限ります。
