@@ -7,11 +7,18 @@
   },
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
+    "@effect/platform-browser": "catalog:",
     "@effront/alchemy": "workspace:*",
+    "@effront/core": "workspace:*",
     "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
+    "@vitejs/plugin-rsc": "catalog:",
+    "alchemy": "catalog:",
+    "effect": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "vite-plus": "catalog:"
   }
 }

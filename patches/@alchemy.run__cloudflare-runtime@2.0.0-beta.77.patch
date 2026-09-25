@@ -1,0 +1,1010 @@
+diff --git a/dist/vite/node/plugin.mjs b/dist/vite/node/plugin.mjs
+index e496d501e3a0e9b677f5ee923afd9a563380f435..f46f41092fe8e8167f089fc8ffdff5bc6fbbe794 100644
+--- a/dist/vite/node/plugin.mjs
++++ b/dist/vite/node/plugin.mjs
+@@ -1,4 +1,4 @@
+-import { a as EXPORT_TYPES_EVENT, i as ENVIRONMENT_NAME_HEADER, n as mergeExportTypes, o as INIT_PATH, s as REQUEST_EXPORT_TYPES_EVENT, t as configuredExportTypes } from "./export-types-DAtj3eHu.mjs";
++import "node:module";
+ import { MODULE_REFERENCE_REGEX, additionalModulesPlugin, cloudflareExternalsPlugin, nodejsAlsPlugin, nodejsImportWarningPlugin, nodejsUnenvPlugin, optionsPlugin, virtualModulesPlugin, wasmInitPlugin, workerEntryId } from "@alchemy.run/cloudflare-runtime/rolldown/plugins";
+ import { WORKER_EXPORT_TYPES_EVENT, haveExportTypesChanged, isExportTypes } from "@alchemy.run/cloudflare-runtime/rolldown/export-types";
+ import { parseViteEnvironments } from "@alchemy.run/cloudflare-runtime/rolldown/options";
+@@ -9,31 +9,71 @@ import * as vite from "vite";
+ import assert from "node:assert";
+ import * as NodeFs from "node:fs";
+ import * as NodePath from "node:path";
+-//#region src/vite/dev-environment.ts
++//#region tmp/runtime-patch/src/vite/module-runner/constants.shared.ts
++const INIT_PATH = "/__vite_module_runner/init";
++const ENVIRONMENT_NAME_HEADER = "distilled-environment-name";
++/**
++* Sent by the dev server over the module runner WebSocket to ask the Worker to
++* evaluate the entry module and classify its exports. The reply comes back as
++* {@link EXPORT_TYPES_EVENT}.
++*
++* This runs over the module runner channel rather than an HTTP endpoint so it
++* cannot be intercepted by the asset router that sits in front of the Worker.
++*/
++const REQUEST_EXPORT_TYPES_EVENT = "distilled-cloudflare:request-export-types";
++/** Reply to {@link REQUEST_EXPORT_TYPES_EVENT}, carrying an `ExportTypes` payload. */
++const EXPORT_TYPES_EVENT = "distilled-cloudflare:export-types";
++//#endregion
++//#region tmp/runtime-patch/src/vite/dev-environment.ts
+ /** How long to wait for the Worker to report its export types before giving up. */
+ const EXPORT_TYPES_TIMEOUT_MS = 1e4;
+ var DistilledDevEnvironment = class extends vite.DevEnvironment {
+ 	transport;
+-	constructor(name, config) {
+-		const transport = new HotChannel();
++	constructor(name, config, onReload) {
++		let metadata;
++		const transport = new HotChannel((payload) => {
++			if (payload.type !== "full-reload") return false;
++			const next = this.depsOptimizer?.metadata;
++			const optimizer = payload.path === "*" && !payload.triggeredBy && next !== metadata;
++			metadata = next;
++			onReload(optimizer ? "optimizer" : "full-reload");
++			return true;
++		});
+ 		super(name, config, {
+ 			hot: true,
+ 			transport
+ 		});
+ 		this.transport = transport;
++		this.recordOptimizerMetadata = () => {
++			metadata = this.depsOptimizer?.metadata;
++		};
+ 	}
++	recordOptimizerMetadata;
+ 	async connect(address) {
+ 		const url = new URL$1(address.toString());
+ 		url.protocol = "ws";
+ 		url.pathname = INIT_PATH;
+ 		const ws = new WebSocket(url.toString(), { headers: { [ENVIRONMENT_NAME_HEADER]: this.name } });
+ 		await new Promise((resolve, reject) => {
+-			ws.addEventListener("open", () => {
++			const cleanup = () => {
++				clearTimeout(timer);
++				ws.removeEventListener("open", opened);
++				ws.removeEventListener("error", failed);
++				ws.removeEventListener("close", failed);
++			};
++			const opened = () => {
++				cleanup();
+ 				resolve();
+-			});
+-			ws.addEventListener("error", (event) => {
+-				reject("error" in event ? event.error : /* @__PURE__ */ new Error("WebSocket connection error"));
+-			});
++			};
++			const failed = () => {
++				cleanup();
++				ws.close();
++				reject(/* @__PURE__ */ new Error("Worker module transport could not connect"));
++			};
++			const timer = setTimeout(failed, EXPORT_TYPES_TIMEOUT_MS);
++			ws.addEventListener("open", opened);
++			ws.addEventListener("error", failed);
++			ws.addEventListener("close", failed);
+ 		});
+ 		this.transport.ws = ws;
+ 	}
+@@ -48,18 +88,22 @@ var DistilledDevEnvironment = class extends vite.DevEnvironment {
+ 	* error is surfaced to the user by whichever request hits the entry next, and
+ 	* the dev server keeps whatever export types it already has.
+ 	*/
+-	async requestExportTypes(timeoutMs = EXPORT_TYPES_TIMEOUT_MS) {
++	async requestExportTypes(timeoutMs = EXPORT_TYPES_TIMEOUT_MS, signal) {
+ 		return await new Promise((resolve) => {
+ 			let timer;
++			const cancel = () => listener(void 0);
+ 			const listener = (data) => {
++				signal?.removeEventListener("abort", cancel);
+ 				clearTimeout(timer);
+ 				this.transport.off(EXPORT_TYPES_EVENT, listener);
+ 				resolve(isExportTypes(data) ? data : void 0);
+ 			};
+-			timer = setTimeout(() => {
+-				this.transport.off(EXPORT_TYPES_EVENT, listener);
+-				resolve(void 0);
+-			}, timeoutMs);
++			timer = setTimeout(cancel, timeoutMs);
++			if (signal?.aborted) {
++				cancel();
++				return;
++			}
++			signal?.addEventListener("abort", cancel, { once: true });
+ 			this.transport.on(EXPORT_TYPES_EVENT, listener);
+ 			this.transport.send({
+ 				type: "custom",
+@@ -76,6 +120,7 @@ var DistilledDevEnvironment = class extends vite.DevEnvironment {
+ 	}
+ };
+ var HotChannel = class {
++	intercept;
+ 	#ws;
+ 	queue;
+ 	listeners = /* @__PURE__ */ new Map();
+@@ -88,7 +133,7 @@ var HotChannel = class {
+ 	* during `configureServer`, which is before Vite calls `listen()`.
+ 	*/
+ 	set ws(ws) {
+-		this.#ws?.removeEventListener("message", this.boundDispatch);
++		this.close();
+ 		this.#ws = ws;
+ 		ws.addEventListener("message", this.boundDispatch);
+ 		if (this.queue) {
+@@ -96,7 +141,11 @@ var HotChannel = class {
+ 			this.queue = void 0;
+ 		}
+ 	}
++	constructor(intercept) {
++		this.intercept = intercept;
++	}
+ 	send(payload) {
++		if (this.intercept(payload)) return;
+ 		const json = JSON.stringify(payload);
+ 		if (this.#ws) this.#ws.send(json);
+ 		else {
+@@ -117,6 +166,7 @@ var HotChannel = class {
+ 		assert(this.#ws, "WebSocket is not connected");
+ 	}
+ 	close() {
++		this.queue = void 0;
+ 		if (!this.#ws) return;
+ 		this.#ws.removeEventListener("message", this.boundDispatch);
+ 		this.#ws.close();
+@@ -125,15 +175,41 @@ var HotChannel = class {
+ 	dispatch(event) {
+ 		const payload = JSON.parse(event.data.toString());
+ 		const listeners = this.listeners.get(payload.event) ?? /* @__PURE__ */ new Set();
+-		for (const listener of listeners) listener(payload.data, this.client);
++		const ws = this.#ws;
++		for (const listener of listeners) listener(payload.data, { send: (reply) => {
++			if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(reply));
++		} });
+ 	}
+-	client = { send: (payload) => {
+-		assert(this.#ws, "WebSocket is not connected");
+-		this.#ws.send(JSON.stringify(payload));
+-	} };
+ };
+ //#endregion
+-//#region src/vite/forwarded-host.ts
++//#region tmp/runtime-patch/src/vite/export-types.ts
++/**
++* The export types that follow from the plugin options alone.
++*
++* Durable Object and Workflow classes have to be declared up front because
++* workerd needs their namespaces at startup, so they are known before the entry
++* module has ever been evaluated. Named entrypoints have no such declaration
++* and can only be discovered by classifying the entry's exports.
++*/
++function configuredExportTypes(options) {
++	const exportTypes = {};
++	for (const namespace of options.worker?.durableObjectNamespaces ?? []) exportTypes[namespace.className] = "DurableObject";
++	for (const workflow of options.worker?.workflows ?? []) exportTypes[workflow.className] = "WorkflowEntrypoint";
++	return exportTypes;
++}
++/**
++* Combines detected export types with the configured ones. Configuration wins:
++* a class declared as a Durable Object namespace must be wrapped as one even if
++* it is momentarily broken and classifies as something else.
++*/
++function mergeExportTypes(configured, detected) {
++	return {
++		...detected,
++		...configured
++	};
++}
++//#endregion
++//#region tmp/runtime-patch/src/vite/forwarded-host.ts
+ /**
+ * Resolves the client-facing host of an incoming dev-server request.
+ *
+@@ -150,7 +226,7 @@ function firstHeaderValue(value) {
+ 	return first ? first : void 0;
+ }
+ //#endregion
+-//#region src/vite/websockets.ts
++//#region tmp/runtime-patch/src/vite/websockets.ts
+ /**
+ * Handles 'upgrade' requests on the Vite HTTP server and forwards the
+ * WebSocket handshake to the local workerd address as a raw HTTP upgrade.
+@@ -158,7 +234,7 @@ function firstHeaderValue(value) {
+ * Returns a cleanup function that removes the listener (used on server restart).
+ */
+ function handleWebSocket(httpServer, address) {
+-	const upstreamBase = typeof address === "string" ? new URL(address) : address;
++	let closed = false;
+ 	const sockets = /* @__PURE__ */ new Set();
+ 	const track = (socket) => {
+ 		sockets.add(socket);
+@@ -172,46 +248,54 @@ function handleWebSocket(httpServer, address) {
+ 		const isViteRequest = request.headers["sec-websocket-protocol"]?.startsWith("vite") ?? false;
+ 		const isSandboxRequest = hasSandboxOrigin(url.origin);
+ 		if (isViteRequest && !isSandboxRequest) return;
+-		const target = new URL(url.pathname + url.search, upstreamBase);
+-		const upstream = NodeHttp.request({
+-			hostname: target.hostname,
+-			port: target.port,
+-			path: target.pathname + target.search,
+-			method: request.method,
+-			headers: {
+-				...request.headers,
+-				host: url.host
+-			}
+-		});
+-		const cleanup = () => {
+-			upstream.destroy();
+-			socket.destroy();
++		track(socket);
++		const forward = (upstreamBase) => {
++			if (closed || socket.destroyed) return;
++			const target = new URL(url.pathname + url.search, upstreamBase);
++			const upstream = NodeHttp.request({
++				hostname: target.hostname,
++				port: target.port,
++				path: target.pathname + target.search,
++				method: request.method,
++				headers: {
++					...request.headers,
++					host: url.host
++				}
++			});
++			const cleanup = () => {
++				upstream.destroy();
++				socket.destroy();
++			};
++			upstream.on("error", cleanup);
++			socket.on("close", () => upstream.destroy());
++			upstream.on("response", (response) => {
++				if (!socket.destroyed) socket.destroy();
++				response.resume();
++			});
++			upstream.on("upgrade", (upstreamRes, upstreamSocket, upstreamHead) => {
++				upstreamSocket.on("error", () => upstreamSocket.destroy());
++				if (socket.destroyed) {
++					upstreamSocket.destroy();
++					return;
++				}
++				track(socket);
++				track(upstreamSocket);
++				const headerLines = [`HTTP/1.1 ${upstreamRes.statusCode ?? 101} ${upstreamRes.statusMessage ?? "Switching Protocols"}`];
++				for (let i = 0; i < upstreamRes.rawHeaders.length; i += 2) headerLines.push(`${upstreamRes.rawHeaders[i]}: ${upstreamRes.rawHeaders[i + 1]}`);
++				socket.write(`${headerLines.join("\r\n")}\r\n\r\n`);
++				if (upstreamHead.length > 0) socket.write(upstreamHead);
++				if (head.length > 0) upstreamSocket.write(head);
++				socket.pipe(upstreamSocket).pipe(socket);
++			});
++			upstream.end();
+ 		};
+-		upstream.on("error", cleanup);
+-		socket.on("close", () => upstream.destroy());
+-		upstream.on("response", (response) => {
+-			if (!socket.destroyed) socket.destroy();
+-			response.resume();
++		(typeof address === "function" ? address(forward) : Promise.resolve().then(() => forward(address))).catch(() => {
++			if (!socket.destroyed) socket.end("HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
+ 		});
+-		upstream.on("upgrade", (upstreamRes, upstreamSocket, upstreamHead) => {
+-			upstreamSocket.on("error", () => upstreamSocket.destroy());
+-			if (socket.destroyed) {
+-				upstreamSocket.destroy();
+-				return;
+-			}
+-			track(socket);
+-			track(upstreamSocket);
+-			const headerLines = [`HTTP/1.1 ${upstreamRes.statusCode ?? 101} ${upstreamRes.statusMessage ?? "Switching Protocols"}`];
+-			for (let i = 0; i < upstreamRes.rawHeaders.length; i += 2) headerLines.push(`${upstreamRes.rawHeaders[i]}: ${upstreamRes.rawHeaders[i + 1]}`);
+-			socket.write(`${headerLines.join("\r\n")}\r\n\r\n`);
+-			if (upstreamHead.length > 0) socket.write(upstreamHead);
+-			if (head.length > 0) upstreamSocket.write(head);
+-			socket.pipe(upstreamSocket).pipe(socket);
+-		});
+-		upstream.end();
+ 	};
+ 	httpServer.on("upgrade", onUpgrade);
+ 	return () => {
++		closed = true;
+ 		httpServer.off("upgrade", onUpgrade);
+ 		for (const socket of sockets) socket.destroy();
+ 		sockets.clear();
+@@ -232,7 +316,7 @@ function hasSandboxOrigin(origin) {
+ 	return SANDBOX_ORIGIN_REGEXP.test(origin);
+ }
+ //#endregion
+-//#region src/vite/dev-plugin.ts
++//#region tmp/runtime-patch/src/vite/dev-plugin.ts
+ let context;
+ function dev(options) {
+ 	const environmentNames = parseViteEnvironments(options);
+@@ -241,7 +325,10 @@ function dev(options) {
+ 	let handle;
+ 	let isServerRestarting = false;
+ 	let removeUpgradeListener;
++	let stopRuntime;
++	let runtimeReload = () => {};
+ 	const close = async () => {
++		await stopRuntime?.();
+ 		removeUpgradeListener?.();
+ 		removeUpgradeListener = void 0;
+ 		await handle?.close();
+@@ -268,7 +355,7 @@ function dev(options) {
+ 		config() {
+ 			const environment = { dev: { createEnvironment(name, config) {
+ 				if (!hasConfigureServerHook(plugin)) return vite.createRunnableDevEnvironment(name, config);
+-				return new DistilledDevEnvironment(name, config);
++				return new DistilledDevEnvironment(name, config, (reason) => runtimeReload(name, reason));
+ 			} } };
+ 			return { environments: Object.fromEntries(environmentNames.map((name) => [name, environment])) };
+ 		},
+@@ -279,6 +366,9 @@ function dev(options) {
+ 			if (!isServerRestarting) await close();
+ 		},
+ 		async configureServer(server) {
++			await stopRuntime?.();
++			removeUpgradeListener?.();
++			removeUpgradeListener = void 0;
+ 			const restartServer = server.restart.bind(server);
+ 			server.restart = async () => {
+ 				try {
+@@ -303,80 +393,134 @@ function dev(options) {
+ 			const connect = async (address) => {
+ 				for (const environment of entryEnvironments()) {
+ 					await environment.depsOptimizer?.init();
++					environment.recordOptimizerMetadata();
+ 					await environment.connect(address);
+ 				}
+ 			};
+-			handle ??= await startServer(options, entryEnvironment, server, options.context ?? context, exportTypes);
+-			await connect(handle.address);
+-			let address = handle.address;
+-			const bindWebSocket = () => {
+-				removeUpgradeListener?.();
+-				removeUpgradeListener = server.httpServer ? handleWebSocket(server.httpServer, address) : void 0;
+-			};
+-			/**
+-			* Replaces the Worker runtime so it is regenerated for `exportTypes`.
+-			* workerd needs a named export for every entrypoint, Durable Object, and
+-			* Workflow class, and those exports are baked into the Worker's entry
+-			* module at startup.
+-			*/
+-			const restartRuntime = async () => {
+-				await handle?.close();
+-				handle = await startServer(options, entryEnvironment, server, options.context ?? context, exportTypes);
+-				await connect(handle.address);
+-				address = handle.address;
+-				bindWebSocket();
+-			};
+-			/**
+-			* Applies export types reported by the Worker. Returns `true` when they
+-			* no longer match what the running Worker was generated for, in which
+-			* case a runtime restart has been queued on `applying`.
+-			*/
++			let address;
+ 			let applying = Promise.resolve();
++			let running = false;
++			let dirty = false;
++			let stopped = false;
++			let generation = 0;
++			let classification;
++			const disconnect = () => {
++				classification?.abort();
++				for (const environment of entryEnvironments()) environment.transport.close();
++			};
+ 			const applyExportTypes = (detected) => {
+ 				const next = mergeExportTypes(configured, detected);
+ 				if (!haveExportTypesChanged(exportTypes, next)) return false;
+ 				exportTypes = next;
+-				applying = applying.catch(() => {}).then(restartRuntime).catch((error) => {
+-					server.config.logger.error(`Failed to reload the Worker runtime: ${String(error)}`, {
+-						error: error instanceof Error ? error : void 0,
+-						timestamp: true
+-					});
+-				});
++				scheduleRestart("exports");
+ 				return true;
+ 			};
++			const run = async () => {
++				do {
++					dirty = false;
++					disconnect();
++					await handle?.close();
++					handle = void 0;
++					for (const environment of entryEnvironments()) environment.moduleGraph.invalidateAll();
++					if (stopped) throw new Error("Worker runtime closed");
++					const current = ++generation;
++					server.config.logger.info(`[alchemy-runtime] starting generation=${current}`);
++					handle = await startServer(options, entryEnvironment, server, options.context ?? context, exportTypes);
++					if (stopped) throw new Error("Worker runtime closed");
++					await connect(handle.address);
++					address = handle.address;
++					classification = new AbortController();
++					const detected = input ? await entryEnvironments()[0]?.requestExportTypes(void 0, classification.signal) : void 0;
++					if (detected) applyExportTypes(detected);
++					if (!dirty && !stopped) server.config.logger.info(`[alchemy-runtime] ready generation=${current}`);
++				} while (dirty && !stopped);
++				if (stopped) throw new Error("Worker runtime closed");
++			};
++			function scheduleRestart(reason) {
++				if (stopped) return;
++				dirty = true;
++				classification?.abort();
++				server.config.logger.info(`[alchemy-runtime] restart reason=${reason}`);
++				if (running) return;
++				running = true;
++				applying = Promise.resolve().then(run).finally(() => {
++					running = false;
++					if (dirty && !stopped) scheduleRestart("pending");
++				});
++				if (reason !== "startup") {
++					server.config.logger.info(`[alchemy-runtime] browser reload reason=${reason}`);
++					server.environments.client.hot.send({ type: "full-reload" });
++				}
++				applying.catch((error) => {
++					server.config.logger.error(`[alchemy-runtime] failed: ${String(error)}`);
++				});
++			}
++			const withReady = async (forward) => {
++				let pending;
++				do {
++					pending = applying;
++					await pending;
++				} while (pending !== applying);
++				if (stopped) throw new Error("Worker runtime closed");
++				forward(address);
++			};
++			runtimeReload = (name, reason) => scheduleRestart(`${reason}:${name}`);
++			stopRuntime = async () => {
++				stopped = true;
++				dirty = false;
++				disconnect();
++				try {
++					await applying;
++				} catch {}
++			};
+ 			if (input) {
+ 				await server.environments.client.pluginContainer.buildStart();
+-				const detected = await entryEnvironments()[0]?.requestExportTypes();
+-				if (detected && applyExportTypes(detected)) await applying;
+ 				for (const environment of entryEnvironments()) environment.hot.on(WORKER_EXPORT_TYPES_EVENT, (data) => {
+-					if (!isExportTypes(data) || !applyExportTypes(data)) return;
+-					server.config.logger.info("Worker exports changed, reloading the Worker runtime.", { timestamp: true });
++					if (isExportTypes(data)) applyExportTypes(data);
+ 				});
+ 			}
++			scheduleRestart("startup");
++			await withReady(() => {});
++			const bindWebSocket = () => {
++				removeUpgradeListener?.();
++				removeUpgradeListener = server.httpServer ? handleWebSocket(server.httpServer, withReady) : void 0;
++			};
+ 			if (!input) return;
+ 			bindWebSocket();
+ 			return () => {
+ 				server.middlewares.use(function distilledCloudflareProxyMiddleware(req, res) {
+-					const url = new URL$1(req.originalUrl ?? req.url ?? "/", address.toString());
+-					const request = NodeHttp.request(url, {
+-						method: req.method,
+-						headers: {
+-							...req.headers,
+-							host: resolveForwardedHost(req.headers, url.host)
+-						}
+-					});
+-					req.pipe(request);
+-					request.on("response", (response) => {
+-						res.writeHead(response.statusCode ?? 500, response.headers);
+-						response.pipe(res);
+-					});
+-					request.on("error", (error) => {
+-						server.config.logger.error(`Worker request failed: ${error.message}`, {
+-							error,
+-							timestamp: true
++					withReady((ready) => {
++						if (req.destroyed || res.destroyed) return;
++						const url = new URL$1(req.originalUrl ?? req.url ?? "/", ready.toString());
++						const request = NodeHttp.request(url, {
++							method: req.method,
++							headers: {
++								...req.headers,
++								host: resolveForwardedHost(req.headers, url.host)
++							}
++						});
++						req.pipe(request);
++						res.on("close", () => request.destroy());
++						request.on("response", (response) => {
++							response.on("error", () => res.destroy());
++							res.writeHead(response.statusCode ?? 500, response.headers);
++							response.pipe(res);
++						});
++						request.on("error", (error) => {
++							server.config.logger.error(`Worker request failed: ${error.message}`, {
++								error,
++								timestamp: true
++							});
++							if (!res.headersSent) res.writeHead(502, { "content-type": "text/plain" });
++							res.end("Bad Gateway");
++						});
++					}).catch(() => {
++						if (res.destroyed) return;
++						res.writeHead(503, {
++							"content-type": "text/plain",
++							"retry-after": "1"
+ 						});
+-						if (!res.headersSent) res.writeHead(502, { "content-type": "text/plain" });
+-						res.end("Bad Gateway");
++						res.end("Worker runtime unavailable");
+ 					});
+ 				});
+ 				if (options.dev?.middlewareOrder === "pre" && middlewareBoundary !== void 0) {
+@@ -396,7 +540,7 @@ const hasConfigureServerHook = (plugin) => {
+ 	return typeof hook === "function" || typeof hook.handler === "function";
+ };
+ //#endregion
+-//#region src/vite/preview-plugin.ts
++//#region tmp/runtime-patch/src/vite/preview-plugin.ts
+ /**
+ * Preview mode: serve the freshly built worker through workerd.
+ *
+@@ -476,7 +620,7 @@ const findEntryModule = (directory, inputName) => {
+ 	throw new Error(`Cannot find the built worker entry (${candidates.join(" or ")}) in "${directory}". Run the build before starting the preview server.`);
+ };
+ //#endregion
+-//#region src/vite/plugin.ts
++//#region tmp/runtime-patch/src/vite/plugin.ts
+ function cloudflareVitePlugin(options = {}) {
+ 	return [
+ 		optionsPlugin.vite(options),
+diff --git a/dist/vite/node/plugin.mjs.map b/dist/vite/node/plugin.mjs.map
+index 9907a229acd39db349209bcd3d1f33803bdb696d..b42be752b1656df94bfbb4d638644d4c191c8b2b 100644
+--- a/dist/vite/node/plugin.mjs.map
++++ b/dist/vite/node/plugin.mjs.map
+@@ -1 +1 @@
+-{"version":3,"file":"plugin.mjs","names":["NodeURL","#ws","NodeURL","NodeURL"],"sources":["../../../src/vite/dev-environment.ts","../../../src/vite/forwarded-host.ts","../../../src/vite/websockets.ts","../../../src/vite/dev-plugin.ts","../../../src/vite/preview-plugin.ts","../../../src/vite/plugin.ts"],"sourcesContent":["import type { ExportTypes } from \"../rolldown/export-types.ts\";\nimport { isExportTypes } from \"../rolldown/export-types.ts\";\nimport { MODULE_REFERENCE_REGEX } from \"../rolldown/plugins/index.ts\";\nimport assert from \"node:assert\";\nimport { URL as NodeURL } from \"node:url\";\nimport * as vite from \"vite\";\nimport type { FetchFunctionOptions } from \"vite/module-runner\";\nimport {\n  ENVIRONMENT_NAME_HEADER,\n  EXPORT_TYPES_EVENT,\n  INIT_PATH,\n  REQUEST_EXPORT_TYPES_EVENT,\n} from \"./module-runner/constants.shared.ts\";\n\n/** How long to wait for the Worker to report its export types before giving up. */\nconst EXPORT_TYPES_TIMEOUT_MS = 10_000;\n\nexport class DistilledDevEnvironment extends vite.DevEnvironment {\n  transport: HotChannel;\n\n  constructor(name: string, config: vite.ResolvedConfig) {\n    const transport = new HotChannel();\n    super(name, config, {\n      hot: true,\n      transport,\n    });\n    this.transport = transport;\n  }\n\n  async connect(address: string | globalThis.URL) {\n    const url = new NodeURL(address.toString());\n    url.protocol = \"ws\";\n    url.pathname = INIT_PATH;\n    // The Worker ambient declaration hides Bun's headers overload when both\n    // runtime type libraries are loaded by the consolidated package config.\n    const ws = new (WebSocket as unknown as {\n      new (\n        url: string,\n        options: { headers: Record<string, string> },\n      ): WebSocket;\n    })(url.toString(), {\n      headers: { [ENVIRONMENT_NAME_HEADER]: this.name },\n    });\n    await new Promise<void>((resolve, reject) => {\n      ws.addEventListener(\"open\", () => {\n        resolve();\n      });\n      ws.addEventListener(\"error\", (event) => {\n        // Depending on which global WebSocket type wins (bun-types vs\n        // @types/node's undici), the event may or may not carry `error`.\n        reject(\n          \"error\" in event\n            ? event.error\n            : new Error(\"WebSocket connection error\"),\n        );\n      });\n    });\n    this.transport.ws = ws;\n  }\n  override async close(): Promise<void> {\n    await super.close();\n    // `transport.close()` is idempotent; make sure the module-runner socket is\n    // released even if Vite didn't close the hot channel itself.\n    this.transport.close();\n  }\n\n  /**\n   * Asks the Worker to evaluate the entry module and classify its exports.\n   *\n   * Resolves to `undefined` if the Worker could not evaluate the entry — the\n   * error is surfaced to the user by whichever request hits the entry next, and\n   * the dev server keeps whatever export types it already has.\n   */\n  async requestExportTypes(\n    timeoutMs: number = EXPORT_TYPES_TIMEOUT_MS,\n  ): Promise<ExportTypes | undefined> {\n    return await new Promise<ExportTypes | undefined>((resolve) => {\n      let timer: ReturnType<typeof setTimeout>;\n      const listener = (data: unknown) => {\n        clearTimeout(timer);\n        this.transport.off(EXPORT_TYPES_EVENT, listener);\n        resolve(isExportTypes(data) ? data : undefined);\n      };\n      timer = setTimeout(() => {\n        this.transport.off(EXPORT_TYPES_EVENT, listener);\n        resolve(undefined);\n      }, timeoutMs);\n      this.transport.on(EXPORT_TYPES_EVENT, listener);\n      this.transport.send({\n        type: \"custom\",\n        event: REQUEST_EXPORT_TYPES_EVENT,\n      });\n    });\n  }\n\n  override async fetchModule(\n    id: string,\n    importer?: string,\n    options?: FetchFunctionOptions,\n  ): Promise<vite.FetchResult> {\n    // Additional modules (CompiledWasm, Data, Text) are resolved to\n    // `__CLOUDFLARE_MODULE__...` ids and must be externalized so the module\n    // runner loads them via native `import()` → workerd's module fallback.\n    if (MODULE_REFERENCE_REGEX.test(id)) {\n      return {\n        externalize: id,\n        type: \"module\",\n      };\n    }\n    return super.fetchModule(id, importer, options);\n  }\n}\n\nclass HotChannel implements vite.HotChannel {\n  #ws?: WebSocket;\n  queue?: Array<string>;\n  listeners = new Map<string, Set<vite.HotChannelListener>>();\n\n  /**\n   * Replaces the socket, which also happens when the Worker runtime is\n   * restarted mid-session.\n   *\n   * Messages are dispatched from the moment a socket is attached rather than\n   * from `listen()`: the dev server queries the Worker for its export types\n   * during `configureServer`, which is before Vite calls `listen()`.\n   */\n  set ws(ws: WebSocket) {\n    this.#ws?.removeEventListener(\"message\", this.boundDispatch);\n    this.#ws = ws;\n    ws.addEventListener(\"message\", this.boundDispatch);\n    if (this.queue) {\n      for (const message of this.queue) {\n        ws.send(message);\n      }\n      this.queue = undefined;\n    }\n  }\n\n  send(payload: vite.CustomPayload) {\n    const json = JSON.stringify(payload);\n    if (this.#ws) {\n      this.#ws.send(json);\n    } else {\n      this.queue ??= [];\n      this.queue.push(json);\n    }\n  }\n\n  on(event: string, listener: vite.HotChannelListener) {\n    const listeners = this.listeners.get(event) ?? new Set();\n    listeners.add(listener);\n    this.listeners.set(event, listeners);\n  }\n\n  off(event: string, listener: vite.HotChannelListener) {\n    this.listeners.get(event)?.delete(listener);\n  }\n\n  private boundDispatch = this.dispatch.bind(this);\n\n  listen() {\n    assert(this.#ws, \"WebSocket is not connected\");\n    // Already dispatching — see the `ws` setter.\n  }\n\n  close() {\n    // The channel can be closed before a runner ever connected (e.g. a dev\n    // server created and torn down during a framework's type generation), so\n    // tolerate a missing socket — and close it so the runtime connection does\n    // not leak across server restarts.\n    if (!this.#ws) return;\n    this.#ws.removeEventListener(\"message\", this.boundDispatch);\n    this.#ws.close();\n    this.#ws = undefined;\n  }\n\n  private dispatch(event: MessageEvent) {\n    const payload = JSON.parse(event.data.toString()) as vite.CustomPayload;\n\n    const listeners = this.listeners.get(payload.event) ?? new Set();\n    for (const listener of listeners) {\n      listener(payload.data, this.client);\n    }\n  }\n\n  private client: vite.HotChannelClient = {\n    send: (payload) => {\n      assert(this.#ws, \"WebSocket is not connected\");\n\n      this.#ws.send(JSON.stringify(payload));\n    },\n  };\n}\n","import type { IncomingHttpHeaders } from \"node:http\";\n\n/**\n * Resolves the client-facing host of an incoming dev-server request.\n *\n * When the dev server runs behind a proxy or tunnel (e.g. ngrok or\n * `cloudflared`), the `Host` header carries the local address while the\n * public host arrives in `X-Forwarded-Host`. Preferring the forwarded host\n * lets the worker see the URL the client actually requested.\n */\nexport function resolveForwardedHost(\n  headers: IncomingHttpHeaders,\n  fallbackHost: string,\n): string {\n  return (\n    firstHeaderValue(headers[\"x-forwarded-host\"]) ??\n    firstHeaderValue(headers.host) ??\n    fallbackHost\n  );\n}\n\nfunction firstHeaderValue(\n  value: string | Array<string> | undefined,\n): string | undefined {\n  // Proxy chains may append to a single header (\"host1, host2\") instead of\n  // repeating it; only the first entry is the client-facing host.\n  const raw = Array.isArray(value) ? value[0] : value;\n  const first = raw?.split(\",\")[0]?.trim();\n  return first ? first : undefined;\n}\n","import * as NodeHttp from \"node:http\";\nimport type { IncomingMessage } from \"node:http\";\nimport type { Duplex } from \"node:stream\";\nimport type * as vite from \"vite\";\nimport { resolveForwardedHost } from \"./forwarded-host.ts\";\n\n/**\n * Handles 'upgrade' requests on the Vite HTTP server and forwards the\n * WebSocket handshake to the local workerd address as a raw HTTP upgrade.\n *\n * Returns a cleanup function that removes the listener (used on server restart).\n */\nexport function handleWebSocket(\n  httpServer: vite.HttpServer,\n  address: string | URL,\n): () => void {\n  const upstreamBase = typeof address === \"string\" ? new URL(address) : address;\n\n  // Sockets hijacked by an `upgrade` are not reaped by `server.closeAllConnections()`,\n  // yet `server.close()` still waits on them — so a lingering proxied WebSocket blocks\n  // the HTTP server from closing on restart. Track live sockets and destroy them in the\n  // cleanup function to close deterministically.\n  const sockets = new Set<Duplex>();\n  const track = (socket: Duplex) => {\n    sockets.add(socket);\n    socket.on(\"close\", () => sockets.delete(socket));\n  };\n\n  const onUpgrade = (\n    request: IncomingMessage,\n    socket: Duplex,\n    head: Buffer,\n  ) => {\n    // Unhandled socket errors crash Node.\n    socket.on(\"error\", () => socket.destroy());\n\n    // The URL — and thus the Sandbox-origin check below — is built from the\n    // resolved (forwarded) host, not the raw `Host` header. This diverges from\n    // upstream, which keys the origin off `Host`; here it's intentional so a\n    // tunnel-fronted Sandbox preview still matches. Direct Sandbox hits carry no\n    // `X-Forwarded-Host`, so they fall back to `Host` and behave identically.\n    const rawHost = resolveForwardedHost(request.headers, \"localhost\");\n    const base = /^https?:\\/\\//i.test(rawHost) ? rawHost : `http://${rawHost}`;\n    const url = new URL(request.url ?? \"/\", base);\n\n    const isViteRequest =\n      request.headers[\"sec-websocket-protocol\"]?.startsWith(\"vite\") ?? false;\n    const isSandboxRequest = hasSandboxOrigin(url.origin);\n\n    // Vite handles its own HMR upgrades; forward Sandbox preview URLs anyway.\n    if (isViteRequest && !isSandboxRequest) {\n      return;\n    }\n\n    const target = new URL(url.pathname + url.search, upstreamBase);\n    const upstream = NodeHttp.request({\n      hostname: target.hostname,\n      port: target.port,\n      path: target.pathname + target.search,\n      method: request.method,\n      // Forward the client-facing host so the worker sees the URL the client\n      // requested rather than the local workerd address.\n      headers: { ...request.headers, host: url.host },\n    });\n\n    const cleanup = () => {\n      upstream.destroy();\n      socket.destroy();\n    };\n\n    upstream.on(\"error\", cleanup);\n    socket.on(\"close\", () => upstream.destroy());\n\n    upstream.on(\"response\", (response) => {\n      // Worker did not accept the upgrade.\n      if (!socket.destroyed) {\n        socket.destroy();\n      }\n      response.resume();\n    });\n\n    upstream.on(\"upgrade\", (upstreamRes, upstreamSocket, upstreamHead) => {\n      upstreamSocket.on(\"error\", () => upstreamSocket.destroy());\n\n      if (socket.destroyed) {\n        upstreamSocket.destroy();\n        return;\n      }\n\n      track(socket);\n      track(upstreamSocket);\n\n      const statusLine = `HTTP/1.1 ${upstreamRes.statusCode ?? 101} ${\n        upstreamRes.statusMessage ?? \"Switching Protocols\"\n      }`;\n      const headerLines: Array<string> = [statusLine];\n      for (let i = 0; i < upstreamRes.rawHeaders.length; i += 2) {\n        headerLines.push(\n          `${upstreamRes.rawHeaders[i]}: ${upstreamRes.rawHeaders[i + 1]}`,\n        );\n      }\n      socket.write(`${headerLines.join(\"\\r\\n\")}\\r\\n\\r\\n`);\n\n      if (upstreamHead.length > 0) {\n        socket.write(upstreamHead);\n      }\n      if (head.length > 0) {\n        upstreamSocket.write(head);\n      }\n\n      socket.pipe(upstreamSocket).pipe(socket);\n    });\n\n    // WebSocket upgrade requests carry no body, and any early client bytes are\n    // forwarded above via `upstreamSocket.write(head)`. Ending the request\n    // directly flushes the upstream handshake deterministically, rather than\n    // relying on the incoming `request` stream to emit `end` (which can be\n    // delayed by TCP timing) and avoids a second consumer of the client socket.\n    upstream.end();\n  };\n\n  httpServer.on(\"upgrade\", onUpgrade);\n  return () => {\n    httpServer.off(\"upgrade\", onUpgrade);\n    for (const socket of sockets) {\n      socket.destroy();\n    }\n    sockets.clear();\n  };\n}\n\n/**\n * Matches the origin of a Sandbox SDK preview URL.\n * See: https://developers.cloudflare.com/sandbox/concepts/preview-urls/\n *\n * Pattern: https?://<port(4+ digits)>-<id(no dots)>-<token>.localhost\n *\n * IMPORTANT: The token segment is [a-z0-9_]+ (no hyphens) to prevent ReDoS — two adjacent\n * [^.]+ groups separated by - cause quadratic backtracking on hyphen-heavy input. Tokens\n * are documented as letters/digits/underscores only.\n */\nconst SANDBOX_ORIGIN_REGEXP =\n  /^https?:\\/\\/\\d{4,}-[^.]+-[a-z0-9_]+\\.localhost(:\\d+)?$/i;\n\nfunction hasSandboxOrigin(origin: string) {\n  return SANDBOX_ORIGIN_REGEXP.test(origin);\n}\n","import type { ExportTypes } from \"../rolldown/export-types.ts\";\nimport {\n  haveExportTypesChanged,\n  isExportTypes,\n  WORKER_EXPORT_TYPES_EVENT,\n} from \"../rolldown/export-types.ts\";\nimport { parseViteEnvironments } from \"../rolldown/options.ts\";\nimport type { OptionsApi } from \"../rolldown/plugins/index.ts\";\nimport { workerEntryId } from \"../rolldown/plugins/index.ts\";\nimport { resolvePluginApi } from \"../rolldown/utils.ts\";\nimport type { RuntimeServices } from \"../core/index.ts\";\nimport type * as Context from \"effect/Context\";\nimport * as NodeHttp from \"node:http\";\nimport { URL as NodeURL } from \"node:url\";\nimport * as vite from \"vite\";\nimport { DistilledDevEnvironment } from \"./dev-environment.ts\";\nimport type { ServerHandle } from \"./dev-server.ts\";\nimport { configuredExportTypes, mergeExportTypes } from \"./export-types.ts\";\nimport { resolveForwardedHost } from \"./forwarded-host.ts\";\nimport type { CloudflareVitePluginOptions } from \"./plugin.ts\";\nimport { handleWebSocket } from \"./websockets.ts\";\n\nlet context: Context.Context<RuntimeServices> | undefined;\n\nexport function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {\n  const environmentNames = parseViteEnvironments(options);\n  const configured = configuredExportTypes(options);\n  // Which exports the running Worker was generated for. Kept across dev server\n  // restarts so a restart does not undo what was detected.\n  let exportTypes: ExportTypes = configured;\n  let handle: ServerHandle | undefined;\n  let isServerRestarting = false;\n  let removeUpgradeListener: (() => void) | undefined;\n  const close = async () => {\n    removeUpgradeListener?.();\n    removeUpgradeListener = undefined;\n    await handle?.close();\n    handle = undefined;\n  };\n  let optionsApi: OptionsApi | undefined;\n  const plugins: Array<vite.Plugin> = [];\n  // The proxy middleware registers in a `configureServer` post callback, which\n  // Vite runs in plugin order — so when this plugin is appended after a\n  // framework's plugins, the framework's own post middlewares (e.g. a Node\n  // request bridge that assumes a runnable environment) would see requests\n  // first. With `middlewareOrder: \"pre\"` the proxy is instead inserted\n  // directly after Vite's internal middlewares, ahead of every other plugin's\n  // post middlewares. This companion plugin records that insertion point: its\n  // post callback runs before all normal plugins' post callbacks (it is\n  // `enforce: \"pre\"`), i.e. right after Vite registered its internal\n  // middlewares and before any other plugin registered post middlewares.\n  let middlewareBoundary: number | undefined;\n  if (options.dev?.middlewareOrder === \"pre\") {\n    plugins.push({\n      name: \"distilled-cloudflare:dev-middleware-boundary\",\n      enforce: \"pre\",\n      configureServer(server) {\n        middlewareBoundary = undefined;\n        return () => {\n          middlewareBoundary = server.middlewares.stack.length;\n        };\n      },\n    });\n  }\n  const plugin: vite.Plugin = {\n    name: \"distilled-cloudflare:dev\",\n    configResolved({ plugins }) {\n      optionsApi = resolvePluginApi<OptionsApi>(\n        plugins ?? [],\n        \"distilled-cloudflare:options\",\n      );\n    },\n    config() {\n      const environment: vite.EnvironmentOptions = {\n        dev: {\n          createEnvironment(name, config) {\n            // Framework integrations strip `configureServer` off this plugin\n            // when they create throwaway dev servers (e.g. Astro's type-gen\n            // during `build`/`sync`) so we don't boot workerd mid-build. In\n            // that case there is no runtime to proxy to — degrade to Vite's\n            // default runnable environment. Check this exact plugin instance\n            // (not the resolved plugin list) so multiple instances and\n            // renamed/wrapped plugins behave predictably.\n            if (!hasConfigureServerHook(plugin)) {\n              return vite.createRunnableDevEnvironment(name, config);\n            }\n            return new DistilledDevEnvironment(name, config);\n          },\n        },\n      };\n      return {\n        environments: Object.fromEntries(\n          environmentNames.map((name) => [name, environment]),\n        ),\n      };\n    },\n    async buildEnd() {\n      if (!isServerRestarting) {\n        await close();\n      }\n    },\n    async closeBundle() {\n      if (!isServerRestarting) {\n        await close();\n      }\n    },\n    async configureServer(server) {\n      const restartServer = server.restart.bind(server);\n      server.restart = async () => {\n        try {\n          isServerRestarting = true;\n          await restartServer();\n        } finally {\n          isServerRestarting = false;\n        }\n      };\n      if (!optionsApi) {\n        throw new Error(\"Cannot resolve the cloudflare-runtime:options plugin\");\n      }\n      // Frameworks can register multiple names for the same Worker entry.\n      const inputs = [...new Set(Object.values(optionsApi.input()))];\n      if (inputs.length > 1) {\n        throw new Error(\n          `Expected exactly one entry in the input, got ${inputs.length} entries: ${JSON.stringify(inputs)}`,\n        );\n      }\n      const { createDefaultContext, startServer } =\n        await import(\"./dev-server.ts\");\n      if (!options.context) {\n        context ??= await createDefaultContext();\n      }\n      const [input] = inputs;\n      const entryEnvironment = {\n        environmentName: environmentNames[0],\n        // The module runner imports the generated Worker entry rather than the\n        // user entry: it is the module that re-exports everything the Worker\n        // needs and that reports its export types over `import.meta.hot`.\n        entryId: input ? workerEntryId(input) : input,\n        entryName: input,\n      };\n      const entryEnvironments = () =>\n        environmentNames\n          .map((name) => server.environments[name])\n          .filter(\n            (environment) => environment instanceof DistilledDevEnvironment,\n          );\n\n      const connect = async (address: ServerHandle[\"address\"]) => {\n        for (const environment of entryEnvironments()) {\n          await environment.depsOptimizer?.init();\n          await environment.connect(address);\n        }\n      };\n      handle ??= await startServer(\n        options,\n        entryEnvironment,\n        server,\n        options.context ?? context!,\n        exportTypes,\n      );\n      await connect(handle.address);\n      let address = handle.address;\n\n      const bindWebSocket = () => {\n        removeUpgradeListener?.();\n        removeUpgradeListener = server.httpServer\n          ? handleWebSocket(server.httpServer, address)\n          : undefined;\n      };\n\n      /**\n       * Replaces the Worker runtime so it is regenerated for `exportTypes`.\n       * workerd needs a named export for every entrypoint, Durable Object, and\n       * Workflow class, and those exports are baked into the Worker's entry\n       * module at startup.\n       */\n      const restartRuntime = async () => {\n        await handle?.close();\n        handle = await startServer(\n          options,\n          entryEnvironment,\n          server,\n          options.context ?? context!,\n          exportTypes,\n        );\n        await connect(handle.address);\n        address = handle.address;\n        bindWebSocket();\n      };\n\n      /**\n       * Applies export types reported by the Worker. Returns `true` when they\n       * no longer match what the running Worker was generated for, in which\n       * case a runtime restart has been queued on `applying`.\n       */\n      let applying: Promise<void> = Promise.resolve();\n      const applyExportTypes = (detected: ExportTypes): boolean => {\n        const next = mergeExportTypes(configured, detected);\n        if (!haveExportTypesChanged(exportTypes, next)) {\n          return false;\n        }\n        exportTypes = next;\n        applying = applying\n          .catch(() => {})\n          .then(restartRuntime)\n          .catch((error: unknown) => {\n            server.config.logger.error(\n              `Failed to reload the Worker runtime: ${String(error)}`,\n              {\n                error: error instanceof Error ? error : undefined,\n                timestamp: true,\n              },\n            );\n          });\n        return true;\n      };\n\n      if (input) {\n        // Vite's internal CSS plugins rely on `buildStart` having run for the\n        // client environment before a server environment transforms a module.\n        // Vite does that while initializing the dev server, which is after\n        // this hook, and evaluating the entry now would fail without it.\n        await server.environments.client.pluginContainer.buildStart();\n        // Detect up front so that the first request already reaches a Worker\n        // exposing every entrypoint the entry module defines.\n        const detected = await entryEnvironments()[0]?.requestExportTypes();\n        if (detected && applyExportTypes(detected)) {\n          await applying;\n        }\n        // From here on the entry reports its exports over HMR every time it is\n        // re-evaluated, which is how entrypoints added later get picked up.\n        for (const environment of entryEnvironments()) {\n          environment.hot.on(WORKER_EXPORT_TYPES_EVENT, (data: unknown) => {\n            if (!isExportTypes(data) || !applyExportTypes(data)) {\n              return;\n            }\n            server.config.logger.info(\n              \"Worker exports changed, reloading the Worker runtime.\",\n              {\n                timestamp: true,\n              },\n            );\n          });\n        }\n      }\n\n      if (!input) {\n        // If there is no input, we are in SPA mode, so we don't need to route requests to the server.\n        return;\n      }\n      bindWebSocket();\n      return () => {\n        server.middlewares.use(\n          function distilledCloudflareProxyMiddleware(req, res) {\n            const url = new NodeURL(\n              req.originalUrl ?? req.url ?? \"/\",\n              address.toString(),\n            );\n            const request = NodeHttp.request(url, {\n              method: req.method,\n              headers: {\n                ...req.headers,\n                host: resolveForwardedHost(req.headers, url.host),\n              },\n            });\n            req.pipe(request);\n            request.on(\"response\", (response) => {\n              res.writeHead(response.statusCode ?? 500, response.headers);\n              response.pipe(res);\n            });\n            // Without a listener a connection error is an unhandled `error`\n            // event, which takes down the dev server. Requests in flight while\n            // the Worker runtime is being replaced hit exactly that.\n            request.on(\"error\", (error) => {\n              server.config.logger.error(\n                `Worker request failed: ${error.message}`,\n                {\n                  error,\n                  timestamp: true,\n                },\n              );\n              if (!res.headersSent) {\n                res.writeHead(502, { \"content-type\": \"text/plain\" });\n              }\n              res.end(\"Bad Gateway\");\n            });\n          },\n        );\n        if (\n          options.dev?.middlewareOrder === \"pre\" &&\n          middlewareBoundary !== undefined\n        ) {\n          // Move the proxy middleware from the end of the stack to directly\n          // after Vite's internal middlewares, ahead of the post middlewares\n          // other plugins registered.\n          const stack = server.middlewares.stack;\n          const entry = stack.pop();\n          if (entry) {\n            stack.splice(middlewareBoundary, 0, entry);\n          }\n        }\n      };\n    },\n  };\n  plugins.push(plugin);\n  return plugins;\n}\n\nconst hasConfigureServerHook = (plugin: vite.Plugin): boolean => {\n  const hook = plugin.configureServer;\n  if (hook == null) return false;\n  return typeof hook === \"function\" || typeof hook.handler === \"function\";\n};\n","import { parseViteEnvironments } from \"../rolldown/options.ts\";\nimport type { OptionsApi } from \"../rolldown/plugins/index.ts\";\nimport { resolvePluginApi } from \"../rolldown/utils.ts\";\nimport * as NodeFs from \"node:fs\";\nimport * as NodeHttp from \"node:http\";\nimport * as NodePath from \"node:path\";\nimport { URL as NodeURL } from \"node:url\";\nimport type * as vite from \"vite\";\nimport { resolveForwardedHost } from \"./forwarded-host.ts\";\nimport type { CloudflareVitePluginOptions } from \"./plugin.ts\";\nimport { handleWebSocket } from \"./websockets.ts\";\n\n/**\n * Preview mode: serve the freshly built worker through workerd.\n *\n * `vite preview` (and any framework that drives it programmatically — e.g.\n * waku's SSG step, which boots a preview server mid-`buildApp` and renders\n * every static page through it) resolves the same plugins as the build. This\n * plugin's `configurePreviewServer` hook reads the built worker output from\n * the entry environment's `build.outDir`, boots workerd over it via\n * `cloudflare-runtime`, and registers a proxy middleware ahead of Vite's\n * internal middlewares so every request — static assets included, via the\n * runtime's assets plugin — is handled exactly as on the deployed worker.\n *\n * This mirrors what upstream `@cloudflare/vite-plugin` provides via its own\n * `configurePreviewServer` (miniflare over the built output), and is what\n * makes SSG-in-workerd work: a top-level `import { env } from\n * \"cloudflare:workers\"` in a prerendered page module loads fine, because the\n * page renders inside workerd rather than the Node process.\n */\nexport function preview(options: CloudflareVitePluginOptions): vite.Plugin {\n  return {\n    name: \"distilled-cloudflare:preview\",\n    async configurePreviewServer(server) {\n      const config = server.config;\n      const optionsApi = resolvePluginApi<OptionsApi>(\n        config.plugins,\n        \"distilled-cloudflare:options\",\n      );\n      if (!optionsApi) {\n        throw new Error(\n          \"Cannot resolve the distilled-cloudflare:options plugin\",\n        );\n      }\n      const input = optionsApi.input();\n      const inputNames = Object.keys(input);\n      if (inputNames.length === 0) {\n        // SPA mode: no worker entry — leave the preview server to Vite's\n        // static file serving.\n        return;\n      }\n      if (inputNames.length > 1) {\n        throw new Error(\n          `Expected exactly one entry in the input, got ${inputNames.length} entries: ${JSON.stringify(input)}`,\n        );\n      }\n      const [entryEnvironmentName] = parseViteEnvironments(options);\n      const entryEnvironment = config.environments[entryEnvironmentName!];\n      if (!entryEnvironment) {\n        throw new Error(\n          `Cannot resolve the \"${entryEnvironmentName}\" environment from the preview config`,\n        );\n      }\n      const directory = NodePath.resolve(\n        config.root,\n        entryEnvironment.build.outDir,\n      );\n      const entryModule = findEntryModule(directory, inputNames[0]!);\n      const clientEnvironment = config.environments[\"client\"];\n      const assetsDirectory = clientEnvironment\n        ? NodePath.resolve(config.root, clientEnvironment.build.outDir)\n        : undefined;\n\n      const { startPreviewServer } = await import(\"./preview-server.ts\");\n      const handle = await startPreviewServer(options, {\n        directory,\n        entryModule,\n        assetsDirectory:\n          assetsDirectory !== undefined && NodeFs.existsSync(assetsDirectory)\n            ? assetsDirectory\n            : undefined,\n      });\n      const address = handle.address;\n      const removeUpgradeListener = server.httpServer\n        ? handleWebSocket(server.httpServer, address)\n        : undefined;\n      const close = server.close.bind(server);\n      server.close = async () => {\n        removeUpgradeListener?.();\n        await handle.close();\n        await close();\n      };\n      // Registered directly (not via the returned post hook), so the proxy\n      // runs ahead of Vite's internal static-file middlewares and of any\n      // middleware a framework appends afterwards (e.g. waku's Node SSG\n      // fallback) — the worker handles every request, like in production.\n      server.middlewares.use(\n        function distilledCloudflarePreviewMiddleware(req, res) {\n          const url = new NodeURL(req.url ?? \"/\", address.toString());\n          const request = NodeHttp.request(url, {\n            method: req.method,\n            headers: {\n              ...req.headers,\n              host: resolveForwardedHost(req.headers, url.host),\n            },\n          });\n          req.pipe(request);\n          request.on(\"response\", (response) => {\n            res.writeHead(response.statusCode ?? 500, response.headers);\n            response.pipe(res);\n          });\n        },\n      );\n    },\n  };\n}\n\n/**\n * Locate the built entry chunk for the (single) worker input. Entry chunks\n * are emitted as `[name].js` (Vite's server-build default `entryFileNames`);\n * `.mjs` is accepted for configs that override the extension.\n */\nconst findEntryModule = (directory: string, inputName: string): string => {\n  const candidates = [`${inputName}.js`, `${inputName}.mjs`];\n  for (const candidate of candidates) {\n    if (NodeFs.existsSync(NodePath.join(directory, candidate))) {\n      return candidate;\n    }\n  }\n  throw new Error(\n    `Cannot find the built worker entry (${candidates.join(\" or \")}) in \"${directory}\". ` +\n      \"Run the build before starting the preview server.\",\n  );\n};\n","import type { BasePluginOptions } from \"../rolldown/options.ts\";\nimport {\n  additionalModulesPlugin,\n  cloudflareExternalsPlugin,\n  nodejsAlsPlugin,\n  nodejsImportWarningPlugin,\n  nodejsUnenvPlugin,\n  optionsPlugin,\n  virtualModulesPlugin,\n  wasmInitPlugin,\n} from \"../rolldown/plugins/index.ts\";\nimport type {\n  BindingHooks,\n  RuntimeServices,\n  RuntimeWorker,\n} from \"../core/index.ts\";\nimport type * as Context from \"effect/Context\";\nimport type * as vite from \"vite\";\nimport { dev } from \"./dev-plugin.ts\";\nimport { preview } from \"./preview-plugin.ts\";\n\nexport interface CloudflareVitePluginDevOptions {\n  /**\n   * Where the Worker request-proxy middleware registers relative to the\n   * `configureServer` post middlewares of other plugins.\n   *\n   * - `\"post\"` (default): append in plugin order. Required by frameworks whose\n   *   own dev middlewares must see requests first (e.g. Astro's prerender\n   *   handler and dev handler).\n   * - `\"pre\"`: insert directly after Vite's internal middlewares, ahead of the\n   *   post middlewares other plugins registered. Use this when appending the\n   *   Cloudflare plugin after a framework's config-file plugins and the\n   *   framework registers its own Node request-bridge middleware that cannot\n   *   handle the Worker environment (e.g. Waku's RSC bridge, which assumes a\n   *   runnable Node environment).\n   *\n   * @default \"post\"\n   */\n  middlewareOrder?: \"pre\" | \"post\";\n}\n\nexport interface CloudflareVitePluginOptions<\n  B extends BindingHooks = BindingHooks,\n> extends BasePluginOptions {\n  worker?: Omit<\n    RuntimeWorker<B>,\n    \"compatibilityDate\" | \"compatibilityFlags\" | \"modules\"\n  >;\n  context?: Context.Context<RuntimeServices>;\n  dev?: CloudflareVitePluginDevOptions;\n}\n\nexport default function cloudflareVitePlugin(\n  options: CloudflareVitePluginOptions = {},\n): vite.PluginOption {\n  return [\n    optionsPlugin.vite(options),\n    cloudflareExternalsPlugin.vite(options),\n    nodejsAlsPlugin.vite(options),\n    nodejsImportWarningPlugin.vite(options),\n    nodejsUnenvPlugin.vite(options),\n    virtualModulesPlugin.vite(options),\n    wasmInitPlugin.vite(options),\n    additionalModulesPlugin.vite(options),\n    {\n      name: \"distilled-cloudflare:rsc\",\n      enforce: \"pre\",\n      config() {\n        return { rsc: { serverHandler: false } } as vite.UserConfig;\n      },\n    } as vite.Plugin,\n    ...dev(options),\n    preview(options),\n    // Some of the composed plugins are conditional (e.g. the nodejs-compat\n    // family) and resolve to `null`; filter them out so integrations that\n    // post-process the returned plugins don't have to handle sparse entries.\n  ].filter((plugin): plugin is vite.Plugin => plugin !== null);\n}\n"],"mappings":"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"}
+\ No newline at end of file
++{"version":3,"file":"plugin.mjs","names":["NodeURL","#ws","NodeURL","NodeURL"],"sources":["../../../src/vite/module-runner/constants.shared.ts","../../../src/vite/dev-environment.ts","../../../src/vite/export-types.ts","../../../src/vite/forwarded-host.ts","../../../src/vite/websockets.ts","../../../src/vite/dev-plugin.ts","../../../src/vite/preview-plugin.ts","../../../src/vite/plugin.ts"],"sourcesContent":["export const INIT_PATH = \"/__vite_module_runner/init\";\nexport const ENVIRONMENT_NAME_HEADER = \"distilled-environment-name\";\nexport const WORKER_ENTRY_PATH_HEADER = \"distilled-worker-entry-path\";\n\n/**\n * Sent by the dev server over the module runner WebSocket to ask the Worker to\n * evaluate the entry module and classify its exports. The reply comes back as\n * {@link EXPORT_TYPES_EVENT}.\n *\n * This runs over the module runner channel rather than an HTTP endpoint so it\n * cannot be intercepted by the asset router that sits in front of the Worker.\n */\nexport const REQUEST_EXPORT_TYPES_EVENT =\n  \"distilled-cloudflare:request-export-types\";\n\n/** Reply to {@link REQUEST_EXPORT_TYPES_EVENT}, carrying an `ExportTypes` payload. */\nexport const EXPORT_TYPES_EVENT = \"distilled-cloudflare:export-types\";\n\nexport interface EntryEnvironment {\n  environmentName: string;\n  entryId: string;\n  entryName: string;\n  /** Id of the virtual module that classifies the entry module's exports. */\n  exportTypesId: string;\n}\n","import type { ExportTypes } from \"../rolldown/export-types.ts\";\nimport { isExportTypes } from \"../rolldown/export-types.ts\";\nimport { MODULE_REFERENCE_REGEX } from \"../rolldown/plugins/index.ts\";\nimport assert from \"node:assert\";\nimport { URL as NodeURL } from \"node:url\";\nimport * as vite from \"vite\";\nimport type { FetchFunctionOptions } from \"vite/module-runner\";\nimport {\n  ENVIRONMENT_NAME_HEADER,\n  EXPORT_TYPES_EVENT,\n  INIT_PATH,\n  REQUEST_EXPORT_TYPES_EVENT,\n} from \"./module-runner/constants.shared.ts\";\n\n/** How long to wait for the Worker to report its export types before giving up. */\nconst EXPORT_TYPES_TIMEOUT_MS = 10_000;\n\nexport class DistilledDevEnvironment extends vite.DevEnvironment {\n  transport: HotChannel;\n\n  constructor(name: string, config: vite.ResolvedConfig, onReload: (reason: \"optimizer\" | \"full-reload\") => void) {\n    let metadata: unknown;\n    const transport = new HotChannel((payload) => {\n      if (payload.type !== \"full-reload\") return false;\n      const next = this.depsOptimizer?.metadata;\n      const optimizer = payload.path === \"*\" && !payload.triggeredBy && next !== metadata;\n      metadata = next;\n      // A program reload must retire every graph in the shared isolate. Accepted\n      // updates remain on the existing runner and keep ordinary HMR semantics.\n      onReload(optimizer ? \"optimizer\" : \"full-reload\");\n      return true;\n    });\n    super(name, config, {\n      hot: true,\n      transport,\n    });\n    this.transport = transport;\n    this.recordOptimizerMetadata = () => { metadata = this.depsOptimizer?.metadata; };\n  }\n\n  recordOptimizerMetadata: () => void;\n\n  async connect(address: string | globalThis.URL) {\n    const url = new NodeURL(address.toString());\n    url.protocol = \"ws\";\n    url.pathname = INIT_PATH;\n    // The Worker ambient declaration hides Bun's headers overload when both\n    // runtime type libraries are loaded by the consolidated package config.\n    const ws = new (WebSocket as unknown as {\n      new (\n        url: string,\n        options: { headers: Record<string, string> },\n      ): WebSocket;\n    })(url.toString(), {\n      headers: { [ENVIRONMENT_NAME_HEADER]: this.name },\n    });\n    await new Promise<void>((resolve, reject) => {\n      const cleanup = () => {\n        clearTimeout(timer);\n        ws.removeEventListener(\"open\", opened);\n        ws.removeEventListener(\"error\", failed);\n        ws.removeEventListener(\"close\", failed);\n      };\n      const opened = () => { cleanup(); resolve(); };\n      const failed = () => {\n        cleanup();\n        ws.close();\n        reject(new Error(\"Worker module transport could not connect\"));\n      };\n      const timer = setTimeout(failed, EXPORT_TYPES_TIMEOUT_MS);\n      ws.addEventListener(\"open\", opened);\n      ws.addEventListener(\"error\", failed);\n      ws.addEventListener(\"close\", failed);\n    });\n    this.transport.ws = ws;\n  }\n  override async close(): Promise<void> {\n    await super.close();\n    // `transport.close()` is idempotent; make sure the module-runner socket is\n    // released even if Vite didn't close the hot channel itself.\n    this.transport.close();\n  }\n\n  /**\n   * Asks the Worker to evaluate the entry module and classify its exports.\n   *\n   * Resolves to `undefined` if the Worker could not evaluate the entry — the\n   * error is surfaced to the user by whichever request hits the entry next, and\n   * the dev server keeps whatever export types it already has.\n   */\n  async requestExportTypes(\n    timeoutMs: number = EXPORT_TYPES_TIMEOUT_MS,\n    signal?: AbortSignal,\n  ): Promise<ExportTypes | undefined> {\n    return await new Promise<ExportTypes | undefined>((resolve) => {\n      let timer: ReturnType<typeof setTimeout>;\n      const cancel = () => listener(undefined);\n      const listener = (data: unknown) => {\n        signal?.removeEventListener(\"abort\", cancel);\n        clearTimeout(timer);\n        this.transport.off(EXPORT_TYPES_EVENT, listener);\n        resolve(isExportTypes(data) ? data : undefined);\n      };\n      timer = setTimeout(cancel, timeoutMs);\n      if (signal?.aborted) { cancel(); return; }\n      signal?.addEventListener(\"abort\", cancel, { once: true });\n      this.transport.on(EXPORT_TYPES_EVENT, listener);\n      this.transport.send({\n        type: \"custom\",\n        event: REQUEST_EXPORT_TYPES_EVENT,\n      });\n    });\n  }\n\n  override async fetchModule(\n    id: string,\n    importer?: string,\n    options?: FetchFunctionOptions,\n  ): Promise<vite.FetchResult> {\n    // Additional modules (CompiledWasm, Data, Text) are resolved to\n    // `__CLOUDFLARE_MODULE__...` ids and must be externalized so the module\n    // runner loads them via native `import()` → workerd's module fallback.\n    if (MODULE_REFERENCE_REGEX.test(id)) {\n      return {\n        externalize: id,\n        type: \"module\",\n      };\n    }\n    return super.fetchModule(id, importer, options);\n  }\n}\n\nclass HotChannel implements vite.HotChannel {\n  #ws?: WebSocket;\n  queue?: Array<string>;\n  listeners = new Map<string, Set<vite.HotChannelListener>>();\n\n  /**\n   * Replaces the socket, which also happens when the Worker runtime is\n   * restarted mid-session.\n   *\n   * Messages are dispatched from the moment a socket is attached rather than\n   * from `listen()`: the dev server queries the Worker for its export types\n   * during `configureServer`, which is before Vite calls `listen()`.\n   */\n  set ws(ws: WebSocket) {\n    this.close();\n    this.#ws = ws;\n    ws.addEventListener(\"message\", this.boundDispatch);\n    if (this.queue) {\n      for (const message of this.queue) {\n        ws.send(message);\n      }\n      this.queue = undefined;\n    }\n  }\n\n  constructor(private readonly intercept: (payload: vite.HMRPayload) => boolean) {}\n\n  send(payload: vite.HMRPayload) {\n    if (this.intercept(payload)) return;\n    const json = JSON.stringify(payload);\n    if (this.#ws) {\n      this.#ws.send(json);\n    } else {\n      this.queue ??= [];\n      this.queue.push(json);\n    }\n  }\n\n  on(event: string, listener: vite.HotChannelListener) {\n    const listeners = this.listeners.get(event) ?? new Set();\n    listeners.add(listener);\n    this.listeners.set(event, listeners);\n  }\n\n  off(event: string, listener: vite.HotChannelListener) {\n    this.listeners.get(event)?.delete(listener);\n  }\n\n  private boundDispatch = this.dispatch.bind(this);\n\n  listen() {\n    assert(this.#ws, \"WebSocket is not connected\");\n    // Already dispatching — see the `ws` setter.\n  }\n\n  close() {\n    // The channel can be closed before a runner ever connected (e.g. a dev\n    // server created and torn down during a framework's type generation), so\n    // tolerate a missing socket — and close it so the runtime connection does\n    // not leak across server restarts.\n    this.queue = undefined;\n    if (!this.#ws) return;\n    this.#ws.removeEventListener(\"message\", this.boundDispatch);\n    this.#ws.close();\n    this.#ws = undefined;\n  }\n\n  private dispatch(event: MessageEvent) {\n    const payload = JSON.parse(event.data.toString()) as vite.CustomPayload;\n\n    const listeners = this.listeners.get(payload.event) ?? new Set();\n    const ws = this.#ws;\n    for (const listener of listeners) {\n      listener(payload.data, { send: (reply) => {\n        if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(reply));\n      } });\n    }\n  }\n}\n","import type { ExportType, ExportTypes } from \"../rolldown/export-types.ts\";\nimport type { CloudflareVitePluginOptions } from \"./plugin.ts\";\n\nconst WRAPPER_FACTORIES = {\n  DurableObject: \"createDurableObjectWrapper\",\n  WorkerEntrypoint: \"createWorkerEntrypointWrapper\",\n  WorkflowEntrypoint: \"createWorkflowEntrypointWrapper\",\n} satisfies Record<ExportType, string>;\n\nconst IDENTIFIER_REGEX = /^[A-Za-z_$][A-Za-z0-9_$]*$/;\n\n/**\n * Names the generated Worker entry already uses, and which therefore cannot be\n * taken over by a user export.\n */\nconst RESERVED_EXPORT_NAMES = new Set([\"default\", \"ModuleRunnerDO\"]);\n\n/**\n * The export types that follow from the plugin options alone.\n *\n * Durable Object and Workflow classes have to be declared up front because\n * workerd needs their namespaces at startup, so they are known before the entry\n * module has ever been evaluated. Named entrypoints have no such declaration\n * and can only be discovered by classifying the entry's exports.\n */\nexport function configuredExportTypes(\n  options: CloudflareVitePluginOptions,\n): ExportTypes {\n  const exportTypes: ExportTypes = {};\n  for (const namespace of options.worker?.durableObjectNamespaces ?? []) {\n    exportTypes[namespace.className] = \"DurableObject\";\n  }\n  for (const workflow of options.worker?.workflows ?? []) {\n    exportTypes[workflow.className] = \"WorkflowEntrypoint\";\n  }\n  return exportTypes;\n}\n\n/**\n * Combines detected export types with the configured ones. Configuration wins:\n * a class declared as a Durable Object namespace must be wrapped as one even if\n * it is momentarily broken and classifies as something else.\n */\nexport function mergeExportTypes(\n  configured: ExportTypes,\n  detected: ExportTypes,\n): ExportTypes {\n  return { ...detected, ...configured };\n}\n\n/**\n * Renders the wrapper exports for the generated Worker entry.\n *\n * An export whose name is not a valid identifier (`export { x as \"a-b\" }`)\n * cannot be re-exported by the wrapper module, so it is skipped rather than\n * emitting a module that fails to parse.\n */\nexport function renderExportWrappers(exportTypes: ExportTypes): Array<string> {\n  return Object.entries(exportTypes)\n    .filter(\n      ([name]) =>\n        IDENTIFIER_REGEX.test(name) && !RESERVED_EXPORT_NAMES.has(name),\n    )\n    .map(\n      ([name, type]) =>\n        `export const ${name} = ${WRAPPER_FACTORIES[type]}(\"${name}\");`,\n    );\n}\n","import type { IncomingHttpHeaders } from \"node:http\";\n\n/**\n * Resolves the client-facing host of an incoming dev-server request.\n *\n * When the dev server runs behind a proxy or tunnel (e.g. ngrok or\n * `cloudflared`), the `Host` header carries the local address while the\n * public host arrives in `X-Forwarded-Host`. Preferring the forwarded host\n * lets the worker see the URL the client actually requested.\n */\nexport function resolveForwardedHost(\n  headers: IncomingHttpHeaders,\n  fallbackHost: string,\n): string {\n  return (\n    firstHeaderValue(headers[\"x-forwarded-host\"]) ??\n    firstHeaderValue(headers.host) ??\n    fallbackHost\n  );\n}\n\nfunction firstHeaderValue(\n  value: string | Array<string> | undefined,\n): string | undefined {\n  // Proxy chains may append to a single header (\"host1, host2\") instead of\n  // repeating it; only the first entry is the client-facing host.\n  const raw = Array.isArray(value) ? value[0] : value;\n  const first = raw?.split(\",\")[0]?.trim();\n  return first ? first : undefined;\n}\n","import * as NodeHttp from \"node:http\";\nimport type { IncomingMessage } from \"node:http\";\nimport type { Duplex } from \"node:stream\";\nimport type * as vite from \"vite\";\nimport { resolveForwardedHost } from \"./forwarded-host.ts\";\n\n/**\n * Handles 'upgrade' requests on the Vite HTTP server and forwards the\n * WebSocket handshake to the local workerd address as a raw HTTP upgrade.\n *\n * Returns a cleanup function that removes the listener (used on server restart).\n */\nexport function handleWebSocket(\n  httpServer: vite.HttpServer,\n  address: string | URL | ((forward: (address: string | URL) => void) => Promise<void>),\n): () => void {\n  let closed = false;\n\n  // Sockets hijacked by an `upgrade` are not reaped by `server.closeAllConnections()`,\n  // yet `server.close()` still waits on them — so a lingering proxied WebSocket blocks\n  // the HTTP server from closing on restart. Track live sockets and destroy them in the\n  // cleanup function to close deterministically.\n  const sockets = new Set<Duplex>();\n  const track = (socket: Duplex) => {\n    sockets.add(socket);\n    socket.on(\"close\", () => sockets.delete(socket));\n  };\n\n  const onUpgrade = (\n    request: IncomingMessage,\n    socket: Duplex,\n    head: Buffer,\n  ) => {\n    // Unhandled socket errors crash Node.\n    socket.on(\"error\", () => socket.destroy());\n\n    // The URL — and thus the Sandbox-origin check below — is built from the\n    // resolved (forwarded) host, not the raw `Host` header. This diverges from\n    // upstream, which keys the origin off `Host`; here it's intentional so a\n    // tunnel-fronted Sandbox preview still matches. Direct Sandbox hits carry no\n    // `X-Forwarded-Host`, so they fall back to `Host` and behave identically.\n    const rawHost = resolveForwardedHost(request.headers, \"localhost\");\n    const base = /^https?:\\/\\//i.test(rawHost) ? rawHost : `http://${rawHost}`;\n    const url = new URL(request.url ?? \"/\", base);\n\n    const isViteRequest =\n      request.headers[\"sec-websocket-protocol\"]?.startsWith(\"vite\") ?? false;\n    const isSandboxRequest = hasSandboxOrigin(url.origin);\n\n    // Vite handles its own HMR upgrades; forward Sandbox preview URLs anyway.\n    if (isViteRequest && !isSandboxRequest) {\n      return;\n    }\n\n    track(socket);\n    const forward = (upstreamBase: string | URL) => {\n    if (closed || socket.destroyed) return;\n    const target = new URL(url.pathname + url.search, upstreamBase);\n    const upstream = NodeHttp.request({\n      hostname: target.hostname,\n      port: target.port,\n      path: target.pathname + target.search,\n      method: request.method,\n      // Forward the client-facing host so the worker sees the URL the client\n      // requested rather than the local workerd address.\n      headers: { ...request.headers, host: url.host },\n    });\n\n    const cleanup = () => {\n      upstream.destroy();\n      socket.destroy();\n    };\n\n    upstream.on(\"error\", cleanup);\n    socket.on(\"close\", () => upstream.destroy());\n\n    upstream.on(\"response\", (response) => {\n      // Worker did not accept the upgrade.\n      if (!socket.destroyed) {\n        socket.destroy();\n      }\n      response.resume();\n    });\n\n    upstream.on(\"upgrade\", (upstreamRes, upstreamSocket, upstreamHead) => {\n      upstreamSocket.on(\"error\", () => upstreamSocket.destroy());\n\n      if (socket.destroyed) {\n        upstreamSocket.destroy();\n        return;\n      }\n\n      track(socket);\n      track(upstreamSocket);\n\n      const statusLine = `HTTP/1.1 ${upstreamRes.statusCode ?? 101} ${\n        upstreamRes.statusMessage ?? \"Switching Protocols\"\n      }`;\n      const headerLines: Array<string> = [statusLine];\n      for (let i = 0; i < upstreamRes.rawHeaders.length; i += 2) {\n        headerLines.push(\n          `${upstreamRes.rawHeaders[i]}: ${upstreamRes.rawHeaders[i + 1]}`,\n        );\n      }\n      socket.write(`${headerLines.join(\"\\r\\n\")}\\r\\n\\r\\n`);\n\n      if (upstreamHead.length > 0) {\n        socket.write(upstreamHead);\n      }\n      if (head.length > 0) {\n        upstreamSocket.write(head);\n      }\n\n      socket.pipe(upstreamSocket).pipe(socket);\n    });\n\n    // WebSocket upgrade requests carry no body, and any early client bytes are\n    // forwarded above via `upstreamSocket.write(head)`. Ending the request\n    // directly flushes the upstream handshake deterministically, rather than\n    // relying on the incoming `request` stream to emit `end` (which can be\n    // delayed by TCP timing) and avoids a second consumer of the client socket.\n    upstream.end();\n    };\n    const forwarding = typeof address === \"function\" ? address(forward) : Promise.resolve().then(() => forward(address));\n    void forwarding.catch(() => {\n      if (!socket.destroyed) socket.end(\"HTTP/1.1 503 Service Unavailable\\r\\nConnection: close\\r\\nContent-Length: 0\\r\\n\\r\\n\");\n    });\n  };\n\n  httpServer.on(\"upgrade\", onUpgrade);\n  return () => {\n    closed = true;\n    httpServer.off(\"upgrade\", onUpgrade);\n    for (const socket of sockets) {\n      socket.destroy();\n    }\n    sockets.clear();\n  };\n}\n\n/**\n * Matches the origin of a Sandbox SDK preview URL.\n * See: https://developers.cloudflare.com/sandbox/concepts/preview-urls/\n *\n * Pattern: https?://<port(4+ digits)>-<id(no dots)>-<token>.localhost\n *\n * IMPORTANT: The token segment is [a-z0-9_]+ (no hyphens) to prevent ReDoS — two adjacent\n * [^.]+ groups separated by - cause quadratic backtracking on hyphen-heavy input. Tokens\n * are documented as letters/digits/underscores only.\n */\nconst SANDBOX_ORIGIN_REGEXP =\n  /^https?:\\/\\/\\d{4,}-[^.]+-[a-z0-9_]+\\.localhost(:\\d+)?$/i;\n\nfunction hasSandboxOrigin(origin: string) {\n  return SANDBOX_ORIGIN_REGEXP.test(origin);\n}\n","import type { ExportTypes } from \"../rolldown/export-types.ts\";\nimport {\n  haveExportTypesChanged,\n  isExportTypes,\n  WORKER_EXPORT_TYPES_EVENT,\n} from \"../rolldown/export-types.ts\";\nimport { parseViteEnvironments } from \"../rolldown/options.ts\";\nimport type { OptionsApi } from \"../rolldown/plugins/index.ts\";\nimport { workerEntryId } from \"../rolldown/plugins/index.ts\";\nimport { resolvePluginApi } from \"../rolldown/utils.ts\";\nimport type { RuntimeServices } from \"../core/index.ts\";\nimport type * as Context from \"effect/Context\";\nimport * as NodeHttp from \"node:http\";\nimport { URL as NodeURL } from \"node:url\";\nimport * as vite from \"vite\";\nimport { DistilledDevEnvironment } from \"./dev-environment.ts\";\nimport type { ServerHandle } from \"./dev-server.ts\";\nimport { configuredExportTypes, mergeExportTypes } from \"./export-types.ts\";\nimport { resolveForwardedHost } from \"./forwarded-host.ts\";\nimport type { CloudflareVitePluginOptions } from \"./plugin.ts\";\nimport { handleWebSocket } from \"./websockets.ts\";\n\nlet context: Context.Context<RuntimeServices> | undefined;\n\nexport function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {\n  const environmentNames = parseViteEnvironments(options);\n  const configured = configuredExportTypes(options);\n  // Which exports the running Worker was generated for. Kept across dev server\n  // restarts so a restart does not undo what was detected.\n  let exportTypes: ExportTypes = configured;\n  let handle: ServerHandle | undefined;\n  let isServerRestarting = false;\n  let removeUpgradeListener: (() => void) | undefined;\n  let stopRuntime: (() => Promise<void>) | undefined;\n  let runtimeReload: (name: string, reason: string) => void = () => {};\n  const close = async () => {\n    await stopRuntime?.();\n    removeUpgradeListener?.();\n    removeUpgradeListener = undefined;\n    await handle?.close();\n    handle = undefined;\n  };\n  let optionsApi: OptionsApi | undefined;\n  const plugins: Array<vite.Plugin> = [];\n  // The proxy middleware registers in a `configureServer` post callback, which\n  // Vite runs in plugin order — so when this plugin is appended after a\n  // framework's plugins, the framework's own post middlewares (e.g. a Node\n  // request bridge that assumes a runnable environment) would see requests\n  // first. With `middlewareOrder: \"pre\"` the proxy is instead inserted\n  // directly after Vite's internal middlewares, ahead of every other plugin's\n  // post middlewares. This companion plugin records that insertion point: its\n  // post callback runs before all normal plugins' post callbacks (it is\n  // `enforce: \"pre\"`), i.e. right after Vite registered its internal\n  // middlewares and before any other plugin registered post middlewares.\n  let middlewareBoundary: number | undefined;\n  if (options.dev?.middlewareOrder === \"pre\") {\n    plugins.push({\n      name: \"distilled-cloudflare:dev-middleware-boundary\",\n      enforce: \"pre\",\n      configureServer(server) {\n        middlewareBoundary = undefined;\n        return () => {\n          middlewareBoundary = server.middlewares.stack.length;\n        };\n      },\n    });\n  }\n  const plugin: vite.Plugin = {\n    name: \"distilled-cloudflare:dev\",\n    configResolved({ plugins }) {\n      optionsApi = resolvePluginApi<OptionsApi>(\n        plugins ?? [],\n        \"distilled-cloudflare:options\",\n      );\n    },\n    config() {\n      const environment: vite.EnvironmentOptions = {\n        dev: {\n          createEnvironment(name, config) {\n            // Framework integrations strip `configureServer` off this plugin\n            // when they create throwaway dev servers (e.g. Astro's type-gen\n            // during `build`/`sync`) so we don't boot workerd mid-build. In\n            // that case there is no runtime to proxy to — degrade to Vite's\n            // default runnable environment. Check this exact plugin instance\n            // (not the resolved plugin list) so multiple instances and\n            // renamed/wrapped plugins behave predictably.\n            if (!hasConfigureServerHook(plugin)) {\n              return vite.createRunnableDevEnvironment(name, config);\n            }\n            return new DistilledDevEnvironment(name, config, (reason) => runtimeReload(name, reason));\n          },\n        },\n      };\n      return {\n        environments: Object.fromEntries(\n          environmentNames.map((name) => [name, environment]),\n        ),\n      };\n    },\n    async buildEnd() {\n      if (!isServerRestarting) {\n        await close();\n      }\n    },\n    async closeBundle() {\n      if (!isServerRestarting) {\n        await close();\n      }\n    },\n    async configureServer(server) {\n      await stopRuntime?.();\n      removeUpgradeListener?.();\n      removeUpgradeListener = undefined;\n      const restartServer = server.restart.bind(server);\n      server.restart = async () => {\n        try {\n          isServerRestarting = true;\n          await restartServer();\n        } finally {\n          isServerRestarting = false;\n        }\n      };\n      if (!optionsApi) {\n        throw new Error(\"Cannot resolve the cloudflare-runtime:options plugin\");\n      }\n      // Frameworks can register multiple names for the same Worker entry.\n      const inputs = [...new Set(Object.values(optionsApi.input()))];\n      if (inputs.length > 1) {\n        throw new Error(\n          `Expected exactly one entry in the input, got ${inputs.length} entries: ${JSON.stringify(inputs)}`,\n        );\n      }\n      const { createDefaultContext, startServer } =\n        await import(\"./dev-server.ts\");\n      if (!options.context) {\n        context ??= await createDefaultContext();\n      }\n      const [input] = inputs;\n      const entryEnvironment = {\n        environmentName: environmentNames[0],\n        // The module runner imports the generated Worker entry rather than the\n        // user entry: it is the module that re-exports everything the Worker\n        // needs and that reports its export types over `import.meta.hot`.\n        entryId: input ? workerEntryId(input) : input,\n        entryName: input,\n      };\n      const entryEnvironments = () =>\n        environmentNames\n          .map((name) => server.environments[name])\n          .filter(\n            (environment) => environment instanceof DistilledDevEnvironment,\n          );\n\n      const connect = async (address: ServerHandle[\"address\"]) => {\n        for (const environment of entryEnvironments()) {\n          await environment.depsOptimizer?.init();\n          environment.recordOptimizerMetadata();\n          await environment.connect(address);\n        }\n      };\n      let address: ServerHandle[\"address\"];\n      let applying: Promise<void> = Promise.resolve();\n      let running = false;\n      let dirty = false;\n      let stopped = false;\n      let generation = 0;\n      let classification: AbortController | undefined;\n      const disconnect = () => {\n        classification?.abort();\n        for (const environment of entryEnvironments()) environment.transport.close();\n      };\n      const applyExportTypes = (detected: ExportTypes): boolean => {\n        const next = mergeExportTypes(configured, detected);\n        if (!haveExportTypesChanged(exportTypes, next)) return false;\n        exportTypes = next;\n        scheduleRestart(\"exports\");\n        return true;\n      };\n      const run = async () => {\n        do {\n          dirty = false;\n          disconnect();\n          await handle?.close();\n          handle = undefined;\n          // Every environment shares the replaced isolate. Retire their transforms\n          // together, including SSR references compiled against the previous RSC graph.\n          for (const environment of entryEnvironments()) environment.moduleGraph.invalidateAll();\n          if (stopped) throw new Error(\"Worker runtime closed\");\n          const current = ++generation;\n          server.config.logger.info(`[alchemy-runtime] starting generation=${current}`);\n          handle = await startServer(options, entryEnvironment, server, options.context ?? context!, exportTypes);\n          if (stopped) throw new Error(\"Worker runtime closed\");\n          await connect(handle.address);\n          address = handle.address;\n          // Entry evaluation can discover another dependency generation. Its callback only\n          // marks this loop dirty and cancels classification, never awaits its own restart.\n          classification = new AbortController();\n          const detected = input ? await entryEnvironments()[0]?.requestExportTypes(undefined, classification.signal) : undefined;\n          if (detected) applyExportTypes(detected);\n          if (!dirty && !stopped) server.config.logger.info(`[alchemy-runtime] ready generation=${current}`);\n        } while (dirty && !stopped);\n        if (stopped) throw new Error(\"Worker runtime closed\");\n      };\n      function scheduleRestart(reason: string) {\n        if (stopped) return;\n        dirty = true;\n        classification?.abort();\n        server.config.logger.info(`[alchemy-runtime] restart reason=${reason}`);\n        if (running) return;\n        running = true;\n        applying = Promise.resolve().then(run).finally(() => {\n          running = false;\n          if (dirty && !stopped) scheduleRestart(\"pending\");\n        });\n        if (reason !== \"startup\") {\n          // Retire the old document before it can consume new-generation Flight\n          // references. Its replacement GET waits on the readiness gate above.\n          server.config.logger.info(`[alchemy-runtime] browser reload reason=${reason}`);\n          server.environments.client.hot.send({ type: \"full-reload\" });\n        }\n        // Observe the rejection without replacing the readiness promise with success.\n        void applying.catch((error: unknown) => {\n          server.config.logger.error(`[alchemy-runtime] failed: ${String(error)}`);\n        });\n      }\n      const withReady = async (forward: (address: ServerHandle[\"address\"]) => void) => {\n        let pending: Promise<void>;\n        do {\n          pending = applying;\n          await pending;\n        } while (pending !== applying);\n        if (stopped) throw new Error(\"Worker runtime closed\");\n        forward(address);\n      };\n      runtimeReload = (name, reason) => scheduleRestart(`${reason}:${name}`);\n      stopRuntime = async () => {\n        stopped = true;\n        dirty = false;\n        disconnect();\n        try { await applying; } catch { /* Shutdown still releases the failed runtime. */ }\n      };\n      if (input) {\n        await server.environments.client.pluginContainer.buildStart();\n        for (const environment of entryEnvironments()) {\n          environment.hot.on(WORKER_EXPORT_TYPES_EVENT, (data: unknown) => {\n            if (isExportTypes(data)) applyExportTypes(data);\n          });\n        }\n      }\n      scheduleRestart(\"startup\");\n      await withReady(() => {});\n      const bindWebSocket = () => {\n        removeUpgradeListener?.();\n        removeUpgradeListener = server.httpServer\n          ? handleWebSocket(server.httpServer, withReady)\n          : undefined;\n      };\n\n      if (!input) {\n        // If there is no input, we are in SPA mode, so we don't need to route requests to the server.\n        return;\n      }\n      bindWebSocket();\n      return () => {\n        server.middlewares.use(\n          function distilledCloudflareProxyMiddleware(req, res) {\n            void withReady((ready) => {\n            if (req.destroyed || res.destroyed) return;\n            const url = new NodeURL(\n              req.originalUrl ?? req.url ?? \"/\",\n              ready.toString(),\n            );\n            const request = NodeHttp.request(url, {\n              method: req.method,\n              headers: {\n                ...req.headers,\n                host: resolveForwardedHost(req.headers, url.host),\n              },\n            });\n            req.pipe(request);\n            res.on(\"close\", () => request.destroy());\n            request.on(\"response\", (response) => {\n              response.on(\"error\", () => res.destroy());\n              res.writeHead(response.statusCode ?? 500, response.headers);\n              response.pipe(res);\n            });\n            // Without a listener a connection error is an unhandled `error`\n            // event, which takes down the dev server. Requests in flight while\n            // the Worker runtime is being replaced hit exactly that.\n            request.on(\"error\", (error) => {\n              server.config.logger.error(\n                `Worker request failed: ${error.message}`,\n                {\n                  error,\n                  timestamp: true,\n                },\n              );\n              if (!res.headersSent) {\n                res.writeHead(502, { \"content-type\": \"text/plain\" });\n              }\n              res.end(\"Bad Gateway\");\n            });\n            }).catch(() => {\n              if (res.destroyed) return;\n              res.writeHead(503, { \"content-type\": \"text/plain\", \"retry-after\": \"1\" });\n              res.end(\"Worker runtime unavailable\");\n            });\n          },\n        );\n        if (\n          options.dev?.middlewareOrder === \"pre\" &&\n          middlewareBoundary !== undefined\n        ) {\n          // Move the proxy middleware from the end of the stack to directly\n          // after Vite's internal middlewares, ahead of the post middlewares\n          // other plugins registered.\n          const stack = server.middlewares.stack;\n          const entry = stack.pop();\n          if (entry) {\n            stack.splice(middlewareBoundary, 0, entry);\n          }\n        }\n      };\n    },\n  };\n  plugins.push(plugin);\n  return plugins;\n}\n\nconst hasConfigureServerHook = (plugin: vite.Plugin): boolean => {\n  const hook = plugin.configureServer;\n  if (hook == null) return false;\n  return typeof hook === \"function\" || typeof hook.handler === \"function\";\n};\n","import { parseViteEnvironments } from \"../rolldown/options.ts\";\nimport type { OptionsApi } from \"../rolldown/plugins/index.ts\";\nimport { resolvePluginApi } from \"../rolldown/utils.ts\";\nimport * as NodeFs from \"node:fs\";\nimport * as NodeHttp from \"node:http\";\nimport * as NodePath from \"node:path\";\nimport { URL as NodeURL } from \"node:url\";\nimport type * as vite from \"vite\";\nimport { resolveForwardedHost } from \"./forwarded-host.ts\";\nimport type { CloudflareVitePluginOptions } from \"./plugin.ts\";\nimport { handleWebSocket } from \"./websockets.ts\";\n\n/**\n * Preview mode: serve the freshly built worker through workerd.\n *\n * `vite preview` (and any framework that drives it programmatically — e.g.\n * waku's SSG step, which boots a preview server mid-`buildApp` and renders\n * every static page through it) resolves the same plugins as the build. This\n * plugin's `configurePreviewServer` hook reads the built worker output from\n * the entry environment's `build.outDir`, boots workerd over it via\n * `cloudflare-runtime`, and registers a proxy middleware ahead of Vite's\n * internal middlewares so every request — static assets included, via the\n * runtime's assets plugin — is handled exactly as on the deployed worker.\n *\n * This mirrors what upstream `@cloudflare/vite-plugin` provides via its own\n * `configurePreviewServer` (miniflare over the built output), and is what\n * makes SSG-in-workerd work: a top-level `import { env } from\n * \"cloudflare:workers\"` in a prerendered page module loads fine, because the\n * page renders inside workerd rather than the Node process.\n */\nexport function preview(options: CloudflareVitePluginOptions): vite.Plugin {\n  return {\n    name: \"distilled-cloudflare:preview\",\n    async configurePreviewServer(server) {\n      const config = server.config;\n      const optionsApi = resolvePluginApi<OptionsApi>(\n        config.plugins,\n        \"distilled-cloudflare:options\",\n      );\n      if (!optionsApi) {\n        throw new Error(\n          \"Cannot resolve the distilled-cloudflare:options plugin\",\n        );\n      }\n      const input = optionsApi.input();\n      const inputNames = Object.keys(input);\n      if (inputNames.length === 0) {\n        // SPA mode: no worker entry — leave the preview server to Vite's\n        // static file serving.\n        return;\n      }\n      if (inputNames.length > 1) {\n        throw new Error(\n          `Expected exactly one entry in the input, got ${inputNames.length} entries: ${JSON.stringify(input)}`,\n        );\n      }\n      const [entryEnvironmentName] = parseViteEnvironments(options);\n      const entryEnvironment = config.environments[entryEnvironmentName!];\n      if (!entryEnvironment) {\n        throw new Error(\n          `Cannot resolve the \"${entryEnvironmentName}\" environment from the preview config`,\n        );\n      }\n      const directory = NodePath.resolve(\n        config.root,\n        entryEnvironment.build.outDir,\n      );\n      const entryModule = findEntryModule(directory, inputNames[0]!);\n      const clientEnvironment = config.environments[\"client\"];\n      const assetsDirectory = clientEnvironment\n        ? NodePath.resolve(config.root, clientEnvironment.build.outDir)\n        : undefined;\n\n      const { startPreviewServer } = await import(\"./preview-server.ts\");\n      const handle = await startPreviewServer(options, {\n        directory,\n        entryModule,\n        assetsDirectory:\n          assetsDirectory !== undefined && NodeFs.existsSync(assetsDirectory)\n            ? assetsDirectory\n            : undefined,\n      });\n      const address = handle.address;\n      const removeUpgradeListener = server.httpServer\n        ? handleWebSocket(server.httpServer, address)\n        : undefined;\n      const close = server.close.bind(server);\n      server.close = async () => {\n        removeUpgradeListener?.();\n        await handle.close();\n        await close();\n      };\n      // Registered directly (not via the returned post hook), so the proxy\n      // runs ahead of Vite's internal static-file middlewares and of any\n      // middleware a framework appends afterwards (e.g. waku's Node SSG\n      // fallback) — the worker handles every request, like in production.\n      server.middlewares.use(\n        function distilledCloudflarePreviewMiddleware(req, res) {\n          const url = new NodeURL(req.url ?? \"/\", address.toString());\n          const request = NodeHttp.request(url, {\n            method: req.method,\n            headers: {\n              ...req.headers,\n              host: resolveForwardedHost(req.headers, url.host),\n            },\n          });\n          req.pipe(request);\n          request.on(\"response\", (response) => {\n            res.writeHead(response.statusCode ?? 500, response.headers);\n            response.pipe(res);\n          });\n        },\n      );\n    },\n  };\n}\n\n/**\n * Locate the built entry chunk for the (single) worker input. Entry chunks\n * are emitted as `[name].js` (Vite's server-build default `entryFileNames`);\n * `.mjs` is accepted for configs that override the extension.\n */\nconst findEntryModule = (directory: string, inputName: string): string => {\n  const candidates = [`${inputName}.js`, `${inputName}.mjs`];\n  for (const candidate of candidates) {\n    if (NodeFs.existsSync(NodePath.join(directory, candidate))) {\n      return candidate;\n    }\n  }\n  throw new Error(\n    `Cannot find the built worker entry (${candidates.join(\" or \")}) in \"${directory}\". ` +\n      \"Run the build before starting the preview server.\",\n  );\n};\n","import type { BasePluginOptions } from \"../rolldown/options.ts\";\nimport {\n  additionalModulesPlugin,\n  cloudflareExternalsPlugin,\n  nodejsAlsPlugin,\n  nodejsImportWarningPlugin,\n  nodejsUnenvPlugin,\n  optionsPlugin,\n  virtualModulesPlugin,\n  wasmInitPlugin,\n} from \"../rolldown/plugins/index.ts\";\nimport type {\n  BindingHooks,\n  RuntimeServices,\n  RuntimeWorker,\n} from \"../core/index.ts\";\nimport type * as Context from \"effect/Context\";\nimport type * as vite from \"vite\";\nimport { dev } from \"./dev-plugin.ts\";\nimport { preview } from \"./preview-plugin.ts\";\n\nexport interface CloudflareVitePluginDevOptions {\n  /**\n   * Where the Worker request-proxy middleware registers relative to the\n   * `configureServer` post middlewares of other plugins.\n   *\n   * - `\"post\"` (default): append in plugin order. Required by frameworks whose\n   *   own dev middlewares must see requests first (e.g. Astro's prerender\n   *   handler and dev handler).\n   * - `\"pre\"`: insert directly after Vite's internal middlewares, ahead of the\n   *   post middlewares other plugins registered. Use this when appending the\n   *   Cloudflare plugin after a framework's config-file plugins and the\n   *   framework registers its own Node request-bridge middleware that cannot\n   *   handle the Worker environment (e.g. Waku's RSC bridge, which assumes a\n   *   runnable Node environment).\n   *\n   * @default \"post\"\n   */\n  middlewareOrder?: \"pre\" | \"post\";\n}\n\nexport interface CloudflareVitePluginOptions<\n  B extends BindingHooks = BindingHooks,\n> extends BasePluginOptions {\n  worker?: Omit<\n    RuntimeWorker<B>,\n    \"compatibilityDate\" | \"compatibilityFlags\" | \"modules\"\n  >;\n  context?: Context.Context<RuntimeServices>;\n  dev?: CloudflareVitePluginDevOptions;\n}\n\nexport default function cloudflareVitePlugin(\n  options: CloudflareVitePluginOptions = {},\n): vite.PluginOption {\n  return [\n    optionsPlugin.vite(options),\n    cloudflareExternalsPlugin.vite(options),\n    nodejsAlsPlugin.vite(options),\n    nodejsImportWarningPlugin.vite(options),\n    nodejsUnenvPlugin.vite(options),\n    virtualModulesPlugin.vite(options),\n    wasmInitPlugin.vite(options),\n    additionalModulesPlugin.vite(options),\n    {\n      name: \"distilled-cloudflare:rsc\",\n      enforce: \"pre\",\n      config() {\n        return { rsc: { serverHandler: false } } as vite.UserConfig;\n      },\n    } as vite.Plugin,\n    ...dev(options),\n    preview(options),\n    // Some of the composed plugins are conditional (e.g. the nodejs-compat\n    // family) and resolve to `null`; filter them out so integrations that\n    // post-process the returned plugins don't have to handle sparse entries.\n  ].filter((plugin): plugin is vite.Plugin => plugin !== null);\n}\n"],"mappings":"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"}
+\ No newline at end of file
+diff --git a/src/vite/dev-environment.ts b/src/vite/dev-environment.ts
+index eb69d5834d027e5c132d9381b2a59a2bd63cb428..a2205e0db99115a264bb1cc651fc0b162138c51f 100644
+--- a/src/vite/dev-environment.ts
++++ b/src/vite/dev-environment.ts
+@@ -18,15 +18,28 @@ const EXPORT_TYPES_TIMEOUT_MS = 10_000;
+ export class DistilledDevEnvironment extends vite.DevEnvironment {
+   transport: HotChannel;
+ 
+-  constructor(name: string, config: vite.ResolvedConfig) {
+-    const transport = new HotChannel();
++  constructor(name: string, config: vite.ResolvedConfig, onReload: (reason: "optimizer" | "full-reload") => void) {
++    let metadata: unknown;
++    const transport = new HotChannel((payload) => {
++      if (payload.type !== "full-reload") return false;
++      const next = this.depsOptimizer?.metadata;
++      const optimizer = payload.path === "*" && !payload.triggeredBy && next !== metadata;
++      metadata = next;
++      // A program reload must retire every graph in the shared isolate. Accepted
++      // updates remain on the existing runner and keep ordinary HMR semantics.
++      onReload(optimizer ? "optimizer" : "full-reload");
++      return true;
++    });
+     super(name, config, {
+       hot: true,
+       transport,
+     });
+     this.transport = transport;
++    this.recordOptimizerMetadata = () => { metadata = this.depsOptimizer?.metadata; };
+   }
+ 
++  recordOptimizerMetadata: () => void;
++
+   async connect(address: string | globalThis.URL) {
+     const url = new NodeURL(address.toString());
+     url.protocol = "ws";
+@@ -42,18 +55,22 @@ export class DistilledDevEnvironment extends vite.DevEnvironment {
+       headers: { [ENVIRONMENT_NAME_HEADER]: this.name },
+     });
+     await new Promise<void>((resolve, reject) => {
+-      ws.addEventListener("open", () => {
+-        resolve();
+-      });
+-      ws.addEventListener("error", (event) => {
+-        // Depending on which global WebSocket type wins (bun-types vs
+-        // @types/node's undici), the event may or may not carry `error`.
+-        reject(
+-          "error" in event
+-            ? event.error
+-            : new Error("WebSocket connection error"),
+-        );
+-      });
++      const cleanup = () => {
++        clearTimeout(timer);
++        ws.removeEventListener("open", opened);
++        ws.removeEventListener("error", failed);
++        ws.removeEventListener("close", failed);
++      };
++      const opened = () => { cleanup(); resolve(); };
++      const failed = () => {
++        cleanup();
++        ws.close();
++        reject(new Error("Worker module transport could not connect"));
++      };
++      const timer = setTimeout(failed, EXPORT_TYPES_TIMEOUT_MS);
++      ws.addEventListener("open", opened);
++      ws.addEventListener("error", failed);
++      ws.addEventListener("close", failed);
+     });
+     this.transport.ws = ws;
+   }
+@@ -73,18 +90,20 @@ export class DistilledDevEnvironment extends vite.DevEnvironment {
+    */
+   async requestExportTypes(
+     timeoutMs: number = EXPORT_TYPES_TIMEOUT_MS,
++    signal?: AbortSignal,
+   ): Promise<ExportTypes | undefined> {
+     return await new Promise<ExportTypes | undefined>((resolve) => {
+       let timer: ReturnType<typeof setTimeout>;
++      const cancel = () => listener(undefined);
+       const listener = (data: unknown) => {
++        signal?.removeEventListener("abort", cancel);
+         clearTimeout(timer);
+         this.transport.off(EXPORT_TYPES_EVENT, listener);
+         resolve(isExportTypes(data) ? data : undefined);
+       };
+-      timer = setTimeout(() => {
+-        this.transport.off(EXPORT_TYPES_EVENT, listener);
+-        resolve(undefined);
+-      }, timeoutMs);
++      timer = setTimeout(cancel, timeoutMs);
++      if (signal?.aborted) { cancel(); return; }
++      signal?.addEventListener("abort", cancel, { once: true });
+       this.transport.on(EXPORT_TYPES_EVENT, listener);
+       this.transport.send({
+         type: "custom",
+@@ -125,7 +144,7 @@ class HotChannel implements vite.HotChannel {
+    * during `configureServer`, which is before Vite calls `listen()`.
+    */
+   set ws(ws: WebSocket) {
+-    this.#ws?.removeEventListener("message", this.boundDispatch);
++    this.close();
+     this.#ws = ws;
+     ws.addEventListener("message", this.boundDispatch);
+     if (this.queue) {
+@@ -136,7 +155,10 @@ class HotChannel implements vite.HotChannel {
+     }
+   }
+ 
+-  send(payload: vite.CustomPayload) {
++  constructor(private readonly intercept: (payload: vite.HMRPayload) => boolean) {}
++
++  send(payload: vite.HMRPayload) {
++    if (this.intercept(payload)) return;
+     const json = JSON.stringify(payload);
+     if (this.#ws) {
+       this.#ws.send(json);
+@@ -168,6 +190,7 @@ class HotChannel implements vite.HotChannel {
+     // server created and torn down during a framework's type generation), so
+     // tolerate a missing socket — and close it so the runtime connection does
+     // not leak across server restarts.
++    this.queue = undefined;
+     if (!this.#ws) return;
+     this.#ws.removeEventListener("message", this.boundDispatch);
+     this.#ws.close();
+@@ -178,16 +201,11 @@ class HotChannel implements vite.HotChannel {
+     const payload = JSON.parse(event.data.toString()) as vite.CustomPayload;
+ 
+     const listeners = this.listeners.get(payload.event) ?? new Set();
++    const ws = this.#ws;
+     for (const listener of listeners) {
+-      listener(payload.data, this.client);
++      listener(payload.data, { send: (reply) => {
++        if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(reply));
++      } });
+     }
+   }
+-
+-  private client: vite.HotChannelClient = {
+-    send: (payload) => {
+-      assert(this.#ws, "WebSocket is not connected");
+-
+-      this.#ws.send(JSON.stringify(payload));
+-    },
+-  };
+ }
+diff --git a/src/vite/dev-plugin.ts b/src/vite/dev-plugin.ts
+index c92c1e4f1b91cac8a40a77d64e26ae5ec83ebdb6..bc53384ef5d6c602c9f5713214c108497c3fb72f 100644
+--- a/src/vite/dev-plugin.ts
++++ b/src/vite/dev-plugin.ts
+@@ -31,7 +31,10 @@ export function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {
+   let handle: ServerHandle | undefined;
+   let isServerRestarting = false;
+   let removeUpgradeListener: (() => void) | undefined;
++  let stopRuntime: (() => Promise<void>) | undefined;
++  let runtimeReload: (name: string, reason: string) => void = () => {};
+   const close = async () => {
++    await stopRuntime?.();
+     removeUpgradeListener?.();
+     removeUpgradeListener = undefined;
+     await handle?.close();
+@@ -84,7 +87,7 @@ export function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {
+             if (!hasConfigureServerHook(plugin)) {
+               return vite.createRunnableDevEnvironment(name, config);
+             }
+-            return new DistilledDevEnvironment(name, config);
++            return new DistilledDevEnvironment(name, config, (reason) => runtimeReload(name, reason));
+           },
+         },
+       };
+@@ -105,6 +108,9 @@ export function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {
+       }
+     },
+     async configureServer(server) {
++      await stopRuntime?.();
++      removeUpgradeListener?.();
++      removeUpgradeListener = undefined;
+       const restartServer = server.restart.bind(server);
+       server.restart = async () => {
+         try {
+@@ -148,101 +154,107 @@ export function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {
+       const connect = async (address: ServerHandle["address"]) => {
+         for (const environment of entryEnvironments()) {
+           await environment.depsOptimizer?.init();
++          environment.recordOptimizerMetadata();
+           await environment.connect(address);
+         }
+       };
+-      handle ??= await startServer(
+-        options,
+-        entryEnvironment,
+-        server,
+-        options.context ?? context!,
+-        exportTypes,
+-      );
+-      await connect(handle.address);
+-      let address = handle.address;
+-
+-      const bindWebSocket = () => {
+-        removeUpgradeListener?.();
+-        removeUpgradeListener = server.httpServer
+-          ? handleWebSocket(server.httpServer, address)
+-          : undefined;
+-      };
+-
+-      /**
+-       * Replaces the Worker runtime so it is regenerated for `exportTypes`.
+-       * workerd needs a named export for every entrypoint, Durable Object, and
+-       * Workflow class, and those exports are baked into the Worker's entry
+-       * module at startup.
+-       */
+-      const restartRuntime = async () => {
+-        await handle?.close();
+-        handle = await startServer(
+-          options,
+-          entryEnvironment,
+-          server,
+-          options.context ?? context!,
+-          exportTypes,
+-        );
+-        await connect(handle.address);
+-        address = handle.address;
+-        bindWebSocket();
+-      };
+-
+-      /**
+-       * Applies export types reported by the Worker. Returns `true` when they
+-       * no longer match what the running Worker was generated for, in which
+-       * case a runtime restart has been queued on `applying`.
+-       */
++      let address: ServerHandle["address"];
+       let applying: Promise<void> = Promise.resolve();
++      let running = false;
++      let dirty = false;
++      let stopped = false;
++      let generation = 0;
++      let classification: AbortController | undefined;
++      const disconnect = () => {
++        classification?.abort();
++        for (const environment of entryEnvironments()) environment.transport.close();
++      };
+       const applyExportTypes = (detected: ExportTypes): boolean => {
+         const next = mergeExportTypes(configured, detected);
+-        if (!haveExportTypesChanged(exportTypes, next)) {
+-          return false;
+-        }
++        if (!haveExportTypesChanged(exportTypes, next)) return false;
+         exportTypes = next;
+-        applying = applying
+-          .catch(() => {})
+-          .then(restartRuntime)
+-          .catch((error: unknown) => {
+-            server.config.logger.error(
+-              `Failed to reload the Worker runtime: ${String(error)}`,
+-              {
+-                error: error instanceof Error ? error : undefined,
+-                timestamp: true,
+-              },
+-            );
+-          });
++        scheduleRestart("exports");
+         return true;
+       };
+-
++      const run = async () => {
++        do {
++          dirty = false;
++          disconnect();
++          await handle?.close();
++          handle = undefined;
++          // Every environment shares the replaced isolate. Retire their transforms
++          // together, including SSR references compiled against the previous RSC graph.
++          for (const environment of entryEnvironments()) environment.moduleGraph.invalidateAll();
++          if (stopped) throw new Error("Worker runtime closed");
++          const current = ++generation;
++          server.config.logger.info(`[alchemy-runtime] starting generation=${current}`);
++          handle = await startServer(options, entryEnvironment, server, options.context ?? context!, exportTypes);
++          if (stopped) throw new Error("Worker runtime closed");
++          await connect(handle.address);
++          address = handle.address;
++          // Entry evaluation can discover another dependency generation. Its callback only
++          // marks this loop dirty and cancels classification, never awaits its own restart.
++          classification = new AbortController();
++          const detected = input ? await entryEnvironments()[0]?.requestExportTypes(undefined, classification.signal) : undefined;
++          if (detected) applyExportTypes(detected);
++          if (!dirty && !stopped) server.config.logger.info(`[alchemy-runtime] ready generation=${current}`);
++        } while (dirty && !stopped);
++        if (stopped) throw new Error("Worker runtime closed");
++      };
++      function scheduleRestart(reason: string) {
++        if (stopped) return;
++        dirty = true;
++        classification?.abort();
++        server.config.logger.info(`[alchemy-runtime] restart reason=${reason}`);
++        if (running) return;
++        running = true;
++        applying = Promise.resolve().then(run).finally(() => {
++          running = false;
++          if (dirty && !stopped) scheduleRestart("pending");
++        });
++        if (reason !== "startup") {
++          // Retire the old document before it can consume new-generation Flight
++          // references. Its replacement GET waits on the readiness gate above.
++          server.config.logger.info(`[alchemy-runtime] browser reload reason=${reason}`);
++          server.environments.client.hot.send({ type: "full-reload" });
++        }
++        // Observe the rejection without replacing the readiness promise with success.
++        void applying.catch((error: unknown) => {
++          server.config.logger.error(`[alchemy-runtime] failed: ${String(error)}`);
++        });
++      }
++      const withReady = async (forward: (address: ServerHandle["address"]) => void) => {
++        let pending: Promise<void>;
++        do {
++          pending = applying;
++          await pending;
++        } while (pending !== applying);
++        if (stopped) throw new Error("Worker runtime closed");
++        forward(address);
++      };
++      runtimeReload = (name, reason) => scheduleRestart(`${reason}:${name}`);
++      stopRuntime = async () => {
++        stopped = true;
++        dirty = false;
++        disconnect();
++        try { await applying; } catch { /* Shutdown still releases the failed runtime. */ }
++      };
+       if (input) {
+-        // Vite's internal CSS plugins rely on `buildStart` having run for the
+-        // client environment before a server environment transforms a module.
+-        // Vite does that while initializing the dev server, which is after
+-        // this hook, and evaluating the entry now would fail without it.
+         await server.environments.client.pluginContainer.buildStart();
+-        // Detect up front so that the first request already reaches a Worker
+-        // exposing every entrypoint the entry module defines.
+-        const detected = await entryEnvironments()[0]?.requestExportTypes();
+-        if (detected && applyExportTypes(detected)) {
+-          await applying;
+-        }
+-        // From here on the entry reports its exports over HMR every time it is
+-        // re-evaluated, which is how entrypoints added later get picked up.
+         for (const environment of entryEnvironments()) {
+           environment.hot.on(WORKER_EXPORT_TYPES_EVENT, (data: unknown) => {
+-            if (!isExportTypes(data) || !applyExportTypes(data)) {
+-              return;
+-            }
+-            server.config.logger.info(
+-              "Worker exports changed, reloading the Worker runtime.",
+-              {
+-                timestamp: true,
+-              },
+-            );
++            if (isExportTypes(data)) applyExportTypes(data);
+           });
+         }
+       }
++      scheduleRestart("startup");
++      await withReady(() => {});
++      const bindWebSocket = () => {
++        removeUpgradeListener?.();
++        removeUpgradeListener = server.httpServer
++          ? handleWebSocket(server.httpServer, withReady)
++          : undefined;
++      };
+ 
+       if (!input) {
+         // If there is no input, we are in SPA mode, so we don't need to route requests to the server.
+@@ -252,9 +264,11 @@ export function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {
+       return () => {
+         server.middlewares.use(
+           function distilledCloudflareProxyMiddleware(req, res) {
++            void withReady((ready) => {
++            if (req.destroyed || res.destroyed) return;
+             const url = new NodeURL(
+               req.originalUrl ?? req.url ?? "/",
+-              address.toString(),
++              ready.toString(),
+             );
+             const request = NodeHttp.request(url, {
+               method: req.method,
+@@ -264,7 +278,9 @@ export function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {
+               },
+             });
+             req.pipe(request);
++            res.on("close", () => request.destroy());
+             request.on("response", (response) => {
++              response.on("error", () => res.destroy());
+               res.writeHead(response.statusCode ?? 500, response.headers);
+               response.pipe(res);
+             });
+@@ -284,6 +300,11 @@ export function dev(options: CloudflareVitePluginOptions): Array<vite.Plugin> {
+               }
+               res.end("Bad Gateway");
+             });
++            }).catch(() => {
++              if (res.destroyed) return;
++              res.writeHead(503, { "content-type": "text/plain", "retry-after": "1" });
++              res.end("Worker runtime unavailable");
++            });
+           },
+         );
+         if (
+diff --git a/src/vite/websockets.ts b/src/vite/websockets.ts
+index 4061fd1a7b3d73e9a1a614150d5eb2684ebf5e52..6b5d602b3d0ff17e9add4f1df0098173ba0e0931 100644
+--- a/src/vite/websockets.ts
++++ b/src/vite/websockets.ts
+@@ -12,9 +12,9 @@ import { resolveForwardedHost } from "./forwarded-host.ts";
+  */
+ export function handleWebSocket(
+   httpServer: vite.HttpServer,
+-  address: string | URL,
++  address: string | URL | ((forward: (address: string | URL) => void) => Promise<void>),
+ ): () => void {
+-  const upstreamBase = typeof address === "string" ? new URL(address) : address;
++  let closed = false;
+ 
+   // Sockets hijacked by an `upgrade` are not reaped by `server.closeAllConnections()`,
+   // yet `server.close()` still waits on them — so a lingering proxied WebSocket blocks
+@@ -52,6 +52,9 @@ export function handleWebSocket(
+       return;
+     }
+ 
++    track(socket);
++    const forward = (upstreamBase: string | URL) => {
++    if (closed || socket.destroyed) return;
+     const target = new URL(url.pathname + url.search, upstreamBase);
+     const upstream = NodeHttp.request({
+       hostname: target.hostname,
+@@ -117,10 +120,16 @@ export function handleWebSocket(
+     // relying on the incoming `request` stream to emit `end` (which can be
+     // delayed by TCP timing) and avoids a second consumer of the client socket.
+     upstream.end();
++    };
++    const forwarding = typeof address === "function" ? address(forward) : Promise.resolve().then(() => forward(address));
++    void forwarding.catch(() => {
++      if (!socket.destroyed) socket.end("HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
++    });
+   };
+ 
+   httpServer.on("upgrade", onUpgrade);
+   return () => {
++    closed = true;
+     httpServer.off("upgrade", onUpgrade);
+     for (const socket of sockets) {
+       socket.destroy();
