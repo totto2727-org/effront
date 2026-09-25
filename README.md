@@ -17,7 +17,7 @@ vp install
 vp dev
 ```
 
-Choose `--platform bun` for Bun, `--platform cloudflare` for standalone Cloudflare Workers, or `--platform alchemy-cloudflare` for an Alchemy-managed Cloudflare Worker. Only the Alchemy option requires a configured Cloudflare profile, including for local development. Every starter uses identical application code; only infrastructure entries, configuration, and dependencies differ. See [Getting started](app/docs/src/content/en/articles/guide/getting-started.md) and the [starter examples](examples/README.md).
+For other configurations, see [Platforms](app/docs/src/content/en/articles/platforms.md).
 
 ## Usage
 
@@ -30,8 +30,6 @@ Choose `--platform bun` for Bun, `--platform cloudflare` for standalone Cloudfla
 | Use Alchemy resource capabilities in pages and Server Functions  | [Alchemy](packages/alchemy/README.md#usage)        |
 | Render Markdown with file-relative links and images              | [Markdown](packages/markdown/README.md#usage)      |
 | Apply utility styles to server-rendered and hydrated components  | [Tailwind](packages/tailwind/README.md#usage)      |
-
-The [standalone Cloudflare starter](examples/cloudflare) demonstrates the non-Alchemy host. For routes, services, and Server Functions beyond the minimal application, use the [Alchemy-based Basic example](examples/basic).
 
 ## Key features
 

@@ -382,9 +382,8 @@ describe("documentation catalog", () => {
       ]);
       expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
       expect(start).toContain("render: () => Effect.succeed(<h1>Hello, Effront</h1>),");
-      for (const platform of ["bun", "cloudflare", "alchemy"]) {
-        expect(start).toContain(`../platforms/${platform}.md`);
-      }
+      expect(start).toContain("../platforms.md");
+      expect(start).not.toMatch(/\.\.\/platforms\/(bun|cloudflare|alchemy)\.md/);
       expect(start).not.toMatch(/--platform (bun|cloudflare|alchemy-cloudflare)/);
       const alchemy = readFileSync(
         new URL(`./${directory}/platforms/alchemy.md`, import.meta.url),
@@ -394,9 +393,7 @@ describe("documentation catalog", () => {
         alchemy.startsWith(locale === "en" ? "## Prepare the example" : "## サンプルを準備する"),
       ).toBe(true);
       const html = await render(`/${locale}/guide/getting-started`);
-      for (const platform of ["bun", "cloudflare", "alchemy"]) {
-        expect(html).toContain(`/platforms/${platform}`);
-      }
+      expect(html).toContain(`href="/${locale}/platforms"`);
       expect(html).toContain('data-language="tsx"');
       expect(html).toContain("--shiki-dark");
     },
@@ -428,9 +425,7 @@ describe("documentation catalog", () => {
         ),
       ) as { scripts: Record<string, string> };
       expect(manifest.scripts).toEqual({
-        dev: "vp dev",
-        build: "vp build",
-        start: `${example.endsWith("bun") ? "bun" : "node"} dist/rsc/server.js`,
+        start: `${example === "bun" ? "bun" : "node"} dist/rsc/server.js`,
       });
     },
   );

@@ -37,4 +37,4 @@ Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront
 
 ## Add resources when needed {#capabilities}
 
-The minimal Worker does not declare a KV binding or a fixed development port. For resource-backed application services, follow [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic), [Alchemy's resource APIs](https://alchemy.run/docs), and the [Effront Alchemy API reference](../api-reference/alchemy.md).
+For application services using resources such as KV and D1, follow [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic), [Alchemy's resource APIs](https://alchemy.run/docs), and the [Effront Alchemy API reference](../api-reference/alchemy.md).

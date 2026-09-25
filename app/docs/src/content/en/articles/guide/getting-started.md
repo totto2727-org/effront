@@ -12,7 +12,7 @@ vp dev
 ```
 
 Open the local URL printed by the development server. The page displays `Hello, world`.
-For Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers, see the [Bun](../platforms/bun.md), [Cloudflare Workers](../platforms/cloudflare.md), and [Alchemy](../platforms/alchemy.md) platform guides.
+For other configurations, see [Platforms](../platforms.md).
 
 ## Explore the sample {#application}
 

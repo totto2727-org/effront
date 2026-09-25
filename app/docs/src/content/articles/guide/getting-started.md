@@ -12,7 +12,7 @@ vp dev
 ```
 
 開発サーバーが表示するローカル URL を開くと、`Hello, world` が表示されます。
-Node.js 以外の構成は、[Bun](../platforms/bun.md)、[Cloudflare Workers](../platforms/cloudflare.md)、[Alchemy 管理の Cloudflare Workers](../platforms/alchemy.md)を参照してください。
+他の構成は[プラットフォーム](../platforms.md)を参照してください。
 
 ## サンプルの構成を見る {#application}
 

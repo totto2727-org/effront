@@ -37,4 +37,4 @@ vp run dev
 
 ## 必要に応じてリソースを追加する {#capabilities}
 
-最小構成の Worker は KV バインディングや固定の開発用ポートを定義しません。リソースを使うアプリケーションサービスは [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic)、[Alchemy のリソース API](https://alchemy.run/docs)、[Effront の Alchemy API リファレンス](../api-reference/alchemy.md)を参照してください。
+KV や D1 などのリソースを使うアプリケーションサービスは [Alchemy Basic](https://github.com/totto2727-org/effront/tree/main/examples/basic)、[Alchemy のリソース API](https://alchemy.run/docs)、[Effront の Alchemy API リファレンス](../api-reference/alchemy.md)を参照してください。
