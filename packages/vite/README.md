@@ -24,7 +24,7 @@ Use its [Vite configuration](../../examples/workers/vite.config.ts) and [complet
 
 - Configures the browser, React Server Component, and SSR environments together.
 - Enables the native React Compiler and supplies Effront's browser and SSR entrypoints.
-- Enables Effect Schema's lazy JIT in the RSC, SSR, and browser graphs with Effect 4.0.0-rc.116.
+- Enables Effect Schema's lazy JIT in the framework-owned SSR and browser entries and the RSC entry selected by `effront({ rsc })` with Effect 4.0.0-rc.116.
 - Supports custom host and application entry paths.
 - Refreshes RSC raw-content imports during development, including document deletion.
 
@@ -76,7 +76,10 @@ const entries: EffrontViteOptions = {
 effront(entries);
 ```
 
-The application definition remains in the RSC graph; the integration supplies the browser and SSR entries. Each graph enables Schema JIT before application parsers are captured. Effect falls back to its interpreter when a runtime such as workerd blocks dynamic function construction.
+The application definition remains in the RSC graph, while the integration supplies the browser and SSR entries.
+Those framework-owned entries import Effect Schema JIT directly, while `effront()` adds it to the RSC entry selected by its `rsc` option.
+When `effrontServer()` selects a different RSC entry, specify the same path in `effront({ rsc })` to enable JIT there.
+See [Schema JIT registration](docs/SCHEMA-JIT.md) for the graph boundaries, native host imports, and interpreter fallback.
 
 ## Development
 

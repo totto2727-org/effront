@@ -104,8 +104,14 @@ import { effrontServer } from "@effront/server/vite";
 import { effront } from "@effront/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig({ plugins: [effront(), effrontServer()] });
+export default defineConfig({
+  plugins: [effront({ rsc: "./src/entry.rsc.ts" }), effrontServer()],
+});
 ```
+
+Pass the same RSC entry to `effront({ rsc })` and `effrontServer({ rsc })` when customizing either path, or the Vite JIT import injection may target a different file.
+The Node/Bun host imports remain separate.
+See [Schema JIT registration](../vite/docs/SCHEMA-JIT.md).
 
 The exported `EffrontServerOptions` type has two optional paths relative to the Vite root:
 
