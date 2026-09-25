@@ -4,80 +4,17 @@ Parse Markdown for React rendering and resolve relative links and images to Vite
 
 ## Usage
 
-Resolve a guide's relative link and image before rendering it:
-
-```ts
-import { createMarkdownCollection, parseMarkdown } from "@effront/markdown";
-import { Effect } from "effect";
-
-const collection = await Effect.runPromise(
-  createMarkdownCollection({
-    basePath: "/manual",
-    documents: {
-      "./start.md": "[Guide](./guide.md#intro)\n\n![Logo](./logo.svg)",
-      "./guide.md": "# Intro",
-    },
-    assets: { "./logo.svg": "/assets/logo.hash.svg" },
-  }),
-);
-const entry = collection.get("/manual/start");
-if (entry) {
-  const document = await Effect.runPromise(parseMarkdown(entry));
-  console.log(JSON.stringify(document.nodes));
-  // Link href: /manual/guide#intro
-  // Image src: /assets/logo.hash.svg
-}
-```
-
-> [!WARNING]
-> Use trusted authored Markdown and parser plugins; this integration does not sanitize untrusted submissions.
-
-See the [collection and React rendering guide](docs/GUIDE.md#vite-collections) to load files with `import.meta.glob` and render them with `MarkdownDocument` from `@effront/markdown/document`.
-
-## Key features
-
-- Maps Markdown filenames to public routes without losing directory structure.
-- Resolves document links, image references, queries, and fragments relative to each source file.
-- Uses Vite's asset URLs without a runtime filesystem loader or asset-copying step.
-- Preserves Comark's standard document format and typed Effect error handling.
-- Includes footnotes, math, Mermaid parsing, and Shiki highlighting.
-- Registers Comark's default Math/Mermaid components through client wrappers and distributes KaTeX CSS/fonts; application styles remain application-owned.
-
-## Prerequisites
-
-- **Content loading**: A Vite application when using `import.meta.glob` to supply document and asset maps.
-- **Server runtime**: Support for `node:path` and `node:url`. Cloudflare Workers requires the `nodejs_compat` compatibility flag.
-- **React rendering**: Matching React and React DOM 19.3 installations, including React DOM's `browser` API; Math and Mermaid require browser JavaScript to finish rendering.
-
-## Setup
-
-Install the collection package and Effect in your application:
-
-```bash
-npm install @effront/markdown@0.1.4 effect@4.0.0-rc.112
-```
-
-For React rendering, import the component and load its stylesheet once in your application:
-
-```tsx
-import { MarkdownDocument } from "@effront/markdown/document";
-import "@effront/markdown/styles.css";
-```
-
-Comark, KaTeX, and the diagram renderer are package dependencies; no separate component registration or KaTeX font setup is required.
-Markdown body styling is not provided.
-Style it in your application or use a library such as Tailwind Typography.
-The wrappers preserve upstream rendering behavior, including Mermaid's embedded SVG styles and remote font imports.
+Follow the [Markdown guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/markdown) to install the package, load articles and assets, render pages, and customize their components.
+The guide includes styling requirements, trusted-content constraints, and the current Math/Mermaid SSR limitations.
 
 ## API
 
-The [public API guide](docs/GUIDE.md#public-api) covers collection options and types, lookups, reference resolution, `parseMarkdown`, `MarkdownError`, and configured document rendering with component overrides.
-Use `Math` from `@effront/markdown/math` and `Mermaid` from `@effront/markdown/mermaid` to render individual rich-content leaves with upstream props.
-It also documents URL encoding, missing-reference failures, and current Math and Mermaid rendering constraints.
+The [Markdown API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/markdown) covers collections, parsing, rendering exports, reference resolution, and typed errors.
+[日本語のガイド](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/markdown)と[API リファレンス](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/markdown)も公開しています。
 
 ## Development
 
-See [AGENTS.md](AGENTS.md).
+See [AGENTS.md](AGENTS.md) for package maintenance.
 
 ## License
 

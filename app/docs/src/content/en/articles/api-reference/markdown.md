@@ -15,6 +15,7 @@ Source keys must begin with `./`, be relative to the collection base, and contai
 Invalid options and duplicate public paths fail with `MarkdownError` when the Effect runs.
 Collection creation and parsing belong on the server.
 Cloudflare Workers requires `nodejs_compat` in the Wrangler configuration.
+The server runtime must support `node:path` and `node:url`.
 
 | Collection member                                      | Result                                          |
 | ------------------------------------------------------ | ----------------------------------------------- |
@@ -23,6 +24,8 @@ Cloudflare Workers requires `nodejs_compat` in the Wrangler configuration.
 | `resolveLink(entry, href)`, `resolveImage(entry, src)` | [Reference resolution Effects](#references)     |
 
 Lookup requires an absolute pathname, decodes URL escapes once, accepts one trailing slash, and ignores queries and fragments.
+For a Web `Request`, pass `new URL(request.url).pathname`, not the absolute URL.
+Encoded slashes remain within their filename segment rather than becoming directory separators.
 A missing entry returns `undefined`, not a typed failure.
 Handle it before parsing, for example with a 404 response.
 
@@ -61,14 +64,12 @@ Parser exceptions become `MarkdownError` with the original exception in `cause`.
 
 ## Markdown rendering {#rendering}
 
-Effront exports Markdown rendering components and minimal CSS for Math and Mermaid.
-Use `MarkdownDocument` from `@effront/markdown/document`, `Math` from `@effront/markdown/math`, `Mermaid` from `@effront/markdown/mermaid`, and the stylesheet from `@effront/markdown/styles.css`.
+Import `MarkdownDocument` from `@effront/markdown/document` and `@effront/markdown/styles.css`, then pass the parsed document through `value`.
+These imports are sufficient: the Comark-based Math and Mermaid components are registered by default, with no individual registration needed.
 
-The components are based on Comark's default components.
-See the [Comark React API](https://comark.dev/rendering/react) for component props and configuration.
-
-Pass the parsed document to `MarkdownDocument` through its `value` prop.
-Use `components` to override the default components, including Math and Mermaid, for example `components={{ Math: MyMath, Mermaid: MyMermaid }}`.
+To customize rendering, wrap `Math` from `@effront/markdown/math` or `Mermaid` from `@effront/markdown/mermaid` with your desired options, or implement your own components.
+Pass the replacements through `MarkdownDocument`'s `components`, for example `components={{ Math: MyMath, Mermaid: MyMermaid }}`.
+See the [Comark React API](https://comark.dev/rendering/react) for component options.
 
 > [!WARNING]
 > Math and Mermaid currently require client-side JavaScript and do not support SSR.
@@ -89,6 +90,9 @@ The collection exposes equivalent methods that take `entry` first.
 | Missing relative target or path outside the collection base | `MarkdownError`                |
 
 Relative paths use the source document's directory.
+Resolution uses POSIX paths independently of the host operating system or working directory.
+The Markdown source is unchanged, and dynamic attribute bindings and custom component mappings retain Comark's behavior.
+The application remains responsible for the URL policy of references that pass through unchanged.
 Queries and fragments are preserved: `./details.md#example` from `./guide/start.md` resolves to `/manual/guide/details#example` under `/manual`.
 Asset suffixes are appended literally to the imported URL, not merged with an existing query or fragment.
 Avoid conflicting suffixes or use the complete URL.

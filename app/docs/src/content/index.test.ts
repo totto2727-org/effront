@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { Effect } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -655,6 +655,82 @@ describe("documentation catalog", () => {
     },
   );
 
+  it.each([
+    "README.md",
+    "docs/INDEX.md",
+    "examples/AGENTS.md",
+    "app/docs/docs/AUTHORING.md",
+    "packages/markdown/README.md",
+    "packages/markdown/AGENTS.md",
+    "packages/markdown/docs/IMPLEMENTATION.md",
+  ])("%s links Markdown readers to maintained documentation", (path) => {
+    const repository = new URL("../../../../", import.meta.url);
+    const file = new URL(path, repository);
+    const source = readFileSync(file, "utf8");
+    expect(source).not.toContain("markdown/docs/GUIDE.md");
+    if (path.startsWith("packages/markdown/")) {
+      expect(source).not.toMatch(/\]\((?:\.\/)?(?:docs\/)?GUIDE\.md(?:[#)]|$)/);
+    }
+    const links = [...source.matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]!);
+    for (const href of links) {
+      if (href.includes("effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev")) {
+        const target = new URL(href);
+        expect(target.origin).toBe(
+          "https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev",
+        );
+        expect(localizedPages.map((page) => page.slug)).toContain(target.pathname);
+      } else if (href.includes("markdown") && !/^[a-z]+:|^#/.test(href)) {
+        expect(existsSync(new URL(href.split("#")[0]!, file)), href).toBe(true);
+      }
+    }
+  });
+
+  it("keeps the Markdown README as a canonical bilingual entry point", () => {
+    const repository = new URL("../../../../", import.meta.url);
+    const source = readFileSync(new URL("packages/markdown/README.md", repository), "utf8");
+    for (const locale of ["en", "ja"]) {
+      for (const section of ["guide", "api-reference"]) {
+        expect(source).toContain(
+          `https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/${locale}/${section}/markdown`,
+        );
+      }
+    }
+    expect(existsSync(new URL("packages/markdown/docs/GUIDE.md", repository))).toBe(false);
+  });
+
+  it.each(["en", "ja"])("%s retains unique Markdown consumer contracts", async (locale) => {
+    const guide = await text(`/${locale}/guide/markdown`);
+    expect(guide).toContain("?url&amp;no-inline");
+    expect(guide).toContain("Tailwind Typography");
+    const reference = await text(`/${locale}/api-reference/markdown`);
+    for (const contract of ["new URL(request.url).pathname", "node:path", "node:url", "POSIX"]) {
+      expect(reference).toContain(contract);
+    }
+  });
+
+  it.each(
+    ["en", "ja"].flatMap((locale) => [
+      `/${locale}/guide/markdown`,
+      `/${locale}/api-reference/markdown`,
+    ]),
+  )("%s explains renderer capabilities without internal wiring", async (slug) => {
+    const prose = await text(slug);
+    expect(prose).not.toMatch(/use client|client leaf|RSC|internal wrapper|クライアント境界/);
+    expect(prose).not.toMatch(
+      /document\.meta\.components|MarkdownDocumentProps|remote font|リモートフォント/,
+    );
+    expect(prose).toMatch(
+      slug.startsWith("/en")
+        ? /imports[\s\S]*sufficient[\s\S]*registered by default[\s\S]*wrap[\s\S]*implement your own components[\s\S]*replacements[\s\S]*components/
+        : /import だけ[\s\S]*標準で登録[\s\S]*オプションでラップ[\s\S]*独自のコンポーネント[\s\S]*components/,
+    );
+    expect(prose).toContain(slug.startsWith("/en") ? "only placeholders" : "プレースホルダーのみ");
+    expect(prose).toContain(
+      slug.startsWith("/en") ? "server-renderable replacements" : "独自に実装",
+    );
+    expect(await render(slug)).toContain('href="https://comark.dev/rendering/react"');
+  });
+
   it("keeps Markdown caveats and server-only highlighting visible", async () => {
     const html = await render("/guide/markdown");
     expect(html).toContain('href="/guide/getting-started#application"');
@@ -673,9 +749,7 @@ describe("documentation catalog", () => {
     expect(html).toContain("MarkdownError");
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
-    expect(englishReference).toMatch(
-      /exports Markdown rendering components[\s\S]*based on Comark[\s\S]*override the default components/,
-    );
+    expect(englishReference).toContain("Comark-based Math and Mermaid components");
     expect(englishReference).toContain(
       "Math and Mermaid currently require client-side JavaScript and do not support SSR.",
     );

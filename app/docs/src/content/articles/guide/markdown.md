@@ -78,6 +78,8 @@ export const manual = createMarkdownCollection({
 ```
 
 参照するアセットのファイル形式をすべて glob に含めてください。
+文書とアセットで同じ `base` を指定し、参照の基準位置を揃えてください。
+各アセットに個別に取得できる URL が必要な場合は、アセット glob の `query` を `"?url&no-inline"` に変更し、Vite によるインライン化を防いでください。
 
 ## 記事を URL で表示する {#render}
 
@@ -156,9 +158,12 @@ const IntroPage = EFFRONT.Page.make({
 ```
 
 追加プラグインは Effront の標準プラグインの後に実行され、標準プラグインを置き換えるものではありません。
-Effront は Markdown レンダリング用のコンポーネントと Math・Mermaid 向けの最小限の CSS を提供し、コンポーネントは Comark のデフォルトコンポーネントをベースにしています。
-`components` を指定すると、既定のコンポーネントを上書きできます。
-各コンポーネントの props や設定の詳細は [Comark の React レンダラー](https://comark.dev/rendering/react)を参照してください。
+上の `MarkdownDocument` とスタイルシートの import だけで、解析したドキュメントを表示できます。
+Math と Mermaid は標準で登録されているため、個別の登録は不要です。
+Effront は Comark ベースのコンポーネントと Math・Mermaid 向けの最小限の CSS を提供します。
+表示を変更するには、`@effront/markdown/math` の `Math` や `@effront/markdown/mermaid` の `Mermaid` を好みのオプションでラップするか、独自のコンポーネントを実装します。
+差し替えるコンポーネントを `MarkdownDocument` の `components` に渡してください。
+各コンポーネントのオプションは [Comark の React レンダラー](https://comark.dev/rendering/react)を参照してください。
 
 > [!WARNING]
 > 現状、Math と Mermaid はクライアント JavaScript が必須であり、SSR に対応していません。

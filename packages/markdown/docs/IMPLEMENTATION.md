@@ -2,28 +2,15 @@
 
 ## Purpose
 
-The collection separates source paths from public URLs: Vite loads files, the collection resolves their references, and Comark parses and renders their contents.
-For setup, use [the package README](../README.md), [the consumer guide](GUIDE.md), or [`examples/markdown`](../../../examples/markdown).
+This document explains the collection's indexes, resolution algorithm, rendering graphs, and build artifacts for maintainers.
+Consumer contracts live in the [English API reference](../../../app/docs/src/content/en/articles/api-reference/markdown.md) and its [Japanese translation](../../../app/docs/src/content/articles/api-reference/markdown.md).
 
 ## Responsibilities
 
-Vite discovers documents with `import.meta.glob` and imports their contents with `?raw`.
-Using the same glob `base` gives document and asset keys a shared reference directory.
-Vite also resolves assets with `?url` and owns their development URLs, production emission, and hashing.
-The collection consumes those maps rather than implementing a runtime filesystem loader, asset copier, or bundler.
-
-The package maps source files to application URLs while preserving directory hierarchy.
-For example, the keys `./manual.md` and `./manual/guide/deep/details.md` map to `/manual` and `/manual/guide/deep/details` when `basePath` is `/`.
-Removing only `.md` keeps directory and file names distinct: `guide.md` becomes `/guide`, while `guide/index.md` becomes `/guide/index`.
-Relative document links resolve from their containing source file and retain queries and fragments.
-Asset references use URLs supplied by Vite.
-Source-relative path operations use Effect's [`NodePath.layerPosix`](https://effect.website/docs/v4/api/platform-node-shared/NodePath), keeping Vite's slash-separated paths consistent across hosts.
-The runtime must support `node:path` and `node:url`; the Workers example enables `nodejs_compat`.
-
-`createMarkdownCollection`, `parseMarkdown`, and URL resolvers expose expected failures through `MarkdownError` in Effect's error channel.
-Collection entries and `get` remain ordinary values and lookup operations.
-A missing document is a lookup miss, allowing the application's catch-all middleware to return 404 before streaming.
-Collection lookup preserves segment boundaries and decodes each URL segment once, including literal percent filenames.
+Vite owns file discovery and asset emission.
+The collection consumes loaded maps rather than implementing a runtime filesystem loader, asset copier, or bundler.
+Source-relative path operations use Effect's [`NodePath.layerPosix`](https://effect.website/docs/v4/api/platform-node-shared/NodePath) so slash-separated Vite keys have host-independent semantics.
+The source index and public URL index remain separate: reference resolution needs source filenames, while request lookup needs encoded public routes.
 
 ## collection.ts の処理フロー
 
@@ -60,15 +47,11 @@ flowchart TD
     I -->|いいえ| O["URL順のentries / get / resolveLink / resolveImageを返す"]
 ```
 
-設定確認では、`basePath`が`/`で始まり、query・fragment・`..`セグメントを含まないことを確認します。
-globキーは`./`で始まるコレクション基準の相対パスとして扱い、`..`による基準外参照や`.md`だけのファイル名は受け付けません。
-`Entry.source`は診断と相対リンク解決用のキーとして残りますが、読み込みディレクトリの指定ではありません。
-例: `basePath: "/manual"`とglobの`base: "./content"`で、`./guide.md` → `/manual/guide`、`./guide/start.md` → `/manual/guide/start`。
+`Entry.source` remains the source-index key used by diagnostics and relative resolution, not a filesystem loading instruction.
 
 ### 2. リクエストURLからEntryを検索
 
-`get(pathname)`は同期的なMap検索で、Effectではありません。
-見つからない場合は`undefined`を返し、404にする判断は呼び出し側が担当します。
+`get(pathname)`は公開 URL 索引を同期的に検索します。
 
 ```mermaid
 flowchart TD
@@ -120,25 +103,17 @@ suffixは文字列として末尾へ追加し、既存URLのqueryを再構成・
 
 ## Rendering
 
-Parsing retains Comark's standard defaults and adds the mdts plugins for footnotes, math, Mermaid with Tokyo Night, and Shiki.
-`parseMarkdown` prepares a Comark document and resolves link/image attributes before rendering.
+`parseMarkdown` resolves link/image attributes after the parser plugins, keeping URL resolution independent from rendering.
 `@effront/markdown/document` wraps Comark's direct document-rendering entry point with configurable defaults and an `effront-markdown` wrapper class.
 It does not import the collection/parser entry point or make the whole article a Client Component.
 Only the Math and Mermaid wrappers carry `use client`; they reuse Comark's default components and keep the Mermaid dependency out of the SSR graph.
 Mermaid uses [`use(browser())`](https://react.dev/reference/react-dom/browser) inside a `Suspense` boundary to leave its fallback on the server, then [`lazy`](https://react.dev/reference/react/lazy) loads the upstream component in the browser.
 React manages loading and retries instead of a wrapper-owned Effect and mounted state.
 The document wrapper merges its default component mappings with the caller's mappings using object spread and leaves component resolution to Comark.
-The public `@effront/markdown/styles.css` entry supplies KaTeX CSS, not a document theme.
 The library build copies KaTeX's local fonts and license beside the emitted stylesheet so its relative font URLs survive package publication.
 The wrappers do not filter themes, rewrite SVG styles or IDs, or replace upstream invalid-input behavior.
-Typography, layout, alerts, and colors belong to applications.
-Upstream Mermaid SVG styles and remote font imports are inherited, not isolated or sanitized.
 
-> [!WARNING]
-> Content and plugins are trusted authored inputs.
-> This integration is not a sanitizer for untrusted submissions.
-
-Ordinary prose, syntax highlighting, tables, and footnotes render on the server.
+Ordinary prose stays in the server-rendering graph.
 Math starts as `...` and Mermaid as an empty container until client effects run; rich no-JavaScript rendering remains deferred in [the roadmap](../../../docs/ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
 
 ## Verification

@@ -367,9 +367,15 @@ for (const reader of locales) {
     ).toContainText(/not a sanitizer|sanitizer ではありません/);
     await followHeading(page, reader, "rendering");
     const rendering = article.locator("p").filter({ hasText: "@effront/markdown/document" });
-    await expect(rendering).toContainText("@effront/markdown/math");
-    await expect(rendering).toContainText("@effront/markdown/mermaid");
     await expect(rendering).toContainText("@effront/markdown/styles.css");
+    await expect(rendering).toContainText(/registered by default|標準で登録/);
+    await expect(rendering).toContainText(/no individual registration needed|個別の登録は不要/);
+    const customization = article.locator("p").filter({ hasText: "@effront/markdown/math" });
+    await expect(customization).toContainText("@effront/markdown/mermaid");
+    await expect(customization).toContainText(/desired options|好みのオプション/);
+    await expect(customization).toContainText(
+      /implement your own components|独自のコンポーネントを実装/,
+    );
     await expect(article).toContainText("components={{ Math: MyMath, Mermaid: MyMermaid }}");
     const ssrWarning = article.locator('[data-alert="warning"]').filter({ hasText: "SSR" });
     await expect(ssrWarning).toContainText(

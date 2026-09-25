@@ -6,7 +6,8 @@
 - `src/parse.ts` owns Comark parsing, default mdts plugins, and post-parse link/image resolution.
 - `src/error.ts` owns the shared `MarkdownError` failure type.
 - `src/document.tsx` owns the configured renderer, `src/math.tsx` and `src/mermaid.tsx` wrap upstream client components, and `src/styles.css` supplies required KaTeX styles.
-- `docs/GUIDE.md` owns the consumer API; `docs/IMPLEMENTATION.md` preserves the collection flowcharts and verification boundaries.
+- Consumer documentation lives in the [English guide](../../app/docs/src/content/en/articles/guide/markdown.md) and [API reference](../../app/docs/src/content/en/articles/api-reference/markdown.md), with [Japanese guide](../../app/docs/src/content/articles/guide/markdown.md) and [API reference](../../app/docs/src/content/articles/api-reference/markdown.md) translations. Update both locales rather than adding package-local consumer guides.
+- `docs/IMPLEMENTATION.md` owns collection flowcharts, rendering graph boundaries, and packaging mechanics for maintainers.
 
 ## Architecture
 

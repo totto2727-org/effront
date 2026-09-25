@@ -15,6 +15,7 @@
 不正なオプションや公開パスの重複は、Effect 実行時に `MarkdownError` になります。
 コレクションの作成と解析はサーバー側で行います。
 Cloudflare Workers では Wrangler 設定の `nodejs_compat` が必要です。
+サーバーランタイムは `node:path` と `node:url` をサポートする必要があります。
 
 | コレクションのメンバー                                 | 戻り値                                       |
 | ------------------------------------------------------ | -------------------------------------------- |
@@ -24,6 +25,8 @@ Cloudflare Workers では Wrangler 設定の `nodejs_compat` が必要です。
 
 検索には絶対パスを指定します。
 URL エスケープは一度デコードし、末尾のスラッシュを一つ許容し、クエリとフラグメントを無視します。
+Web `Request` では、絶対 URL ではなく `new URL(request.url).pathname` を渡してください。
+エンコードされたスラッシュはディレクトリ区切りに変わらず、ファイル名のセグメント内に保持されます。
 該当エントリーがなければ、型付きの失敗ではなく `undefined` を返します。
 解析前に、404 レスポンスなどで処理してください。
 
@@ -62,14 +65,12 @@ parser の例外は、元の例外を `cause` に持つ `MarkdownError` にな�
 
 ## Markdown のレンダリング {#rendering}
 
-Effront は Markdown レンダリング用のコンポーネントと、Math・Mermaid 向けの最小限の CSS を公開しています。
-`MarkdownDocument` は `@effront/markdown/document`、`Math` は `@effront/markdown/math`、`Mermaid` は `@effront/markdown/mermaid`、スタイルシートは `@effront/markdown/styles.css` から利用できます。
+`@effront/markdown/document` の `MarkdownDocument` と `@effront/markdown/styles.css` を import し、解析したドキュメントを `value` に渡します。
+この import だけで利用でき、Comark ベースの Math と Mermaid は標準で登録されているため、個別の登録は不要です。
 
-これらのコンポーネントは Comark のデフォルトコンポーネントをベースにしています。
-各コンポーネントの props や設定の詳細は [Comark React API](https://comark.dev/rendering/react) を参照してください。
-
-解析したドキュメントを `MarkdownDocument` の `value` prop に渡します。
-`components={{ Math: MyMath, Mermaid: MyMermaid }}` のように `components` を指定すると、Math・Mermaid を含む既定のコンポーネントを上書きできます。
+表示を変更するには、`@effront/markdown/math` の `Math` や `@effront/markdown/mermaid` の `Mermaid` を好みのオプションでラップするか、独自のコンポーネントを実装します。
+`components={{ Math: MyMath, Mermaid: MyMermaid }}` のように、差し替えるコンポーネントを `MarkdownDocument` の `components` に渡してください。
+各コンポーネントのオプションは [Comark React API](https://comark.dev/rendering/react) を参照してください。
 
 > [!WARNING]
 > 現状、Math と Mermaid はクライアント JavaScript が必須であり、SSR に対応していません。
@@ -90,6 +91,9 @@ Effront は Markdown レンダリング用のコンポーネントと、Math・M
 | 相対参照先がない、またはコレクションの基準位置の外を指す | `MarkdownError`                   |
 
 相対パスはソース文書のディレクトリを基準にします。
+ホスト OS や作業ディレクトリに依存せず、POSIX パスとして解決します。
+Markdown のソースは変更せず、動的な属性バインディングと独自コンポーネントのマッピングは Comark の動作を維持します。
+そのまま通過する参照の URL ポリシーはアプリケーション側で管理してください。
 クエリとフラグメントは保持されます。
 `/manual` 配下では、`./guide/start.md` からの `./details.md#example` は `/manual/guide/details#example` になります。
 アセットの接尾辞はインポート済み URL にそのまま追加し、既存のクエリやフラグメントと統合しません。

@@ -78,6 +78,8 @@ export const manual = createMarkdownCollection({
 ```
 
 Include every referenced asset's file type in the glob.
+Use the same `base` for documents and assets so references share one content root.
+If each asset needs a separately fetchable URL, change the asset glob's `query` to `"?url&no-inline"` to prevent Vite from inlining it.
 
 ## Render the article at its URL {#render}
 
@@ -155,9 +157,12 @@ const IntroPage = EFFRONT.Page.make({
 ```
 
 Additional plugins run after Effront's defaults, not instead of them.
-Effront provides Markdown rendering components and minimal CSS for Math and Mermaid, based on Comark's default components.
-Use `components` to override the default components.
-See [Comark's React renderer](https://comark.dev/rendering/react) for component props and configuration.
+The `MarkdownDocument` and stylesheet imports above are sufficient to render the parsed document.
+Math and Mermaid are registered by default, with no individual registration needed.
+Effront supplies Comark-based components and minimal Math/Mermaid CSS.
+To customize them, wrap the exported `Math` from `@effront/markdown/math` or `Mermaid` from `@effront/markdown/mermaid` with your desired options, or implement your own components.
+Pass your replacements through `MarkdownDocument`'s `components`.
+See [Comark's React renderer](https://comark.dev/rendering/react) for component options.
 
 > [!WARNING]
 > Math and Mermaid currently require client-side JavaScript and do not support SSR.
