@@ -77,9 +77,6 @@ Content tests check catalog coverage, declared headings, and rendered internal a
 
 Vite imports Markdown at build/development time.
 Parsing runs in the Page Effect with `MarkdownError` in the error channel.
-Each Vite module generation memoizes the locale collections and uses Effect's bounded `Cache` for up to 128 parsed documents, including syntax highlighting.
-Concurrent lookups share in-progress parsing, successful results remain reusable, and failed lookups expire immediately.
-HMR or a new build recreates the collections and parser cache, including their reference resolvers and parser configuration.
 The application does not use a custom parser, runtime filesystem loader, Git execution, or network content loading.
 Only rendered content and navigation metadata cross the client boundary, not the collection or highlighter.
 
@@ -132,7 +129,7 @@ Cloudflare can satisfy HEAD and Range from a cached GET itself; these do not imp
 HTTP caching does not inspect React's serialized payload: a render error encoded inside a normally completed HTTP 200 can be cached.
 This policy does not add a core rendering observer or claim to exclude such application-level errors; verify authored pages before deployment and roll out a corrected version if necessary.
 Response streams and their Effect scopes remain unchanged.
-Hash-named `/assets/*` resources retain their one-year `immutable` policy via `_headers`.
+Static assets use Cloudflare's default ETag and revalidation behavior; this application does not override their cache headers.
 
 Enabling Workers Cache changes billing: cache hits consume no Worker CPU, but all requests, including static assets, are billed at the standard Workers request rate.
 See [Workers Cache pricing](https://developers.cloudflare.com/workers/cache/#pricing) before enabling the production deployment.
@@ -143,7 +140,7 @@ Cloudflare isolates each deployed Worker version automatically; this cache polic
 Compatibility between a previously opened tab and a newer deployment is a separate follow-up, [TOT-240](https://linear.app/totto2727/issue/TOT-240), and is not implemented here.
 Development disables the response cache policy so edits remain visible.
 
-The authentication-free local acceptance host verifies real rendered HTML/Flight, outgoing policy headers, navigation, and static asset headers, not the managed Cloudflare cache in front of the Worker.
+The authentication-free local acceptance host verifies real rendered HTML/Flight, outgoing policy headers, and navigation, not the managed Cloudflare cache in front of the Worker.
 After an authorized deployment, repeat HTML and Flight GETs and inspect Cloudflare's `Cf-Cache-Status: MISS` then `HIT`, correct content types and bodies, and the absence of the consumed `Cloudflare-CDN-Cache-Control` header.
 Repeat with credentials, then deploy changed content and verify a fresh request receives the new article rather than the previous version's cache.
 These production cache observations are not established by local tests.
@@ -200,10 +197,8 @@ vp run test:browser
 ```
 
 `tests/vite.config.ts` reuses the production config, Worker entry, styles, routes, and content, adding the local host pattern used by `tests/e2e-alchemy`.
-The direct runtime host explicitly reads `public/_headers`, matching the file-to-asset-config step performed by Alchemy's deployment and local providers; acceptance also checks that the same rules reach `dist/client/_headers`.
 It never evaluates `alchemy.run.ts`, invokes Alchemy planning, accesses cloud state, or deploys.
 Playwright builds the site and runs the built Worker through preview on port `4394`, without server reuse.
-Set `EFFRONT_DOCS_TEST_PORT` to a free port when another worktree is running acceptance.
 This checks the built site's runtime behavior, not official CLI authentication or remote deployment.
 Failure traces and screenshots stay under ignored `app/docs/tmp/`.
 

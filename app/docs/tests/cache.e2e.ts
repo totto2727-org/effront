@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
 // Local workerd validates origin policy, not the managed Workers Cache in front
@@ -49,31 +48,4 @@ test("origin marks invalid POST private", async ({ request }) => {
   const response = await request.post("/en/guide/markdown", { data: "not-a-server-function" });
   expect(response.status()).not.toBe(200);
   expectPolicy(response.headers(), false);
-});
-
-test("the build ships the same asset header rules used by the local host", () => {
-  expect(readFileSync(new URL("../dist/client/_headers", import.meta.url), "utf8")).toBe(
-    readFileSync(new URL("../public/_headers", import.meta.url), "utf8"),
-  );
-});
-
-test("hashed production assets carry immutable long-lived cache headers", async ({
-  page,
-  request,
-}) => {
-  await page.goto("/en");
-  const assetPaths = await page
-    .locator('script[src], link[rel="stylesheet"]')
-    .evaluateAll((nodes) =>
-      nodes
-        .map((node) => node.getAttribute("src") ?? node.getAttribute("href"))
-        .filter((path): path is string => path !== null && path.includes("/assets/")),
-    );
-  expect(assetPaths.length).toBeGreaterThan(0);
-  for (const path of assetPaths) {
-    const response = await request.get(path);
-    expect(response.status()).toBe(200);
-    expect(response.headers()["cache-control"]).toContain("immutable");
-    expect(response.headers()["cache-control"]).toContain("max-age=31536000");
-  }
 });
