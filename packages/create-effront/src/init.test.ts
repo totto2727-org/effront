@@ -48,6 +48,26 @@ for (const platform of platforms) {
   });
 }
 
+for (const platform of platforms) {
+  it(`keeps generated ${platform} host entries aligned with the runnable example`, async () => {
+    const directory = join(await temporaryDirectory(), platform);
+    await createProject(directory, platform);
+    const hostFiles = [
+      "vite.config.ts",
+      ...(platform === "node" || platform === "bun"
+        ? ["src/entry.rsc.ts", "src/entry.server.ts"]
+        : platform === "cloudflare"
+          ? ["src/entry.workers.ts"]
+          : []),
+    ];
+    for (const file of hostFiles) {
+      expect(await readFile(join(directory, file), "utf8")).toBe(
+        await readFile(new URL(`../../../examples/${platform}/${file}`, import.meta.url), "utf8"),
+      );
+    }
+  });
+}
+
 it("creates a standalone Cloudflare Worker without Alchemy or bindings", async () => {
   const directory = join(await temporaryDirectory(), "cloudflare");
   await createProject(directory, "cloudflare");
