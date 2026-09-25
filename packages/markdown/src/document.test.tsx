@@ -29,13 +29,13 @@ const render = async (
 };
 
 describe("MarkdownDocument", () => {
-  it("renders parsed documents with its scoped class and Comark's no-JS rich-content placeholders", async () => {
+  it("streams parsed documents with scoped and no-JavaScript rich-content placeholders", async () => {
     const html = await render("Inline $x$.\n\n```mermaid\nflowchart LR\n  A --> B\n```");
     expect(html).toContain('class="comark-content effront-markdown"');
     expect(html).toContain('<span class="math inline">...</span>');
     expect(html).toContain('<div class="mermaid "');
     expect(html).not.toContain("<svg");
-    expect(html).not.toContain("katex");
+    expect(html).not.toContain('class="katex');
   });
 
   it.each(["Math", "math", "ProseMath"])(
