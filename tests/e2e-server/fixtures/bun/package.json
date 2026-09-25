@@ -3,8 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp build",
     "start": "bun dist/rsc/server.js"
   },
   "dependencies": {

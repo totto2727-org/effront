@@ -29,7 +29,12 @@ for (const platform of platforms) {
     const examples = ["node", "bun", "cloudflare", "alchemy-cloudflare"];
 
     expect(manifest.name).toBe("my-app");
-    expect(manifest.scripts.dev).toBe(platform === "alchemy-cloudflare" ? "alchemy dev" : "vp dev");
+    if (platform === "alchemy-cloudflare") {
+      expect(manifest.scripts).toEqual({ dev: "alchemy dev" });
+    } else {
+      expect(manifest.scripts).not.toHaveProperty("dev");
+      expect(manifest.scripts).not.toHaveProperty("build");
+    }
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
     for (const example of examples) {
       const source = await readFile(
@@ -55,11 +60,7 @@ it("creates a standalone Cloudflare Worker without Alchemy or bindings", async (
   expect(manifest.dependencies).not.toHaveProperty("alchemy");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
   expect(manifest.devDependencies).toHaveProperty("wrangler", "4.131.0");
-  expect(manifest.scripts).toMatchObject({
-    dev: "vp dev",
-    build: "vp build",
-    deploy: "wrangler deploy",
-  });
+  expect(manifest.scripts).toEqual({ deploy: "wrangler deploy" });
   expect(worker).toContain("createFetchHandler(application)");
   expect(config).toContain("effrontCloudflare()");
   expect(config).not.toContain("server:");

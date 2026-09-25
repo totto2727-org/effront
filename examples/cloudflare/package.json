@@ -2,10 +2,6 @@
   "name": "effront-cloudflare-example",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "vp dev",
-    "build": "vp build"
-  },
   "dependencies": {
     "@effect/platform-browser": "catalog:",
     "@effront/cloudflare": "workspace:*",

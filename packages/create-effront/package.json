@@ -9,10 +9,9 @@
     "directory": "packages/create-effront"
   },
   "bin": {
-    "create-effront": "./bin/create-effront.js"
+    "create-effront": "./dist/main.js"
   },
   "files": [
-    "bin",
     "dist",
     "templates",
     "README.md",
