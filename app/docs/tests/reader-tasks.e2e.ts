@@ -296,6 +296,12 @@ for (const reader of locales) {
       .filter({ hasText: "import { MarkdownDocument }" });
     await expect(rendererExample).toContainText('from "@effront/markdown/document"');
     await expect(rendererExample).toContainText('import "@effront/markdown/styles.css"');
+    await expect(page.locator("article")).toContainText(
+      reader.locale === "en"
+        ? "Markdown body styling is not provided."
+        : "Markdown 本文のスタイリングは提供しません。",
+    );
+    await expect(page.locator("article")).toContainText("Tailwind Typography");
     const collectionScope = page
       .locator('article [data-alert="note"]')
       .filter({ hasText: "TanStack Markdown" });
@@ -361,16 +367,17 @@ for (const reader of locales) {
     ).toContainText(/not a sanitizer|sanitizer ではありません/);
     const rendering = article.locator("p").filter({ hasText: "@effront/markdown/document" });
     await expect(rendering).toContainText(
-      /registers Comark's default Math\/Mermaid|Comark 標準の Math\/Mermaid/,
+      /default Math and Mermaid mappings|既定の Math と Mermaid の対応/,
     );
     await expect(rendering).toContainText(
       /itself is not a Client Component|自体は Client Component ではありません/,
     );
-    await expect(rendering).toContainText("@effront/markdown/styles.css");
+    await expect(rendering).toContainText("@effront/markdown/math");
+    await expect(rendering).toContainText("@effront/markdown/mermaid");
+    await expect(rendering).toContainText("themeDark");
     await expect(rendering).toContainText(
-      /define prose, layout, alerts, and colors in the application|本文・レイアウト・alert・配色はアプリケーションで定義/,
+      /without adding defaults or converting theme-dark|既定値の追加や theme-dark の変換を行いません/,
     );
-    await expect(rendering).toContainText(/SSR is not guaranteed|SSR を保証しません/);
     await expect(article.locator('a[href="https://comark.dev"]')).toBeVisible();
     await expect(article.locator('a[href="https://comark.dev/rendering/react"]')).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", reader.locale);
