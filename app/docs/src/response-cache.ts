@@ -11,8 +11,8 @@ const varyFor = (vary: string | undefined) => {
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean),
   );
-  // Native Workers Cache runs before the Worker, including the build guard below.
-  for (const name of ["accept", "cookie", "authorization", "x-effront-build-id"]) {
+  // Partition public cache entries before the Worker checks request credentials.
+  for (const name of ["accept", "cookie", "authorization"]) {
     values.add(name);
   }
   return [...values].join(", ");
@@ -22,7 +22,6 @@ const varyFor = (vary: string | undefined) => {
 export const withResponseCache = <E, R>(
   handler: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>,
   options: {
-    readonly buildId: string;
     readonly development?: boolean | undefined;
   },
 ): Effect.Effect<
@@ -33,9 +32,7 @@ export const withResponseCache = <E, R>(
   Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
     const flight = request.headers["accept"] === flightMediaType;
-    const staleBuild =
-      !options.development && flight && request.headers["x-effront-build-id"] !== options.buildId;
-    const response = staleBuild ? HttpServerResponse.empty({ status: 409 }) : yield* handler;
+    const response = yield* handler;
     const vary = varyFor(response.headers["vary"]);
     const contentType = response.headers["content-type"]?.split(";", 1)[0]?.trim().toLowerCase();
     // This docs-only opt-in overrides core's conservative private/no-store default.
@@ -57,7 +54,6 @@ export const withResponseCache = <E, R>(
       "cloudflare-cdn-cache-control": publicResponse
         ? "public, max-age=31536000"
         : privateCacheControl,
-      "x-effront-build-id": options.buildId,
       vary,
     });
   });

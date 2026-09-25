@@ -23,7 +23,6 @@ export default Cloudflare.Worker(
       // Vite-only environment values are safe only when the Worker handles a request.
       fetch: Effect.suspend(() =>
         withResponseCache(fetch, {
-          buildId: import.meta.env["VITE_EFFRONT_BUILD_ID"],
           development: import.meta.env.DEV,
         }),
       ).pipe(Effect.orDie),

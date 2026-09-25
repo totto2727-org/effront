@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { buildHeaders } from "./cache-headers";
 import { architectureBaseline } from "../src/content/architecture-baseline";
 import { articleCatalog } from "../src/content/catalog";
 import { corePages, coreSources } from "../src/content/core";
@@ -344,16 +343,13 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
           const bookmark = `${localizedUrl(retired)}?from=bookmark`;
           const response = await request.fetch(bookmark, {
             method,
-            headers: { ...(await buildHeaders(request)), Accept: accept },
+            headers: { Accept: accept },
             maxRedirects: 0,
           });
           expect(response.status()).toBe(308);
           expect(response.headers()["location"]).toBe(`${localizedUrl(canonical)}?from=bookmark`);
           expect(await response.body()).toHaveLength(0);
-          const followed = await request.fetch(bookmark, {
-            method,
-            headers: { ...(await buildHeaders(request)), Accept: accept },
-          });
+          const followed = await request.fetch(bookmark, { method, headers: { Accept: accept } });
           expect(followed.status()).toBe(200);
           expect(new URL(followed.url()).pathname).toBe(localizedUrl(canonical));
           expect(new URL(followed.url()).search).toBe("?from=bookmark");
@@ -379,7 +375,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
     for (const accept of ["text/html", "text/x-component"]) {
       test(`${localizedUrl(path)} returns a real ${accept} 404`, async ({ request }) => {
         const response = await request.get(localizedUrl(path), {
-          headers: { ...(await buildHeaders(request)), Accept: accept },
+          headers: { Accept: accept },
           maxRedirects: 0,
         });
         expect(response.status()).toBe(404);

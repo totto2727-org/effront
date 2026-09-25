@@ -4,7 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { withResponseCache } from "./response-cache";
 
-const requiredVary = ["accept", "cookie", "authorization", "x-effront-build-id"];
+const requiredVary = ["accept", "cookie", "authorization"];
 const html = () =>
   HttpServerResponse.text("rendered", {
     contentType: "text/html",
@@ -16,7 +16,7 @@ const run = <E>(
   development = false,
 ) =>
   Effect.runPromise(
-    withResponseCache(app, { buildId: "build-a", development }).pipe(
+    withResponseCache(app, { development }).pipe(
       Effect.provideService(
         HttpServerRequest.HttpServerRequest,
         HttpServerRequest.fromWeb(request),
@@ -30,7 +30,6 @@ const expectPolicy = (response: HttpServerResponse.HttpServerResponse, publicRes
   expect(response.headers["cloudflare-cdn-cache-control"]).toBe(
     publicResponse ? "public, max-age=31536000" : "private, no-store",
   );
-  expect(response.headers["x-effront-build-id"]).toBe("build-a");
   expect(response.headers["vary"]?.split(", ")).toEqual(expect.arrayContaining(requiredVary));
   expect(response.headers["x-effront-cache"]).toBeUndefined();
 };
@@ -44,7 +43,7 @@ describe("docs native cache header policy", () => {
       });
       const response = await run(
         new Request("https://docs.example/guide", {
-          headers: { accept, "x-effront-build-id": "build-a" },
+          headers: { accept },
         }),
         Effect.succeed(original),
       );
@@ -57,25 +56,8 @@ describe("docs native cache header policy", () => {
     });
   }
 
-  for (const buildId of [undefined, "previous-deployment"]) {
-    it(`rejects ${buildId ?? "missing"} Flight build ID before running the handler`, async () => {
-      const response = await run(
-        new Request("https://docs.example/guide", {
-          headers: {
-            accept: "text/x-component",
-            ...(buildId ? { "x-effront-build-id": buildId } : {}),
-          },
-        }),
-        Effect.die("handler must not run"),
-      );
-      expect(response.status).toBe(409);
-      expectPolicy(response, false);
-      expect(await HttpServerResponse.toWeb(response).text()).toBe("");
-    });
-  }
-
   it.each(["text/x-component, text/html", "text/x-component; charset=utf-8", "TEXT/X-COMPONENT"])(
-    "does not apply the exact Flight guard to Accept %s",
+    "uses HTML negotiation for non-exact Flight Accept %s",
     async (accept) => {
       const response = await run(
         new Request("https://docs.example/guide", { headers: { accept } }),
@@ -85,7 +67,7 @@ describe("docs native cache header policy", () => {
     },
   );
 
-  it("development skips the build guard but disables both caches", async () => {
+  it("development disables both caches", async () => {
     const response = await run(
       new Request("https://docs.example/guide", { headers: { accept: "text/x-component" } }),
       Effect.succeed(HttpServerResponse.text("flight", { contentType: "text/x-component" })),
@@ -162,7 +144,6 @@ describe("docs native cache header policy", () => {
       "accept",
       "cookie",
       "authorization",
-      "x-effront-build-id",
     ]);
   });
 
@@ -183,7 +164,7 @@ describe("docs native cache header policy", () => {
     expectPolicy(
       await run(
         new Request("https://docs.example/guide", {
-          headers: { accept: "text/x-component", "x-effront-build-id": "build-a" },
+          headers: { accept: "text/x-component" },
         }),
       ),
       false,

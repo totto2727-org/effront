@@ -44,7 +44,6 @@ const loadFlight = Effect.fnUntraced(function* (request: FlightRequest) {
 }, Effect.provide(FlightClientTestLayer));
 
 beforeEach(() => {
-  vi.unstubAllGlobals();
   decodeFlight.mockReset();
   decodeFlight.mockImplementation((_stream, _options) => Promise.resolve(decodedPayload));
 });
@@ -107,7 +106,7 @@ it.effect("loads the embedded initial Flight without waiting for stream completi
 it.effect("requests and decodes a whole-tree Flight response", () =>
   Effect.gen(function* () {
     let observedRequest: HttpClientRequest.HttpClientRequest | undefined;
-    const httpClient = makeClient((request) => {
+    const client = makeClient((request) => {
       observedRequest = request;
       return new Response(new Uint8Array(), {
         headers: {
@@ -119,7 +118,7 @@ it.effect("requests and decodes a whole-tree Flight response", () =>
     const response = yield* loadFlight({
       _tag: "Navigation",
       destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(Effect.provideService(HttpClient.HttpClient, httpClient));
+    }).pipe(Effect.provideService(HttpClient.HttpClient, client));
     if (response._tag === "Document") {
       return yield* Effect.die("Expected a Flight response.");
     }
@@ -129,7 +128,6 @@ it.effect("requests and decodes a whole-tree Flight response", () =>
     expect(observedRequest?.method).toBe("GET");
     expect(observedRequest?.url).toBe("https://effront.test/schedule/day-two");
     expect(observedRequest?.headers["accept"]).toBe("text/x-component");
-    expect(observedRequest?.headers["x-effront-build-id"]).toBeUndefined();
     expect(decodeFlight).toHaveBeenCalledWith(
       expect.any(ReadableStream),
       expect.objectContaining({ startTime: expect.any(Number) }),
@@ -137,87 +135,6 @@ it.effect("requests and decodes a whole-tree Flight response", () =>
 
     yield* response.release;
   }),
-);
-
-it.effect("captures the document build ID once for Flight requests", () =>
-  Effect.suspend(() => {
-    let documentBuildId = "build-one";
-    vi.stubGlobal("document", {
-      querySelector: vi.fn(() => ({ getAttribute: () => documentBuildId })),
-    });
-    const requests: HttpClientRequest.HttpClientRequest[] = [];
-    const httpClient = makeClient((request) => {
-      requests.push(request);
-      return new Response(new Uint8Array(), {
-        headers: { "content-type": "text/x-component" },
-      });
-    });
-    const layer = FlightClient.layer.pipe(
-      Layer.provide(InitialFlightStream.layerTest({ stream: initialFlightStream })),
-    );
-    return Effect.gen(function* () {
-      const flightClient = yield* FlightClient;
-
-      const navigation = yield* flightClient.load({
-        _tag: "Navigation",
-        destination: new URL("https://effront.test/schedule/day-two"),
-      });
-      if (navigation._tag === "Document") {
-        return yield* Effect.die("Expected a Flight response.");
-      }
-      yield* navigation.release;
-
-      documentBuildId = "build-two";
-      const serverFunction = yield* flightClient.load({
-        _tag: "ServerFunction",
-        body: "encoded-arguments",
-        destination: new URL("https://effront.test/"),
-        id: "server-function-id",
-        temporaryReferences: {},
-      });
-      if (serverFunction._tag === "Document") {
-        return yield* Effect.die("Expected a Flight response.");
-      }
-      yield* serverFunction.release;
-
-      expect(requests).toHaveLength(2);
-      expect(requests[0]?.headers["x-effront-build-id"]).toBe("build-one");
-      expect(requests[1]?.headers["x-effront-build-id"]).toBe("build-one");
-    }).pipe(Effect.provide(layer), Effect.provideService(HttpClient.HttpClient, httpClient));
-  }),
-);
-
-it.effect("omits the build ID header when metadata content is absent or empty", () =>
-  Effect.forEach([null, ""], (buildId) =>
-    Effect.suspend(() => {
-      vi.stubGlobal("document", {
-        querySelector: vi.fn(() => ({ getAttribute: () => buildId })),
-      });
-      let observedRequest: HttpClientRequest.HttpClientRequest | undefined;
-      const httpClient = makeClient((request) => {
-        observedRequest = request;
-        return new Response(new Uint8Array(), {
-          headers: { "content-type": "text/x-component" },
-        });
-      });
-      const layer = FlightClient.layer.pipe(
-        Layer.provide(InitialFlightStream.layerTest({ stream: initialFlightStream })),
-      );
-      return Effect.gen(function* () {
-        const flightClient = yield* FlightClient;
-        const resource = yield* flightClient.load({
-          _tag: "Navigation",
-          destination: new URL("https://effront.test/schedule/day-two"),
-        });
-        if (resource._tag === "Document") {
-          return yield* Effect.die("Expected a Flight response.");
-        }
-        yield* resource.release;
-
-        expect(observedRequest?.headers["x-effront-build-id"]).toBeUndefined();
-      }).pipe(Effect.provide(layer), Effect.provideService(HttpClient.HttpClient, httpClient));
-    }),
-  ),
 );
 
 it.effect("keeps streamed chunks cancellable after the root payload resolves", () =>
@@ -331,29 +248,6 @@ it.effect("returns document navigation for a non-Flight navigation response", ()
   }),
 );
 
-it.effect("falls back to a document and releases a stale-build navigation response", () =>
-  Effect.gen(function* () {
-    let requestSignal: AbortSignal | undefined;
-    const resource = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(
-      Effect.provideService(
-        HttpClient.HttpClient,
-        makeClient((_request, signal) => {
-          requestSignal = signal;
-          return new Response("Stale build", { status: 409 });
-        }),
-      ),
-    );
-
-    expect(resource._tag).toBe("Document");
-    expect(decodeFlight).not.toHaveBeenCalled();
-    yield* resource.release;
-    expect(requestSignal?.aborted).toBe(true);
-  }),
-);
-
 it.effect("rejects a Flight response without its resolved location", () =>
   loadFlight({
     _tag: "Navigation",
@@ -454,7 +348,6 @@ it.effect("decodes a Server Function response with its temporary references", ()
     expect(observedRequest?.url).toBe("https://effront.test/");
     expect(observedRequest?.headers["accept"]).toBe("text/x-component");
     expect(observedRequest?.headers[ServerFnIdHeader]).toBe("server-function-id");
-    expect(observedRequest?.headers["x-effront-build-id"]).toBeUndefined();
     expect(decodeFlight).toHaveBeenCalledWith(
       expect.any(ReadableStream),
       expect.objectContaining({

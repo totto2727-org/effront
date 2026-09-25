@@ -119,7 +119,7 @@ The docs response policy uses native Effect HTTP header transforms:
 
 - `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
 - `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
-- `Vary: Accept, Cookie, Authorization, X-Effront-Build-Id` partitions HTML/Flight and prevents a public cache hit from bypassing credential checks or the old-client guard.
+- `Vary: Accept, Cookie, Authorization` partitions HTML/Flight and prevents a public cache hit from bypassing credential checks.
 
 Workers Cache explicitly honors `Vary`, unlike assumptions made about zone caching.
 Its default key includes the path, full query string and Worker version, so `/en`, `/ja`, query variants and deployments are isolated without synthetic URLs or a purge job.
@@ -137,24 +137,16 @@ Hash-named `/assets/*` resources retain their one-year `immutable` policy via `_
 Enabling Workers Cache changes billing: cache hits consume no Worker CPU, but all requests, including static assets, are billed at the standard Workers request rate.
 See [Workers Cache pricing](https://developers.cloudflare.com/workers/cache/#pricing) before enabling the production deployment.
 
-### Deployment generations and already-open tabs
+### Deployment generations and validation
 
-Cloudflare isolates each deployed Worker version automatically.
-The separate Vite build ID exists only for client/Flight compatibility, not for cache storage.
-An optional `EFFRONT_BUILD_ID` must never be reused for different content or client assets.
-HTML advertises that ID in `meta[name="effront-build-id"]`; the Flight client captures it once and sends `x-effront-build-id` on subsequent requests.
-Missing or mismatched production Flight tokens receive `409` and `private, no-store`; the existing navigation fallback reloads the document before decoding Flight.
-Including the token in `Vary` prevents the pre-Worker cache from returning a different client's compatible response instead of this rejection.
-Server Function requests are not cached or automatically replayed.
-Development disables the policy and guard so edits remain visible.
-
-Deploy all Worker graphs and matching assets together.
-The Flight guard does not solve initial HTML/asset races during multi-version gradual rollouts; those still require [version affinity and matching static assets](https://developers.cloudflare.com/workers/versions-and-deployments/gradual-deployments/version-affinity/#static-assets).
+Cloudflare isolates each deployed Worker version automatically; this cache policy needs no application build ID or client protocol changes.
+Compatibility between a previously opened tab and a newer deployment is a separate follow-up, [TOT-240](https://linear.app/totto2727/issue/TOT-240), and is not implemented here.
+Development disables the response cache policy so edits remain visible.
 
 The authentication-free local acceptance host verifies real rendered HTML/Flight, outgoing policy headers, navigation, and static asset headers, not the managed Cloudflare cache in front of the Worker.
 After an authorized deployment, repeat HTML and Flight GETs and inspect Cloudflare's `Cf-Cache-Status: MISS` then `HIT`, correct content types and bodies, and the absence of the consumed `Cloudflare-CDN-Cache-Control` header.
-Repeat with credentials and a missing/stale Flight token, then deploy changed content and verify the new article and an already-open tab.
-These production cache and deployment-transition observations are not established by local tests.
+Repeat with credentials, then deploy changed content and verify a fresh request receives the new article rather than the previous version's cache.
+These production cache observations are not established by local tests.
 
 Official specifications: [configuration and header precedence](https://developers.cloudflare.com/workers/cache/configuration/), [cache keys and version isolation](https://developers.cloudflare.com/workers/cache/cache-keys/), [limitations](https://developers.cloudflare.com/workers/cache/limitations/), and [static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/).
 

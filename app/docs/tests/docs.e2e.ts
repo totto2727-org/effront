@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { buildHeaders } from "./cache-headers";
 import { articleCatalog } from "../src/content/catalog";
 import { corePages, coreSources } from "../src/content/core";
 import { architectureBaseline } from "../src/content/architecture-baseline";
@@ -243,9 +242,7 @@ test("unknown and historical removed routes return real HTML and Flight 404 resp
   ]) {
     const html = await request.get(slug);
     expect(html.status()).toBe(404);
-    const flight = await request.get(slug, {
-      headers: { ...(await buildHeaders(request)), Accept: "text/x-component" },
-    });
+    const flight = await request.get(slug, { headers: { Accept: "text/x-component" } });
     expect(flight.status()).toBe(404);
   }
 });
@@ -264,7 +261,7 @@ for (const { retired, canonical } of [
   for (const accept of ["text/html", "text/x-component"]) {
     test(`${retired} redirects ${accept} to ${canonical}`, async ({ request }) => {
       const bookmark = `${retired}?from=bookmark`;
-      const headers = { ...(await buildHeaders(request)), Accept: accept };
+      const headers = { Accept: accept };
       const redirect = await request.get(bookmark, { headers, maxRedirects: 0 });
       expect(redirect.status()).toBe(308);
       expect(redirect.headers()["location"]).toBe(`${canonical}?from=bookmark`);

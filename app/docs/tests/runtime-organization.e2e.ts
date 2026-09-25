@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { buildHeaders } from "./cache-headers";
 
 for (const prefix of ["", "/en", "/ja"]) {
   const target = `${prefix}/advanced/server-function-execution-and-refresh`;
@@ -10,7 +9,7 @@ for (const prefix of ["", "/en", "/ja"]) {
       for (const method of ["GET", "HEAD"]) {
         const response = await request.fetch(`${prefix}/advanced?from=bookmark`, {
           method,
-          headers: { ...(await buildHeaders(request)), Accept: accept },
+          headers: { Accept: accept },
           maxRedirects: 0,
         });
         expect(response.status()).toBe(308);
