@@ -78,8 +78,7 @@ export const manual = createMarkdownCollection({
 ```
 
 参照するアセットのファイル形式をすべて glob に含めてください。
-文書とアセットで同じ `base` を指定し、参照の基準位置を揃えてください。
-各アセットに個別に取得できる URL が必要な場合は、アセット glob の `query` を `"?url&no-inline"` に変更し、Vite によるインライン化を防いでください。
+文書とアセットで同じ `base` を指定し、相対参照の基準位置を揃えてください。
 
 ## 記事を URL で表示する {#render}
 

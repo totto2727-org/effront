@@ -685,25 +685,24 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("keeps the Markdown README as a canonical bilingual entry point", () => {
+  it("keeps the Markdown README as a canonical documentation entry point", () => {
     const repository = new URL("../../../../", import.meta.url);
     const source = readFileSync(new URL("packages/markdown/README.md", repository), "utf8");
-    for (const locale of ["en", "ja"]) {
-      for (const section of ["guide", "api-reference"]) {
-        expect(source).toContain(
-          `https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/${locale}/${section}/markdown`,
-        );
-      }
+    for (const section of ["guide", "api-reference"]) {
+      expect(source).toContain(
+        `https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/${section}/markdown`,
+      );
     }
     expect(existsSync(new URL("packages/markdown/docs/GUIDE.md", repository))).toBe(false);
   });
 
-  it.each(["en", "ja"])("%s retains unique Markdown consumer contracts", async (locale) => {
+  it.each(["en", "ja"])("%s explains Markdown article lookup and asset usage", async (locale) => {
     const guide = await text(`/${locale}/guide/markdown`);
-    expect(guide).toContain("?url&amp;no-inline");
+    expect(guide).toContain("query: &quot;?url&quot;");
+    expect(guide).toContain("base: &quot;./content&quot;");
     expect(guide).toContain("Tailwind Typography");
     const reference = await text(`/${locale}/api-reference/markdown`);
-    for (const contract of ["new URL(request.url).pathname", "node:path", "node:url", "POSIX"]) {
+    for (const contract of ["collection.get(&quot;/manual/start&quot;)", "undefined", "404"]) {
       expect(reference).toContain(contract);
     }
   });

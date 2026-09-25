@@ -23,10 +23,8 @@ The server runtime must support `node:path` and `node:url`.
 | `entries`                                              | Readonly entries sorted by public URL           |
 | `resolveLink(entry, href)`, `resolveImage(entry, src)` | [Reference resolution Effects](#references)     |
 
-Lookup requires an absolute pathname, decodes URL escapes once, accepts one trailing slash, and ignores queries and fragments.
-For a Web `Request`, pass `new URL(request.url).pathname`, not the absolute URL.
-Encoded slashes remain within their filename segment rather than becoming directory separators.
-A missing entry returns `undefined`, not a typed failure.
+`collection.get("/manual/start")` retrieves the article at that site path.
+A missing entry returns `undefined`.
 Handle it before parsing, for example with a 404 response.
 
 | `MarkdownEntry` field                    | Value                              |
@@ -89,13 +87,7 @@ The collection exposes equivalent methods that take `entry` first.
 | Fragment-only, `/`-prefixed, or external URL                | Unchanged                      |
 | Missing relative target or path outside the collection base | `MarkdownError`                |
 
-Relative paths use the source document's directory.
-Resolution uses POSIX paths independently of the host operating system or working directory.
-The Markdown source is unchanged, and dynamic attribute bindings and custom component mappings retain Comark's behavior.
-The application remains responsible for the URL policy of references that pass through unchanged.
-Queries and fragments are preserved: `./details.md#example` from `./guide/start.md` resolves to `/manual/guide/details#example` under `/manual`.
-Asset suffixes are appended literally to the imported URL, not merged with an existing query or fragment.
-Avoid conflicting suffixes or use the complete URL.
+Relative references resolve from the directory of the Markdown file containing them.
 
 `MarkdownError` has `_tag: "MarkdownError"`, a diagnostic `message`, and optional `cause`.
 It covers collection configuration, unresolved references, and parser failures.

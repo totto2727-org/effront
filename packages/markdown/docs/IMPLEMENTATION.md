@@ -3,7 +3,7 @@
 ## Purpose
 
 This document explains the collection's indexes, resolution algorithm, rendering graphs, and build artifacts for maintainers.
-Consumer contracts live in the [English API reference](../../../app/docs/src/content/en/articles/api-reference/markdown.md) and its [Japanese translation](../../../app/docs/src/content/articles/api-reference/markdown.md).
+Consumer contracts live in the [API reference](../../../app/docs/src/content/en/articles/api-reference/markdown.md).
 
 ## Responsibilities
 
@@ -12,94 +12,94 @@ The collection consumes loaded maps rather than implementing a runtime filesyste
 Source-relative path operations use Effect's [`NodePath.layerPosix`](https://effect.website/docs/v4/api/platform-node-shared/NodePath) so slash-separated Vite keys have host-independent semantics.
 The source index and public URL index remain separate: reference resolution needs source filenames, while request lookup needs encoded public routes.
 
-## collection.ts の処理フロー
+## collection.ts processing flow
 
-対象: [`packages/markdown/src/collection.ts`](../src/collection.ts)。
-このファイルはViteが読み込んだ文字列・アセットURLを索引化します。
-Markdownの構文解析とReact描画は別の処理です。
+Source: [`packages/markdown/src/collection.ts`](../src/collection.ts).
+This file indexes strings and asset URLs loaded by Vite.
+Markdown parsing and React rendering are separate operations.
 
-### 1. コレクション生成
+### 1. Create a collection
 
-`createMarkdownCollection(options)`はEffectを返し、以下の処理はそのEffectを実行したときに行われます。
-`documents`は`?raw`の文字列マップ、`assets`は`?url`のURLマップです。
+`createMarkdownCollection(options)` returns an Effect, and the following steps run when that Effect executes.
+`documents` is a map of `?raw` strings, and `assets` is a map of `?url` URLs.
 
 ```mermaid
 flowchart TD
-    A["Effect実行: basePath / documents / assets"] --> P["NodePath.layerPosixからPathサービスを取得"]
-    P --> B["basePathをセグメント化"]
-    B --> C{"設定条件を満たすか"}
-    C -->|いいえ| E["MarkdownErrorでEffect失敗"]
-    C -->|はい| D["公開URL索引・ソース索引・アセット索引を作成"]
-    D --> F{"未処理のアセットがあるか"}
-    F -->|はい| G{"globキーがコレクション基準の相対パスか"}
-    G -->|いいえ| E
-    G -->|はい| H["キーをセグメント単位でencodeして登録<br/>値はViteのURLをそのまま保持"]
+    A["Run Effect: basePath / documents / assets"] --> P["Get the Path service from NodePath.layerPosix"]
+    P --> B["Split basePath into segments"]
+    B --> C{"Is the configuration valid?"}
+    C -->|No| E["Fail the Effect with MarkdownError"]
+    C -->|Yes| D["Create public URL, source, and asset indexes"]
+    D --> F{"Any remaining assets?"}
+    F -->|Yes| G{"Is the glob key relative to the collection base?"}
+    G -->|No| E
+    G -->|Yes| H["Encode each key segment and register it<br/>Keep the Vite URL unchanged"]
     H --> F
-    F -->|いいえ| I{"未処理のMarkdownがあるか"}
-    I -->|はい| J{"globキーがコレクション基準の相対パスで<br/>ファイル名が.mdで終わるか"}
-    J -->|いいえ| E
-    J -->|はい| K["globキーの相対階層とbasePathを結合<br/>.md拡張子だけを除去"]
-    K --> L["各セグメントをencodeして公開URLを作成"]
-    L --> M{"公開URLが重複するか"}
-    M -->|はい| E
-    M -->|いいえ| N["本文・URL・参照解決関数を持つEntryを作成<br/>公開URLとソースの両索引へ登録"]
+    F -->|No| I{"Any remaining Markdown documents?"}
+    I -->|Yes| J{"Is the glob key relative to the collection base<br/>and does its filename end in .md?"}
+    J -->|No| E
+    J -->|Yes| K["Combine the glob key's relative hierarchy with basePath<br/>Remove only the .md extension"]
+    K --> L["Encode each segment to create the public URL"]
+    L --> M{"Is the public URL duplicated?"}
+    M -->|Yes| E
+    M -->|No| N["Create an Entry with content, URL, and reference resolvers<br/>Register it in both public URL and source indexes"]
     N --> I
-    I -->|いいえ| O["URL順のentries / get / resolveLink / resolveImageを返す"]
+    I -->|No| O["Return URL-sorted entries / get / resolveLink / resolveImage"]
 ```
 
 `Entry.source` remains the source-index key used by diagnostics and relative resolution, not a filesystem loading instruction.
 
-### 2. リクエストURLからEntryを検索
+### 2. Look up an Entry by request URL
 
-`get(pathname)`は公開 URL 索引を同期的に検索します。
+`get(pathname)` synchronously searches the public URL index.
 
 ```mermaid
 flowchart TD
-    A["get: リクエストのpathname"] --> B["最初のquery / fragment以降を取り除く"]
-    B --> C{"先頭が / か"}
-    C -->|いいえ| X["undefined"]
-    C -->|はい| D["単独の末尾 / を除去<br/>連続 / は保持"]
-    D --> E["先頭 / を除去してセグメントに分割"]
-    E --> F["各セグメントを1回decode<br/>decode失敗時は元の文字列を保持"]
-    F --> G["各セグメントを再encodeして索引キーを作成"]
-    G --> H{"公開URL索引に存在するか"}
-    H -->|はい| Y["MarkdownEntry"]
-    H -->|いいえ| X
+    A["get: request pathname"] --> B["Remove the first query or fragment and everything after it"]
+    B --> C{"Does it start with /?"}
+    C -->|No| X["undefined"]
+    C -->|Yes| D["Remove a single trailing /<br/>Preserve repeated /"]
+    D --> E["Remove the leading / and split into segments"]
+    E --> F["Decode each segment once<br/>Keep the original string if decoding fails"]
+    F --> G["Re-encode each segment to create the index key"]
+    G --> H{"Does the public URL index contain it?"}
+    H -->|Yes| Y["MarkdownEntry"]
+    H -->|No| X
 ```
 
-分割してからdecodeするため、セグメント内のencoded slashがディレクトリ境界へ変わることはありません。
-ファイル名が文字列として`%20`を含む場合も、URLの`%2520`を二重decodeせず検索します。
+Splitting before decoding prevents encoded slashes within segments from becoming directory boundaries.
+Filenames containing the literal string `%20` are looked up without decoding the URL's `%2520` twice.
 
-### 3. Markdown内のリンク・画像参照を解決
+### 3. Resolve links and image references in Markdown
 
-`resolveLink`と`resolveImage`は共通の`resolveLocal`を使うEffectです。
-前者はMarkdownファイルをページURLへ解決でき、後者はアセット索引だけを使います。
+`resolveLink` and `resolveImage` are Effects that share `resolveLocal`.
+The former can resolve Markdown files to page URLs, while the latter uses only the asset index.
 
 ```mermaid
 flowchart TD
-    A["resolveLink / resolveImageのEffect実行"] --> B{"参照が # / またはschemeで始まるか"}
-    B -->|はい| C["参照をそのまま返す"]
-    B -->|いいえ| D["パスとquery / fragmentのsuffixを分離"]
-    D --> E{"パスが空か"}
-    E -->|はい| F["現在のEntry URL + suffixを返す"]
-    E -->|いいえ| G["encodeしたソースパスからPath.dirnameで基準ディレクトリを取得"]
-    G --> H["参照を分割し各セグメントを1回decodeして再encode<br/>encoded slashをセグメント内に保持"]
-    H --> I["Path.joinで相対参照を結合・正規化"]
-    I --> J{"結果が .. または ../ で始まるか"}
-    J -->|はい| X["MarkdownErrorでEffect失敗"]
-    J -->|いいえ| K["Path.resolveで固定の / 基準の索引キーへ"]
-    K --> L{"リンクであり、対象が.mdか"}
-    L -->|はい| M["ソース索引からEntryの公開URLを取得"]
-    L -->|いいえ| N["アセット索引からViteのURLを取得"]
-    M --> O{"対象が見つかったか"}
+    A["Run the resolveLink / resolveImage Effect"] --> B{"Does the reference start with #, /, or a scheme?"}
+    B -->|Yes| C["Return the reference unchanged"]
+    B -->|No| D["Separate the path from its query / fragment suffix"]
+    D --> E{"Is the path empty?"}
+    E -->|Yes| F["Return the current Entry URL + suffix"]
+    E -->|No| G["Use Path.dirname on the encoded source path to get the base directory"]
+    G --> H["Split the reference, decode each segment once, and re-encode<br/>Keep encoded slashes within segments"]
+    H --> I["Join and normalize the relative reference with Path.join"]
+    I --> J{"Is the result .. or does it start with ../?"}
+    J -->|Yes| X["Fail the Effect with MarkdownError"]
+    J -->|No| K["Use Path.resolve to create an index key relative to the fixed / root"]
+    K --> L{"Is this a link to a .md target?"}
+    L -->|Yes| M["Get the Entry's public URL from the source index"]
+    L -->|No| N["Get the Vite URL from the asset index"]
+    M --> O{"Was the target found?"}
     N --> O
-    O -->|いいえ| X
-    O -->|はい| P["取得したURL + suffixを返す"]
+    O -->|No| X
+    O -->|Yes| P["Return the retrieved URL + suffix"]
 ```
 
-外部URLやルート相対URLのポリシーはComark・アプリケーション側に委譲します。
-アセットの読み込み・変換・出力はViteの担当で、この処理は渡されたURLを検索するだけです。
-suffixは文字列として末尾へ追加し、既存URLのqueryを再構成・マージしません。
+Comark and the application own the policy for external and root-relative URLs.
+Vite owns asset loading, transformation, and emission, and this operation only looks up the supplied URLs.
+The suffix is appended as a string without reconstructing or merging the existing URL's query.
 
 ## Rendering
 

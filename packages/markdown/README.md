@@ -10,7 +10,6 @@ The guide includes styling requirements, trusted-content constraints, and the cu
 ## API
 
 The [Markdown API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/markdown) covers collections, parsing, rendering exports, reference resolution, and typed errors.
-[日本語のガイド](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/markdown)と[API リファレンス](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/markdown)も公開しています。
 
 ## Development
 

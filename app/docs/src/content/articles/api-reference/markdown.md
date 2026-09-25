@@ -23,11 +23,8 @@ Cloudflare Workers では Wrangler 設定の `nodejs_compat` が必要です。
 | `entries`                                              | 公開 URL 順の readonly エントリー配列        |
 | `resolveLink(entry, href)`、`resolveImage(entry, src)` | [参照解決の Effect](#references)             |
 
-検索には絶対パスを指定します。
-URL エスケープは一度デコードし、末尾のスラッシュを一つ許容し、クエリとフラグメントを無視します。
-Web `Request` では、絶対 URL ではなく `new URL(request.url).pathname` を渡してください。
-エンコードされたスラッシュはディレクトリ区切りに変わらず、ファイル名のセグメント内に保持されます。
-該当エントリーがなければ、型付きの失敗ではなく `undefined` を返します。
+`collection.get("/manual/start")` で、そのサイト内パスの記事を取得します。
+該当エントリーがなければ `undefined` を返します。
 解析前に、404 レスポンスなどで処理してください。
 
 | `MarkdownEntry` のフィールド             | 値                                      |
@@ -90,14 +87,7 @@ parser の例外は、元の例外を `cause` に持つ `MarkdownError` にな�
 | フラグメントのみ、`/` 始まり、外部 URL                   | 変更なし                          |
 | 相対参照先がない、またはコレクションの基準位置の外を指す | `MarkdownError`                   |
 
-相対パスはソース文書のディレクトリを基準にします。
-ホスト OS や作業ディレクトリに依存せず、POSIX パスとして解決します。
-Markdown のソースは変更せず、動的な属性バインディングと独自コンポーネントのマッピングは Comark の動作を維持します。
-そのまま通過する参照の URL ポリシーはアプリケーション側で管理してください。
-クエリとフラグメントは保持されます。
-`/manual` 配下では、`./guide/start.md` からの `./details.md#example` は `/manual/guide/details#example` になります。
-アセットの接尾辞はインポート済み URL にそのまま追加し、既存のクエリやフラグメントと統合しません。
-競合する接尾辞を避けるか、完成した URL を使ってください。
+相対参照は、その参照を含む Markdown ファイルのディレクトリを基準に解決します。
 
 `MarkdownError` は `_tag: "MarkdownError"`、診断用の `message`、省略可能な `cause` を持ちます。
 コレクション設定、参照解決、parser の失敗を表します。

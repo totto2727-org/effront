@@ -78,8 +78,7 @@ export const manual = createMarkdownCollection({
 ```
 
 Include every referenced asset's file type in the glob.
-Use the same `base` for documents and assets so references share one content root.
-If each asset needs a separately fetchable URL, change the asset glob's `query` to `"?url&no-inline"` to prevent Vite from inlining it.
+Use the same `base` for documents and assets so relative references match.
 
 ## Render the article at its URL {#render}
 
