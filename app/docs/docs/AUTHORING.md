@@ -1,7 +1,7 @@
 # SSR documentation site
 
 Author English articles at `/en` and Japanese translations at `/ja`.
-The site renders each request through Effront and Alchemy's native Cloudflare integration.
+The site renders cache misses through Effront and Alchemy's native Cloudflare integration and serves complete production HTML and Flight responses from a build-scoped edge cache.
 Unprefixed Japanese URLs remain available for existing bookmarks.
 
 ## Author or change an article
@@ -98,6 +98,59 @@ Only the Page article participates in the named page transition.
 Do not add a route key to the shell or move its state into the Page.
 Document scrolling and heading links use native navigation.
 The deployment stylesheet remains explicitly selected through `effrontTailwind`, without a manual CSS import or extra runtime plugin.
+
+## Production response caching
+
+Caching is explicitly enabled by the docs Worker, not by the general-purpose Effront runtime.
+Core applications retain `Cache-Control: private, no-store` unless they implement their own policy.
+The docs site is public and request-independent: introducing authentication or cookie-dependent rendering, experiments, or other personalized rendering requires revisiting this opt-in policy before deployment.
+
+### Native Workers Cache and browser freshness
+
+`src/entry.workers.ts` enables Cloudflare's [Workers Cache](https://developers.cloudflare.com/workers/cache/) with Alchemy's native `cache: { enabled: true }` option.
+The installed Alchemy provider forwards this to the Worker version's `cacheOptions` metadata; no Cache Rules, custom cache store, `caches.default`, or response buffering is needed.
+Cloudflare serves cache hits before executing the Worker, using tiered caching and request collapsing.
+Workers Cache is distinct from both zone caching and the older Workers Cache API.
+
+`src/response-cache.ts` defines the docs-only response policy with `HttpMiddleware.make` and native Effect HTTP header transforms.
+`src/entry.effront.tsx` registers it with `EFFRONT.Middleware.make(responseCache)` and applies it to the docs Routes through `EFFRONT.withMiddleware(ResponseCache)`.
+The Worker does not wrap its final fetch with this policy, and the middleware does not change response bodies or add a core API:
+
+- `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
+- `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
+- `Vary: Accept` partitions HTML/Flight without partitioning by Cookie or Authorization.
+
+Workers Cache explicitly honors `Vary`, unlike assumptions made about zone caching.
+Its default key includes the path, full query string and Worker version, so `/en`, `/ja`, query variants and deployments are isolated without synthetic URLs or a purge job.
+Do not enable cross-version caching.
+The request hostname is not part of the native key; this site must continue to render the same public content across its hostnames.
+
+The middleware opts in only GET requests whose `Accept` contains `text/html` or `text/x-component`, with a 200 response.
+Cookie and Authorization request headers do not affect this public site's cache policy.
+The middleware does not inspect response cookies or Set-Cookie headers.
+Other responses returned through the middleware receive `private, no-store` in both cache-control headers; failures propagate without adding cache headers.
+This docs-specific policy does not additionally inspect Range, Content-Range, response Content-Type, or wildcard Vary; it is not a general-purpose caching middleware.
+Cloudflare can satisfy HEAD and Range from a cached GET itself.
+HTTP caching does not inspect React's serialized payload: a render error encoded inside a normally completed HTTP 200 can be cached.
+This policy does not add a core rendering observer or claim to exclude such application-level errors; verify authored pages before deployment and roll out a corrected version if necessary.
+Response streams and their Effect scopes remain unchanged.
+Static assets use Cloudflare's default ETag and revalidation behavior; this application does not override their cache headers.
+
+Enabling Workers Cache changes billing: cache hits consume no Worker CPU, but all requests, including static assets, are billed at the standard Workers request rate.
+See [Workers Cache pricing](https://developers.cloudflare.com/workers/cache/#pricing) before enabling the production deployment.
+
+### Deployment generations and validation
+
+Cloudflare isolates each deployed Worker version automatically; this cache policy needs no application build ID or client protocol changes.
+Compatibility between a previously opened tab and a newer deployment is a separate follow-up, [TOT-240](https://linear.app/totto2727/issue/TOT-240), and is not implemented here.
+Development disables the response cache policy so edits remain visible.
+
+The authentication-free local acceptance host verifies real rendered HTML/Flight, outgoing policy headers, and navigation, not the managed Cloudflare cache in front of the Worker.
+After an authorized deployment, repeat HTML and Flight GETs and inspect Cloudflare's `Cf-Cache-Status: MISS` then `HIT`, correct content types and bodies, and the absence of the consumed `Cloudflare-CDN-Cache-Control` header.
+Repeat with credentials, then deploy changed content and verify a fresh request receives the new article rather than the previous version's cache.
+These production cache observations are not established by local tests.
+
+Official specifications: [configuration and header precedence](https://developers.cloudflare.com/workers/cache/configuration/), [cache keys and version isolation](https://developers.cloudflare.com/workers/cache/cache-keys/), [limitations](https://developers.cloudflare.com/workers/cache/limitations/), and [static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/).
 
 ## Consumer compatibility and public packages
 
