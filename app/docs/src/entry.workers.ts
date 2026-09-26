@@ -2,8 +2,6 @@ import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 
-import { responseCache } from "./response-cache";
-
 export default Cloudflare.Worker(
   "Docs",
   {
@@ -19,7 +17,7 @@ export default Cloudflare.Worker(
       import("./entry.effront").then((module) => module.default),
     );
     return {
-      fetch: fetch.pipe(responseCache, Effect.orDie),
+      fetch: fetch.pipe(Effect.orDie),
     };
   }),
 );

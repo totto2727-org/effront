@@ -5,6 +5,7 @@ import { DocsShell } from "./components/docs-shell";
 import { getPage, navigation, localizedNavigation } from "./content";
 import { documentLocale, documentPath, localizedPath } from "./content/locale";
 import { architectureBaseline } from "./content/architecture-baseline";
+import { responseCache } from "./response-cache";
 
 class RequestPath extends Context.Service<RequestPath, string>()("app/docs/RequestPath") {}
 const RequestPathLive = Layer.effect(
@@ -55,6 +56,7 @@ const RetiredArticleRedirects = HttpRouter.middleware(
   { global: true },
 );
 const EFFRONT = Application.effront<RequestPath>();
+const ResponseCache = EFFRONT.Middleware.make(responseCache);
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.map(RequestPath, (pathname) => {
@@ -139,7 +141,8 @@ function documentPage(slug: string) {
 // Explicit routes preserve Effront's compile-time collision checks and its native 404 handling.
 export default EFFRONT.make({
   layer: Layer.mergeAll(RequestPathLive, RetiredArticleRedirects),
-  routes: EFFRONT.Routes.make({ layout: RootLayout })
+  routes: EFFRONT.withMiddleware(ResponseCache)
+    .Routes.make({ layout: RootLayout })
     .page("/", documentPage("/"))
     .page("/guide/getting-started", documentPage("/guide/getting-started"))
     .page("/guide/routes", documentPage("/guide/routes"))

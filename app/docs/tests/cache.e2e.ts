@@ -86,5 +86,6 @@ test("origin marks invalid POST private", async ({ request }) => {
     data: "not-a-server-function",
   });
   expect(response.status()).not.toBe(200);
-  expectPolicy(response.headers(), false);
+  expect(response.headers()["cache-control"]).toBe("private, no-store");
+  expect(response.headers()["cloudflare-cdn-cache-control"]).toBeUndefined();
 });

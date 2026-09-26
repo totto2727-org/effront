@@ -113,7 +113,8 @@ Cloudflare serves cache hits before executing the Worker, using tiered caching a
 Workers Cache is distinct from both zone caching and the older Workers Cache API.
 
 `src/response-cache.ts` defines the docs-only response policy with `HttpMiddleware.make` and native Effect HTTP header transforms.
-The Worker applies it with `fetch.pipe(responseCache)`, without changing the response body or adding a core API:
+`src/entry.effront.tsx` registers it with `EFFRONT.Middleware.make(responseCache)` and applies it to the docs Routes through `EFFRONT.withMiddleware(ResponseCache)`.
+The Worker does not wrap its final fetch with this policy, and the middleware does not change response bodies or add a core API:
 
 - `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
 - `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
