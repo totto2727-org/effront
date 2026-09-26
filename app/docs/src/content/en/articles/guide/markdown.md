@@ -158,7 +158,6 @@ const IntroPage = EFFRONT.Page.make({
 Additional plugins run after Effront's defaults, not instead of them.
 The `MarkdownDocument` and stylesheet imports above are sufficient to render the parsed document.
 Math and Mermaid are registered by default, with no individual registration needed.
-Effront supplies Comark-based components and minimal Math/Mermaid CSS.
 To customize them, wrap the exported `Math` from `@effront/markdown/math` or `Mermaid` from `@effront/markdown/mermaid` with your desired options, or implement your own components.
 Pass your replacements through `MarkdownDocument`'s `components`.
 See [Comark's React renderer](https://comark.dev/rendering/react) for component options.

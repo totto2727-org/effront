@@ -159,7 +159,6 @@ const IntroPage = EFFRONT.Page.make({
 追加プラグインは Effront の標準プラグインの後に実行され、標準プラグインを置き換えるものではありません。
 上の `MarkdownDocument` とスタイルシートの import だけで、解析したドキュメントを表示できます。
 Math と Mermaid は標準で登録されているため、個別の登録は不要です。
-Effront は Comark ベースのコンポーネントと Math・Mermaid 向けの最小限の CSS を提供します。
 表示を変更するには、`@effront/markdown/math` の `Math` や `@effront/markdown/mermaid` の `Mermaid` を好みのオプションでラップするか、独自のコンポーネントを実装します。
 差し替えるコンポーネントを `MarkdownDocument` の `components` に渡してください。
 各コンポーネントのオプションは [Comark の React レンダラー](https://comark.dev/rendering/react)を参照してください。

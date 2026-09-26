@@ -15,7 +15,6 @@
 不正なオプションや公開パスの重複は、Effect 実行時に `MarkdownError` になります。
 コレクションの作成と解析はサーバー側で行います。
 Cloudflare Workers では Wrangler 設定の `nodejs_compat` が必要です。
-サーバーランタイムは `node:path` と `node:url` をサポートする必要があります。
 
 | コレクションのメンバー                                 | 戻り値                                       |
 | ------------------------------------------------------ | -------------------------------------------- |
@@ -62,11 +61,28 @@ parser の例外は、元の例外を `cause` に持つ `MarkdownError` にな�
 
 ## Markdown のレンダリング {#rendering}
 
-`@effront/markdown/document` の `MarkdownDocument` と `@effront/markdown/styles.css` を import し、解析したドキュメントを `value` に渡します。
-この import だけで利用でき、Comark ベースの Math と Mermaid は標準で登録されているため、個別の登録は不要です。
+初期設定済みの `@effront/markdown/document` の `MarkdownDocument` と `@effront/markdown/styles.css` を利用することができます。
 
-表示を変更するには、`@effront/markdown/math` の `Math` や `@effront/markdown/mermaid` の `Mermaid` を好みのオプションでラップするか、独自のコンポーネントを実装します。
-`components={{ Math: MyMath, Mermaid: MyMermaid }}` のように、差し替えるコンポーネントを `MarkdownDocument` の `components` に渡してください。
+```tsx
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
+
+<MarkdownDocument value={document} />;
+```
+
+カスタマイズする場合:
+
+```tsx
+import { Mermaid } from "@effront/markdown/mermaid";
+import type { ComponentProps } from "react";
+
+function MyMermaid(props: ComponentProps<typeof Mermaid>) {
+  return <Mermaid {...props} width="100%" />;
+}
+
+<MarkdownDocument value={document} components={{ Mermaid: MyMermaid }} />;
+```
+
 各コンポーネントのオプションは [Comark React API](https://comark.dev/rendering/react) を参照してください。
 
 > [!WARNING]
@@ -87,7 +103,7 @@ parser の例外は、元の例外を `cause` に持つ `MarkdownError` にな�
 | フラグメントのみ、`/` 始まり、外部 URL                   | 変更なし                          |
 | 相対参照先がない、またはコレクションの基準位置の外を指す | `MarkdownError`                   |
 
-相対参照は、その参照を含む Markdown ファイルのディレクトリを基準に解決します。
+相対パスは、各 Markdown ファイルを基準に解決します。
 
 `MarkdownError` は `_tag: "MarkdownError"`、診断用の `message`、省略可能な `cause` を持ちます。
 コレクション設定、参照解決、parser の失敗を表します。

@@ -396,7 +396,6 @@ for (const accept of ["text/html", "text/x-component"]) {
 
 test("hydrates and follows Markdown links with Flight while retaining shared layout state", async ({
   page,
-  request,
 }) => {
   await page.goto("/manual");
   await page.waitForLoadState("networkidle");

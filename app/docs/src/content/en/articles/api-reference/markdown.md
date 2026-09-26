@@ -15,7 +15,6 @@ Source keys must begin with `./`, be relative to the collection base, and contai
 Invalid options and duplicate public paths fail with `MarkdownError` when the Effect runs.
 Collection creation and parsing belong on the server.
 Cloudflare Workers requires `nodejs_compat` in the Wrangler configuration.
-The server runtime must support `node:path` and `node:url`.
 
 | Collection member                                      | Result                                          |
 | ------------------------------------------------------ | ----------------------------------------------- |
@@ -62,11 +61,28 @@ Parser exceptions become `MarkdownError` with the original exception in `cause`.
 
 ## Markdown rendering {#rendering}
 
-Import `MarkdownDocument` from `@effront/markdown/document` and `@effront/markdown/styles.css`, then pass the parsed document through `value`.
-These imports are sufficient: the Comark-based Math and Mermaid components are registered by default, with no individual registration needed.
+You can use the preconfigured `MarkdownDocument` from `@effront/markdown/document` and `@effront/markdown/styles.css`.
 
-To customize rendering, wrap `Math` from `@effront/markdown/math` or `Mermaid` from `@effront/markdown/mermaid` with your desired options, or implement your own components.
-Pass the replacements through `MarkdownDocument`'s `components`, for example `components={{ Math: MyMath, Mermaid: MyMermaid }}`.
+```tsx
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
+
+<MarkdownDocument value={document} />;
+```
+
+To customize:
+
+```tsx
+import { Mermaid } from "@effront/markdown/mermaid";
+import type { ComponentProps } from "react";
+
+function MyMermaid(props: ComponentProps<typeof Mermaid>) {
+  return <Mermaid {...props} width="100%" />;
+}
+
+<MarkdownDocument value={document} components={{ Mermaid: MyMermaid }} />;
+```
+
 See the [Comark React API](https://comark.dev/rendering/react) for component options.
 
 > [!WARNING]
@@ -87,7 +103,7 @@ The collection exposes equivalent methods that take `entry` first.
 | Fragment-only, `/`-prefixed, or external URL                | Unchanged                      |
 | Missing relative target or path outside the collection base | `MarkdownError`                |
 
-Relative references resolve from the directory of the Markdown file containing them.
+Relative paths resolve from each Markdown file.
 
 `MarkdownError` has `_tag: "MarkdownError"`, a diagnostic `message`, and optional `cause`.
 It covers collection configuration, unresolved references, and parser failures.

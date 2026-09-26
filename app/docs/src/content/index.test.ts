@@ -718,11 +718,30 @@ describe("documentation catalog", () => {
     expect(prose).not.toMatch(
       /document\.meta\.components|MarkdownDocumentProps|remote font|リモートフォント/,
     );
-    expect(prose).toMatch(
-      slug.startsWith("/en")
-        ? /imports[\s\S]*sufficient[\s\S]*registered by default[\s\S]*wrap[\s\S]*implement your own components[\s\S]*replacements[\s\S]*components/
-        : /import だけ[\s\S]*標準で登録[\s\S]*オプションでラップ[\s\S]*独自のコンポーネント[\s\S]*components/,
-    );
+    for (const contract of [
+      "@effront/markdown/document",
+      "@effront/markdown/styles.css",
+      "components",
+    ]) {
+      expect(prose).toContain(contract);
+    }
+    if (slug.includes("/api-reference/")) {
+      const html = await render(slug);
+      const code = [...html.matchAll(/<pre\b[^>]*>([\s\S]*?)<\/pre>/g)]
+        .map(([, block]) => block?.replace(/<[^>]*>/g, ""))
+        .join("\n");
+      expect(code).toContain(
+        "import { MarkdownDocument } from &quot;@effront/markdown/document&quot;",
+      );
+      expect(code).toContain("&lt;MarkdownDocument value={document} /&gt;");
+      expect(code).toContain("function MyMermaid(props: ComponentProps&lt;typeof Mermaid&gt;)");
+      expect(code).toContain("&lt;Mermaid {...props} width=&quot;100%&quot; /&gt;");
+      expect(code).toContain("components={{ Mermaid: MyMermaid }}");
+      expect(prose).toContain("nodejs_compat");
+      expect(prose).not.toMatch(/node:path|node:url/);
+    } else {
+      expect(prose).toContain(slug.startsWith("/en") ? "registered by default" : "標準で登録");
+    }
     expect(prose).toContain(slug.startsWith("/en") ? "only placeholders" : "プレースホルダーのみ");
     expect(prose).toContain(
       slug.startsWith("/en") ? "server-renderable replacements" : "独自に実装",
@@ -743,12 +762,12 @@ describe("documentation catalog", () => {
     const reference = await render("/api-reference/markdown");
     expect(reference).toContain("sanitizer");
     expect(reference).toContain("Mermaid");
-    expect(reference).toContain("@effront/markdown/math");
+    expect(reference).toContain("@effront/markdown/document");
     expect(reference).toContain("@effront/markdown/mermaid");
     expect(html).toContain("MarkdownError");
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
-    expect(englishReference).toContain("Comark-based Math and Mermaid components");
+    expect(englishReference).toContain("preconfigured");
     expect(englishReference).toContain(
       "Math and Mermaid currently require client-side JavaScript and do not support SSR.",
     );
