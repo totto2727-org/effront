@@ -1,63 +1,52 @@
-import { createInterface } from "node:readline/promises";
+import { NodeServices } from "@effect/platform-node";
+import { Console, Effect, Option } from "effect";
+import { Argument, Command, Flag, Prompt } from "effect/unstable/cli";
+import { readFileSync } from "node:fs";
 import { stdin, stdout } from "node:process";
-import { parseArgs as parseNodeArgs } from "node:util";
-import { createProject, isPlatform, platforms, type Platform } from "./init.js";
+import { createProject, platforms } from "./init.js";
 
-export function parseArgs(args: string[]): {
-  directory: string | undefined;
-  platform: Platform | undefined;
-  help?: boolean;
-} {
-  const { positionals, values } = parseNodeArgs({
-    args,
-    allowPositionals: true,
-    strict: true,
-    options: {
-      help: { type: "boolean", short: "h" },
-      platform: { type: "string" },
-    },
-  });
-  if (positionals.length > 1) {
-    throw new Error(`Unexpected argument: ${positionals[1]}`);
-  }
-  if (values.help) {
-    return { directory: positionals[0], platform: undefined, help: true };
-  }
-  if (values.platform !== undefined && !isPlatform(values.platform)) {
-    throw new Error(`--platform must be one of: ${platforms.join(", ")}`);
-  }
-  return { directory: positionals[0], platform: values.platform as Platform | undefined };
-}
+const command = Command.make(
+  "create-effront",
+  {
+    directory: Argument.string("directory").pipe(Argument.optional),
+    platform: Flag.choice("platform", platforms).pipe(Flag.optional),
+  },
+  Effect.fn(function* ({ directory, platform }) {
+    if ((Option.isNone(directory) || Option.isNone(platform)) && (!stdin.isTTY || !stdout.isTTY)) {
+      return yield* Effect.fail(
+        new Error("Specify a directory and --platform in non-interactive mode."),
+      );
+    }
 
-export async function runCli(args: string[]): Promise<void> {
-  const options = parseArgs(args);
-  if (options.help) {
-    stdout.write(
-      `Usage: vp create effront -- [directory] --platform ${platforms.join("|")}\nPlatforms: node, bun, cloudflare (standalone Workers), alchemy-cloudflare (Alchemy-managed Workers)\n`,
+    const targetDirectory = Option.isSome(directory)
+      ? directory.value
+      : yield* Prompt.run(Prompt.text({ message: "Project directory", default: "my-effront-app" }));
+    const targetPlatform = Option.isSome(platform)
+      ? platform.value
+      : yield* Prompt.run(
+          Prompt.select({
+            message: "Platform",
+            choices: platforms.map((value) => ({ title: value, value })),
+          }),
+        );
+    const target = yield* Effect.tryPromise(() => createProject(targetDirectory, targetPlatform));
+    yield* Console.log(
+      `Created ${targetPlatform} Effront project at ${target}\nNext: cd ${targetDirectory} && vp install && ${targetPlatform === "alchemy-cloudflare" ? "vp run dev" : "vp dev"}`,
     );
-    return;
-  }
-  let { directory, platform } = options;
-  if (!directory || !platform) {
-    if (!stdin.isTTY || !stdout.isTTY) {
-      throw new Error("Specify a directory and --platform in non-interactive mode.");
-    }
-    const prompt = createInterface({ input: stdin, output: stdout });
-    try {
-      directory ||=
-        (await prompt.question("Project directory (my-effront-app): ")).trim() || "my-effront-app";
-      if (!platform) {
-        const answer = (await prompt.question(`Platform (${platforms.join("/")}): `)).trim();
-        if (!isPlatform(answer))
-          throw new Error(`Platform must be one of: ${platforms.join(", ")}`);
-        platform = answer;
-      }
-    } finally {
-      prompt.close();
-    }
-  }
-  const target = await createProject(directory, platform);
-  stdout.write(
-    `Created ${platform} Effront project at ${target}\nNext: cd ${directory} && vp install && ${platform === "alchemy-cloudflare" ? "vp run dev" : "vp dev"}\n`,
+  }),
+).pipe(
+  Command.withDescription("Create a minimal Effront application"),
+  Command.withExamples([
+    { command: "vp create effront -- my-app --platform node" },
+    { command: "vp create effront -- my-app --platform alchemy-cloudflare" },
+  ]),
+);
+
+export function runCli(args: ReadonlyArray<string>): Promise<void> {
+  const { version } = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  ) as { version: string };
+  return Effect.runPromise(
+    Command.runWith(command, { version })(args).pipe(Effect.provide(NodeServices.layer)),
   );
 }

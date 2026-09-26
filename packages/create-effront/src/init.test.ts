@@ -1,9 +1,8 @@
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { stdout } from "node:process";
 import { afterEach, expect, it, vi } from "vitest";
-import { parseArgs, runCli } from "./cli.js";
+import { runCli } from "./cli.js";
 import { createProject, platforms } from "./init.js";
 
 const directories: string[] = [];
@@ -126,21 +125,28 @@ for (const platform of ["node", "bun"] as const) {
   });
 }
 
-it("accepts each platform argument forwarded by vp create after --", () => {
-  for (const platform of platforms) {
-    expect(parseArgs(["app", "--platform", platform])).toEqual({ directory: "app", platform });
-  }
-});
+for (const platform of platforms) {
+  it(`accepts the ${platform} flag forwarded by vp create`, async () => {
+    const directory = join(await temporaryDirectory(), `forwarded-${platform}`);
+    const output = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      await runCli([directory, "--platform", platform]);
+      expect(JSON.parse(await readFile(join(directory, "package.json"), "utf8"))).toHaveProperty(
+        "name",
+        `forwarded-${platform}`,
+      );
+    } finally {
+      output.mockRestore();
+    }
+  });
+}
 
-it("describes the VitePlus forwarding syntax in help", async () => {
-  const output = vi.spyOn(stdout, "write").mockImplementation(() => true);
+it("describes supported platforms in framework-generated help", async () => {
+  const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
     await runCli(["--help"]);
-    expect(output).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "vp create effront -- [directory] --platform node|bun|cloudflare|alchemy-cloudflare",
-      ),
-    );
+    expect(output).toHaveBeenCalledWith(expect.stringContaining("--platform"));
+    expect(output).toHaveBeenCalledWith(expect.stringContaining("alchemy-cloudflare"));
   } finally {
     output.mockRestore();
   }
@@ -148,7 +154,7 @@ it("describes the VitePlus forwarding syntax in help", async () => {
 
 it("creates a project from forwarded VitePlus arguments and recommends vp commands", async () => {
   const directory = join(await temporaryDirectory(), "my-app");
-  const output = vi.spyOn(stdout, "write").mockImplementation(() => true);
+  const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
     await runCli([directory, "--platform", "cloudflare"]);
     expect(output).toHaveBeenCalledWith(
@@ -171,18 +177,24 @@ it("refuses to overwrite an existing project", async () => {
   expect(await readdir(directory)).toEqual(["keep.txt"]);
 });
 
-it("rejects an unknown platform and malformed command arguments", () => {
-  expect(() => parseArgs(["app", "--platform", "workers"])).toThrow("--platform must be one of");
-  expect(() => parseArgs(["app", "--platform="])).toThrow("--platform must be one of");
-  expect(() => parseArgs(["app", "--unknown"])).toThrow("Unknown option");
-  expect(() => parseArgs(["first", "second"])).toThrow("Unexpected argument");
-  expect(parseArgs(["app", "--platform=bun"])).toEqual({ directory: "app", platform: "bun" });
-  expect(parseArgs(["-h"])).toMatchObject({ help: true });
+it("rejects invalid platform and unexpected options without creating a project", async () => {
+  const directory = join(await temporaryDirectory(), "invalid");
+  await expect(runCli([directory, "--platform", "workers"])).rejects.toThrow();
+  await expect(runCli([directory, "--unknown"])).rejects.toThrow();
+  await expect(runCli([directory, "--platform="])).rejects.toThrow();
+  await expect(runCli([directory, "extra", "--platform", "node"])).rejects.toThrow();
+  await expect(readdir(directory)).rejects.toThrow();
+});
+
+it("rejects missing options without a terminal", async () => {
+  await expect(runCli([])).rejects.toThrow(
+    "Specify a directory and --platform in non-interactive mode.",
+  );
 });
 
 it("recommends Alchemy orchestration rather than a direct Vite dev command", async () => {
   const directory = join(await temporaryDirectory(), "alchemy-app");
-  const output = vi.spyOn(stdout, "write").mockImplementation(() => true);
+  const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
     await runCli([directory, "--platform", "alchemy-cloudflare"]);
     expect(output).toHaveBeenCalledWith(
