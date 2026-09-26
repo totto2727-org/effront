@@ -2,7 +2,7 @@ import { Effect, Stream } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { describe, expect, it } from "vite-plus/test";
 
-import { withResponseCache } from "./response-cache";
+import { responseCache } from "./response-cache";
 
 const requiredVary = ["accept", "cookie", "authorization"];
 const html = () =>
@@ -16,7 +16,8 @@ const run = <E>(
   development = false,
 ) =>
   Effect.runPromise(
-    withResponseCache(app, { development }).pipe(
+    app.pipe(
+      responseCache({ development }),
       Effect.provideService(
         HttpServerRequest.HttpServerRequest,
         HttpServerRequest.fromWeb(request),

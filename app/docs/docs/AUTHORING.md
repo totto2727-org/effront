@@ -112,7 +112,8 @@ The installed Alchemy provider forwards this to the Worker version's `cacheOptio
 Cloudflare serves cache hits before executing the Worker, using tiered caching and request collapsing.
 Workers Cache is distinct from both zone caching and the older Workers Cache API.
 
-The docs response policy uses native Effect HTTP header transforms:
+`src/response-cache.ts` defines the docs-only response policy with `HttpMiddleware.make` and native Effect HTTP header transforms.
+The Worker applies it with `fetch.pipe(responseCache({ development: import.meta.env.DEV }))` at request time, without changing the response body or adding a core API:
 
 - `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
 - `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
