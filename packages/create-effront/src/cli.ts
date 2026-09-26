@@ -1,11 +1,9 @@
-import { NodeServices } from "@effect/platform-node";
 import { Console, Effect, Option } from "effect";
 import { Argument, Command, Flag, Prompt } from "effect/unstable/cli";
-import { readFileSync } from "node:fs";
 import { stdin, stdout } from "node:process";
 import { createProject, platforms } from "./init.js";
 
-const command = Command.make(
+export const command = Command.make(
   "create-effront",
   {
     directory: Argument.string("directory").pipe(Argument.optional),
@@ -41,12 +39,3 @@ const command = Command.make(
     { command: "vp create effront -- my-app --platform alchemy-cloudflare" },
   ]),
 );
-
-export function runCli(args: ReadonlyArray<string>): Promise<void> {
-  const { version } = JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-  ) as { version: string };
-  return Effect.runPromise(
-    Command.runWith(command, { version })(args).pipe(Effect.provide(NodeServices.layer)),
-  );
-}

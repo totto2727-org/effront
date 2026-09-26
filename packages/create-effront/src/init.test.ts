@@ -2,10 +2,15 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
-import { runCli } from "./cli.js";
+import { NodeServices } from "@effect/platform-node";
+import { Effect } from "effect";
+import { Command } from "effect/unstable/cli";
+import packageJson from "../package.json" with { type: "json" };
+import { command } from "./cli.js";
 import { createProject, platforms } from "./init.js";
 
 const directories: string[] = [];
+const runCommand = Command.runWith(command, { version: packageJson.version });
 
 async function temporaryDirectory(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), "create-effront-test-"));
@@ -130,7 +135,9 @@ for (const platform of platforms) {
     const directory = join(await temporaryDirectory(), `forwarded-${platform}`);
     const output = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
-      await runCli([directory, "--platform", platform]);
+      await Effect.runPromise(
+        runCommand([directory, "--platform", platform]).pipe(Effect.provide(NodeServices.layer)),
+      );
       expect(JSON.parse(await readFile(join(directory, "package.json"), "utf8"))).toHaveProperty(
         "name",
         `forwarded-${platform}`,
@@ -144,7 +151,7 @@ for (const platform of platforms) {
 it("describes supported platforms in framework-generated help", async () => {
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
-    await runCli(["--help"]);
+    await Effect.runPromise(runCommand(["--help"]).pipe(Effect.provide(NodeServices.layer)));
     expect(output).toHaveBeenCalledWith(expect.stringContaining("--platform"));
     expect(output).toHaveBeenCalledWith(expect.stringContaining("alchemy-cloudflare"));
   } finally {
@@ -156,7 +163,9 @@ it("creates a project from forwarded VitePlus arguments and recommends vp comman
   const directory = join(await temporaryDirectory(), "my-app");
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
-    await runCli([directory, "--platform", "cloudflare"]);
+    await Effect.runPromise(
+      runCommand([directory, "--platform", "cloudflare"]).pipe(Effect.provide(NodeServices.layer)),
+    );
     expect(output).toHaveBeenCalledWith(
       expect.stringContaining(`Next: cd ${directory} && vp install && vp dev`),
     );
@@ -179,24 +188,46 @@ it("refuses to overwrite an existing project", async () => {
 
 it("rejects invalid platform and unexpected options without creating a project", async () => {
   const directory = join(await temporaryDirectory(), "invalid");
-  await expect(runCli([directory, "--platform", "workers"])).rejects.toThrow();
-  await expect(runCli([directory, "--unknown"])).rejects.toThrow();
-  await expect(runCli([directory, "--platform="])).rejects.toThrow();
-  await expect(runCli([directory, "extra", "--platform", "node"])).rejects.toThrow();
+  await expect(
+    Effect.runPromise(
+      runCommand([directory, "--platform", "workers"]).pipe(Effect.provide(NodeServices.layer)),
+    ),
+  ).rejects.toThrow();
+  await expect(
+    Effect.runPromise(
+      runCommand([directory, "--unknown"]).pipe(Effect.provide(NodeServices.layer)),
+    ),
+  ).rejects.toThrow();
+  await expect(
+    Effect.runPromise(
+      runCommand([directory, "--platform="]).pipe(Effect.provide(NodeServices.layer)),
+    ),
+  ).rejects.toThrow();
+  await expect(
+    Effect.runPromise(
+      runCommand([directory, "extra", "--platform", "node"]).pipe(
+        Effect.provide(NodeServices.layer),
+      ),
+    ),
+  ).rejects.toThrow();
   await expect(readdir(directory)).rejects.toThrow();
 });
 
 it("rejects missing options without a terminal", async () => {
-  await expect(runCli([])).rejects.toThrow(
-    "Specify a directory and --platform in non-interactive mode.",
-  );
+  await expect(
+    Effect.runPromise(runCommand([]).pipe(Effect.provide(NodeServices.layer))),
+  ).rejects.toThrow("Specify a directory and --platform in non-interactive mode.");
 });
 
 it("recommends Alchemy orchestration rather than a direct Vite dev command", async () => {
   const directory = join(await temporaryDirectory(), "alchemy-app");
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
-    await runCli([directory, "--platform", "alchemy-cloudflare"]);
+    await Effect.runPromise(
+      runCommand([directory, "--platform", "alchemy-cloudflare"]).pipe(
+        Effect.provide(NodeServices.layer),
+      ),
+    );
     expect(output).toHaveBeenCalledWith(
       expect.stringContaining(`Next: cd ${directory} && vp install && vp run dev`),
     );
