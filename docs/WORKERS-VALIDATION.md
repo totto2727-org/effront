@@ -8,6 +8,7 @@ The upstream history is preserved from `ed886996d1d3780b94166af4f798c53416d547c8
 
 The migration checks below predate the Effront rename, with later sections recording subsequent milestones.
 Commands, paths, API names, and results describe their respective executions, not the current checkout.
+References below to `examples/workers` record the former rich standalone consumer; the current minimal starter is `examples/cloudflare`, while `tests/e2e-build/` owns the binding and runtime regressions.
 Current code uses `@effront/core/*`, `Application.effront()`, and separate `effront()` from `@effront/vite` plus `effrontCloudflare()` from `@effront/cloudflare`; the latter direct options replaced the historical nested `cloudflare` options.
 
 ## Requirement-to-evidence mapping

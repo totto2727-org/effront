@@ -1,7 +1,6 @@
 `Layout` でページ共通の HTML を、`Page` で各ページの内容を定義し、`Routes` で URL に接続します。
 このガイドではトップページから始めて、パスパラメーターと、専用のレイアウトや読み込み表示を持つセクションを追加します。
 
-[はじめにのサンプル](./getting-started.md)を [http://127.0.0.1:1340](http://127.0.0.1:1340) で起動した状態で進めます。
 最初の三つのセクションで `src/entry.effront.tsx` の構成要素を説明し、[エントリー全体](#application)でそれらを組み合わせます。
 
 ## 共通の Layout を定義する {#layouts}
@@ -86,7 +85,7 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes });
 ```
 
-保存して [http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと、RootLayout の `children` の位置に `Home` と表示されます。
+保存後、ブラウザーで `/` を開くと、RootLayout の `children` の位置に `Home` と表示されます。
 
 ## パスパラメーターを受け取る {#matching}
 
@@ -114,9 +113,11 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .page("/manual/*path", ManualPage);
 ```
 
-- [http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello) は `hello` と表示します。
-- [http://127.0.0.1:1340/manual/setup/install](http://127.0.0.1:1340/manual/setup/install) は `setup/install` と表示します。
-- [http://127.0.0.1:1340/manual](http://127.0.0.1:1340/manual) と [http://127.0.0.1:1340/manual/](http://127.0.0.1:1340/manual/) では `path` が空文字列になり、`Manual` と表示します。
+ブラウザーでは、次のパスを開けます。
+
+- `/articles/hello` は `hello` と表示します。
+- `/manual/setup/install` は `setup/install` と表示します。
+- `/manual` と `/manual/` では `path` が空文字列になり、`Manual` と表示します。
 
 名前付きパラメーターは一つのセグメントを受け取ります。
 catch-all は空文字列を含む残りのパスを受け取り、パターンの末尾にしか置けません。
@@ -174,5 +175,5 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout })
   .mount("/articles", articles);
 ```
 
-[http://127.0.0.1:1340/articles/hello](http://127.0.0.1:1340/articles/hello) を開きます。
+ブラウザーで `/articles/hello` を開きます。
 ArticleLayout の `Articles` の下に `Loading article…` が表示され、2 秒の待機後に読み込み表示が `hello` に置き換わります。

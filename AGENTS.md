@@ -2,8 +2,9 @@
 
 ## Repository structure
 
-- `packages/`: core runtime, provider adapters, build integrations, Markdown support, and development tooling; consult a package's local `AGENTS.md` for its unique constraints.
-- `examples/`: Workers, Node, Bun, Alchemy, and focused showcase consumers. The `basic -> alchemy` alias is excluded from workspace discovery.
+- `packages/`: core runtime, provider adapters, build integrations, Markdown support, the `create-effront` initializer, and development tooling; consult a package's local `AGENTS.md` for its unique constraints.
+- `examples/{node,bun,cloudflare,alchemy-cloudflare}/`: byte-identical one-page application starters; nonminimal features belong in the Alchemy-based `basic/` example. Rich Node/Bun host regression apps are test-owned fixtures under `tests/e2e-server/fixtures/`.
+- `examples/{check-in,streaming-feed}/`: focused interactive showcases, separate from the minimal starters.
 - `app/docs/`: the framework's own SSR documentation application.
 - `tests/`: independent browser integration packages, distinct from package-owned unit and integration tests.
 - [Documentation index](docs/INDEX.md): cross-package architecture, testing, release policy, roadmap, and upstream provenance only; single-owner guides belong under that package's `docs/`.

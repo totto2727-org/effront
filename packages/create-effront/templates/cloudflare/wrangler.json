@@ -1,0 +1,6 @@
+{
+  "name": "__PROJECT_NAME__",
+  "main": "src/entry.workers.ts",
+  "compatibility_date": "2026-09-10",
+  "compatibility_flags": ["nodejs_compat"]
+}

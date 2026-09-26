@@ -1,0 +1,23 @@
+{
+  "name": "effront-cloudflare-example",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@effect/platform-browser": "catalog:",
+    "@effront/cloudflare": "workspace:*",
+    "@effront/core": "workspace:*",
+    "effect": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@effront/vite": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-rsc": "catalog:",
+    "tailwindcss": "catalog:",
+    "vite-plus": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

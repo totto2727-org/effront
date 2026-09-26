@@ -87,22 +87,18 @@ for (const reader of locales) {
     expect(importantBorder).not.toBe(warningBorder);
   });
 
-  test(`${reader.locale} reader finds the clone-and-run sample and its file roles`, async ({
+  test(`${reader.locale} reader finds the create-and-run starter and its file roles`, async ({
     page,
   }) => {
     await openGuide(page, reader, "/guide/getting-started");
     await followHeading(page, reader, "setup");
-    const commands = page.locator("article pre code").filter({ hasText: "git clone" });
+    const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
     await expect(commands).toHaveText(
-      "git clone https://github.com/totto2727-org/effront.git\ncd effront\nvp install",
+      "vp create effront -- my-app --platform node\ncd my-app\nvp install\nvp dev",
     );
     await expect(
-      page.locator("article pre code").filter({ hasText: "cd examples/hello-world" }),
-    ).toHaveText("cd examples/hello-world\nvp dev");
-    await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toBeVisible();
-    await expect(
       page.locator(
-        'article a[href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"]',
+        'article a[href="https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx"]',
       ),
     ).toBeVisible();
     await followHeading(page, reader, "application");
@@ -135,29 +131,38 @@ for (const reader of locales) {
     expect(tokenColors.length).toBeGreaterThan(2);
   });
 
-  for (const [host, example, dev] of [
-    ["node", "node", "http://127.0.0.1:1341"],
-    ["bun", "bun", "http://127.0.0.1:1342"],
-    ["cloudflare", "workers", "http://127.0.0.1:1343"],
-    ["alchemy", "alchemy", "http://localhost:1337"],
+  for (const [host, example] of [
+    ["node", "node"],
+    ["bun", "bun"],
+    ["cloudflare", "cloudflare"],
+    ["alchemy", "alchemy-cloudflare"],
   ] as const) {
-    test(`${reader.locale} reader runs the existing ${host} example without assembling host configuration`, async ({
+    test(`${reader.locale} reader creates the ${host} starter without assembling host configuration`, async ({
       page,
     }) => {
       await page.goto(`/${reader.locale}/platforms`);
       await page.locator(`article a[href="/${reader.locale}/platforms/${host}"]`).click();
       await expect(page).toHaveURL(`/${reader.locale}/platforms/${host}`);
-      await expect(
-        page.locator(
-          `article a[href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"]`,
-        ),
-      ).toBeVisible();
       await followHeading(page, reader, "setup");
-      const commands = page.locator("article pre code").filter({ hasText: "git clone" });
-      await expect(commands).toContainText(`cd examples/${example}`);
+      const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
+      await expect(commands).toContainText(`vp create effront -- my-app --platform ${example}`);
+      await expect(commands).toContainText("cd my-app");
       await expect(commands).toContainText("vp install");
+      await expect(page.locator("article")).not.toContainText("git clone");
       await expect(page.locator("article")).not.toContainText("vp pack");
-      await expect(page.locator(`article a[href="${dev}"]`).first()).toBeVisible();
+      await expect(page.locator("article")).not.toContainText("Count: 0");
+      await expect(page.locator("article")).not.toContainText("cd examples/workers");
+      if (host === "alchemy") {
+        await expect(page.locator("article")).toContainText(
+          reader.locale === "en"
+            ? "local URL printed by Alchemy"
+            : "Alchemy が表示するローカル URL",
+        );
+      } else {
+        await expect(page.locator("article")).toContainText(
+          reader.locale === "en" ? "local URL printed by Vite" : "Vite が表示するローカル URL",
+        );
+      }
       for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
         await expect(
           page.locator("article table").getByRole("row").filter({ hasText: file }),
@@ -232,7 +237,7 @@ for (const reader of locales) {
     await expect(complete).toContainText("EFFRONT.Layout.make");
     await expect(complete).toContainText("EFFRONT.Page.make");
     await expect(complete).toContainText('Routes.make({ layout: RootLayout }).page("/", HomePage)');
-    await expect(page.locator('article a[href="http://127.0.0.1:1340"]')).toHaveCount(2);
+    await expect(page.locator("article")).not.toContainText("127.0.0.1:1340");
     await followHeading(page, reader, "matching");
     await expect(page.locator("article h2#matching")).toHaveText(
       reader.locale === "en" ? "Read path parameters" : "パスパラメーターを受け取る",

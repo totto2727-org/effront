@@ -3,8 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp build",
     "start": "node dist/rsc/server.js"
   },
   "dependencies": {
@@ -12,20 +10,16 @@
     "@effect/platform-node": "catalog:",
     "@effront/core": "workspace:*",
     "@effront/server": "workspace:*",
-    "@tanstack/react-query": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@effect/platform-node": "catalog:",
-    "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
-    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
-    "tailwindcss": "catalog:",
     "vite-plus": "catalog:"
   }
 }

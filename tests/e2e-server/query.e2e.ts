@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === "bun", "Query playground is owned by the Node example");
+  test.skip(testInfo.project.name === "bun", "Query playground is owned by the Node fixture");
   await page.goto("/loading/query");
   await page.waitForLoadState("networkidle");
 });

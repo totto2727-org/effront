@@ -22,7 +22,6 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   // Added: effrontTailwind().
   plugins: [effront(), effrontServer(), await effrontTailwind()],
-  server: { host: "127.0.0.1", port: 1340, strictPort: true },
 });
 ```
 

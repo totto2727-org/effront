@@ -30,7 +30,7 @@ export function Greeting() {
 
 With Tailwind's default theme, the paragraph has a maximum width of `48rem` and padding of `1rem` horizontally and `0.5rem` vertically.
 The styles apply in the initial HTML, including with JavaScript disabled.
-See the [Alchemy navigation component](../../examples/alchemy/src/components/shell.tsx) and [Vite configuration](../../examples/alchemy/vite.config.ts) for a complete application.
+See the [Alchemy navigation component](../../examples/basic/src/components/shell.tsx) and [Vite configuration](../../examples/basic/vite.config.ts) for a complete application.
 
 ## Key features
 

@@ -51,7 +51,7 @@ import { Layer } from "effect";
 }).pipe(Layer.launch, BunRuntime.runMain);
 ```
 
-The [Node startup](../../examples/node/src/entry.server.ts) and [Bun startup](../../examples/bun/src/entry.server.ts) are complete application examples.
+The [minimal Node startup](../../examples/node/src/entry.server.ts) and [minimal Bun startup](../../examples/bun/src/entry.server.ts) show complete one-page host configuration. Unlike the code above, these starters mount only generated client assets and omit the optional public-file mount.
 
 ## Key features
 

@@ -16,7 +16,7 @@ export default defineConfig({
 });
 ```
 
-With a [core application and Fetch entry](../core/README.md#usage) and a Wrangler binding `vars: { APP_LABEL: "Greeting Worker" }`, read that binding in a request Effect:
+The [minimal standalone Cloudflare example](../../examples/cloudflare/) has a one-page application, a Fetch entry using `createFetchHandler(application)`, and a `wrangler.jsonc` with `nodejs_compat` but no application bindings. To add a greeting binding, configure `vars: { APP_LABEL: "Greeting Worker" }` in Wrangler and read it in a request Effect:
 
 ```ts
 import { createWorkersContextAccessors } from "@effront/cloudflare/workers";
@@ -30,7 +30,7 @@ export const greeting = Effect.gen(function* () {
 ```
 
 A Page that evaluates `greeting` can render `Hello from Greeting Worker`.
-The [standalone Workers example](../../examples/workers/README.md#usage) provides the complete runnable application and Wrangler configuration.
+The example's `src/entry.workers.ts` wires the core Fetch handler to the application, while the binding is available only within a request. See the [platform guide](../../app/docs/src/content/en/articles/platforms/cloudflare.md) for build and local Wrangler commands.
 The Fetch handler comes from `@effront/core/workers`; import request accessors from `@effront/cloudflare/workers` to avoid loading the Vite plugin in your Worker.
 
 ## Key features

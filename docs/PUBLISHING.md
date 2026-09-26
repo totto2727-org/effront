@@ -1,11 +1,11 @@
 # npm publication
 
 All public libraries release together at version `0.1.4` with public access and the `latest` dist-tag.
-The release includes `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@effront/markdown`, `@effront/tailwind`, `@effront/alchemy`, and `@effront/server`.
+The release includes `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@effront/markdown`, `@effront/tailwind`, `@effront/alchemy`, and `@effront/server`, plus the `create-effront` initializer at the same version.
 
 ## Prepare a release
 
-1. Bump every library version together in the release pull request.
+1. Bump every library and `create-effront` version together in the release pull request.
 2. When workspace peer ranges need updating, run `vp install --lockfile-only`.
 3. Confirm that the package owner has configured npm Trusted Publishing for every package before relying on the workflow.
 
@@ -14,7 +14,8 @@ The workflow skips versions already on npm.
 
 ## Package builds
 
-Each public package owns a `vite.config.ts` and uses `vp pack` to generate JavaScript and declarations.
+Each public library owns a `vite.config.ts` and uses `vp pack` to generate JavaScript and declarations.
+`create-effront` also participates in the filtered build. Its publication must include the executable CLI and complete starter templates.
 For the initial workspace build, call `vp exec --filter "./packages/*" -- vp pack` directly.
 It builds in workspace dependency order without a package-name list or package-specific `dependsOn`.
 Do not wrap this command in `vp run`: task discovery loads consumer configurations whose static imports require the package `dist/` exports to exist already.
@@ -40,7 +41,8 @@ Before merging the publishing workflow, the package owner must ensure that all n
 | Publication        | Direct          |
 | GitHub environment | None            |
 
-The owner must perform initial publication if npm requires it.
+The owner must perform initial publication if npm requires it, including the first `create-effront` release.
+`vp create effront` resolves the published `create-effront` package, so the command is not available to registry consumers before this step.
 The workflow uses GitHub-hosted runners and job-scoped `id-token: write`, without long-lived npm tokens.
 Protect `main` and require the CI check before merging.
 Local checks and dry runs do not verify registry trust or package ownership.

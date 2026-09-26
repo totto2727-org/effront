@@ -1,0 +1,25 @@
+{
+  "name": "__PROJECT_NAME__",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "alchemy dev"
+  },
+  "dependencies": {
+    "@effect/platform-browser": "4.0.0-rc.112",
+    "@effront/alchemy": "0.1.4",
+    "@effront/core": "0.1.4",
+    "alchemy": "2.0.0-beta.77",
+    "effect": "4.0.0-rc.112",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@effront/vite": "0.1.4",
+    "@types/node": "22.20.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-rsc": "0.5.35",
+    "vite-plus": "0.3.1"
+  }
+}

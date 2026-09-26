@@ -4,9 +4,9 @@ Serve Effront pages and Server Functions on Alchemy Cloudflare Workers with requ
 
 ## Usage
 
-The [native Worker example](../../examples/alchemy/src/entry.workers.ts) supplies a KV client to an Effront application.
+The [native Worker example](../../examples/basic/src/entry.workers.ts) supplies a KV client to an Effront application.
 Its home page renders `Hello from Alchemy KV`, and its browser button calls a greeting Server Function using the same request-local service.
-Use its [stack](../../examples/alchemy/alchemy.run.ts), [Vite configuration](../../examples/alchemy/vite.config.ts), and [application](../../examples/alchemy/src/entry.effront.tsx) together.
+Use its [stack](../../examples/basic/alchemy.run.ts), [Vite configuration](../../examples/basic/vite.config.ts), and [application](../../examples/basic/src/entry.effront.tsx) together.
 
 Register the compiler before the Alchemy adapter:
 

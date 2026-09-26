@@ -17,8 +17,8 @@ export default defineConfig({
 });
 ```
 
-The [Workers application's routes](../../examples/workers/src/entry.effront.tsx) render `Hello, world!` at `/`, hydrate a counter, and navigate to About without replacing the shared shell.
-Use its [Vite configuration](../../examples/workers/vite.config.ts) and [complete setup](../../examples/workers/README.md#usage) to run that application.
+The [minimal Cloudflare application's route](../../examples/cloudflare/src/entry.effront.tsx) renders `Hello, world` at `/`.
+Use its [Vite configuration](../../examples/cloudflare/vite.config.ts) and [platform guide](../../app/docs/src/content/en/articles/platforms/cloudflare.md) to run that application. For counters and navigation, see [Alchemy Basic](../../examples/basic/).
 
 ## Key features
 

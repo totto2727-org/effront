@@ -43,7 +43,7 @@ Alchemy's accepted error union is narrower, so handle or map remaining applicati
 
 `makeApplicationHttpEffect` captures service references from its construction Context.
 `applicationHttpEffect` uses the explicit `context` option, which defaults to an empty Context.
-The [Alchemy example](https://github.com/totto2727-org/effront/tree/main/examples/alchemy) demonstrates capturing an application service backed by a KV client.
+The [Basic example](https://github.com/totto2727-org/effront/tree/main/examples/basic) demonstrates capturing an application service backed by a KV client.
 
 - Live request values override captured services with the same key.
 - Capture excludes HTTP services, Scope, Layer memoization state, Alchemy `RuntimeContext`, Worker self, generic `Self`, Cloudflare environment, raw Request, Worker environment, and execution context.
