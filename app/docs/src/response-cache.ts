@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { HttpMiddleware, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 
-const flightMediaType = "text/x-component";
 const privateCacheControl = "private, no-store";
 
 const varyFor = (vary: string | undefined) => {
@@ -21,7 +20,7 @@ export const responseCache = HttpMiddleware.make(
     Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest;
       const accept = request.headers["accept"];
-      const acceptsPage = accept === flightMediaType || accept?.includes("text/html") === true;
+      const acceptsPage = ["text/html", "text/x-component"].some((type) => accept?.includes(type));
       const response = yield* handler;
       const vary = varyFor(response.headers["vary"]);
       // This docs-only opt-in overrides core's conservative private/no-store default.

@@ -124,7 +124,7 @@ Its default key includes the path, full query string and Worker version, so `/en
 Do not enable cross-version caching.
 The request hostname is not part of the native key; this site must continue to render the same public content across its hostnames.
 
-The middleware opts in only GET requests whose `Accept` contains `text/html` or exactly equals `text/x-component`, with a 200 response.
+The middleware opts in only GET requests whose `Accept` contains `text/html` or `text/x-component`, with a 200 response.
 Cookie and Authorization request headers do not affect this public site's cache policy.
 The middleware does not inspect response cookies or Set-Cookie headers.
 Other responses returned through the middleware receive `private, no-store` in both cache-control headers; failures propagate without adding cache headers.

@@ -38,19 +38,21 @@ const expectPolicy = (response: HttpServerResponse.HttpServerResponse, isPublic:
 };
 
 describe("docs cache middleware", () => {
-  it.each(["text/html", "text/x-component", "text/html,application/xhtml+xml,*/*;q=0.8"])(
-    "caches public GET with Accept %s without changing its body",
-    async (accept) => {
-      const original = html();
-      const response = await run(pageRequest({ accept }), Effect.succeed(original));
-      expectPolicy(response, true);
-      expect(response.body).toBe(original.body);
-      expect(original.headers["cache-control"]).toBe("private, no-store");
-      expect(await HttpServerResponse.toWeb(response).text()).toBe("rendered");
-    },
-  );
+  it.each([
+    "text/html",
+    "text/x-component",
+    "text/x-component; charset=utf-8",
+    "text/html,application/xhtml+xml,*/*;q=0.8",
+  ])("caches public GET with Accept %s without changing its body", async (accept) => {
+    const original = html();
+    const response = await run(pageRequest({ accept }), Effect.succeed(original));
+    expectPolicy(response, true);
+    expect(response.body).toBe(original.body);
+    expect(original.headers["cache-control"]).toBe("private, no-store");
+    expect(await HttpServerResponse.toWeb(response).text()).toBe("rendered");
+  });
 
-  it.each(["*/*", "application/json", "text/x-component; charset=utf-8", ""])(
+  it.each(["*/*", "application/json", ""])(
     "does not opt unsupported Accept %s into caching",
     async (accept) => expectPolicy(await run(pageRequest({ accept })), false),
   );
