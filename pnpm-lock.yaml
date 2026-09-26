@@ -845,11 +845,11 @@ importers:
   packages/create-effront:
     dependencies:
       '@effect/platform-node':
-        specifier: 4.0.0-rc.112
-        version: 4.0.0-rc.112(effect@4.0.0-rc.112)(redis@6.2.1)
+        specifier: 4.0.0-rc.116
+        version: 4.0.0-rc.116(effect@4.0.0-rc.116)(redis@6.2.1)
       effect:
-        specifier: 4.0.0-rc.112
-        version: 4.0.0-rc.112
+        specifier: 4.0.0-rc.116
+        version: 4.0.0-rc.116
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
