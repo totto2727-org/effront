@@ -27,8 +27,8 @@ export const coreRuntimeSources = {
   responseLifetime: {
     path: "packages/core/src/http.ts",
     language: "typescript",
-    code: `    // Effect rc.112 transfers every streaming response scope before discarding
-    // HEAD bodies. Preserve GET metadata but prevent transfer to an unread body.
+    code: `    // Preserve GET metadata while preventing HEAD from transferring the response
+    // scope to a streaming body that no reader will consume.
     return request.method === "HEAD"
       ? HttpServerResponse.setBody(response, HttpBody.empty).pipe(
           HttpServerResponse.setHeaders(response.headers),
@@ -276,9 +276,7 @@ export const coreRuntimePages: readonly DocPage[] = [
         </p>
         <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
         <p>
-          HEADの本文は消費されません。 固定しているEffect
-          rc.112は、HEADの本文を破棄する前にストリーミング応答のScopeを移譲します。
-          Effrontは先に本文を <code>HttpBody.empty</code>{" "}
+          HEADの本文は消費されません。Effrontは先に本文を <code>HttpBody.empty</code>{" "}
           に置き換え、ヘッダーを維持することで、読まれないストリームへの移譲を防ぎます。
         </p>
         <p>

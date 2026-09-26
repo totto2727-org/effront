@@ -28,6 +28,8 @@ Effront supplies browser startup code.
 `application` selects the application definition, not a browser entry.
 `@effront/core/application-entry` resolves to that module through a Vite alias, not a standalone public package subpath.
 Host adapters such as `effrontServer` and `effrontAlchemy` configure their own request entries.
+Effect Schema JIT is registered separately in the browser and SSR entries, the native Node/Bun host, and the RSC entry selected by `effront({ rsc })`.
+For native hosting, align the RSC paths with `plugins: [effront({ rsc: "./src/entry.rsc.ts" }), effrontServer()]` so JIT registration targets the actual RSC entry. See the [graph ownership explanation](https://github.com/totto2727-org/effront/blob/main/packages/vite/docs/SCHEMA-JIT.md).
 
 ## effrontCloudflare {#cloudflare}
 

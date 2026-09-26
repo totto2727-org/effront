@@ -36,7 +36,7 @@ Use utilities in your component's JSX:
 <h1 className="p-4 text-xl font-bold">Hello</h1>
 ```
 
-The heading has padding and larger, bold text.
+The heading has padding and larger, bold text in the initial HTML, even when JavaScript is disabled.
 
 ## Define a theme in a stylesheet {#stylesheet}
 

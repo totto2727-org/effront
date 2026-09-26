@@ -33,12 +33,14 @@ describe("current core learning material", () => {
     expect(implementation).toContain(source.code);
   });
 
-  // Historical excerpts remain in the recorded baseline. The two updated excerpts describe
-  // post-baseline Flight error digests and Stream wire values instead.
+  // Historical excerpts remain in the recorded baseline. Flight error digests, Stream wire
+  // values, and the version-neutral HEAD scope comment describe post-baseline code instead.
   it.each(
     coreSources.filter(
       (source) =>
-        source !== coreRuntimeSources.flightRuntime && source !== coreRuntimeSources.serverFnBrand,
+        source !== coreRuntimeSources.flightRuntime &&
+        source !== coreRuntimeSources.serverFnBrand &&
+        source !== coreRuntimeSources.responseLifetime,
     ),
   )("retains the $path excerpt in the architecture baseline", (source) => {
     const baselineSource = execFileSync(

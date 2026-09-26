@@ -36,7 +36,7 @@ export default defineConfig({
 <h1 className="p-4 text-xl font-bold">Hello</h1>
 ```
 
-見出しに余白が付き、文字が大きく太くなります。
+JavaScript を無効にしていても初期 HTML からスタイルが適用され、見出しに余白が付き、文字が大きく太くなります。
 
 ## スタイルシートでテーマを定義する {#stylesheet}
 

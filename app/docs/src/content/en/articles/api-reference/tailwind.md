@@ -15,7 +15,7 @@ export default defineConfig({
 ```
 
 Do not register `@tailwindcss/vite` separately.
-With both packages declared and installed, the plugin generates Tailwind's default stylesheet. Without them, ordinary CSS compiles without Tailwind; declaring just one produces a warning. `root` defaults to the current working directory; set it to `import.meta.dirname` to keep imported Vite configurations tied to the application package.
+With both packages declared and installed, the plugin generates Tailwind's default stylesheet. Without them, ordinary CSS compiles without Tailwind; declaring just one produces a warning, and declaring them without installing them fails configuration. `root` defaults to the current working directory; set it to `import.meta.dirname` to keep imported Vite configurations tied to the application package.
 No CSS file or component-level CSS import is needed.
 Class and stylesheet changes use HMR during development.
 See [Styling](../guide/styling.md) for installation and application examples.

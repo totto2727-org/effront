@@ -20,10 +20,10 @@ export const describe = EFFRONT.ServerFn.make({
 `./effront` はアプリケーションで共有するファクトリーを公開します。
 クライアントから `"2"` と `"items"` を渡すと、`{ count: 2, label: "items" }` が返ります。
 
-| オプション | 契約                                                                                                      |
-| ---------- | --------------------------------------------------------------------------------------------------------- |
-| `input`    | 一つの Schema デコーダー、またはデコーダーの readonly 配列。呼び出し側は各 Schema の `Encoded` 型を渡す。 |
-| `handler`  | デコード済みの `Type` を引数に受け取り、`Effect.Effect<Output, E, AvailableServices>` を返す。            |
+| オプション | 契約                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| `input`    | 省略可能。一つの Schema デコーダー、またはデコーダーの readonly 配列。呼び出し側は各 Schema の `Encoded` 型を渡す。 |
+| `handler`  | デコード済みの `Type` を引数に受け取り、`Effect.Effect<Output, E, AvailableServices>` を返す。                      |
 
 `AvailableServices` は、アプリケーションのサービスとファクトリーのミドルウェアスコープが提供するサービスを含みます。
 成功時のハンドラーの値が `Output` になります。
@@ -43,11 +43,12 @@ export const describe = EFFRONT.ServerFn.make({
 | `[Schema.FiniteFromString, Schema.String]`     | 文字列、文字列   | 数値、文字列                  |
 | `Schema.Tuple([Schema.String, Schema.Finite])` | タプル一つ       | `[string, number]` タプル一つ |
 | `Schema.Array(Schema.String)`                  | 文字列配列一つ   | 文字列配列一つ                |
-| `[]`                                           | なし             | なし                          |
+| 省略または `[]`                                | なし             | なし                          |
 
 Schema の配列は位置引数を表します。
 配列やタプルの Schema は一つの引数を表します。
 単一のデコーダーは、余分なネイティブ引数を無視し、引数の省略時には `undefined` をデコードします。
+一方、引数を取らない関数は、明示的な `undefined` を含む余分なネイティブ引数を、ハンドラー実行前に拒否します。
 
 `useActionState` は、前の状態、`FormData` の順に引数を渡します。
 

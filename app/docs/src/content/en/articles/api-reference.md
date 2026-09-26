@@ -47,8 +47,8 @@ Related definitions must share one factory instance or a derivative from `withMi
 | All Effront packages                                                | `0.1.4`         |
 | `react`, `react-dom`                                                | `19.3.0`        |
 | `@vitejs/plugin-rsc`                                                | `0.5.35`        |
-| `effect`, `@effect/platform-browser`, host-specific Effect packages | `4.0.0-rc.112`  |
-| `alchemy`                                                           | `2.0.0-beta.77` |
+| `effect`, `@effect/platform-browser`, host-specific Effect packages | `4.0.0-rc.116`  |
+| `alchemy`                                                           | `2.0.0-beta.79` |
 | `@comark/react`                                                     | `0.6.2`         |
 
 Keep Effront package versions aligned, including optional adapters and integrations.

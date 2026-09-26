@@ -1,5 +1,3 @@
-# Query Server Functions
-
 Use a Query Server Function to read server data from a Client Component without treating the call as a mutation or refreshing the current route.
 It runs an existing Server Function through an Effect-aware client API.
 Use an ordinary Server Function or a form action when the operation changes state and the UI should navigate or refresh.

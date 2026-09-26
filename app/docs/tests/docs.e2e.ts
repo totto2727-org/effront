@@ -67,9 +67,11 @@ test("styling distinguishes default setup from optional theme and plugin configu
   }
   await expect(article).toContainText(/スタイルシート[^。]*CSS import[^。]*不要/);
   const defaults = article.locator("pre code").filter({
-    hasText: "plugins: [effront(), effrontServer(), effrontTailwind()]",
+    hasText: "plugins: [effront(), effrontServer(), await effrontTailwind()]",
   });
-  await expect(defaults).toContainText("plugins: [effront(), effrontServer(), effrontTailwind()]");
+  await expect(defaults).toContainText(
+    "plugins: [effront(), effrontServer(), await effrontTailwind()]",
+  );
   await expect(article).not.toContainText("stylingPlugins");
   await expect(defaults).not.toContainText("stylesheet:");
   await expect(article.locator("pre code").filter({ hasText: "--color-brand" })).toBeVisible();

@@ -20,10 +20,10 @@ export const describe = EFFRONT.ServerFn.make({
 `./effront` exports the application's shared factory.
 A client call with `"2"` and `"items"` resolves to `{ count: 2, label: "items" }`.
 
-| Option    | Contract                                                                                       |
-| --------- | ---------------------------------------------------------------------------------------------- |
-| `input`   | One Schema decoder or a readonly array of decoders. Callers pass each Schema's `Encoded` type. |
-| `handler` | Receives decoded `Type` arguments and returns `Effect.Effect<Output, E, AvailableServices>`.   |
+| Option    | Contract                                                                                                 |
+| --------- | -------------------------------------------------------------------------------------------------------- |
+| `input`   | Optional. One Schema decoder or a readonly array of decoders. Callers pass each Schema's `Encoded` type. |
+| `handler` | Receives decoded `Type` arguments and returns `Effect.Effect<Output, E, AvailableServices>`.             |
 
 `AvailableServices` includes application services and services from the factory's middleware scope.
 The successful handler value determines `Output`.
@@ -43,11 +43,12 @@ For React components that call the function, see [Server Functions](/en/guide/se
 | `[Schema.FiniteFromString, Schema.String]`     | String, string   | Number, string               |
 | `Schema.Tuple([Schema.String, Schema.Finite])` | One tuple        | One `[string, number]` tuple |
 | `Schema.Array(Schema.String)`                  | One string array | One string array             |
-| `[]`                                           | None             | None                         |
+| Omitted or `[]`                                | None             | None                         |
 
 An array of Schemas describes positional arguments.
 An array or tuple Schema describes one argument.
 A single decoder ignores extra native arguments and decodes `undefined` when its argument is omitted.
+A zero-argument function instead rejects extra native arguments, including an explicit `undefined`, before running its handler.
 
 `useActionState` supplies previous state followed by `FormData`:
 

@@ -13,6 +13,9 @@ vp dev
 
 Open the local URL printed by the development server. The page displays `Hello, world`.
 For other configurations, see [Platforms](../platforms.md).
+The initializer accepts `node`, `bun`, `cloudflare`, and `alchemy-cloudflare` after `--platform`; pass the directory and platform after `--` so Vite+ forwards them.
+In an interactive terminal it prompts for either omitted value, while scripts must provide both. Run `vp create effront -- --help` to see the options.
+It creates a new directory or uses an existing empty one without overwriting files, produces registry-resolvable dependencies independent of this workspace, and does not deploy the app.
 
 ## Explore the sample {#application}
 

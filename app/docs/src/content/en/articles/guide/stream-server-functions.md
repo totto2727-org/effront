@@ -1,5 +1,3 @@
-# Stream Server Functions
-
 Use a Stream Server Function when a server read produces a sequence of values and the Client Component should render each value as it arrives.
 A standard mutation is still the right choice for writes that navigate or refresh the current route.
 

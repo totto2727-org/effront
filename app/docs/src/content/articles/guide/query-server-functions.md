@@ -1,5 +1,3 @@
-# Query Server Function
-
 Query Server Function は、Client Component からサーバーのデータを読み取るために使います。
 呼び出しを mutation として扱わず、現在のルートも再描画しません。
 既存の Server Function を Effect 対応のクライアント API から実行します。

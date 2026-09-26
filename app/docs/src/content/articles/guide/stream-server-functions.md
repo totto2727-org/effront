@@ -1,5 +1,3 @@
-# Stream Server Function
-
 Stream Server Function は、サーバーで連続した値を読み取り、Client Component で各値が届くたびに表示するときに使います。
 書き込み後に現在のルートをナビゲーションまたは更新する場合は、通常の mutation を使います。
 

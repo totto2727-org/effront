@@ -29,6 +29,7 @@ export type FetchHandler<Env = unknown, ExecutionContext = unknown> = (
 アプリケーション Layer は呼び出しごとに取得します。
 Scope はレスポンス本文の完了、失敗、キャンセルまで保持されます。
 本文のないレスポンスでは直ちに解放します。
+バッファ済みレスポンスのリクエストサービスは応答の構築後に解放できますが、ストリーミング本文では読み取りの完了まで保持します。
 
 不正な `Content-Length` や 10 MiB を超える値に対しては `413` を返します。
 Server Function の POST は、このヘッダーがなくても受信バイト数を 10 MiB に制限します。
@@ -56,6 +57,7 @@ export const { getWorkersEnv, getWorkersRequestContext } = createWorkersContextA
 ```
 
 ファクトリーが作るのは読み取り関数であり、サービスや Layer ではありません。
+生成した関数は直接の読み取り関数と同じリクエスト Context を共有し、ホストから提供されたオブジェクトの同一性を保持します。
 各関数は、実行時のリクエストを読む Effect を返します。
 Effect を事前に作っていても同様です。
 型付きの失敗やサービス要件はありません。
