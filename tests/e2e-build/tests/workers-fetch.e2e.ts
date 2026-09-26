@@ -69,6 +69,15 @@ test("hydrates the client counter and navigates application links", async ({ pag
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(expected.label);
 });
 
+test("invokes a Server Function with the request-scoped Workers greeting binding", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Read greeting binding" }).click();
+  await expect(page.getByTestId("action-greeting")).toHaveText("Hello from workerd binding, Ada!");
+});
+
 test("returns a non-success response for an unknown route", async ({ request }) => {
   const response = await request.get("/not-a-route");
   expect(response.status()).toBe(404);

@@ -2,28 +2,21 @@
 
 ## サンプルを起動する {#setup}
 
-Node.js 24.11 以降と [Vite+](https://viteplus.dev/) がインストールされている状態で、[Hello world サンプル](https://github.com/totto2727-org/effront/tree/main/examples/hello-world)を取得します。
+Node.js 24.11 以降と [Vite+](https://viteplus.dev/) を用意し、Node.js 用の最小構成を作成します。
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform node
+cd my-app
 vp install
-```
-
-続いてサンプルを起動します。
-
-```bash
-cd examples/hello-world
 vp dev
 ```
 
-[http://127.0.0.1:1340](http://127.0.0.1:1340) を開くと、`Hello, world` が表示されます。
-次回以降は `examples/hello-world` で `vp dev` を実行します。
+開発サーバーが表示するローカル URL を開くと、`Hello, world` が表示されます。
+他の構成は[プラットフォーム](../platforms.md)を参照してください。
 
 ## サンプルの構成を見る {#application}
 
-サンプルにはページが一つあり、Node.js でローカル起動します。
-五つのファイルは、それぞれ次の役割を持ちます。
+Node.js 用の最小構成にはページが一つあり、主なファイルは五つです。
 
 | ファイル                | 役割                                                          |
 | ----------------------- | ------------------------------------------------------------- |
@@ -33,7 +26,7 @@ vp dev
 | `vite.config.ts`        | Effront の開発とビルドを設定します。                          |
 | `package.json`          | 依存パッケージと、サンプルを実行するコマンドを定義します。    |
 
-ページの実装は [`src/entry.effront.tsx`](https://github.com/totto2727-org/effront/blob/main/examples/hello-world/src/entry.effront.tsx) にあります。
+ページの実装は、生成したプロジェクトの `src/entry.effront.tsx` にあります（[Node サンプルのソース](https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx)でも確認できます）。
 `HomePage` が見出しの表示内容、`RootLayout` が外側の HTML、`Routes` が `/` とページの対応を定義しています。
 
 ## 表示内容を変える {#run}

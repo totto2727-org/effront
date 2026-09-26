@@ -1,41 +1,35 @@
-[Cloudflare Workers サンプル](https://github.com/totto2727-org/effront/tree/main/examples/workers)を Vite でローカル実行し、ビルド済みの Worker を Wrangler で確認します。
-このサンプルは `@effront/cloudflare` を使い、Alchemy は必要ありません。
-
 ## サンプルを起動する {#setup}
 
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールし、次を実行します。
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform cloudflare
+cd my-app
 vp install
-cd examples/workers
 vp dev
 ```
 
-[http://127.0.0.1:1343](http://127.0.0.1:1343) を開きます。
-トップページに `Hello, world!` と `Hello from Cloudflare Workers` が表示されます。
-`Count: 0` をクリックしてカウンターが増えることを確認します。
+Vite が表示するローカル URL を開きます。
+一画面に `Hello, world` と表示されます。
 
 ## Worker の設定を確認する {#vite}
 
 サンプルには Workers で動かすためのファイルが揃っています。
 
-| ファイル                | 役割                                                                                         |
-| ----------------------- | -------------------------------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | ページ、ルートレイアウト、ルートを定義します。                                               |
-| `src/entry.workers.ts`  | `createFetchHandler(application)` で作成した Fetch ハンドラーをエクスポートします。          |
-| `vite.config.ts`        | `effront()` と `effrontCloudflare()`、Tailwind を登録し、開発用の URL を固定します。         |
-| `wrangler.jsonc`        | Worker のエントリー、互換性設定、`ASSETS` バインディング、アプリケーション変数を定義します。 |
-| `package.json`          | アダプター、Wrangler、アプリケーションの依存パッケージを定義します。                         |
+| ファイル                | 役割                                                                                |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | HTML レイアウト、一つのページ、`/` ルートを定義します。                             |
+| `src/entry.workers.ts`  | `createFetchHandler(application)` で作成した Fetch ハンドラーをエクスポートします。 |
+| `vite.config.ts`        | `effront()` と `effrontCloudflare()` を登録します。                                 |
+| `wrangler.jsonc`        | Worker のエントリー、互換性の日付、`nodejs_compat` フラグを定義します。             |
+| `package.json`          | アダプター、Wrangler、アプリケーションの依存パッケージを定義します。                |
 
 ページの内容は `src/entry.effront.tsx` で変更します。
-Wrangler の設定を変更するときは、既存の `nodejs_compat` フラグと `ASSETS` バインディングを保持してください。
-その他のオプションは [Wrangler 設定リファレンス](https://developers.cloudflare.com/workers/wrangler/configuration/) を参照してください。
+Wrangler の設定を変更するときは `nodejs_compat` フラグを保持してください。
 
 ## ビルド済みの Worker を Wrangler で実行する {#local}
 
-開発サーバーを停止し、`examples/workers` で次のコマンドを実行します。
+開発サーバーを停止し、生成したプロジェクトで次のコマンドを実行します。
 
 ```bash
 vp build

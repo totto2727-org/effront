@@ -27,7 +27,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Opening [http://127.0.0.1:1340](http://127.0.0.1:1340) displays `Hello, Ada.`
+Open `/` to see `Hello, Ada.`
 For data-backed UI, read [application services](./effect.md) inside the Effect returned by `render`.
 
 ## Add an interactive control {#client-boundary}
@@ -63,7 +63,7 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open [http://127.0.0.1:1340](http://127.0.0.1:1340) and click `Count: 0` to increment the counter.
+Open `/` and click `Count: 0` to increment the counter.
 The `Welcome` component is rendered on the server.
 
 > [!WARNING]

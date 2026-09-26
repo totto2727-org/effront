@@ -1,0 +1,25 @@
+{
+  "name": "effront-loading-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "alchemy dev"
+  },
+  "dependencies": {
+    "@effront/alchemy": "workspace:*",
+    "@effront/core": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "alchemy": "catalog:",
+    "effect": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@effront/tailwind": "workspace:*",
+    "@effront/vite": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-rsc": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}

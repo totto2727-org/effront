@@ -13,7 +13,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      'vp build && wrangler dev --local --no-bundle --config fixture/dist/rsc/wrangler.json --env-file empty.env --ip 127.0.0.1 --port 4173 --inspector-port 0 --var "APP_LABEL:Workers override" --var "SERVER_TOKEN:acceptance-test-secret"',
+      'vp build && wrangler dev --local --no-bundle --config fixture/dist/rsc/wrangler.json --env-file empty.env --ip 127.0.0.1 --port 4173 --inspector-port 0 --var "APP_LABEL:Workers override" --var "GREETING:Hello from workerd binding" --var "SERVER_TOKEN:acceptance-test-secret"',
     url: "http://127.0.0.1:4173",
     reuseExistingServer: false,
     timeout: 120_000,

@@ -7,7 +7,7 @@ import { effront } from "@effront/vite";
 import { createServer, type ViteDevServer } from "vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-const exampleRoot = fileURLToPath(new URL("../../../examples/alchemy/", import.meta.url));
+const exampleRoot = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
 const memoSentinel = "react.memo_cache_sentinel";
 

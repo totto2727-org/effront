@@ -42,7 +42,7 @@ export default { fetch: createFetchHandler(application) };
 
 Register the [Cloudflare integration](../cloudflare/README.md#usage) to serve this Fetch entry.
 A request to `/` returns HTML containing `Hello, world!`.
-The [standalone Workers example](../../examples/workers/README.md#usage) supplies the complete host configuration.
+The [minimal standalone Cloudflare example](../../examples/cloudflare/) supplies the complete host configuration. Add bindings separately when needed.
 Native Effect HTTP hosts can instead use [`toHttpEffect` or `makeHttpEffect`](docs/API.md#native-effect-http).
 
 ## Key features

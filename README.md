@@ -6,6 +6,19 @@ Effront is a fork of [effective-rsc](https://github.com/nikhilsnayak/effective-r
 Implementation of this fork started from upstream commit [`ed886996d1d3780b94166af4f798c53416d547c8`](https://github.com/nikhilsnayak/effective-rsc/commit/ed886996d1d3780b94166af4f798c53416d547c8).
 See [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and subsequent incorporation history.
 
+## Quick start
+
+Create a one-page Node.js application, install its dependencies, and start the development server:
+
+```sh
+vp create effront -- my-app --platform node
+cd my-app
+vp install
+vp dev
+```
+
+For other configurations, see [Platforms](app/docs/src/content/en/articles/platforms.md).
+
 ## Usage
 
 | To…                                                              | Use…                                               |
@@ -17,8 +30,6 @@ See [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and subse
 | Use Alchemy resource capabilities in pages and Server Functions  | [Alchemy](packages/alchemy/README.md#usage)        |
 | Render Markdown with file-relative links and images              | [Markdown](packages/markdown/README.md#usage)      |
 | Apply utility styles to server-rendered and hydrated components  | [Tailwind](packages/tailwind/README.md#usage)      |
-
-The [standalone Workers example](examples/workers/README.md#usage) combines the runtime, tooling, and styling integrations in a small application.
 
 ## Key features
 
@@ -33,7 +44,6 @@ The [standalone Workers example](examples/workers/README.md#usage) combines the 
 - **Host**: Cloudflare Workers with Node compatibility, or the [native Node/Bun server](packages/server/README.md#prerequisites).
 - **Build integration**: VitePlus with the matching Effront integration and host adapter.
 - **Peers**: Effect `4.0.0-rc.112` and React/React DOM `19.3.0`; use matching versions across your application.
-- **Alchemy**: The adapter is pinned to beta.77; its official CLI requires a configured Cloudflare profile even for local use. Standalone Workers does not require that profile for local development.
 
 ## Setup
 

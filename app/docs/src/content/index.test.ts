@@ -246,7 +246,7 @@ describe("documentation catalog", () => {
       ])
         expect(content).toContain(contract);
       for (const path of [
-        "tree/main/examples/alchemy",
+        "tree/main/examples/basic",
         "tree/main/tests/e2e-alchemy",
         "blob/main/tests/e2e-alchemy/playwright.config.ts",
         "blob/main/docs/TESTING.md#native-alchemy-integration",
@@ -318,7 +318,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("keeps conceptual guides host-neutral and links the clone-and-run quickstart", async () => {
+  it("keeps conceptual guides host-neutral and links the create-and-run quickstart", async () => {
     for (const slug of [
       "/guide/routes",
       "/guide/components",
@@ -331,8 +331,8 @@ describe("documentation catalog", () => {
     }
     const start = await text("/guide/getting-started");
     for (const required of [
-      "git clone https://github.com/totto2727-org/effront.git",
-      "cd examples/hello-world",
+      "vp create effront -- my-app --platform node",
+      "cd my-app",
       "vp install",
       "vp dev",
       "Hello, world",
@@ -346,7 +346,7 @@ describe("documentation catalog", () => {
     }
     expect(start).not.toContain("vp add");
     expect(await render("/guide/getting-started")).toContain(
-      'href="https://github.com/totto2727-org/effront/tree/main/examples/hello-world"',
+      'href="https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx"',
     );
     const effect = await render("/guide/effect");
     for (const contract of ["Context.Service", "Layer", "Application.effront"]) {
@@ -368,7 +368,9 @@ describe("documentation catalog", () => {
       ]) {
         const source = readFileSync(new URL(`./${directory}/${guide}.md`, import.meta.url), "utf8");
         expect(source).toContain("vp install");
-        expect(source).toContain(guide === "platforms/alchemy" ? "vp run dev" : "vp dev");
+        if (guide !== "guide/getting-started") {
+          expect(source).toContain(guide === "platforms/alchemy" ? "vp run dev" : "vp dev");
+        }
         expect(source).not.toMatch(/vp pack|vp preview/);
       }
       const start = readFileSync(
@@ -376,12 +378,22 @@ describe("documentation catalog", () => {
         "utf8",
       );
       expect([...start.matchAll(/```bash\n([\s\S]*?)\n```/g)].map((match) => match[1])).toEqual([
-        "git clone https://github.com/totto2727-org/effront.git\ncd effront\nvp install",
-        "cd examples/hello-world\nvp dev",
+        "vp create effront -- my-app --platform node\ncd my-app\nvp install\nvp dev",
       ]);
       expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
       expect(start).toContain("render: () => Effect.succeed(<h1>Hello, Effront</h1>),");
+      expect(start).toContain("../platforms.md");
+      expect(start).not.toMatch(/\.\.\/platforms\/(bun|cloudflare|alchemy)\.md/);
+      expect(start).not.toMatch(/--platform (bun|cloudflare|alchemy-cloudflare)/);
+      const alchemy = readFileSync(
+        new URL(`./${directory}/platforms/alchemy.md`, import.meta.url),
+        "utf8",
+      );
+      expect(
+        alchemy.startsWith(locale === "en" ? "## Prepare the example" : "## サンプルを準備する"),
+      ).toBe(true);
       const html = await render(`/${locale}/guide/getting-started`);
+      expect(html).toContain(`href="/${locale}/platforms"`);
       expect(html).toContain('data-language="tsx"');
       expect(html).toContain("--shiki-dark");
     },
@@ -403,7 +415,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["hello-world", "node", "bun"])(
+  it.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
     (example) => {
       const manifest = JSON.parse(
@@ -413,8 +425,6 @@ describe("documentation catalog", () => {
         ),
       ) as { scripts: Record<string, string> };
       expect(manifest.scripts).toEqual({
-        dev: "vp dev",
-        build: "vp build",
         start: `${example === "bun" ? "bun" : "node"} dist/rsc/server.js`,
       });
     },
@@ -465,13 +475,13 @@ describe("documentation catalog", () => {
   });
 
   it.each(["en", "ja"] as const)(
-    "links runnable platform examples and their configured URLs in %s",
+    "checks generated platform guides without fixing Vite development ports in %s",
     async (locale) => {
       const repository = new URL("../../../../", import.meta.url);
-      for (const [slug, example, port] of [
-        ["node", "node", 1341],
-        ["bun", "bun", 1342],
-        ["cloudflare", "workers", 1343],
+      for (const [slug, example] of [
+        ["node", "node"],
+        ["bun", "bun"],
+        ["cloudflare", "cloudflare"],
       ] as const) {
         const html = await render(`/${locale}/platforms/${slug}`);
         const prose = await text(`/${locale}/platforms/${slug}`);
@@ -479,8 +489,8 @@ describe("documentation catalog", () => {
           new URL(`examples/${example}/vite.config.ts`, repository),
           "utf8",
         );
-        expect(config).toContain(`server: { host: "127.0.0.1", port: ${port}, strictPort: true }`);
-        expect(html).toContain(`href="http://127.0.0.1:${port}"`);
+        expect(config).not.toContain("server:");
+        expect(prose).toMatch(/local URL printed by Vite|Vite が表示するローカル URL/);
         expect(config).not.toContain("preview:");
         expect(prose).not.toContain("vp preview");
         if (slug === "cloudflare") {
@@ -489,29 +499,46 @@ describe("documentation catalog", () => {
           );
           expect(html).toContain('href="http://127.0.0.1:8787"');
         }
-        expect(html).toContain(
-          `href="https://github.com/totto2727-org/effront/tree/main/examples/${example}"`,
-        );
         for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
           expect(prose).toContain(file);
           expect(readFileSync(new URL(`examples/${example}/${file}`, repository), "utf8")).not.toBe(
             "",
           );
         }
-        expect(prose).toContain(`cd examples/${example}`);
-        expect(prose).toContain("vp install");
+        const application = readFileSync(
+          new URL(`examples/${example}/src/entry.effront.tsx`, repository),
+          "utf8",
+        );
+        expect(application).toContain("<h1>Hello, world</h1>");
+        expect(application).not.toContain("Count: 0");
+        expect(prose).not.toContain("Count: 0");
+        expect(prose).toContain(`vp create effront -- my-app --platform ${slug}`);
+        expect(prose).toContain("cd my-app\nvp install");
+        expect(prose).not.toContain("git clone");
         expect(prose).not.toContain("vp pack");
         expect(prose).not.toContain("vp add");
       }
       const alchemy = await render(`/${locale}/platforms/alchemy`);
       expect(alchemy).toContain(
-        'href="https://github.com/totto2727-org/effront/tree/main/examples/alchemy"',
+        'href="https://github.com/totto2727-org/effront/tree/main/examples/basic"',
       );
-      expect(alchemy).toContain('href="http://localhost:1337"');
-      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello, world!");
+      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello, world");
+      expect(await text(`/${locale}/platforms/alchemy`)).toContain(
+        "vp create effront -- my-app --platform alchemy-cloudflare\ncd my-app\nvp install",
+      );
+      expect(await text(`/${locale}/platforms/alchemy`)).not.toContain("git clone");
       expect(
-        readFileSync(new URL("examples/alchemy/src/entry.workers.ts", repository), "utf8"),
-      ).toContain('dev: { host: "localhost", port: 1337, strictPort: true }');
+        readFileSync(
+          new URL("examples/alchemy-cloudflare/src/entry.effront.tsx", repository),
+          "utf8",
+        ),
+      ).toContain("<h1>Hello, world</h1>");
+      expect(
+        readFileSync(
+          new URL("examples/alchemy-cloudflare/src/entry.workers.ts", repository),
+          "utf8",
+        ),
+      ).toContain("makeApplicationHttpEffect");
       const chooser = await render(`/${locale}/platforms`);
       for (const id of ["setup", "entries", "assets", "node", "bun"]) {
         expect(chooser).toContain(`id="${id}"`);
@@ -547,32 +574,31 @@ describe("documentation catalog", () => {
         'Routes.make({ layout: RootLayout }).page("/", HomePage)',
       );
       expect(code(sections[3]!)).toContain("export default EFFRONT.make({ routes })");
-      expect(source).toContain("http://127.0.0.1:1340/articles/hello");
+      expect(source).toContain("`/articles/hello`");
     },
   );
 
   it.each(["en", "ja"] as const)(
-    "gives executable guide steps the running sample's explicit origin in %s",
+    "keeps guide URL instructions concise and host-neutral in %s",
     async (locale) => {
-      for (const [guide, path] of [
-        ["getting-started", ""],
-        ["routes", ""],
-        ["components", ""],
-        ["effect", ""],
-        ["server-functions", ""],
-        ["middleware", "/request"],
-        ["markdown", "/manual/intro"],
-        ["http", "/api/greeting"],
+      for (const guide of [
+        "routes",
+        "components",
+        "effect",
+        "server-functions",
+        "middleware",
+        "markdown",
+        "http",
       ]) {
-        expect(await render(`/${locale}/guide/${guide}`)).toContain(
-          `href="http://127.0.0.1:1340${path}"`,
-        );
+        const html = await render(`/${locale}/guide/${guide}`);
+        expect(html).not.toContain("127.0.0.1:1340");
+        expect(html).not.toMatch(/開発サーバー\s*に\s*表示された\s*URL/);
       }
       const config = readFileSync(
-        new URL("../../../../examples/hello-world/vite.config.ts", import.meta.url),
+        new URL("../../../../examples/node/vite.config.ts", import.meta.url),
         "utf8",
       );
-      expect(config).toContain('server: { host: "127.0.0.1", port: 1340, strictPort: true }');
+      expect(config).not.toContain("server:");
     },
   );
 
@@ -581,7 +607,7 @@ describe("documentation catalog", () => {
     async (slug) => {
       const html = await render(slug);
       const root = new URL("../../../../packages/", import.meta.url);
-      for (const name of readdirSync(root)) {
+      for (const name of readdirSync(root).filter((name) => name !== "create-effront")) {
         const manifest = JSON.parse(
           readFileSync(new URL(`${name}/package.json`, root), "utf8"),
         ) as {

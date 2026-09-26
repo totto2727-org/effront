@@ -18,7 +18,8 @@ export default defineConfig({
   fmt: { ignorePatterns },
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
-    ignorePatterns,
+    // Raw template sources are not a workspace project; their imports resolve in generated projects.
+    ignorePatterns: [...ignorePatterns, "packages/create-effront/templates/**"],
     options: { typeAware: true, typeCheck: true },
   },
 });

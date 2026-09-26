@@ -5,7 +5,7 @@ Effront は、Page / Layout の描画や Server Function のリクエストを V
 
 ## 実行できるサンプルを使う {#tools}
 
-以下のテストは [Alchemy サンプルアプリケーション](https://github.com/totto2727-org/effront/tree/main/examples/alchemy)を対象にしています。
+以下のテストは [Basic サンプルアプリケーション](https://github.com/totto2727-org/effront/tree/main/examples/basic)を対象にしています。
 [保守されている Playwright のテスト構成](https://github.com/totto2727-org/effront/tree/main/tests/e2e-alchemy)でサンプルをビルドし、Cloudflare の認証なしでローカルの workerd ホストを起動できます。
 この構成はリポジトリー内の参照例であり、Effront に付属するテストヘルパーではありません。
 
@@ -36,7 +36,7 @@ test("registered routes return HTML and unknown routes return 404", async ({ req
 ```
 
 ビルドしたアプリケーションに対して、設定済みのミドルウェアを含むルートの応答を検証します。
-登録内容はサンプルの[ルート定義](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/entry.effront.tsx)を参照してください。
+登録内容はサンプルの[ルート定義](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/entry.effront.tsx)を参照してください。
 
 ## Page の出力とハイドレーションをテストする {#pages}
 
@@ -63,7 +63,7 @@ test("HomePage renders service data and hydrates its counter", async ({ page }) 
 
 ## 画面遷移で Layout が維持されることをテストする {#layouts}
 
-`RootLayout` は両方の Page を共通の [`Shell`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/components/shell.tsx)で囲みます。
+`RootLayout` は両方の Page を共通の [`Shell`](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/components/shell.tsx)で囲みます。
 画面遷移で Page が切り替わっても、元のナビゲーション要素が DOM に接続されたままであることを検証します。
 `layout.e2e.ts` として保存してください。
 
@@ -93,8 +93,8 @@ test("RootLayout retains its navigation when the Page changes", async ({ page })
 
 ## クライアント経由で Server Function をテストする {#server-functions}
 
-サンプルの [`GreetingAction`](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/client.tsx)は、Client Component から `greet("Ada")` を送信します。
-[`greet` Server Function](https://github.com/totto2727-org/effront/blob/main/examples/alchemy/src/features/greeting/server.ts)はリクエストの `Host` サービスを読み、挨拶を返します。
+サンプルの [`GreetingAction`](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/features/greeting/client.tsx)は、Client Component から `greet("Ada")` を送信します。
+[`greet` Server Function](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/features/greeting/server.ts)はリクエストの `Host` サービスを読み、挨拶を返します。
 `server-function.e2e.ts` として保存してください。
 
 ```ts

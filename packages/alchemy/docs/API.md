@@ -2,7 +2,7 @@
 
 Import HTTP helpers from `@effront/alchemy/cloudflare` and the Vite plugin from `@effront/alchemy/cloudflare/vite`.
 There is no package-root export.
-For a complete application, use the [native Worker](../../../examples/alchemy/src/entry.workers.ts), [stack](../../../examples/alchemy/alchemy.run.ts), and [application](../../../examples/alchemy/src/entry.effront.tsx) together.
+For a complete application, use the [native Worker](../../../examples/basic/src/entry.workers.ts), [stack](../../../examples/basic/alchemy.run.ts), and [application](../../../examples/basic/src/entry.effront.tsx) together.
 
 ## `@effront/alchemy/cloudflare`
 
@@ -44,7 +44,7 @@ export default class App extends Cloudflare.Worker<App>()(
 ) {}
 ```
 
-`CacheClient` is defined in the [example's services module](../../../examples/alchemy/src/features/greeting/services.ts).
+`CacheClient` is defined in the [example's services module](../../../examples/basic/src/features/greeting/services.ts).
 Its request Layer executes `put` and `get`, then renders only the greeting data.
 Provide `ReadWriteNamespaceBinding` explicitly when resolving `ReadWriteNamespace` during construction.
 KV is eventually consistent, so this fixed greeting is not a transactional counter.

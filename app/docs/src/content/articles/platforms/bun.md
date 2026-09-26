@@ -1,61 +1,42 @@
-[Bun サンプル](https://github.com/totto2727-org/effront/tree/main/examples/bun)を開発モードで動かし、ビルド後に Bun の HTTP サーバーを起動します。
-
 ## サンプルを起動する {#setup}
 
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールします。
 本番サーバー用に [Bun 1.4.2 以降](https://bun.sh/docs/installation) もインストールします。
 Vite の開発サーバーは Node.js を使うため、両方のランタイムを用意してください。
-リポジトリをクローンし、依存パッケージをインストールします。
 
 ```bash
-git clone https://github.com/totto2727-org/effront.git
-cd effront
+vp create effront -- my-app --platform bun
+cd my-app
 vp install
-cd examples/bun
 vp dev
 ```
 
-[http://127.0.0.1:1342](http://127.0.0.1:1342) を開きます。
-トップページに `Hello, world!` と表示されます。
-`Count: 0` をクリックしてカウンターが増えることを確認し、**About** から [http://127.0.0.1:1342/about](http://127.0.0.1:1342/about) に移動します。
+Vite が表示するローカル URL を開きます。一画面に `Hello, world` と表示されます。
 
 ## アプリケーションとサーバーのファイルを確認する {#entries}
 
 サンプルにはホストの設定が揃っています。
-ページやサーバーの動作を変更するときは、次のファイルから確認してください。
 
-| ファイル                | 役割                                                                             |
-| ----------------------- | -------------------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | ルートレイアウト、ページ、ルートを定義します。                                   |
-| `src/entry.rsc.ts`      | アプリケーションの HTTP `handler` をエクスポートし、開発中の更新を受け付けます。 |
-| `src/entry.server.ts`   | `@effront/server/bun` と `BunRuntime.runMain` で Bun のリスナーを起動します。    |
-| `vite.config.ts`        | `effront()` と `effrontServer()`、Tailwind を登録し、開発用の URL を固定します。 |
-| `package.json`          | 依存パッケージと `start` コマンドを定義します。                                  |
+| ファイル                | 役割                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | HTML レイアウト、一つのページ、`/` ルートを定義します。                       |
+| `src/entry.rsc.ts`      | アプリケーションの HTTP `handler` をエクスポートします。                      |
+| `src/entry.server.ts`   | `@effront/server/bun` と `BunRuntime.runMain` で Bun のリスナーを起動します。 |
+| `vite.config.ts`        | `effront()` と `effrontServer()` を登録します。                               |
+| `package.json`          | 依存パッケージと `start` コマンドを定義します。                               |
 
-`src/entry.effront.tsx` の見出しを次のように変更して保存すると、`Hello, Effront!` が表示されます。
-
-```tsx
-return (
-  <>
-    {/* 見出しの文字列を変更します。 */}
-    <h1 className="my-5 text-3xl font-bold">Hello, Effront!</h1>
-    {/* 他のページ内容は変更しません。 */}
-  </>
-);
-```
-
-サーバーを再起動せずに [http://127.0.0.1:1342](http://127.0.0.1:1342) の表示が更新されます。
+`src/entry.effront.tsx` の `<h1>Hello, world</h1>` を `<h1>Hello, Effront!</h1>` に変えて保存します。サーバーを再起動せずに表示が更新されます。
 
 ## 本番ビルドをローカルで確認する {#assets}
 
-開発サーバーを停止し、`examples/bun` で次のコマンドを実行します。
+開発サーバーを停止し、生成したプロジェクトで次を実行します。
 
 ```bash
 vp build
 ```
 
-ビルドすると、サーバーの起動ファイルは `dist/rsc/server.js`、生成された JavaScript と CSS は `dist/client/assets`、公開ファイルは `dist/client` に出力されます。
-`src/entry.server.ts` は生成アセットを `/assets/` 以下で、公開ファイルをそれぞれのパスで配信するように設定済みです。
+ビルドすると、サーバーの起動ファイルは `dist/rsc/server.js`、生成されたブラウザー用アセットは `dist/client/assets` に出力されます。
+`src/entry.server.ts` は生成アセットを `/assets/` 以下で配信します。
 
 ## Bun サーバーを起動する {#bun}
 
@@ -67,11 +48,8 @@ vp run start
 
 このスクリプトは `bun dist/rsc/server.js` を実行します。
 `PORT` と `HOST` が未設定なら、[http://127.0.0.1:3000](http://127.0.0.1:3000) を開きます。
-この URL では、Bun がビルド済みアプリケーションを配信します。
 待ち受けアドレスを変更する場合は、起動前に `PORT` と `HOST` を設定してください。
-
-Bun 固有の動作はこのコマンドで確認してください。
-サンプルは本番で `@effect/platform-bun` を、開発時に `@effect/platform-node` を使います。
+最小構成は本番で `@effect/platform-bun` を、開発時に `@effect/platform-node` を使います。
 
 リスナーとアセットのオプションは [サーバー API リファレンス](../api-reference/server.md) を参照してください。
 Node.js を使う場合は、別の [Node.js サンプル](./node.md)を参照してください。

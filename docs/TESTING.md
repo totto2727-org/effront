@@ -62,15 +62,16 @@ App-local dev/build and independently owned E2E tasks remain package-local.
 
 ## Native Alchemy integration
 
-`tests/e2e-alchemy` exercises the committed `examples/alchemy` consumer without authenticated infrastructure reconciliation or deployment.
-Its Vite configuration reuses the application config and adds a test-only workerd host with local KV bindings.
-The fixed command builds the example and runs Alchemy's workerd preview without generating or copying application source.
+`tests/e2e-alchemy` exercises the committed `examples/basic` and `examples/loading` consumers without authenticated infrastructure reconciliation or deployment.
+Its two Vite configurations reuse the respective application configs and add test-only workerd hosts: Basic has local KV bindings, while Loading has no KV dependency.
+Playwright builds both examples and starts separate workerd previews on ports 4393 and 4394 without generating or copying application source.
 
 The browser suite covers:
 
 - Construction-provided native KV clients reaching HTML and Server Functions.
 - HEAD handling, hydration, and navigation.
 - Emitted Tailwind utility styles and narrow-viewport overflow.
+- Loading/Suspense navigation and browser-side Query against Loading's same-host static asset.
 
 Run `vp exec --filter "./packages/*" -- vp pack` at the repository root, then `vp run test` from `tests/e2e-alchemy`.
 Application configs leave host injection and infrastructure planning to the official Alchemy CLI.
