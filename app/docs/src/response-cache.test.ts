@@ -35,9 +35,7 @@ const expectPolicy = (response: HttpServerResponse.HttpServerResponse, isPublic:
   expect(response.headers["cloudflare-cdn-cache-control"]).toBe(
     isPublic ? "public, max-age=31536000" : "private, no-store",
   );
-  expect(response.headers["vary"]?.split(", ")).toEqual(
-    expect.arrayContaining(["accept", "cookie", "authorization"]),
-  );
+  expect(response.headers["vary"]?.split(", ")).toEqual(expect.arrayContaining(["accept"]));
 };
 
 describe("docs cache middleware", () => {
@@ -76,9 +74,12 @@ describe("docs cache middleware", () => {
     expectPolicy(response, false);
   });
 
-  it.each(["cookie", "authorization"])("does not cache requests with %s", async (header) => {
-    expectPolicy(await run(pageRequest({ [header]: "private" })), false);
-    expectPolicy(await run(pageRequest({ [header]: "" })), false);
+  it.each(["cookie", "authorization"])("ignores request %s for public docs", async (header) => {
+    for (const value of ["one", "two", ""]) {
+      const response = await run(pageRequest({ [header]: value }));
+      expectPolicy(response, true);
+      expect(response.headers["vary"]).toBe("accept");
+    }
   });
 
   it("does not cache Set-Cookie responses", async () => {
@@ -104,12 +105,10 @@ describe("docs cache middleware", () => {
   it("preserves and deduplicates existing Vary dimensions", async () => {
     const response = await run(
       pageRequest(),
-      Effect.succeed(
-        HttpServerResponse.setHeader(html(), "vary", "Accept-Language, ACCEPT, Cookie"),
-      ),
+      Effect.succeed(HttpServerResponse.setHeader(html(), "vary", "Accept-Language, ACCEPT")),
     );
     expectPolicy(response, true);
-    expect(response.headers["vary"]).toBe("accept-language, accept, cookie, authorization");
+    expect(response.headers["vary"]).toBe("accept-language, accept");
   });
 
   it("leaves a pending response stream untouched", async () => {

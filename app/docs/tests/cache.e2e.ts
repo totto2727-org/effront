@@ -10,7 +10,7 @@ const expectPolicy = (headers: Record<string, string>, publicResponse: boolean) 
     publicResponse ? "public, max-age=31536000" : "private, no-store",
   );
   expect(headers["vary"]?.toLowerCase().split(/\s*,\s*/)).toEqual(
-    expect.arrayContaining(["accept", "cookie", "authorization"]),
+    expect.arrayContaining(["accept"]),
   );
 };
 
@@ -61,14 +61,22 @@ test("origin does not opt missing pages into long-lived CDN caching", async ({ r
 });
 
 for (const name of ["Cookie", "Authorization"]) {
-  test(`origin marks ${name} requests private`, async ({ request }) => {
+  test(`origin keeps ${name} requests public without varying on credentials`, async ({
+    request,
+  }) => {
     const headers = {
       Accept: "text/html",
       [name]: name === "Cookie" ? "session=private" : "Bearer private",
     };
     const response = await request.get("/en/guide/markdown", { headers });
     expect(response.status()).toBe(200);
-    expectPolicy(response.headers(), false);
+    expectPolicy(response.headers(), true);
+    const vary = response
+      .headers()
+      ["vary"]?.toLowerCase()
+      .split(/\s*,\s*/);
+    expect(vary).not.toContain("cookie");
+    expect(vary).not.toContain("authorization");
   });
 }
 

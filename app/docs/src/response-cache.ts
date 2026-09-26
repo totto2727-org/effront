@@ -16,10 +16,7 @@ const varyFor = (vary: string | undefined) => {
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean),
   );
-  // Partition public cache entries before the Worker checks request credentials.
-  for (const name of ["accept", "cookie", "authorization"]) {
-    values.add(name);
-  }
+  values.add("accept");
   return [...values].join(", ");
 };
 
@@ -37,8 +34,6 @@ export const responseCache = (options: { readonly development?: boolean | undefi
         !options.development &&
         request.method === "GET" &&
         acceptsPage &&
-        request.headers["cookie"] === undefined &&
-        request.headers["authorization"] === undefined &&
         response.status === 200 &&
         response.headers["set-cookie"] === undefined &&
         Cookies.isEmpty(response.cookies);

@@ -103,7 +103,7 @@ The deployment stylesheet remains explicitly selected through `effrontTailwind`,
 
 Caching is explicitly enabled by the docs Worker, not by the general-purpose Effront runtime.
 Core applications retain `Cache-Control: private, no-store` unless they implement their own policy.
-The docs site is public and request-independent: introducing authentication, cookies, experiments, or other personalized rendering requires revisiting this opt-in policy before deployment.
+The docs site is public and request-independent: introducing authentication or cookie-dependent rendering, experiments, or other personalized rendering requires revisiting this opt-in policy before deployment.
 
 ### Native Workers Cache and browser freshness
 
@@ -117,7 +117,7 @@ The Worker applies it with `fetch.pipe(responseCache({ development: import.meta.
 
 - `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
 - `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
-- `Vary: Accept, Cookie, Authorization` partitions HTML/Flight and prevents a public cache hit from bypassing credential checks.
+- `Vary: Accept` partitions HTML/Flight without partitioning by Cookie or Authorization.
 
 Workers Cache explicitly honors `Vary`, unlike assumptions made about zone caching.
 Its default key includes the path, full query string and Worker version, so `/en`, `/ja`, query variants and deployments are isolated without synthetic URLs or a purge job.
@@ -125,7 +125,8 @@ Do not enable cross-version caching.
 The request hostname is not part of the native key; this site must continue to render the same public content across its hostnames.
 
 The middleware opts in only production GET requests whose `Accept` contains `text/html` or exactly equals `text/x-component`, with a 200 response.
-Requests carrying Cookie or Authorization and responses setting cookies (including native Effect cookies) remain private.
+Cookie and Authorization request headers do not affect this public site's cache policy.
+Responses setting cookies (including native Effect cookies) remain private.
 Other responses returned through the middleware receive `private, no-store` in both cache-control headers; failures propagate without adding cache headers.
 This docs-specific policy does not additionally inspect Range, Content-Range, response Content-Type, or wildcard Vary; it is not a general-purpose caching middleware.
 Cloudflare can satisfy HEAD and Range from a cached GET itself.
