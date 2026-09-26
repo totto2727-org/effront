@@ -1,7 +1,12 @@
 #!/usr/bin/env node
-import { runCli } from "./cli.js";
+import { NodeRuntime, NodeServices } from "@effect/platform-node";
+import { Effect } from "effect";
+import { Command } from "effect/unstable/cli";
+import packageJson from "../package.json" with { type: "json" };
+import { command } from "./cli.js";
 
-runCli(process.argv.slice(2)).catch((error: unknown) => {
-  console.error(`create-effront: ${error instanceof Error ? error.message : String(error)}`);
-  process.exitCode = 1;
-});
+command.pipe(
+  Command.run({ version: packageJson.version }),
+  Effect.provide(NodeServices.layer),
+  NodeRuntime.runMain(),
+);

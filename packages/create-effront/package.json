@@ -29,6 +29,10 @@
     "registry": "https://registry.npmjs.org/",
     "tag": "latest"
   },
+  "dependencies": {
+    "@effect/platform-node": "catalog:",
+    "effect": "catalog:"
+  },
   "devDependencies": {
     "@types/node": "catalog:",
     "vitest": "catalog:"
