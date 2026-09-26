@@ -113,7 +113,7 @@ Cloudflare serves cache hits before executing the Worker, using tiered caching a
 Workers Cache is distinct from both zone caching and the older Workers Cache API.
 
 `src/response-cache.ts` defines the docs-only response policy with `HttpMiddleware.make` and native Effect HTTP header transforms.
-The Worker applies it with `fetch.pipe(responseCache({ development: import.meta.env.DEV }))` at request time, without changing the response body or adding a core API:
+The Worker applies it with `fetch.pipe(responseCache)`, without changing the response body or adding a core API:
 
 - `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
 - `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
@@ -124,9 +124,9 @@ Its default key includes the path, full query string and Worker version, so `/en
 Do not enable cross-version caching.
 The request hostname is not part of the native key; this site must continue to render the same public content across its hostnames.
 
-The middleware opts in only production GET requests whose `Accept` contains `text/html` or exactly equals `text/x-component`, with a 200 response.
+The middleware opts in only GET requests whose `Accept` contains `text/html` or exactly equals `text/x-component`, with a 200 response.
 Cookie and Authorization request headers do not affect this public site's cache policy.
-Responses setting cookies (including native Effect cookies) remain private.
+The middleware does not inspect response cookies or Set-Cookie headers.
 Other responses returned through the middleware receive `private, no-store` in both cache-control headers; failures propagate without adding cache headers.
 This docs-specific policy does not additionally inspect Range, Content-Range, response Content-Type, or wildcard Vary; it is not a general-purpose caching middleware.
 Cloudflare can satisfy HEAD and Range from a cached GET itself.

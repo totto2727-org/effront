@@ -12,11 +12,10 @@ const html = () =>
 const run = <E>(
   request: Request,
   app: Effect.Effect<HttpServerResponse.HttpServerResponse, E> = Effect.succeed(html()),
-  development = false,
 ) =>
   Effect.runPromise(
     app.pipe(
-      responseCache({ development }),
+      responseCache,
       Effect.provideService(
         HttpServerRequest.HttpServerRequest,
         HttpServerRequest.fromWeb(request),
@@ -60,10 +59,6 @@ describe("docs cache middleware", () => {
     expectPolicy(await run(new Request("https://docs.example/guide")), false);
   });
 
-  it("disables caching in development", async () => {
-    expectPolicy(await run(pageRequest(), Effect.succeed(html()), true), false);
-  });
-
   it.each(["POST", "PUT", "PATCH", "DELETE", "HEAD"])("does not cache %s", async (method) => {
     expectPolicy(await run(pageRequest({}, method)), false);
   });
@@ -82,20 +77,19 @@ describe("docs cache middleware", () => {
     }
   });
 
-  it("does not cache Set-Cookie responses", async () => {
-    expectPolicy(
-      await run(
-        pageRequest(),
-        Effect.succeed(HttpServerResponse.setHeader(html(), "set-cookie", "session=private")),
-      ),
-      false,
+  it("preserves Set-Cookie without changing the public policy", async () => {
+    const response = await run(
+      pageRequest(),
+      Effect.succeed(HttpServerResponse.setHeader(html(), "set-cookie", "session=private")),
     );
+    expectPolicy(response, true);
+    expect(response.headers["set-cookie"]).toBe("session=private");
   });
 
-  it("also excludes native Effect cookies without changing them", async () => {
+  it("preserves native Effect cookies without changing the public policy", async () => {
     const original = HttpServerResponse.setCookieUnsafe(html(), "session", "private");
     const response = await run(pageRequest(), Effect.succeed(original));
-    expectPolicy(response, false);
+    expectPolicy(response, true);
     expect(response.cookies).toBe(original.cookies);
     expect(HttpServerResponse.toWeb(response).headers.get("set-cookie")).toContain(
       "session=private",

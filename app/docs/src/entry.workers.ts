@@ -19,11 +19,7 @@ export default Cloudflare.Worker(
       import("./entry.effront").then((module) => module.default),
     );
     return {
-      // Alchemy evaluates this outer Effect while planning a native deployment.
-      // Vite-only environment values are safe only when the Worker handles a request.
-      fetch: Effect.suspend(() =>
-        fetch.pipe(responseCache({ development: import.meta.env.DEV })),
-      ).pipe(Effect.orDie),
+      fetch: fetch.pipe(responseCache, Effect.orDie),
     };
   }),
 );
