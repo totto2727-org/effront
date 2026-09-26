@@ -8,10 +8,6 @@ export type Platform = (typeof platforms)[number];
 
 const templates = fileURLToPath(new URL("../templates/", import.meta.url));
 
-export function isPlatform(value: string): value is Platform {
-  return platforms.some((platform) => platform === value);
-}
-
 export function projectName(directory: string): string {
   const name = basename(resolve(directory))
     .toLowerCase()
