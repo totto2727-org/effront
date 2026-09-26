@@ -1,5 +1,5 @@
 import { Console, Effect, Option } from "effect";
-import { Argument, Command, Flag, Prompt } from "effect/unstable/cli";
+import { Argument, CliError, Command, Flag, Prompt } from "effect/unstable/cli";
 import { stdin, stdout } from "node:process";
 import { createProject, platforms } from "./init.js";
 
@@ -12,7 +12,9 @@ export const command = Command.make(
   Effect.fn(function* ({ directory, platform }) {
     if ((Option.isNone(directory) || Option.isNone(platform)) && (!stdin.isTTY || !stdout.isTTY)) {
       return yield* Effect.fail(
-        new Error("Specify a directory and --platform in non-interactive mode."),
+        new CliError.UserError({
+          cause: "Specify a directory and --platform in non-interactive mode.",
+        }),
       );
     }
 
@@ -27,7 +29,10 @@ export const command = Command.make(
             choices: platforms.map((value) => ({ title: value, value })),
           }),
         );
-    const target = yield* Effect.tryPromise(() => createProject(targetDirectory, targetPlatform));
+    const target = yield* Effect.tryPromise({
+      try: () => createProject(targetDirectory, targetPlatform),
+      catch: (cause) => new CliError.UserError({ cause }),
+    });
     yield* Console.log(
       `Created ${targetPlatform} Effront project at ${target}\nNext: cd ${targetDirectory} && vp install && ${targetPlatform === "alchemy-cloudflare" ? "vp run dev" : "vp dev"}`,
     );
