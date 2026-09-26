@@ -50,18 +50,39 @@ for (const theme of ["light", "dark"] as const) {
     page,
   }, testInfo) => {
     await page.goto("/en/guide/components");
+    // This is an authored alert from the actual RSC route, before the fixture adds
+    // the remaining alert types. It verifies icon rendering through the actual RSC route.
+    const renderedAlert = page.locator('article [data-alert="warning"]');
+    await expect(renderedAlert).toBeVisible();
+    await expect(renderedAlert.locator(".docs-alert-title svg")).toBeVisible();
+    await expect(renderedAlert.locator(".docs-alert-title svg")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
+    // A state update with an observable sidebar result ensures the persistent client
+    // shell is interactive before the fixture is added outside React-owned content.
+    const search = page.getByRole("textbox", { name: "Filter guides" });
+    await search.fill("Server and Client Components");
+    await expect(
+      page.locator('[data-slot="sidebar-content"] a[href="/en/guide/components"]'),
+    ).toHaveText("Server and Client Components");
     // Render the production parser/component fixture under the real site stylesheet,
     // without adding a fixture route to the public documentation application.
-    await page.locator("article").evaluate((article, html) => {
-      article.innerHTML = html;
+    await page.evaluate((html) => {
+      const fixture = document.createElement("section");
+      fixture.className = "docs-markdown prose prose-neutral max-w-none dark:prose-invert";
+      fixture.dataset["alertFixture"] = "";
+      fixture.innerHTML = html;
+      document.body.append(fixture);
     }, fixture);
     await page.evaluate(
       (dark) => document.documentElement.classList.toggle("dark", dark),
       theme === "dark",
     );
+    const fixtureHost = page.locator("[data-alert-fixture]");
     const colors = new Set<string>();
     for (const type of types) {
-      const alert = page.locator(`article [data-alert="${type.toLowerCase()}"]`);
+      const alert = fixtureHost.locator(`[data-alert="${type.toLowerCase()}"]`);
       await expect(alert).toBeVisible();
       await expect(alert).toHaveAttribute("aria-label", type);
       await expect(alert.locator(".docs-alert-title")).toHaveText(type);
@@ -109,7 +130,7 @@ for (const theme of ["light", "dark"] as const) {
       colors.add(style.title);
     }
     expect(colors.size).toBe(5);
-    const quotation = page.locator("article blockquote");
+    const quotation = fixtureHost.locator("blockquote");
     await expect(quotation).toHaveCount(1);
     await expect(quotation).toContainText("An ordinary quotation.");
     await expect(quotation).not.toHaveAttribute("data-alert");

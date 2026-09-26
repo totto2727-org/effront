@@ -35,6 +35,7 @@
     "@effront/vite": "workspace:*",
     "alchemy": "catalog:",
     "effect": "catalog:",
+    "rolldown": "catalog:",
     "vite": "catalog:"
   },
   "peerDependencies": {

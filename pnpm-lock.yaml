@@ -179,6 +179,9 @@ catalogs:
     radix-ui:
       specifier: ^1.6.7
       version: 1.6.7
+    rolldown:
+      specifier: 1.2.5
+      version: 1.2.5
     shiki:
       specifier: 4.4.3
       version: 4.4.3
@@ -214,6 +217,9 @@ overrides:
   vitest: 4.1.11
   react: 19.3.0
   react-dom: 19.3.0
+
+patchedDependencies:
+  '@alchemy.run/cloudflare-runtime@2.0.0-beta.77': 190afda595bf0a8a2a9c7691837dcc2f0932820166722442a722c35e073cd239
 
 importers:
 
@@ -294,7 +300,7 @@ importers:
     devDependencies:
       '@alchemy.run/cloudflare-runtime':
         specifier: 'catalog:'
-        version: 2.0.0-beta.77(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
+        version: 2.0.0-beta.77(patch_hash=190afda595bf0a8a2a9c7691837dcc2f0932820166722442a722c35e073cd239)(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
       '@effront/tailwind':
         specifier: workspace:*
         version: link:../../packages/tailwind
@@ -669,6 +675,9 @@ importers:
       effect:
         specifier: 4.0.0-rc.112
         version: 4.0.0-rc.112
+      rolldown:
+        specifier: 'catalog:'
+        version: 1.2.5
 
   packages/cloudflare:
     dependencies:
@@ -832,7 +841,7 @@ importers:
     devDependencies:
       '@alchemy.run/cloudflare-runtime':
         specifier: 'catalog:'
-        version: 2.0.0-beta.77(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
+        version: 2.0.0-beta.77(patch_hash=190afda595bf0a8a2a9c7691837dcc2f0932820166722442a722c35e073cd239)(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
       '@effront/alchemy':
         specifier: workspace:*
         version: link:../../packages/alchemy
@@ -848,6 +857,51 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.2
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
+
+  tests/e2e-alchemy-dev:
+    devDependencies:
+      '@alchemy.run/cloudflare-runtime':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.77(patch_hash=190afda595bf0a8a2a9c7691837dcc2f0932820166722442a722c35e073cd239)(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
+      '@effect/platform-browser':
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112(effect@4.0.0-rc.112)
+      '@effront/alchemy':
+        specifier: workspace:*
+        version: link:../../packages/alchemy
+      '@effront/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@effront/tailwind':
+        specifier: workspace:*
+        version: link:../../packages/tailwind
+      '@effront/vite':
+        specifier: workspace:*
+        version: link:../../packages/vite
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.63.0
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.2
+      '@vitejs/plugin-rsc':
+        specifier: 'catalog:'
+        version: 0.5.35(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      alchemy:
+        specifier: 'catalog:'
+        version: 2.0.0-beta.77(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@types/react@19.3.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(typescript@7.0.2)(vitest@4.1.11)(ws@8.21.3)
+      effect:
+        specifier: 4.0.0-rc.112
+        version: 4.0.0-rc.112
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
+      react-dom:
+        specifier: 19.3.0
+        version: 19.3.0(react@19.3.0)
       vite-plus:
         specifier: 'catalog:'
         version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
@@ -5328,7 +5382,7 @@ packages:
 
 snapshots:
 
-  '@alchemy.run/cloudflare-runtime@2.0.0-beta.77(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)':
+  '@alchemy.run/cloudflare-runtime@2.0.0-beta.77(patch_hash=190afda595bf0a8a2a9c7691837dcc2f0932820166722442a722c35e073cd239)(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)':
     dependencies:
       '@alchemy.run/node-utils': 2.0.0-beta.77
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260901.1)
@@ -7803,7 +7857,7 @@ snapshots:
 
   alchemy@2.0.0-beta.77(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@types/react@19.3.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(typescript@7.0.2)(vitest@4.1.11)(ws@8.21.3):
     dependencies:
-      '@alchemy.run/cloudflare-runtime': 2.0.0-beta.77(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
+      '@alchemy.run/cloudflare-runtime': 2.0.0-beta.77(patch_hash=190afda595bf0a8a2a9c7691837dcc2f0932820166722442a722c35e073cd239)(@distilled.cloud/cloudflare@1.0.0-rc.9(effect@4.0.0-rc.112))(@effect/platform-bun@4.0.0-rc.112(effect@4.0.0-rc.112))(@effect/platform-node@4.0.0-rc.112(effect@4.0.0-rc.112))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.112)(rolldown@1.2.5)(typescript@7.0.2)
       '@alchemy.run/floci': 2.0.0-beta.77(effect@4.0.0-rc.112)
       '@alchemy.run/node-utils': 2.0.0-beta.77
       '@alchemy.run/sigil': 0.0.0-alpha.10(@types/react@19.3.0)(react@19.3.0)

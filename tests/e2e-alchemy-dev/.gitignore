@@ -1,0 +1,4 @@
+.vite-cache/
+tmp/
+test-results/
+playwright-report/

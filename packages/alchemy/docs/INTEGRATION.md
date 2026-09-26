@@ -114,11 +114,64 @@ Core normalizes HEAD responses to an empty body while preserving response metada
 The Fetch client has a guarded compatibility accessor for the pinned rc.112 response implementation because that version lacks the newer public final-response URL property.
 Both behaviors have maintained regression tests and should be revisited together when upgrading Alchemy/Effect.
 
+### Server dependency optimization in development
+
+The workspace applies `patches/@alchemy.run__cloudflare-runtime@2.0.0-beta.77.patch` through `pnpm-workspace.yaml` for [TOT-238](https://linear.app/totto2727/issue/TOT-238).
+Automatic discovery and explicit framework pre-bundles remain enabled in both RSC and SSR; the previous application-level `noDiscovery` mitigation is removed.
+This is a development-host patch, not a change to Effront's application identity or a replacement of one ModuleRunner inside a live isolate.
+
+The patched host serializes replacement of the entire Worker runtime when a server environment requests a full reload.
+The pinned Vite optimizer's wildcard full-reload with changed optimizer metadata is logged separately from source-triggered program reloads.
+Reloads discovered while reconnecting or classifying the new entry mark the restart loop dirty and are drained before the host admits new application requests.
+Accepted HMR updates remain on the normal transport without replacing the runtime.
+A source edit that Vite escalates to a server full reload replaces the shared Worker rather than leaving RSC and SSR module generations inconsistent.
+The host also requests a browser full reload so an existing document cannot retain old client contexts while consuming new Flight references.
+That reload resets document-local UI state; accepted HMR updates do not trigger it.
+The retiring document can still report a transient client-context error while its replacement navigation waits for the new runtime.
+The regression suite records each such diagnostic with its document's `performance.timeOrigin` and accepts it only when that same document is automatically replaced and the successor hydrates successfully; errors from the successor or an unknown document still fail.
+New HTTP requests and application WebSocket upgrades wait for the same ready generation, and forwarding uses its current address in the same synchronous readiness callback.
+Requests already executing may fail or lose their stream during replacement.
+The host never replays their body or re-runs their handler; callers must not infer that a failed response means a mutation did not execute.
+A restart failure remains a rejected readiness state and produces an explicit 503 for subsequent HTTP requests rather than forwarding to the retired runtime.
+
+The patch contains both TypeScript source and the rebuilt `dist/vite/node/plugin.mjs` host artifact and source map.
+Node consumers import that distribution artifact, while Bun can use the source export condition.
+The existing packaged Worker and core artifacts are unchanged.
+This repository's package-manager patch does not propagate through publishing `@effront/alchemy`: external consumers need the equivalent runtime patch or a compatible upstream release.
+It is not a claim of general Durable Object, Workflow, remote-resource, or authenticated CLI acceptance.
+
+To maintain the pinned patch from the repository root:
+
+```sh
+vp pm patch @alchemy.run/cloudflare-runtime@2.0.0-beta.77 -- --edit-dir tmp/runtime-patch
+# Edit the prepared package's src/vite files.
+node packages/alchemy/scripts/rebuild-runtime-patch.mjs tmp/runtime-patch
+vp pm patch-commit tmp/runtime-patch
+vp install --frozen-lockfile
+```
+
+Use a fresh edit directory when one already exists.
+The rebuild recipe deliberately targets beta.77's published dynamic server chunks and must be reviewed when upgrading the runtime.
+Do not ship a source-only patch, disable discovery, or restore ModuleRunner-only replacement as a substitute for real workerd verification.
+
+### Remaining CSS and client-reference HMR limitation
+
+With the pinned Tailwind/RSC integration, an accepted update that also refreshes the shared stylesheet can leave stale Flight client-reference URLs for a subsequent fresh document.
+The existing document can retain its state while the fresh document fails with `RouteOutlet rendered outside its route node`.
+This was reproduced with the unpatched beta.77 runtime as well as the patched runtime.
+Worker restart recovery does not fix this separate path.
+Tailwind injects a stylesheet import into every client boundary, while the pinned RSC plugin's client-update invalidation handles JavaScript updates but not all CSS-propagated client-reference timestamp changes.
+The development suite verifies repeated optimizer recovery and fresh hydration before its independent accepted-update phase, not the known-failing combination of stylesheet HMR followed by fresh hydration.
+Do not describe that suite as proof that all HMR combinations are fixed.
+
 ## Verification
 
 Use the [package development commands](../AGENTS.md#development-commands) for native helper tests and independent browser acceptance.
 The repository checks cover builds, public types, native capability/context propagation, and lifetime regressions.
 The native browser suite checks the committed KV example; standalone Fetch/Workers and HMR fixtures remain independent.
+After workspace package preparation, run `vp run --filter @effront/e2e-alchemy-dev test` from the root for cold-cache native workerd development acceptance.
+Then run `EFFRONT_TEST_WARM=1 vp run --filter @effront/e2e-alchemy-dev test` to reuse the optimizer cache produced by that cold run.
+The development fixture uses a test-owned application copy, an isolate nonce, observed optimizer metadata/full-reload events, and a host-side request ledger to distinguish runtime replacement from ordinary HMR and detect mutation replay.
 Official Alchemy CLI planning and reconciliation require separate verification from the credential-free test host, and neither local check proves cloud deployment or remote permissions.
 
 References: [Alchemy](https://alchemy.run/), [state stores](https://alchemy.run/state-store), [native Worker bridge](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/WorkerBridge.ts), [Vite source integration](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/Sources/Vite.ts), and [KV binding construction](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/KV/NamespaceBinding.ts).

@@ -26,3 +26,9 @@ jobs:
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           vp run check
           vp run test
+      - name: Test Alchemy development dependency changes
+        run: |
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          cd tests/e2e-alchemy-dev
+          vp exec playwright install --with-deps chromium
+          vp run test
