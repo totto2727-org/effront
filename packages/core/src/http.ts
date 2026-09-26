@@ -57,8 +57,8 @@ export const toHttpEffect = <Services, ApplicationError, Requirements>(
       Effect.provideService(Layer.CurrentMemoMap, memoMap),
     );
     const response = yield* handler;
-    // Effect rc.112 transfers every streaming response scope before discarding
-    // HEAD bodies. Preserve GET metadata but prevent transfer to an unread body.
+    // Preserve GET metadata while preventing HEAD from transferring the response
+    // scope to a streaming body that no reader will consume.
     return request.method === "HEAD"
       ? HttpServerResponse.setBody(response, HttpBody.empty).pipe(
           HttpServerResponse.setHeaders(response.headers),

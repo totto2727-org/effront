@@ -20,6 +20,8 @@ Effront の API は、アプリケーションの定義、実行環境への接�
 | `@effront/markdown`                | `createMarkdownCollection`、`parseMarkdown`、`MarkdownError`          | [Markdown](./api-reference/markdown.md)                                                      |
 | `@effront/tailwind`                | `effrontTailwind`                                                     | [Tailwind](./api-reference/tailwind.md)                                                      |
 
+| `@effront/core/query` | `query`、`queryAtom`、`stream`、`streamAtom`、型付き Server Function error | [Query Server Function](/ja/guide/query-server-functions)、[Stream Server Function](/ja/guide/stream-server-functions) |
+
 `@effront/core` の実行時インポートには `react-server` 条件が必要です。
 ホストプロセス全体でこの条件を有効にせず、`effront()` が構成するアプリケーショングラフ内で使用してください。
 アプリケーションのセットアップは [はじめに](/ja/guide/getting-started) と [プラットフォーム](/ja/platforms) を参照してください。
@@ -44,8 +46,8 @@ Effront の API は、アプリケーションの定義、実行環境への接�
 | すべての Effront パッケージ                                      | `0.1.4`         |
 | `react`、`react-dom`                                             | `19.3.0`        |
 | `@vitejs/plugin-rsc`                                             | `0.5.35`        |
-| `effect`、`@effect/platform-browser`、ホスト別 Effect パッケージ | `4.0.0-rc.112`  |
-| `alchemy`                                                        | `2.0.0-beta.77` |
+| `effect`、`@effect/platform-browser`、ホスト別 Effect パッケージ | `4.0.0-rc.116`  |
+| `alchemy`                                                        | `2.0.0-beta.79` |
 | `@comark/react`                                                  | `0.6.2`         |
 
 任意のアダプターや連携パッケージを含め、Effront のバージョンを統一してください。

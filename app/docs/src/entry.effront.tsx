@@ -166,6 +166,8 @@ export default EFFRONT.make({
     )
     .page("/best-practices/testing", documentPage("/best-practices/testing"))
     .page("/guide/server-functions", documentPage("/guide/server-functions"))
+    .page("/guide/query-server-functions", documentPage("/guide/query-server-functions"))
+    .page("/guide/stream-server-functions", documentPage("/guide/stream-server-functions"))
     .page("/guide/middleware", documentPage("/guide/middleware"))
     .page("/guide/http", documentPage("/guide/http"))
     .page(
@@ -235,6 +237,8 @@ export default EFFRONT.make({
     )
     .page("/ja/best-practices/testing", documentPage("/ja/best-practices/testing"))
     .page("/ja/guide/server-functions", documentPage("/ja/guide/server-functions"))
+    .page("/ja/guide/query-server-functions", documentPage("/ja/guide/query-server-functions"))
+    .page("/ja/guide/stream-server-functions", documentPage("/ja/guide/stream-server-functions"))
     .page("/ja/guide/middleware", documentPage("/ja/guide/middleware"))
     .page("/ja/guide/http", documentPage("/ja/guide/http"))
     .page(
@@ -304,6 +308,8 @@ export default EFFRONT.make({
     )
     .page("/en/best-practices/testing", documentPage("/en/best-practices/testing"))
     .page("/en/guide/server-functions", documentPage("/en/guide/server-functions"))
+    .page("/en/guide/query-server-functions", documentPage("/en/guide/query-server-functions"))
+    .page("/en/guide/stream-server-functions", documentPage("/en/guide/stream-server-functions"))
     .page("/en/guide/middleware", documentPage("/en/guide/middleware"))
     .page("/en/guide/http", documentPage("/en/guide/http"))
     .page(

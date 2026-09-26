@@ -6,16 +6,17 @@ packages:
   - examples/*
 
 catalog:
-  "@alchemy.run/cloudflare-runtime": 2.0.0-beta.77
+  "@alchemy.run/cloudflare-runtime": 2.0.0-beta.79
   "@cloudflare/vite-plugin": 1.54.7
   "@comark/react": 0.6.2
-  "@effect/platform-browser": 4.0.0-rc.112
-  "@effect/platform-bun": 4.0.0-rc.112
-  "@effect/platform-node": 4.0.0-rc.112
-  "@effect/platform-node-shared": 4.0.0-rc.112
-  "@effect/sql-d1": 4.0.0-rc.112
-  "@effect/sql-sqlite-do": 4.0.0-rc.112
-  "@effect/vitest": 4.0.0-rc.112
+  "@effect/atom-react": 4.0.0-rc.116
+  "@effect/platform-browser": 4.0.0-rc.116
+  "@effect/platform-bun": 4.0.0-rc.116
+  "@effect/platform-node": 4.0.0-rc.116
+  "@effect/platform-node-shared": 4.0.0-rc.116
+  "@effect/sql-d1": 4.0.0-rc.116
+  "@effect/sql-sqlite-do": 4.0.0-rc.116
+  "@effect/vitest": 4.0.0-rc.116
   "@playwright/test": 1.63.0
   "@tailwindcss/typography": ^0.5.20
   "@tailwindcss/vite": ^4.3.3
@@ -28,12 +29,12 @@ catalog:
   "@types/react-dom": 19.3.0
   "@vitejs/plugin-react": 6.1.1
   "@vitejs/plugin-rsc": 0.5.35
-  alchemy: 2.0.0-beta.77
+  alchemy: 2.0.0-beta.79
   bun: 1.4.2
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
   comark: 0.6.2
-  effect: 4.0.0-rc.112
+  effect: 4.0.0-rc.116
   katex: ^0.17.0
   lucide-react: ^1.44.0
   oxc-transform-react: ^0.145.0

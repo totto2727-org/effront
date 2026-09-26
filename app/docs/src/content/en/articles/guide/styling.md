@@ -6,7 +6,7 @@ It loads the stylesheet for you, whether you use Tailwind's default utilities or
 Install the integration:
 
 ```bash
-vp add -D @effront/tailwind@0.1.4
+vp add -D @effront/tailwind@0.1.4 @tailwindcss/vite@4.3.3 tailwindcss@4.3.3
 ```
 
 In `vite.config.ts` from [Getting started](./getting-started.md), add `effrontTailwind()`:
@@ -21,7 +21,7 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   // Added: effrontTailwind().
-  plugins: [effront(), effrontServer(), effrontTailwind()],
+  plugins: [effront(), effrontServer(), await effrontTailwind()],
 });
 ```
 
@@ -36,17 +36,11 @@ Use utilities in your component's JSX:
 <h1 className="p-4 text-xl font-bold">Hello</h1>
 ```
 
-The heading has padding and larger, bold text.
+The heading has padding and larger, bold text in the initial HTML, even when JavaScript is disabled.
 
 ## Define a theme in a stylesheet {#stylesheet}
 
-To add a shared color or other theme value, install Tailwind as a direct dependency:
-
-```bash
-vp add -D tailwindcss@4.3.3
-```
-
-Create `src/styles.css`:
+To add a shared color or other theme value, create `src/styles.css`:
 
 ```css
 @import "tailwindcss";
@@ -60,7 +54,7 @@ In `vite.config.ts`, pass the stylesheet to `effrontTailwind()`:
 
 ```typescript
 // vite.config.ts: replace effrontTailwind() in the plugins array.
-effrontTailwind({ stylesheet: "./src/styles.css" });
+await effrontTailwind({ stylesheet: "./src/styles.css" });
 ```
 
 The path is relative to the Vite root.

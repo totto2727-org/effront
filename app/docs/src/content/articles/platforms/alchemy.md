@@ -3,7 +3,7 @@
 Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールします。
 
 > [!IMPORTANT]
-> サンプルは Alchemy を `2.0.0-beta.77` に固定しており、この版の CLI はローカル開発でも Cloudflare profile の設定を必要とします。
+> サンプルは Alchemy を `2.0.0-beta.79` に固定しており、この版の CLI はローカル開発でも Cloudflare profile の設定を必要とします。
 > 起動前に [Alchemy のドキュメント](https://alchemy.run/docs)に従って profile を設定してください。
 
 ```bash

@@ -2,40 +2,29 @@
 
 Alchemy constructs infrastructure capabilities before Effront handles requests.
 The adapter connects those two lifetimes without importing the RSC application during construction or serializing host capabilities into rendered output.
+For consumer setup and public contracts, use the [Alchemy guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/alchemy) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/alchemy)) and [API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/alchemy) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/alchemy)).
 
 ## Boundaries
 
-| Package                            | Responsibility                                                                          |
-| ---------------------------------- | --------------------------------------------------------------------------------------- |
-| `@effront/core`                    | Application definitions, request layers, routing, RSC and SSR                           |
-| `@effront/core/http`               | Host-neutral native Effect HTTP handlers                                                |
-| `@effront/vite`                    | React client/RSC/SSR compilation                                                        |
-| `@effront/alchemy/cloudflare`      | Lazy application loading and construction-capability capture for native Alchemy Workers |
-| `@effront/alchemy/cloudflare/vite` | Native Worker bridge, runtime compilation and colocated SSR output                      |
-
-Core imports neither Alchemy nor Cloudflare.
-`ApplicationDefinition<Services, Error, Requirements>` preserves the external requirements of its application layer instead of forcing the application to be closed before reaching its host.
-`toHttpEffect(application)` returns an Effect HTTP handler whose requirements remain visible to the caller.
-`makeHttpEffect(application)` captures application capability references during construction and returns a request handler.
-Neither API runs an independent Effect runtime.
+Core imports neither Alchemy nor Cloudflare and preserves external application requirements at its host-neutral native HTTP boundary.
+`@effront/vite` owns portable React client/RSC/SSR compilation.
+`@effront/alchemy/cloudflare` owns lazy application loading and construction-capability capture.
+`@effront/alchemy/cloudflare/vite` owns the native Worker bridge, development runtime compilation, and default SSR colocation.
+Neither native HTTP API runs an independent Effect runtime.
 
 Native Node/Bun HTTP hosting is provided separately by [`@effront/server`](../../server/README.md), without Alchemy or the Workers Fetch boundary.
 The standalone `@effront/cloudflare` adapter uses the Fetch boundary and has independent regression fixtures.
 
 ## Construction versus requests
 
-Alchemy Worker construction resolves capabilities and records infrastructure bindings.
-It must not import the application eagerly: the application belongs to the RSC graph, while construction runs in the deployment tool and during isolate initialization.
-`makeApplicationHttpEffect(() => import("./entry.effront").then(module => module.default))` defers that import until a request.
-The construction Effect captures service references, not ownership of their lifetimes.
-The handler merges the live request context over those references and does not restore a construction-time request, runtime context, router or scope.
+Alchemy Worker construction resolves capabilities and records infrastructure bindings in the deployment tool and during isolate initialization, separately from the RSC request graph.
+Capture stores references rather than owning their lifetimes.
+The request handler overlays the live context and acquires the application Layer per request.
+The native host owns the request scope through streamed-body completion, failure, and cancellation.
+Buffered responses may release resources after response construction.
+Alchemy's isolate scope has no normal teardown hook, so request-scoped connections belong in the application Layer, not Worker construction.
 
-Application layers are acquired separately for each request.
-The native host owns the request scope and retains streaming resources until EOF, failure or cancellation.
-Buffered responses can release request services as soon as response construction finishes.
-Do not acquire request-scoped connections in the Alchemy Worker construction Effect: Alchemy's isolate scope has no normal teardown hook.
-
-`examples/basic/src/entry.workers.ts` demonstrates the full dependency path in the richer Alchemy Basic application. The [minimal Alchemy Cloudflare starter](../../../examples/alchemy-cloudflare/) does not declare KV:
+The richer [Alchemy Basic Worker](../../../examples/basic/src/entry.workers.ts) demonstrates the dependency path. The [minimal Alchemy Cloudflare starter](../../../examples/alchemy-cloudflare/) does not declare KV:
 
 1. Declare `Cloudflare.KV.Namespace("Cache")` as infrastructure.
 2. Resolve `Cloudflare.KV.ReadWriteNamespace(Cache)` inside the native Worker's construction Effect.
@@ -53,16 +42,12 @@ KV is eventually consistent; the fixed greeting demonstrates binding use, not a 
 
 ## Configuration and Wrangler
 
-Each Alchemy application has an `alchemy.run.ts`, a native Worker module, and a `vite.config.ts`.
-`alchemy.run.ts` defines the stack and providers, the Worker declares infrastructure/runtime requirements, and Vite configures the React compilation graphs.
-The [Vite API](API.md#effrontalchemyoptions-and-effrontalchemyoptions) documents plugin registration and entry options.
-`effront()` owns the React, RSC, SSR, and browser compilation graphs and the application-entry alias; the Alchemy adapter does not register it implicitly.
+`alchemy.run.ts` defines the stack and providers, the Worker declares infrastructure/runtime requirements, and Vite configures React compilation graphs.
+`effront()` owns the React, RSC, SSR, and browser compilation graphs and the application-entry alias.
+The Alchemy adapter does not register it implicitly.
 The adapter uses Alchemy's official `makeWorkerBridge`, rather than passing a Promise-based Fetch function to the Worker.
 Registering `effront()` first lets the adapter replace the portable RSC input before the Cloudflare host captures its Worker entry.
 A separate pre-order hook colocates the default SSR output before the portable compiler supplies its generic default, while preserving explicit output directories.
-The native Worker declares `viteEnvironments: { entry: "rsc", children: ["ssr"] }`.
-Do not set a competing `vite.main`: the Effront adapter owns the RSC bridge entry.
-
 Alchemy supplies the host configuration, so these applications do not maintain a separate Wrangler file.
 Vite remains responsible for React compilation, not infrastructure.
 Standalone Workers fixtures retain Wrangler configuration to test the non-Alchemy adapter.
@@ -70,8 +55,7 @@ Standalone Workers fixtures retain Wrangler configuration to test the non-Alchem
 Alchemy CLI injects the Cloudflare runtime host and the bindings registered during native construction.
 Applications do not import the runtime plugin or inspect `ALCHEMY_CLOUDFLARE_VITE_INJECTED`.
 The independent browser test owns its local runtime plugin and KV simulator; that setup is not part of the application configuration.
-The native bridge uses only Alchemy's injected stack name and stage.
-Independent E2E hosts supply these runtime bindings explicitly; applications compose `effront()` with `effrontAlchemy()` without duplicate stack configuration.
+Independent E2E hosts supply the injected stack and stage explicitly instead of duplicating application stack configuration.
 
 ## Local orchestration
 
@@ -86,8 +70,8 @@ Both approaches use the official CLI and do not require a manually registered ru
 
 ## Compatibility
 
-The integration pins Alchemy and its Cloudflare runtime to `2.0.0-beta.77` and the Effect family to `4.0.0-rc.112`.
-This Alchemy version uses `Config.string`, which is incompatible with rc.113's renamed API despite its broad declared range.
+The integration pins Alchemy and its Cloudflare runtime to `2.0.0-beta.79` and the Effect family to `4.0.0-rc.116`.
+Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, whose `Config.string` call is incompatible with Effect rc.116. Beta.79 uses rc.12 and passed the local Worker browser suite.
 Keep one coherent Effect version across native bridge, core, platform layers and SQL dependencies.
 The local workerd compatibility date is `2026-09-01`, supported by the pinned runtime.
 
@@ -109,10 +93,10 @@ Preserving an API export is not proof of every cloud product's binding or remote
 Removing all compatibility handling caused HTTP 500 in official CLI development because Node-only workerd code was evaluated inside a Worker.
 The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions and HMR as removal checks.
 
-Effect rc.112 transfers streaming scopes before discarding HEAD bodies.
-Core normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.
-The Fetch client has a guarded compatibility accessor for the pinned rc.112 response implementation because that version lacks the newer public final-response URL property.
-Both behaviors have maintained regression tests and should be revisited together when upgrading Alchemy/Effect.
+Under the former Effect rc.112 pin, streaming scopes could be transferred before HEAD bodies were discarded.
+Core still normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.
+The Fetch client's guarded URL accessor originated as a workaround for rc.112, which lacked a public final-response URL property. The current implementation prefers the public URL when available and retains a guarded Web Response/request fallback.
+Both compatibility boundaries have maintained regression tests. Re-evaluate them against the current Effect release before removing either guard.
 
 ## Verification
 
@@ -122,7 +106,7 @@ The native browser suite checks the committed KV example; standalone Fetch/Worke
 Official Alchemy CLI planning and reconciliation require separate verification from the credential-free test host, and neither local check proves cloud deployment or remote permissions.
 
 References: [Alchemy](https://alchemy.run/), [state stores](https://alchemy.run/state-store), [native Worker bridge](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/WorkerBridge.ts), [Vite source integration](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/Sources/Vite.ts), and [KV binding construction](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/KV/NamespaceBinding.ts).
-The source links track upstream main; the compatibility findings above were checked against the installed beta.77 package.
+The source links track upstream main. The dependency mismatch was checked against beta.77 and the working local suite against the pinned beta.79 package.
 
 ## Alternative host
 

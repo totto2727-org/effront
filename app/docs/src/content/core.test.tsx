@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
 import { corePages, coreSources } from "./core";
+import { coreRuntimeSources } from "./core-runtime";
 
 // Source is inspected only by tests. Production pages ship authored snippets, not filesystem reads.
 describe("current core learning material", () => {
@@ -30,10 +31,21 @@ describe("current core learning material", () => {
       "utf8",
     );
     expect(implementation).toContain(source.code);
-    const baselinePath = source.path;
+  });
+
+  // Historical excerpts remain in the recorded baseline. Flight error digests, Stream wire
+  // values, and the version-neutral HEAD scope comment describe post-baseline code instead.
+  it.each(
+    coreSources.filter(
+      (source) =>
+        source !== coreRuntimeSources.flightRuntime &&
+        source !== coreRuntimeSources.serverFnBrand &&
+        source !== coreRuntimeSources.responseLifetime,
+    ),
+  )("retains the $path excerpt in the architecture baseline", (source) => {
     const baselineSource = execFileSync(
       "git",
-      ["show", `${architectureBaseline.commit}:${baselinePath}`],
+      ["show", `${architectureBaseline.commit}:${source.path}`],
       {
         cwd: new URL("../../../../", import.meta.url),
         encoding: "utf8",

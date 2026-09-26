@@ -77,7 +77,7 @@ for (const reader of locales) {
     await page.goto(`/${reader.locale}/platforms/alchemy`);
     const important = page.locator('article [data-alert="important"]');
     await expect(important).toBeVisible();
-    await expect(important).toContainText("2.0.0-beta.77");
+    await expect(important).toContainText("2.0.0-beta.79");
     await expect(important).not.toContainText("[!IMPORTANT]");
     await expect(important.locator(".docs-alert-title")).toHaveText("Important");
     await expect(important.locator("svg")).toBeVisible();
@@ -256,11 +256,11 @@ for (const reader of locales) {
     await followHeading(page, reader, "setup");
     const defaults = page
       .locator("article pre code")
-      .filter({ hasText: "plugins: [effront(), effrontServer(), effrontTailwind()]" });
+      .filter({ hasText: "plugins: [effront(), effrontServer(), await effrontTailwind()]" });
     await expect(defaults).toHaveCount(1);
     await expect(defaults).toContainText('from "@effront/tailwind"');
     await expect(defaults).toContainText(
-      "plugins: [effront(), effrontServer(), effrontTailwind()]",
+      "plugins: [effront(), effrontServer(), await effrontTailwind()]",
     );
     await expect(defaults).not.toContainText("stylesheet:");
     await expect(page.locator("article")).not.toContainText("stylingPlugins");

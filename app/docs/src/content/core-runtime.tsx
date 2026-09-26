@@ -27,8 +27,8 @@ export const coreRuntimeSources = {
   responseLifetime: {
     path: "packages/core/src/http.ts",
     language: "typescript",
-    code: `    // Effect rc.112 transfers every streaming response scope before discarding
-    // HEAD bodies. Preserve GET metadata but prevent transfer to an unread body.
+    code: `    // Preserve GET metadata while preventing HEAD from transferring the response
+    // scope to a streaming body that no reader will consume.
     return request.method === "HEAD"
       ? HttpServerResponse.setBody(response, HttpBody.empty).pipe(
           HttpServerResponse.setHeaders(response.headers),
@@ -57,7 +57,8 @@ export const coreRuntimeSources = {
   flightRuntime: {
     path: "packages/core/src/server/flight-renderer.tsx",
     language: "tsx",
-    code: `        const parentScope = yield* Effect.scope;
+    code: `        const errorDigest = yield* nextErrorDigest;
+        const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
         const release = Scope.close(renderScope, Exit.void);
         return yield* Effect.gen(function* () {
@@ -73,8 +74,11 @@ export const coreRuntimeSources = {
             return renderToReadableStream(payload, {
               onError: (error: unknown) => {
                 if (!signal.aborted) {
-                  void runtime(Effect.logError(error));
+                  void runtime(
+                    Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)),
+                  );
                 }
+                return errorDigest;
               },
               signal,
               temporaryReferences,
@@ -147,25 +151,18 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
     path: "packages/core/src/application/server-fn.ts",
     language: "typescript",
     code: `    const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
-    const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));
-    const serverFunction = (...untrustedArgs: ServerFnArguments<typeof input, "Encoded">) => {
-      // Unary functions still ignore extra native arguments and decode undefined when omitted.
-      const effect = decode(Array.isArray(input) ? untrustedArgs : [untrustedArgs[0]]).pipe(
-        // Normalization preserves the positional Type mapping, which the generic branch erases.
-        Effect.flatMap((args: ReadonlyArray<unknown>) =>
-          handler(...(args as ServerFnArguments<typeof input, "Type">)),
-        ),
-        Effect.mapError((cause) => new ServerFnOperationError({ cause })),
-      );
-      const unavailable = Promise.reject<Effect.Success<typeof effect>>(directInvocationError());
+    const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));`,
+  },
+  serverFnBrand: {
+    path: "packages/core/src/application/server-fn.ts",
+    language: "typescript",
+    code: `      const unavailable =
+        Promise.reject<ServerFnWireValue<Effect.Success<typeof effect>>>(directInvocationError());
       void unavailable.catch(() => undefined);
 
       return Object.assign(unavailable, {
         [ServerFnInvocationTypeId]: Object.freeze({ effect, identity, middleware }),
-      });
-    };
-
-    return attachEFFRONTMember(serverFunction, identity, "ServerFn");`,
+      });`,
   },
   serverFnDecode: {
     path: "packages/core/src/server/server-fn-request.ts",
@@ -279,9 +276,7 @@ export const coreRuntimePages: readonly DocPage[] = [
         </p>
         <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
         <p>
-          HEADの本文は消費されません。 固定しているEffect
-          rc.112は、HEADの本文を破棄する前にストリーミング応答のScopeを移譲します。
-          Effrontは先に本文を <code>HttpBody.empty</code>{" "}
+          HEADの本文は消費されません。Effrontは先に本文を <code>HttpBody.empty</code>{" "}
           に置き換え、ヘッダーを維持することで、読まれないストリームへの移譲を防ぎます。
         </p>
         <p>
@@ -698,10 +693,11 @@ export const coreRuntimePages: readonly DocPage[] = [
           呼び出し側はSchemaの <code>Encoded</code> 値を渡し、handlerは <code>Schema.Tuple</code>{" "}
           成功後にデコード済みの <code>Type</code> 値を受け取ります。
           単一Schemaは最初の引数をデコードし、余分なネイティブ引数は無視し、省略時はundefinedをデコードします。
-          Schema配列は位置付きの引数列を検証します。 デコードとhandlerは{" "}
-          <code>AvailableServices</code> を要求でき、その型付き失敗は{" "}
+          Schema配列は位置付きの引数列を検証し、入力を省略した関数は空の引数列を要求します。
+          デコードとhandlerは <code>AvailableServices</code> を要求でき、その型付き失敗は{" "}
           <code>ServerFnOperationError</code> になります。
         </p>
+        <SourceExcerpt source={coreRuntimeSources.serverFnBrand} />
         <p>
           返されるPromiseには、Effect、identity、middlewareを持つbrandが付きます。
           サーバーグラフで直接awaitすると <code>TypeError</code> でrejectします。 HTTPでは代わりに{" "}

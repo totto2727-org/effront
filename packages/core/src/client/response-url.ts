@@ -2,10 +2,10 @@ import { Option } from "effect";
 import { HttpClientRequest, type HttpClientResponse } from "effect/unstable/http";
 
 /**
- * Resolves the final Fetch URL on the pinned Effect 4.0.0-rc.112 transport.
- * That release keeps the Web Response in `source` without exposing its URL.
- * Guard this implementation boundary rather than asserting a private shape.
- * The fallback matches Effect's later public URL accessor for synthetic responses.
+ * Resolves the final Fetch URL across Effect HTTP response implementations.
+ * Prefer the public URL when available, then the underlying Web Response URL.
+ * Guard the implementation boundary rather than asserting a private shape.
+ * Synthetic responses fall back to the originating request URL.
  */
 export const getResponseUrl = (response: HttpClientResponse.HttpClientResponse): string => {
   if ("url" in response && typeof response.url === "string") {

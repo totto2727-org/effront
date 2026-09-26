@@ -5,6 +5,7 @@ import type { AnyMiddleware } from "../application/middleware";
 import type { RenderRuntimeContext } from "../application/render-runtime";
 import type { FlightPayload, ServerFnResult } from "../rsc/flight";
 import type { RouteTreeModel } from "../rsc/route-tree";
+import { nextErrorDigest } from "./error-digest";
 
 type FlightStream = ReadableStream<Uint8Array>;
 
@@ -27,6 +28,46 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
   "effront/server/flight-renderer/FlightRenderer",
   {
     make: Effect.succeed({
+      renderQuery: Effect.fnUntraced(function* <Services>({
+        middleware,
+        renderRuntime,
+        result,
+        temporaryReferences,
+      }: {
+        readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
+        readonly renderRuntime: RenderRuntimeContext;
+        readonly result: ServerFnResult;
+        readonly temporaryReferences?: ReturnType<typeof createTemporaryReferenceSet>;
+      }): Effect.fn.Return<FlightRender, never, Services | Scope.Scope> {
+        const errorDigest = yield* nextErrorDigest;
+        const parentScope = yield* Effect.scope;
+        const renderScope = yield* Scope.fork(parentScope);
+        const release = Scope.close(renderScope, Exit.void);
+        return yield* Effect.gen(function* () {
+          const runtime = yield* FiberSet.makeRuntimePromise<Services>().pipe(
+            Scope.provide(renderScope),
+          );
+          const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
+          const { renderToReadableStream } = yield* Effect.promise(
+            () => import("@vitejs/plugin-rsc/rsc/server"),
+          );
+          const stream = renderRuntime.bind(runtime, middleware, () =>
+            renderToReadableStream(result, {
+              onError: (error: unknown) => {
+                if (!signal.aborted) {
+                  void runtime(
+                    Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)),
+                  );
+                }
+                return errorDigest;
+              },
+              signal,
+              temporaryReferences,
+            }),
+          );
+          return { release, signal, stream } satisfies FlightRender;
+        }).pipe(Effect.onError(() => release));
+      }),
       render: Effect.fnUntraced(function* <Services>({
         formState,
         middleware,
@@ -39,6 +80,7 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
         never,
         Services | Scope.Scope
       > {
+        const errorDigest = yield* nextErrorDigest;
         const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);
         const release = Scope.close(renderScope, Exit.void);
@@ -55,8 +97,11 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
             return renderToReadableStream(payload, {
               onError: (error: unknown) => {
                 if (!signal.aborted) {
-                  void runtime(Effect.logError(error));
+                  void runtime(
+                    Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)),
+                  );
                 }
+                return errorDigest;
               },
               signal,
               temporaryReferences,

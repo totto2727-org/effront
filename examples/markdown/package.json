@@ -20,6 +20,7 @@
     "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
     "@tailwindcss/typography": "catalog:",
+    "@tailwindcss/vite": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",

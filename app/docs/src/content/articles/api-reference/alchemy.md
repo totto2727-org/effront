@@ -49,12 +49,14 @@ Alchemy が受け付けるエラーの union はより狭いため、`fetch` を
 - HTTP サービス、Scope、Layer のメモ化状態、Alchemy の `RuntimeContext`、Worker self、汎用の `Self`、Cloudflare 環境、元の Request、Worker 環境、実行コンテキストは捕捉しません。
 - 参照の捕捉はサービスの取得や寿命の延長を行いません。所有者は、それを使うすべてのレスポンスの処理が終わるまで保持する必要があります。
 - アプリケーション Layer はリクエストごとに取得します。Alchemy はストリーミングの完了、失敗、キャンセルまでリクエスト Scope を保持します。
+- 構築時の Context を絞り込んでも、名前付きのアプリケーション capability を含む明示的なホスト外サービスの要件は残ります。アプリケーション Layer または捕捉する外部 Context から提供してください。
 
 Worker と Stack の宣言は [Alchemy のセットアップ](../platforms/alchemy.md) を参照してください。
 
 ## effrontAlchemy {#vite}
 
 `@effront/alchemy/cloudflare/vite` の `effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` は、`effront()` より後に登録する必要があります。
+プラグインの順序を逆にすると `TypeError` になります。正しい順序は次のとおりです。
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
@@ -72,8 +74,12 @@ export default defineConfig({
 
 このアダプターに `application` オプションはなく、`effront()` の登録も行いません。
 アプリケーションエントリーの変更は `effront({ application })` と Worker のローダー内インポートに反映します。
+Worker エントリーは `effront({ rsc })` ではなく `effrontAlchemy({ worker })` で選びます。
+ブリッジには Alchemy が注入する `ALCHEMY_STACK_NAME` と `ALCHEMY_STAGE` のバインディングが必要です。欠損または空の値は `TypeError` になり、`alchemy dev` から起動する必要があります。
+SSR 出力は既定で RSC Worker 成果物の子ディレクトリに配置されます。明示した出力先は保持されますが、Worker 成果物と一緒にパッケージ化してください。
 
 Worker 宣言には `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }` が必要です。
 `vite.main`、別のランタイムプラグイン、Wrangler 設定は追加しないでください。
+開発中のサーバーコードからは、インフラの provider factory を含む Node 専用のデプロイ・ローカルホスト用 export を使用できません。デプロイ時の export と本番ビルドには影響しません。
 Alchemy は、Vite 単体ではなく `alchemy dev` を通じてホストプラグインとバインディングを提供します。
-Alchemy `2.0.0-beta.77` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。
+Alchemy `2.0.0-beta.79` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。

@@ -94,8 +94,7 @@ export const page: DocPage = {
       </p>
       <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
       <p>
-        HEAD bodies are never consumed. The pinned Effect rc.112 transfers a streaming response's
-        Scope before discarding its HEAD body. Effront first replaces the body with{" "}
+        HEAD bodies are never consumed. Effront replaces a streaming HEAD body with{" "}
         <code>HttpBody.empty</code> and preserves the headers, avoiding transfer to an unread
         stream.
       </p>

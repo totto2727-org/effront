@@ -3,7 +3,12 @@ import { Context, Deferred, Effect, Exit, Layer, Schema, Scope, Stream } from "e
 import { HttpBody, HttpClient, HttpClientRequest } from "effect/unstable/http";
 import { createFromReadableStream, createTemporaryReferenceSet } from "@vitejs/plugin-rsc/browser";
 
-import { FlightMediaType, ServerFnIdHeader, type FlightPayload } from "../rsc/flight";
+import {
+  FlightMediaType,
+  ServerFnIdHeader,
+  type FlightPayload,
+  type ServerFnResult,
+} from "../rsc/flight";
 import { InitialFlightStream } from "./initial-flight-stream";
 import { getResponseUrl } from "./response-url";
 
@@ -23,6 +28,13 @@ export type FlightRequest =
       readonly destination: URL;
       readonly id: string;
       readonly temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
+    }
+  | {
+      readonly _tag: "Query";
+      readonly body: BodyInit;
+      readonly destination: URL;
+      readonly id: string;
+      readonly temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
     };
 
 type DecodedFlight = {
@@ -34,6 +46,13 @@ type FlightResource = DecodedFlight & {
   readonly _tag: "Flight";
   readonly release: Effect.Effect<void>;
   readonly resolvedUrl: URL;
+};
+
+type QueryResource = {
+  readonly _tag: "Query";
+  readonly completed: Effect.Effect<void, FlightLoadError>;
+  readonly payload: ServerFnResult;
+  readonly release: Effect.Effect<void>;
 };
 
 type DocumentResource = {
@@ -69,7 +88,7 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
       } satisfies DecodedFlight;
     });
 
-    const load = Effect.fnUntraced(function* (flightRequest: FlightRequest) {
+    const loadAny = Effect.fnUntraced(function* (flightRequest: FlightRequest) {
       const parentScope = yield* Effect.scope;
       const responseScope = yield* Scope.fork(parentScope);
       const release = Scope.close(responseScope, Exit.void);
@@ -162,7 +181,7 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
           ),
         );
         const decodeOptions =
-          flightRequest._tag === "ServerFunction"
+          flightRequest._tag !== "Navigation"
             ? import.meta.env.DEV
               ? {
                   startTime: requestStartTime,
@@ -175,7 +194,8 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
                 }
               : undefined;
         const payload = yield* Effect.tryPromise({
-          try: () => createFromReadableStream<FlightPayload>(responseBody, decodeOptions),
+          try: () =>
+            createFromReadableStream<FlightPayload | ServerFnResult>(responseBody, decodeOptions),
           catch: (cause) =>
             new FlightLoadError({
               cause,
@@ -183,17 +203,44 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
             }),
         });
 
+        if (flightRequest._tag === "Query") {
+          return {
+            _tag: "Query",
+            completed: Deferred.await(completed),
+            payload: payload as ServerFnResult,
+            release,
+          } satisfies QueryResource;
+        }
         return {
           _tag: "Flight",
           completed: Deferred.await(completed),
-          payload,
+          payload: payload as FlightPayload,
           release,
           resolvedUrl,
         } satisfies FlightResource;
       }).pipe(Effect.onError(() => release));
     });
 
-    return { load, loadInitial };
+    const load = (request: Exclude<FlightRequest, { readonly _tag: "Query" }>) =>
+      loadAny(request).pipe(
+        Effect.map((resource) => {
+          if (resource._tag === "Query") {
+            throw new TypeError("A navigation or mutation cannot return a query response.");
+          }
+          return resource;
+        }),
+      );
+    const loadQuery = (request: Extract<FlightRequest, { readonly _tag: "Query" }>) =>
+      loadAny(request).pipe(
+        Effect.map((resource) => {
+          if (resource._tag === "Flight") {
+            throw new TypeError("A query cannot return a route response.");
+          }
+          return resource;
+        }),
+      );
+
+    return { load, loadInitial, loadQuery };
   }),
 }) {
   static readonly layer = Layer.effect(this, this.make);

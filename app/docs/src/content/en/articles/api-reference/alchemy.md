@@ -49,12 +49,14 @@ The [Basic example](https://github.com/totto2727-org/effront/tree/main/examples/
 - Capture excludes HTTP services, Scope, Layer memoization state, Alchemy `RuntimeContext`, Worker self, generic `Self`, Cloudflare environment, raw Request, Worker environment, and execution context.
 - Capturing a reference does not acquire the service or extend its lifetime. Its owner must retain it through every response that uses it.
 - The application Layer is acquired per request. Alchemy retains the request Scope through streaming completion, failure, or cancellation.
+- Explicitly required non-host services, including named application capabilities, remain application dependencies after construction-context filtering. Provide them through the application Layer or a captured external Context.
 
 For Worker and Stack declarations, see [Alchemy setup](../platforms/alchemy.md).
 
 ## effrontAlchemy {#vite}
 
-`effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` from `@effront/alchemy/cloudflare/vite` must follow `effront()`:
+`effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` from `@effront/alchemy/cloudflare/vite` must follow `effront()`.
+Reversing their plugin order throws `TypeError`. Use this order:
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
@@ -72,8 +74,12 @@ export default defineConfig({
 
 The adapter has no `application` option and does not register `effront()`.
 Application entry changes belong in `effront({ application })` and the Worker's loader import.
+The Worker entry must be selected with `effrontAlchemy({ worker })`, not `effront({ rsc })`.
+The bridge requires Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` bindings; missing or empty bindings throw `TypeError` and require startup through `alchemy dev`.
+SSR output defaults to a child of the RSC Worker artifact. Explicit output directories are preserved but must be packaged with that artifact.
 
 The Worker declaration requires `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
 Do not set `vite.main` or add a second runtime plugin or Wrangler configuration.
+Node-only deployment and local-host exports, including infrastructure provider factories, are unavailable to server code during development. Deployment-time exports and production builds are unaffected.
 Alchemy supplies the host plugin and bindings through `alchemy dev`, not Vite alone.
-Alchemy `2.0.0-beta.77` requires a configured Cloudflare profile even for [local startup](../platforms/alchemy.md#stack).
+Alchemy `2.0.0-beta.79` requires a configured Cloudflare profile even for [local startup](../platforms/alchemy.md#stack).

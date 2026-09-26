@@ -15,7 +15,7 @@
 - Load CSS through rendered `"use client"` boundaries so RSC includes it in initial HTML and browser hydration. Keep the directive prologue intact.
 - Preserve the CSS-shaped absolute virtual module ID and its `effront-tailwind` query so Vite and Tailwind resolve imports from the application root without creating a physical stylesheet.
 - Exclude `raw`, `url`, `worker`, and `sharedworker` module requests from client-boundary transformation.
-- Include the official Tailwind Vite plugin once. Explicit CSS paths replace the generated stylesheet and resolve against the Vite root.
+- Resolve the official Tailwind Vite plugin from the application's installed dependencies before Vite plugin collection. Declare both `@tailwindcss/vite` and `tailwindcss` to enable it; neither declared means no injected CSS, and explicit CSS paths still load normally. Explicit CSS paths replace the generated stylesheet and resolve against the Vite root.
 
 ## Package-specific rules
 

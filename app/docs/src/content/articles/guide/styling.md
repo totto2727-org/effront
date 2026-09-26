@@ -6,7 +6,7 @@ Tailwind の標準ユーティリティを使う場合も、独自のテーマ�
 統合パッケージをインストールします。
 
 ```bash
-vp add -D @effront/tailwind@0.1.4
+vp add -D @effront/tailwind@0.1.4 @tailwindcss/vite@4.3.3 tailwindcss@4.3.3
 ```
 
 [Getting started](./getting-started.md) の `vite.config.ts` に、`effrontTailwind()` を追加します。
@@ -21,7 +21,7 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   // Added: effrontTailwind().
-  plugins: [effront(), effrontServer(), effrontTailwind()],
+  plugins: [effront(), effrontServer(), await effrontTailwind()],
 });
 ```
 
@@ -36,17 +36,11 @@ export default defineConfig({
 <h1 className="p-4 text-xl font-bold">Hello</h1>
 ```
 
-見出しに余白が付き、文字が大きく太くなります。
+JavaScript を無効にしていても初期 HTML からスタイルが適用され、見出しに余白が付き、文字が大きく太くなります。
 
 ## スタイルシートでテーマを定義する {#stylesheet}
 
-共通の色などのテーマ値を追加するには、Tailwind を直接の依存関係としてインストールします。
-
-```bash
-vp add -D tailwindcss@4.3.3
-```
-
-`src/styles.css` を作成します。
+共通の色などのテーマ値を追加するには、`src/styles.css` を作成します。
 
 ```css
 @import "tailwindcss";
@@ -60,7 +54,7 @@ vp add -D tailwindcss@4.3.3
 
 ```typescript
 // vite.config.ts: replace effrontTailwind() in the plugins array.
-effrontTailwind({ stylesheet: "./src/styles.css" });
+await effrontTailwind({ stylesheet: "./src/styles.css" });
 ```
 
 パスは Vite root を基準にします。

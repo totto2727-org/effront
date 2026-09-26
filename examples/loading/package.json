@@ -6,6 +6,7 @@
     "dev": "alchemy dev"
   },
   "dependencies": {
+    "@effect/platform-browser": "catalog:",
     "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
     "@tanstack/react-query": "catalog:",
@@ -17,9 +18,11 @@
   "devDependencies": {
     "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
+    "tailwindcss": "catalog:",
     "vite-plus": "catalog:"
   }
 }

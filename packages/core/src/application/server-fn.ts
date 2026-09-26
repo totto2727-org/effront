@@ -1,18 +1,23 @@
-import { Array, Effect, Predicate, Schema } from "effect";
+import { Array, Effect, Predicate, Schema, Stream } from "effect";
 
 import { attachEFFRONTMember, type EFFRONTIdentity, type EFFRONTMember } from "./effront-identity";
 import type { AnyMiddleware } from "./middleware";
+import { ServerFnInputError } from "../rsc/server-fn-error";
 
 const ServerFnInvocationTypeId: unique symbol = Symbol.for("effront/ServerFnInvocation");
 
-class ServerFnOperationError extends Schema.TaggedError<ServerFnOperationError>()(
+export class ServerFnOperationError extends Schema.TaggedError<ServerFnOperationError>()(
   "ServerFnOperationError",
   { cause: Schema.Defect() },
 ) {}
 
 type ServerFnInvocation<ApplicationServices> = {
   readonly [ServerFnInvocationTypeId]: {
-    readonly effect: Effect.Effect<unknown, ServerFnOperationError, ApplicationServices>;
+    readonly effect: Effect.Effect<
+      unknown,
+      ServerFnInputError | ServerFnOperationError,
+      ApplicationServices
+    >;
     readonly identity: EFFRONTIdentity<ApplicationServices>;
     readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
   };
@@ -23,7 +28,11 @@ type ServerFnInvocationMatch<ApplicationServices> =
   | { readonly _tag: "IdentityMismatch" }
   | {
       readonly _tag: "Match";
-      readonly effect: Effect.Effect<unknown, ServerFnOperationError, ApplicationServices>;
+      readonly effect: Effect.Effect<
+        unknown,
+        ServerFnInputError | ServerFnOperationError,
+        ApplicationServices
+      >;
       readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
     };
 
@@ -47,21 +56,47 @@ interface ServerFunction<
   Output,
   ApplicationServices,
 > extends EFFRONTMember<ApplicationServices, "ServerFn"> {
-  (...args: Args): Promise<Output>;
+  (...args: Args): Promise<ServerFnWireValue<Output>>;
 }
 
+type ServerFnWireValue<Output> = [Output] extends [never]
+  ? Output
+  : [Output] extends [Stream.Stream<infer Value, infer _Error, infer _Services>]
+    ? ReadableStream<Value>
+    : Output;
+
+type ValidateServerFnOutput<Output, Services> = [Output] extends [never]
+  ? unknown
+  : [Output] extends [Stream.Stream<infer _Value, infer Error, infer Requirements>]
+    ? [Error] extends [never]
+      ? [Requirements] extends [Services]
+        ? unknown
+        : { readonly "A streaming Server Function must fit the application services": never }
+      : { readonly "A streaming Server Function must handle its Stream errors": never }
+    : [Extract<Output, Stream.Stream<unknown, unknown, unknown>>] extends [never]
+      ? unknown
+      : { readonly "A Server Function cannot mix Stream and non-stream results": never };
+
 type ServerFnOptions<Input, Output, Error, Services> = {
-  readonly input: Input;
   readonly handler: (
     ...args: ServerFnArguments<Input, "Type">
   ) => Effect.Effect<Output, Error, Services>;
-};
+} & ([Input] extends [readonly []] ? { readonly input?: Input } : { readonly input: Input });
 
 export type ServerFnFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <const Input extends ServerFnInput<AvailableServices>, Output, Error>(
-    options: ServerFnOptions<Input, Output, Error, AvailableServices>,
+  readonly make: <
+    const Input extends ServerFnInput<AvailableServices> = readonly [],
+    Output = never,
+    Error = never,
+  >(
+    options: ServerFnOptions<Input, Output, Error, AvailableServices> &
+      ValidateServerFnOutput<Output, AvailableServices>,
   ) => ServerFunction<ServerFnArguments<Input, "Encoded">, Output, ApplicationServices>;
 };
+
+export const isServerFnStream = <Services>(
+  value: unknown,
+): value is Stream.Stream<unknown, never, Services> => Stream.isStream(value);
 
 const directInvocationError = () =>
   new TypeError(
@@ -95,19 +130,25 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
   middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
 ): ServerFnFactory<ApplicationServices, AvailableServices> => ({
-  make: ({ input, handler }) => {
+  make: ({ input = [], handler }) => {
     const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
     const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));
     const serverFunction = (...untrustedArgs: ServerFnArguments<typeof input, "Encoded">) => {
       // Unary functions still ignore extra native arguments and decode undefined when omitted.
       const effect = decode(Array.isArray(input) ? untrustedArgs : [untrustedArgs[0]]).pipe(
+        Effect.mapError(
+          (cause) =>
+            new ServerFnInputError({ detail: { message: cause.message, name: cause.name } }),
+        ),
         // Normalization preserves the positional Type mapping, which the generic branch erases.
         Effect.flatMap((args: ReadonlyArray<unknown>) =>
-          handler(...(args as ServerFnArguments<typeof input, "Type">)),
+          handler(...(args as Parameters<typeof handler>)).pipe(
+            Effect.mapError((cause) => new ServerFnOperationError({ cause })),
+          ),
         ),
-        Effect.mapError((cause) => new ServerFnOperationError({ cause })),
       );
-      const unavailable = Promise.reject<Effect.Success<typeof effect>>(directInvocationError());
+      const unavailable =
+        Promise.reject<ServerFnWireValue<Effect.Success<typeof effect>>>(directInvocationError());
       void unavailable.catch(() => undefined);
 
       return Object.assign(unavailable, {

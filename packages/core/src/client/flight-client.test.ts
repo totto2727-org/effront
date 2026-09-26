@@ -33,7 +33,7 @@ const initialFlightStream = new ReadableStream<Uint8Array>({
 });
 
 const { FlightClient, FlightLoadError } = await import("./flight-client");
-type FlightRequest = import("./flight-client").FlightRequest;
+type FlightRequest = Exclude<import("./flight-client").FlightRequest, { readonly _tag: "Query" }>;
 const FlightClientTestLayer = FlightClient.layer.pipe(
   Layer.provide(InitialFlightStream.layerTest({ stream: initialFlightStream })),
 );

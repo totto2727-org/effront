@@ -60,6 +60,17 @@ export const EFFRONT = Application.effront();
 `Requirements` は外部サービスの要件を保持します。
 HTTP ハンドラーが `HttpRouter.HttpRouter` を提供するため、`Services` が `never` でも Layer で独自 HTTP ルートを登録できます。
 
+`make` が推論した定義からサービス型と外部要件型を取り出すには、`@effront/core` の `ApplicationServices<Application>` と `ApplicationRequirements<Application>` を使います。
+`ApplicationRequirements` はランタイムが所有する `HttpRouter.HttpRouter` の要件を除外します。
+
+```typescript
+import type { ApplicationRequirements, ApplicationServices } from "@effront/core";
+import application from "./entry.effront";
+
+type Services = ApplicationServices<typeof application>;
+type HostRequirements = ApplicationRequirements<typeof application>;
+```
+
 Layer の取得は `make` の呼び出し時ではなく、リクエストごとに行います。
 ホストはレスポンス本文の完了、失敗、キャンセルまでリクエスト Scope を保持する必要があります。
 

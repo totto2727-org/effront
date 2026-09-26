@@ -27,6 +27,8 @@ const retainedUrls = [
   "/guide/effect",
   "/best-practices/testing",
   "/guide/server-functions",
+  "/guide/query-server-functions",
+  "/guide/stream-server-functions",
   "/guide/middleware",
   "/guide/http",
   "/platforms",
@@ -324,6 +326,8 @@ describe("documentation catalog", () => {
       "/guide/components",
       "/guide/effect",
       "/guide/server-functions",
+      "/guide/query-server-functions",
+      "/guide/stream-server-functions",
       "/guide/middleware",
       "/guide/http",
     ]) {

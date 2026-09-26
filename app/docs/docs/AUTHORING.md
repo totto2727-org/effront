@@ -181,7 +181,7 @@ A Markdown migration does not change this historical contract.
 Run `vp install` and `vp exec --filter "./packages/*" -- vp pack` from the repository root before starting the application.
 From `app/docs`, `vp run dev` invokes `alchemy dev` and serves `http://localhost:1339` after the local Worker is ready.
 Bare `vp dev` bypasses Alchemy orchestration and is not the application's development entry.
-The pinned Alchemy beta.77 requires a configured Cloudflare profile even for local CLI planning.
+The pinned Alchemy beta.79 requires a configured Cloudflare profile even for local CLI planning.
 Do not force automated acceptance through this user-controlled prerequisite or supply fake credentials.
 See [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for official CLI setup and compatibility boundaries.
 The separate built-site acceptance command below requires no Cloudflare authentication and performs no deployment.
@@ -246,7 +246,7 @@ For a new, never-deployed production stage, the first approved workflow run init
 No cloud deployment or credential/permission validation is implied by local checks.
 
 References: [Alchemy state stores](https://alchemy.run/state-store), [Cloudflare state implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/StateStore/State.ts), and [Cloudflare authentication implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Auth/AuthProvider.ts).
-API and CI behavior were checked against the installed `alchemy@2.0.0-beta.77`; the source URLs track upstream main.
+API and CI behavior were checked against the installed `alchemy@2.0.0-beta.79`; the source URLs track upstream main.
 
 ## Sources and licenses
 
