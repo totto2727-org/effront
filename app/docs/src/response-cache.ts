@@ -28,23 +28,20 @@ export const responseCache = (options: { readonly development?: boolean | undefi
   HttpMiddleware.make(<E, R>(handler: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>) =>
     Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest;
-      const flight = request.headers["accept"] === flightMediaType;
+      const accept = request.headers["accept"];
+      const acceptsPage = accept === flightMediaType || accept?.includes("text/html") === true;
       const response = yield* handler;
       const vary = varyFor(response.headers["vary"]);
-      const contentType = response.headers["content-type"]?.split(";", 1)[0]?.trim().toLowerCase();
       // This docs-only opt-in overrides core's conservative private/no-store default.
       const publicResponse =
         !options.development &&
         request.method === "GET" &&
+        acceptsPage &&
         request.headers["cookie"] === undefined &&
         request.headers["authorization"] === undefined &&
-        request.headers["range"] === undefined &&
         response.status === 200 &&
         response.headers["set-cookie"] === undefined &&
-        Cookies.isEmpty(response.cookies) &&
-        response.headers["content-range"] === undefined &&
-        !vary.split(", ").includes("*") &&
-        contentType === (flight ? flightMediaType : "text/html");
+        Cookies.isEmpty(response.cookies);
 
       return HttpServerResponse.setHeaders(response, {
         "cache-control": publicResponse

@@ -35,9 +35,37 @@ for (const locale of ["en", "ja"]) {
   }
 }
 
+test("origin accepts a browser document Accept header", async ({ request }) => {
+  const response = await request.get("/en/guide/markdown", {
+    headers: { Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" },
+  });
+  expect(response.status()).toBe(200);
+  expectPolicy(response.headers(), true);
+  expect(await response.text()).toContain('lang="en"');
+});
+
+test("origin leaves unsupported Accept private", async ({ request }) => {
+  const response = await request.get("/en/guide/markdown", { headers: { Accept: "*/*" } });
+  expect(response.status()).toBe(200);
+  expectPolicy(response.headers(), false);
+});
+
+test("origin does not opt missing pages into long-lived CDN caching", async ({ request }) => {
+  const response = await request.get("/en/missing-cache-test-page", {
+    headers: { Accept: "text/html" },
+  });
+  expect(response.status()).toBe(404);
+  // Missing-route responses have no cache opt-in headers on the real host.
+  expect(response.headers()["cloudflare-cdn-cache-control"]).toBeUndefined();
+  expect(response.headers()["cache-control"] ?? "").not.toContain("public");
+});
+
 for (const name of ["Cookie", "Authorization"]) {
   test(`origin marks ${name} requests private`, async ({ request }) => {
-    const headers = { [name]: name === "Cookie" ? "session=private" : "Bearer private" };
+    const headers = {
+      Accept: "text/html",
+      [name]: name === "Cookie" ? "session=private" : "Bearer private",
+    };
     const response = await request.get("/en/guide/markdown", { headers });
     expect(response.status()).toBe(200);
     expectPolicy(response.headers(), false);
@@ -45,7 +73,10 @@ for (const name of ["Cookie", "Authorization"]) {
 }
 
 test("origin marks invalid POST private", async ({ request }) => {
-  const response = await request.post("/en/guide/markdown", { data: "not-a-server-function" });
+  const response = await request.post("/en/guide/markdown", {
+    headers: { Accept: "text/html" },
+    data: "not-a-server-function",
+  });
   expect(response.status()).not.toBe(200);
   expectPolicy(response.headers(), false);
 });

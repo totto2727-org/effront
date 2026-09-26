@@ -124,9 +124,11 @@ Its default key includes the path, full query string and Worker version, so `/en
 Do not enable cross-version caching.
 The request hostname is not part of the native key; this site must continue to render the same public content across its hostnames.
 
-Only public GET 200 HTML/Flight responses opt into the long edge TTL.
-Development, credential-bearing requests, cookie-setting responses, non-200 responses and non-GET methods receive `private, no-store` in both cache-control headers.
-Cloudflare can satisfy HEAD and Range from a cached GET itself; these do not imply execution of the origin's HEAD/Range branch.
+The middleware opts in only production GET requests whose `Accept` contains `text/html` or exactly equals `text/x-component`, with a 200 response.
+Requests carrying Cookie or Authorization and responses setting cookies (including native Effect cookies) remain private.
+Other responses returned through the middleware receive `private, no-store` in both cache-control headers; failures propagate without adding cache headers.
+This docs-specific policy does not additionally inspect Range, Content-Range, response Content-Type, or wildcard Vary; it is not a general-purpose caching middleware.
+Cloudflare can satisfy HEAD and Range from a cached GET itself.
 HTTP caching does not inspect React's serialized payload: a render error encoded inside a normally completed HTTP 200 can be cached.
 This policy does not add a core rendering observer or claim to exclude such application-level errors; verify authored pages before deployment and roll out a corrected version if necessary.
 Response streams and their Effect scopes remain unchanged.
