@@ -6,7 +6,7 @@ Markdown の記事を Effront アプリケーションのページとして表�
 コレクションとパーサー、React レンダラーをアプリケーションにインストールします。
 
 ```bash
-vp add @effront/markdown@0.1.4 @comark/react@0.6.2
+vp add @effront/markdown@0.1.4
 ```
 
 `src/content/intro.md` を作成します。
@@ -78,6 +78,7 @@ export const manual = createMarkdownCollection({
 ```
 
 参照するアセットのファイル形式をすべて glob に含めてください。
+文書とアセットで同じ `base` を指定し、相対参照の基準位置を揃えてください。
 
 ## 記事を URL で表示する {#render}
 
@@ -85,7 +86,8 @@ export const manual = createMarkdownCollection({
 
 ```tsx
 // src/entry.effront.tsx: add to the imports.
-import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
 import { parseMarkdown } from "@effront/markdown";
 import { manual } from "./manual";
 
@@ -113,7 +115,9 @@ export default EFFRONT.make({
 ```
 
 ブラウザーで `/manual/intro` を開くと、Layout の内側に記事が表示されます。
-余白や色を加えるには [Styling](./styling.md) を参照してください。
+Markdown 本文のスタイリングは提供しません。
+アプリ側で独自にスタイリングするか、Tailwind Typography などを導入してください。
+[Styling](./styling.md) も参照してください。
 
 `src/content/details.md` の Page が `/manual/details` に登録されている場合、`intro.md` 内の `[Details](./details.md#example)` は `/manual/details#example` に解決されます。
 アセットの相対参照は記事のディレクトリを基準に解決され、import 済みの URL を使います。
@@ -153,10 +157,15 @@ const IntroPage = EFFRONT.Page.make({
 ```
 
 追加プラグインは Effront の標準プラグインの後に実行され、標準プラグインを置き換えるものではありません。
-コンポーネントの差し替えには [Comark の React レンダラー](https://comark.dev/rendering/react)を使ってください。
+上の `MarkdownDocument` とスタイルシートの import だけで、解析したドキュメントを表示できます。
+Math と Mermaid は標準で登録されているため、個別の登録は不要です。
+表示を変更するには、`@effront/markdown/math` の `Math` や `@effront/markdown/mermaid` の `Mermaid` を好みのオプションでラップするか、独自のコンポーネントを実装します。
+差し替えるコンポーネントを `MarkdownDocument` の `components` に渡してください。
+各コンポーネントのオプションは [Comark の React レンダラー](https://comark.dev/rendering/react)を参照してください。
 
-> [!NOTE]
-> 解析に対応しているだけでは、Math や Mermaid を React で表示できません。
-> Comark 0.6.2 はそれらのコンポーネントを自動登録しません。
+> [!WARNING]
+> 現状、Math と Mermaid はクライアント JavaScript が必須であり、SSR に対応していません。
+> サーバー側では数式と図のレンダリングをスキップし、プレースホルダーのみを出力します。
+> SSR が必要な場合は、サーバーでレンダリングできるコンポーネントを独自に実装し、`components` で差し替えてください。
 
 オプションと参照解決の規則は [Markdown リファレンス](../api-reference/markdown.md)を参照してください。

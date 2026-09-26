@@ -19,6 +19,9 @@ Effront の API は、アプリケーションの定義、実行環境への接�
 | `@effront/alchemy/cloudflare/vite` | `effrontAlchemy`                                                      | [Alchemy](./api-reference/alchemy.md)                                                        |
 | `@effront/markdown`                | `createMarkdownCollection`、`parseMarkdown`、`MarkdownError`          | [Markdown](./api-reference/markdown.md)                                                      |
 | `@effront/tailwind`                | `effrontTailwind`                                                     | [Tailwind](./api-reference/tailwind.md)                                                      |
+| `@effront/markdown/document`       | `MarkdownDocument`、`MarkdownDocumentProps`                           | [Markdown](./api-reference/markdown.md)                                                      |
+| `@effront/markdown/math`           | `Math`                                                                | [Markdown](./api-reference/markdown.md)                                                      |
+| `@effront/markdown/mermaid`        | `Mermaid`                                                             | [Markdown](./api-reference/markdown.md)                                                      |
 
 `@effront/core` の実行時インポートには `react-server` 条件が必要です。
 ホストプロセス全体でこの条件を有効にせず、`effront()` が構成するアプリケーショングラフ内で使用してください。

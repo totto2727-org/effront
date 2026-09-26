@@ -1,0 +1,11 @@
+@import "katex/dist/katex.min.css";
+
+.effront-markdown :where(.math.block, .mermaid) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.effront-markdown :where(.mermaid svg) {
+  max-width: 100%;
+  height: auto;
+}

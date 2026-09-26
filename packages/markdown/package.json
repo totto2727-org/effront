@@ -18,7 +18,20 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./document": {
+      "types": "./dist/document.d.ts",
+      "default": "./dist/document.js"
+    },
+    "./math": {
+      "types": "./dist/math.d.ts",
+      "default": "./dist/math.js"
+    },
+    "./mermaid": {
+      "types": "./dist/mermaid.d.ts",
+      "default": "./dist/mermaid.js"
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "publishConfig": {
     "access": "public",
@@ -26,18 +39,23 @@
     "tag": "latest"
   },
   "dependencies": {
+    "@comark/react": "catalog:",
     "@effect/platform-node-shared": "catalog:",
+    "beautiful-mermaid": "catalog:",
     "comark": "catalog:",
     "effect": "catalog:",
     "katex": "catalog:",
     "shiki": "catalog:"
   },
   "devDependencies": {
-    "@comark/react": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:"
   }
 }

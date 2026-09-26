@@ -20,6 +20,9 @@ Choose the other packages for hosting, Markdown, or styling.
 | `@effront/alchemy/cloudflare/vite` | `effrontAlchemy`                                               | [Alchemy](./api-reference/alchemy.md)                                                    |
 | `@effront/markdown`                | `createMarkdownCollection`, `parseMarkdown`, `MarkdownError`   | [Markdown](./api-reference/markdown.md)                                                  |
 | `@effront/tailwind`                | `effrontTailwind`                                              | [Tailwind](./api-reference/tailwind.md)                                                  |
+| `@effront/markdown/document`       | `MarkdownDocument`, `MarkdownDocumentProps`                    | [Markdown](./api-reference/markdown.md)                                                  |
+| `@effront/markdown/math`           | `Math`                                                         | [Markdown](./api-reference/markdown.md)                                                  |
+| `@effront/markdown/mermaid`        | `Mermaid`                                                      | [Markdown](./api-reference/markdown.md)                                                  |
 
 Runtime imports from `@effront/core` require the `react-server` condition.
 Keep them in the application graph configured by `effront()`, not in a host process with `react-server` enabled globally.

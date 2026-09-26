@@ -22,8 +22,8 @@ Cloudflare Workers requires `nodejs_compat` in the Wrangler configuration.
 | `entries`                                              | Readonly entries sorted by public URL           |
 | `resolveLink(entry, href)`, `resolveImage(entry, src)` | [Reference resolution Effects](#references)     |
 
-Lookup requires an absolute pathname, decodes URL escapes once, accepts one trailing slash, and ignores queries and fragments.
-A missing entry returns `undefined`, not a typed failure.
+`collection.get("/manual/start")` retrieves the article at that site path.
+A missing entry returns `undefined`.
 Handle it before parsing, for example with a 404 response.
 
 | `MarkdownEntry` field                    | Value                              |
@@ -53,18 +53,42 @@ No option removes Effront's added plugins.
 `registerDefaultPlugins: false` disables only Comark's defaults.
 Other options, such as `linkify`, follow [Comark](https://comark.dev).
 
-The parsed result is the `value` prop for `MarkdownDocument` from `@comark/react/components/MarkdownDocument`.
-Its standard `components` prop supports replacements such as `components={{ ProseA: MyLink }}`.
-See the [Comark React API](https://comark.dev/rendering/react).
-Comark 0.6.2 does not automatically register Math/Mermaid React components or merge `document.meta.components` into renderer mappings.
-Parser support alone therefore does not establish full SSR rendering.
-Supply those components and verify the result if needed.
-
 > [!WARNING]
 > Only trusted authored Markdown and trusted plugins are supported.
 > This parser is not a sanitizer.
 
 Parser exceptions become `MarkdownError` with the original exception in `cause`.
+
+## Markdown rendering {#rendering}
+
+You can use the preconfigured `MarkdownDocument` from `@effront/markdown/document` and `@effront/markdown/styles.css`.
+
+```tsx
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
+
+<MarkdownDocument value={document} />;
+```
+
+To customize:
+
+```tsx
+import { Mermaid } from "@effront/markdown/mermaid";
+import type { ComponentProps } from "react";
+
+function MyMermaid(props: ComponentProps<typeof Mermaid>) {
+  return <Mermaid {...props} width="100%" />;
+}
+
+<MarkdownDocument value={document} components={{ Mermaid: MyMermaid }} />;
+```
+
+See the [Comark React API](https://comark.dev/rendering/react) for component options.
+
+> [!WARNING]
+> Math and Mermaid currently require client-side JavaScript and do not support SSR.
+> The server skips rendering equations and diagrams and emits only placeholders.
+> If you need SSR, implement server-renderable replacements and supply them through `components`.
 
 ## Links, assets, and MarkdownError {#references}
 
@@ -79,10 +103,7 @@ The collection exposes equivalent methods that take `entry` first.
 | Fragment-only, `/`-prefixed, or external URL                | Unchanged                      |
 | Missing relative target or path outside the collection base | `MarkdownError`                |
 
-Relative paths use the source document's directory.
-Queries and fragments are preserved: `./details.md#example` from `./guide/start.md` resolves to `/manual/guide/details#example` under `/manual`.
-Asset suffixes are appended literally to the imported URL, not merged with an existing query or fragment.
-Avoid conflicting suffixes or use the complete URL.
+Relative paths resolve from each Markdown file.
 
 `MarkdownError` has `_tag: "MarkdownError"`, a diagnostic `message`, and optional `cause`.
 It covers collection configuration, unresolved references, and parser failures.

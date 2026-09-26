@@ -291,6 +291,17 @@ for (const reader of locales) {
     page,
   }) => {
     await openGuide(page, reader, "/guide/markdown");
+    const rendererExample = page
+      .locator("article pre code")
+      .filter({ hasText: "import { MarkdownDocument }" });
+    await expect(rendererExample).toContainText('from "@effront/markdown/document"');
+    await expect(rendererExample).toContainText('import "@effront/markdown/styles.css"');
+    await expect(page.locator("article")).toContainText(
+      reader.locale === "en"
+        ? "Markdown body styling is not provided."
+        : "Markdown 本文のスタイリングは提供しません。",
+    );
+    await expect(page.locator("article")).toContainText("Tailwind Typography");
     const collectionScope = page
       .locator('article [data-alert="note"]')
       .filter({ hasText: "TanStack Markdown" });
@@ -354,8 +365,25 @@ for (const reader of locales) {
     await expect(
       article.locator('[data-alert="warning"]').filter({ hasText: "sanitizer" }),
     ).toContainText(/not a sanitizer|sanitizer ではありません/);
-    await expect(article.locator("p").filter({ hasText: "Comark 0.6.2" })).toContainText(
-      /does not automatically register|自動登録せず/,
+    await followHeading(page, reader, "rendering");
+    const rendering = article.locator("p").filter({ hasText: "@effront/markdown/document" });
+    await expect(rendering).toContainText("@effront/markdown/styles.css");
+    const registrationExample = article
+      .locator("pre code")
+      .filter({ hasText: 'import "@effront/markdown/styles.css"' });
+    await expect(registrationExample).toContainText('from "@effront/markdown/document"');
+    await expect(registrationExample).toContainText("<MarkdownDocument value={document} />");
+    const customization = article.locator("pre code").filter({ hasText: "function MyMermaid" });
+    await expect(customization).toContainText('from "@effront/markdown/mermaid"');
+    await expect(customization).toContainText('width="100%"');
+    await expect(customization).toContainText("components={{ Mermaid: MyMermaid }}");
+    const ssrWarning = article.locator('[data-alert="warning"]').filter({ hasText: "SSR" });
+    await expect(ssrWarning).toContainText(
+      /require client-side JavaScript|クライアント JavaScript が必須/,
+    );
+    await expect(ssrWarning).toContainText(/server skips rendering|レンダリングをスキップ/);
+    await expect(ssrWarning).toContainText(
+      /implement server-renderable replacements|コンポーネントを独自に実装/,
     );
     await expect(article.locator('a[href="https://comark.dev"]')).toBeVisible();
     await expect(article.locator('a[href="https://comark.dev/rendering/react"]')).toBeVisible();
