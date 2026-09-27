@@ -27,14 +27,14 @@ export const coreRuntimeSources = {
   responseLifetime: {
     path: "packages/core/src/http.ts",
     language: "typescript",
-    code: `    // Preserve GET metadata while preventing HEAD from transferring the response
-    // scope to a streaming body that no reader will consume.
-    return request.method === "HEAD"
-      ? HttpServerResponse.setBody(response, HttpBody.empty).pipe(
-          HttpServerResponse.setHeaders(response.headers),
-        )
-      : response;
-  });`,
+    code: `/**
+ * Handles the current HTTP request in its host-owned scope.
+ *
+ * Application layers are built once per evaluation, using the current services.
+ * The host must retain the request scope until the body ends, fails, or is cancelled.
+ * Effect HTTP's Web handler performs this transfer automatically. Do not wrap
+ * response production alone in Effect.scoped: producing headers does not consume a body.
+ */`,
   },
   externalContext: {
     path: "packages/core/src/http.ts",
@@ -276,8 +276,8 @@ export const coreRuntimePages: readonly DocPage[] = [
         </p>
         <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
         <p>
-          HEADの本文は消費されません。Effrontは先に本文を <code>HttpBody.empty</code>{" "}
-          に置き換え、ヘッダーを維持することで、読まれないストリームへの移譲を防ぎます。
+          HEADの本文は消費されません。Effect HTTPのWebハンドラーとネイティブなNode/Bunホストは、HEAD
+          でもヘッダーを維持したままストリームを破棄し、リクエストのScopeを解放します。coreは応答をそのまま返します。
         </p>
         <p>
           HTTPに直接接続するホストも、同じ境界を保つ必要があります。 応答生成だけに{" "}

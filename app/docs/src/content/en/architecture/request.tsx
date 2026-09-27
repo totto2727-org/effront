@@ -94,9 +94,9 @@ export const page: DocPage = {
       </p>
       <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
       <p>
-        HEAD bodies are never consumed. Effront replaces a streaming HEAD body with{" "}
-        <code>HttpBody.empty</code> and preserves the headers, avoiding transfer to an unread
-        stream.
+        HEAD bodies are never consumed. Effect HTTP's Web handler and the native Node and Bun hosts
+        discard the stream while preserving the headers and release the request Scope, so core
+        passes the response through unchanged.
       </p>
       <p>
         A direct HTTP host must preserve the same boundary. Applying <code>Effect.scoped</code> only

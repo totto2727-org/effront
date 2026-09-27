@@ -93,10 +93,9 @@ Preserving an API export is not proof of every cloud product's binding or remote
 Removing all compatibility handling caused HTTP 500 in official CLI development because Node-only workerd code was evaluated inside a Worker.
 The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions and HMR as removal checks.
 
-Under the former Effect rc.112 pin, streaming scopes could be transferred before HEAD bodies were discarded.
-Core still normalizes HEAD responses to an empty body while preserving response metadata, preventing a discarded stream from retaining its scope.
-The Fetch client's guarded URL accessor originated as a workaround for rc.112, which lacked a public final-response URL property. The current implementation prefers the public URL when available and retains a guarded Web Response/request fallback.
-Both compatibility boundaries have maintained regression tests. Re-evaluate them against the current Effect release before removing either guard.
+The former Effect rc.112 pin lacked a public final-response URL and could transfer a streaming scope before a discarded HEAD body.
+Both boundaries were re-evaluated against the pinned rc.116 and removed: `HttpClientResponse.url` now exposes the resolved URL, so the Flight client reads it directly instead of a local guard, and the pinned Web handler plus the native Node and Bun hosts release the request scope for HEAD while preserving response metadata, so core passes responses through unchanged.
+HEAD metadata and scope release stay covered by the core handler regression tests, and the URL accessor contract the Flight client depends on is covered by `packages/core/tests/client/effect-response-url.test.ts`.
 
 ## Verification
 

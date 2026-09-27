@@ -33,8 +33,8 @@ describe("current core learning material", () => {
     expect(implementation).toContain(source.code);
   });
 
-  // Historical excerpts remain in the recorded baseline. Flight error digests, Stream wire
-  // values, and the version-neutral HEAD scope comment describe post-baseline code instead.
+  // Historical excerpts remain in the recorded baseline. Flight error digests and Stream wire
+  // values describe post-baseline code instead.
   it.each(
     coreSources.filter(
       (source) =>

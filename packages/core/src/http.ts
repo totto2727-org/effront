@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Scope } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import type { HttpServerError } from "effect/unstable/http";
-import { HttpBody, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 
 import type { ApplicationDefinition } from "./application/definition";
 import { ServerApplication } from "./server/application";
@@ -57,13 +57,7 @@ export const toHttpEffect = <Services, ApplicationError, Requirements>(
       Effect.provideService(Layer.CurrentMemoMap, memoMap),
     );
     const response = yield* handler;
-    // Preserve GET metadata while preventing HEAD from transferring the response
-    // scope to a streaming body that no reader will consume.
-    return request.method === "HEAD"
-      ? HttpServerResponse.setBody(response, HttpBody.empty).pipe(
-          HttpServerResponse.setHeaders(response.headers),
-        )
-      : response;
+    return response;
   });
 
 type RequestServices = HttpRouter.Provided | HttpRouter.HttpRouter | Layer.CurrentMemoMap;

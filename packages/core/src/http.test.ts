@@ -290,7 +290,7 @@ describe("native HTTP effects", () => {
     expect(interrupted).toBe(true);
   });
 
-  it("preserves streamed GET metadata when normalizing a HEAD response", async () => {
+  it("preserves streamed GET metadata and releases the request scope for HEAD", async () => {
     const acquisitions: Array<Acquisition> = [];
     const app = makeProbeApplication(acquisitions, () =>
       Effect.succeed(

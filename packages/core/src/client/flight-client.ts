@@ -10,7 +10,6 @@ import {
   type ServerFnResult,
 } from "../rsc/flight";
 import { InitialFlightStream } from "./initial-flight-stream";
-import { getResponseUrl } from "./response-url";
 
 export class FlightLoadError extends Schema.TaggedError<FlightLoadError>()("FlightLoadError", {
   cause: Schema.Defect(),
@@ -143,7 +142,8 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
           });
         }
 
-        const responseUrl = getResponseUrl(response);
+        // Effect exposes the resolved URL, including a followed redirect and excluding the hash.
+        const responseUrl = response.url;
         if (responseUrl === "") {
           return yield* new FlightLoadError({
             cause: new Error("Expected the Flight response to include a resolved URL."),
