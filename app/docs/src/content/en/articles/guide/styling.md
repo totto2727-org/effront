@@ -6,7 +6,7 @@ It loads the stylesheet for you, whether you use Tailwind's default utilities or
 Install the integration:
 
 ```bash
-vp add -D @effront/tailwind@0.1.4 @tailwindcss/vite@4.3.3 tailwindcss@4.3.3
+vp add -D @effront/tailwind@0.1.4
 ```
 
 In `vite.config.ts` from [Getting started](./getting-started.md), add `effrontTailwind()`:
@@ -40,7 +40,13 @@ The heading has padding and larger, bold text in the initial HTML, even when Jav
 
 ## Define a theme in a stylesheet {#stylesheet}
 
-To add a shared color or other theme value, create `src/styles.css`:
+To add a shared color or other theme value, install Tailwind as a direct dependency:
+
+```bash
+vp add -D tailwindcss@4.3.3
+```
+
+Create `src/styles.css`:
 
 ```css
 @import "tailwindcss";

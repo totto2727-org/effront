@@ -6,7 +6,7 @@ Tailwind の標準ユーティリティを使う場合も、独自のテーマ�
 統合パッケージをインストールします。
 
 ```bash
-vp add -D @effront/tailwind@0.1.4 @tailwindcss/vite@4.3.3 tailwindcss@4.3.3
+vp add -D @effront/tailwind@0.1.4
 ```
 
 [Getting started](./getting-started.md) の `vite.config.ts` に、`effrontTailwind()` を追加します。
@@ -40,7 +40,13 @@ JavaScript を無効にしていても初期 HTML からスタイルが適用さ
 
 ## スタイルシートでテーマを定義する {#stylesheet}
 
-共通の色などのテーマ値を追加するには、`src/styles.css` を作成します。
+共通の色などのテーマ値を追加するには、Tailwind を直接の依存関係としてインストールします。
+
+```bash
+vp add -D tailwindcss@4.3.3
+```
+
+`src/styles.css` を作成します。
 
 ```css
 @import "tailwindcss";

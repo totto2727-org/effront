@@ -9,11 +9,11 @@ Follow the [Styling guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w
 ## Key features
 
 - Load an application stylesheet in the initial HTML and during hydration.
-- Integrate Tailwind when the application declares its Vite plugin and CSS packages.
+- Include the official `@tailwindcss/vite` plugin and Tailwind CSS 4.
 
 ## Prerequisites
 
-Use an Effront application with `@effront/vite` and a host adapter. Tailwind support requires application-owned `tailwindcss` and `@tailwindcss/vite` dependencies.
+Use an Effront application with `@effront/vite` and a host adapter. Tailwind CSS ships with this package, and an application that imports `tailwindcss` from its own stylesheet must also declare it directly.
 
 ## Setup
 
