@@ -15,7 +15,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.repository == 'totto2727-org/effront' && (github.event_name == 'push' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -55,8 +54,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets[github.ref == 'refs/heads/main' && 'CLOUDFLARE_API_TOKEN' || 'CLOUDFLARE_PREVIEW_API_TOKEN'] }}
           ALCHEMY_STAGE: ${{ steps.stage.outputs.name }}
         run: |
-          : "${CLOUDFLARE_ACCOUNT_ID:?Set the Cloudflare account ID for this deployment environment}"
-          : "${CLOUDFLARE_API_TOKEN:?Set the Cloudflare API token for this deployment environment}"
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           vp exec alchemy deploy --stage "$ALCHEMY_STAGE" --yes
           url="$(vp exec alchemy state read "effront-docs/$ALCHEMY_STAGE/output" --backend cloudflare --no-input --log-level none \
@@ -76,7 +73,7 @@ jobs:
           echo "[Documentation ($ALCHEMY_STAGE)]($url)" >> "$GITHUB_STEP_SUMMARY"
 
   preview-link:
-    if: github.repository == 'totto2727-org/effront' && github.ref != 'refs/heads/main' && needs.deploy.result == 'success'
+    if: github.ref != 'refs/heads/main' && needs.deploy.result == 'success'
     needs: deploy
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -85,7 +82,5 @@ jobs:
       name: docs-${{ needs.deploy.outputs.stage }}
       url: ${{ needs.deploy.outputs.url }}
     steps:
-      - name: Link documentation preview
-        env:
-          PREVIEW_URL: ${{ needs.deploy.outputs.url }}
-        run: echo "[Open this PR's documentation preview]($PREVIEW_URL)" >> "$GITHUB_STEP_SUMMARY"
+      # GitHub creates the branch-specific deployment for this job's environment.
+      - run: "true"

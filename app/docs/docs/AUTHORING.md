@@ -226,9 +226,9 @@ The hash is derived from the complete Git ref, so branch names containing `/` do
 Local development keeps Alchemy's separate `dev_<user>` stage, but the docs state backend is Cloudflare, so do not assume that starting this application is credential-free or has no remote state-store operations.
 Do not set `ALCHEMY_STAGE=production` when running `alchemy dev`.
 
-The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to all branches of this repository and can be dispatched manually from `main` only.
+The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to all branches of this repository and can also be dispatched manually from the chosen branch.
 It builds the required workspace packages before invoking `vp exec alchemy deploy --stage <stage> --yes` from `app/docs` directly in the workflow.
-After deployment it reads the URL from the Alchemy state output. The credential-bearing `docs-preview` job does not create a shared deployment record. A second metadata-only job publishes a separate URL-bearing GitHub deployment for each branch. That deployment is intended to appear in the corresponding PR's deployment section, while the Actions job summary also links it. Confirm the PR links remain available for two simultaneous branches after preview credentials are configured; this cannot be established without a real deployment.
+After deployment it reads the URL from the Alchemy state output. The credential-bearing `docs-preview` job does not create a shared deployment record. A second metadata-only job publishes a separate URL-bearing GitHub deployment for each branch. That deployment is intended to appear in the corresponding PR's deployment section, while the deploy job's Actions summary also links it. Confirm the PR links remain available for two simultaneous branches after preview credentials are configured; this cannot be established without a real deployment.
 Fork PRs do not trigger a push in this repository and do not receive credentials or an automatic remote preview.
 There is no package-level `deploy` script, to avoid accidental production deployment through a local task shortcut.
 Repository checks and tests belong to the separate CI workflow and are not repeated or awaited by the deployment workflow.
