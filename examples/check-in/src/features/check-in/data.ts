@@ -53,16 +53,16 @@ const fixedNow = "2026-09-24T03:00:00.000Z";
  * in one Node event-loop turn and inserts its audit record in the same operation. It is reset
  * whenever the host restarts and must be replaced by a database transaction in a real service.
  */
-export class CheckInStore {
-  readonly #organizers: ReadonlyArray<Organizer> = [
+export function makeCheckInStore() {
+  const organizers: ReadonlyArray<Organizer> = [
     { id: "organizer-ada", name: "Ada Organizer" },
     { id: "organizer-ben", name: "Ben Organizer" },
   ];
-  readonly #events = [
+  const events = [
     { id: "event-summit", name: "Node Summit", organizerId: "organizer-ada" },
     { id: "event-private", name: "Private Workshop", organizerId: "organizer-ben" },
   ] as const;
-  readonly #tickets: Ticket[] = [
+  const tickets: Ticket[] = [
     {
       id: "ticket-ada",
       eventId: "event-summit",
@@ -85,47 +85,48 @@ export class CheckInStore {
       checkedInAt: null,
     },
   ];
-  readonly #audit: AuditEntry[] = [];
+  const audit: AuditEntry[] = [];
 
-  preview(organizerId: string, eventId = "event-summit"): EventPreview | null {
-    const event = this.#events.find(
+  function preview(organizerId: string, eventId = "event-summit"): EventPreview | null {
+    const event = events.find(
       (candidate) => candidate.id === eventId && candidate.organizerId === organizerId,
     );
     if (!event) return null;
 
-    const organizer = this.#organizers.find((candidate) => candidate.id === organizerId);
+    const organizer = organizers.find((candidate) => candidate.id === organizerId);
     if (!organizer) return null;
 
-    const tickets = this.#tickets.filter((ticket) => ticket.eventId === event.id);
+    const eventTickets = tickets.filter((ticket) => ticket.eventId === event.id);
     return {
       eventId: event.id,
       eventName: event.name,
       organizerName: organizer.name,
-      checkedIn: tickets.filter((ticket) => ticket.checkedInAt !== null).length,
-      total: tickets.length,
-      attendees: tickets.map((ticket) => ({
+      checkedIn: eventTickets.filter((ticket) => ticket.checkedInAt !== null).length,
+      total: eventTickets.length,
+      attendees: eventTickets.map((ticket) => ({
         ticketCode: ticket.code,
         attendeeName: ticket.attendeeName,
         status: ticket.checkedInAt === null ? "ready" : "checked-in",
       })),
-      audit: this.#audit
-        .filter((entry) => tickets.some((ticket) => ticket.id === entry.ticketId))
+      audit: audit
+        .filter((entry) => eventTickets.some((ticket) => ticket.id === entry.ticketId))
         .map((entry) => ({
-          ticketCode: tickets.find((ticket) => ticket.id === entry.ticketId)?.code ?? "unknown",
+          ticketCode:
+            eventTickets.find((ticket) => ticket.id === entry.ticketId)?.code ?? "unknown",
           actorId: entry.actorId,
           occurredAt: entry.occurredAt,
         })),
     };
   }
 
-  checkIn(organizerId: string, ticketCode: string): CheckInResult {
+  function checkIn(organizerId: string, ticketCode: string): CheckInResult {
     const code = ticketCode.trim().toUpperCase();
     if (!/^[A-Z0-9]+-[A-Z0-9]+$/.test(code)) return { status: "invalid-ticket" };
 
-    const ticket = this.#tickets.find((candidate) => candidate.code === code);
+    const ticket = tickets.find((candidate) => candidate.code === code);
     if (!ticket) return { status: "not-found" };
 
-    const event = this.#events.find((candidate) => candidate.id === ticket.eventId);
+    const event = events.find((candidate) => candidate.id === ticket.eventId);
     if (!event || event.organizerId !== organizerId) return { status: "forbidden" };
 
     if (ticket.checkedInAt !== null) {
@@ -138,10 +139,12 @@ export class CheckInStore {
 
     // This guarded write and audit append are one synchronous, non-awaiting transition.
     ticket.checkedInAt = fixedNow;
-    this.#audit.push({ ticketId: ticket.id, actorId: organizerId, occurredAt: fixedNow });
+    audit.push({ ticketId: ticket.id, actorId: organizerId, occurredAt: fixedNow });
     return { status: "checked-in", attendeeName: ticket.attendeeName, occurredAt: fixedNow };
   }
+
+  return { preview, checkIn };
 }
 
-export const checkInStore = new CheckInStore();
+export const checkInStore = makeCheckInStore();
 export const demoOrganizer = { id: "organizer-ada", name: "Ada Organizer" } as const;

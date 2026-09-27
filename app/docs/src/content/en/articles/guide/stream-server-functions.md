@@ -29,20 +29,47 @@ Wrap the imported Server Function with `stream` from `@effront/core/query`.
 It returns an Effect `Stream` whose chunks have the handler's element type.
 
 ```tsx
+// src/progress-view.tsx
 "use client";
 
-import { Stream } from "effect";
 import { stream } from "@effront/core/query";
+import { Effect, Stream } from "effect";
+import { useEffect, useState } from "react";
 import { streamProgress } from "./progress";
 
-const progress = stream(streamProgress);
+const readProgress = stream(streamProgress);
 
-export const accumulatedProgress = progress({ count: 3 }).pipe(
-  Stream.scan([], (values, value) => [...values, value]),
-);
+export function ProgressView() {
+  const [values, setValues] = useState<number[]>([]);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Effect.runPromise(
+      Stream.runForEach(readProgress({ count: 3 }), (value) =>
+        Effect.sync(() => setValues((current) => [...current, value])),
+      ),
+      { signal: controller.signal },
+    ).catch(() => {
+      if (!controller.signal.aborted) setFailed(true);
+    });
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <section>
+      {failed && <p role="alert">Could not load progress.</p>}
+      <ol>
+        {values.map((value) => (
+          <li key={value}>{value}</li>
+        ))}
+      </ol>
+    </section>
+  );
+}
 ```
 
-Use the Stream and Effect APIs selected by the component to run, collect, or render the chunks.
+Each value updates the list as it arrives, and unmounting the component interrupts the request and server work.
 `streamAtom` creates an optional atom result function when a component needs the latest streamed chunk through Effect Reactivity.
 It requires the persistent `RegistryProvider` setup from [Query Server Functions](./query-server-functions.md#atom-setup), but `stream` itself does not.
 Before the first chunk, its error channel can also contain Effect's `Cause.NoSuchElementError`; handle the empty-yet state in the component.

@@ -29,20 +29,47 @@ import した Server Function を、`@effront/core/query` の `stream` で包み
 返される Effect の `Stream` は、ハンドラーの要素型のチャンクを発行します。
 
 ```tsx
+// src/progress-view.tsx
 "use client";
 
-import { Stream } from "effect";
 import { stream } from "@effront/core/query";
+import { Effect, Stream } from "effect";
+import { useEffect, useState } from "react";
 import { streamProgress } from "./progress";
 
-const progress = stream(streamProgress);
+const readProgress = stream(streamProgress);
 
-export const accumulatedProgress = progress({ count: 3 }).pipe(
-  Stream.scan([], (values, value) => [...values, value]),
-);
+export function ProgressView() {
+  const [values, setValues] = useState<number[]>([]);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Effect.runPromise(
+      Stream.runForEach(readProgress({ count: 3 }), (value) =>
+        Effect.sync(() => setValues((current) => [...current, value])),
+      ),
+      { signal: controller.signal },
+    ).catch(() => {
+      if (!controller.signal.aborted) setFailed(true);
+    });
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <section>
+      {failed && <p role="alert">進捗を取得できませんでした。</p>}
+      <ol>
+        {values.map((value) => (
+          <li key={value}>{value}</li>
+        ))}
+      </ol>
+    </section>
+  );
+}
 ```
 
-コンポーネントに合わせて Stream と Effect の API を使い、チャンクを実行、収集、描画します。
+各値の到着時にリストが更新され、コンポーネントが外れると通信とサーバー側の処理を中断します。
 Effect Reactivity から最新のチャンクを使う場合は、`streamAtom` で任意の atom result function を作成します。
 これには [Query Server Function](./query-server-functions.md#atom-setup) の永続的な `RegistryProvider` のセットアップが必要ですが、`stream` 自体には不要です。
 最初のチャンクより前では、エラーチャネルに Effect の `Cause.NoSuchElementError` も含まれます。コンポーネントでは、まだ値がない状態を扱ってください。

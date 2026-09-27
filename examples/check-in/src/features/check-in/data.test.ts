@@ -1,23 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { CheckInStore } from "./data";
+import { makeCheckInStore } from "./data";
 
-describe("CheckInStore", () => {
+describe("makeCheckInStore", () => {
   it("scopes previews to the authenticated organizer", () => {
-    const store = new CheckInStore();
+    const store = makeCheckInStore();
 
     expect(store.preview("organizer-ada", "event-summit")?.attendees).toHaveLength(2);
     expect(store.preview("organizer-ben", "event-summit")).toBeNull();
   });
 
   it("rejects an organizer trying to check in another organizer's ticket", () => {
-    const store = new CheckInStore();
+    const store = makeCheckInStore();
 
     expect(store.checkIn("organizer-ada", "PRIVATE-BEN")).toEqual({ status: "forbidden" });
     expect(store.preview("organizer-ben", "event-private")?.audit).toHaveLength(0);
   });
 
   it("creates one audit entry for repeated idempotent check-in requests", () => {
-    const store = new CheckInStore();
+    const store = makeCheckInStore();
 
     expect(store.checkIn("organizer-ada", "summit-ada")).toMatchObject({
       status: "checked-in",
@@ -40,7 +40,7 @@ describe("CheckInStore", () => {
   });
 
   it("validates ticket input before changing state", () => {
-    const store = new CheckInStore();
+    const store = makeCheckInStore();
 
     expect(store.checkIn("organizer-ada", "bad code")).toEqual({ status: "invalid-ticket" });
     expect(store.preview("organizer-ada")?.audit).toHaveLength(0);
