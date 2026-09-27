@@ -419,6 +419,27 @@ describe("documentation catalog", () => {
     },
   );
 
+  it.each(["en", "ja"] as const)(
+    "shows actionable query examples and an Alchemy plugin-order warning in %s",
+    async (locale) => {
+      const queryGuide = await text(`/${locale}/guide/query-server-functions`);
+      expect(queryGuide).toContain("useAtom(ticketStatus)");
+      expect(queryGuide).toContain("run([{ ticketCode }])");
+      expect(queryGuide).toContain("Effect.catchTags({");
+      expect(await render(`/${locale}/guide/query-server-functions`)).toContain(
+        'href="https://github.com/Effect-TS/effect/tree/main/packages/atom/react"',
+      );
+      const alchemy = await render(`/${locale}/api-reference/alchemy`);
+      expect(alchemy).toContain('data-alert="warning"');
+      const alchemyText = await text(`/${locale}/api-reference/alchemy`);
+      expect(alchemyText.indexOf("plugins: [effront(), effrontAlchemy()]")).toBeLessThan(
+        alchemyText.indexOf(
+          locale === "en" ? "Reversing the plugin order" : "プラグインの順序を逆にすると",
+        ),
+      );
+    },
+  );
+
   it.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
     (example) => {

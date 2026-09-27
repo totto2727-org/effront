@@ -28,13 +28,24 @@ The returned function accepts the same positional arguments and returns an `Effe
 
 import { Effect } from "effect";
 import { query } from "@effront/core/query";
+import { useState } from "react";
 import { lookupTicket } from "./ticket";
 
 const lookup = query(lookupTicket);
 
 export function TicketStatus({ ticketCode }: { ticketCode: string }) {
-  const onCheck = () => void Effect.runPromiseExit(lookup({ ticketCode }));
-  return <button onClick={onCheck}>Check ticket</button>;
+  const [status, setStatus] = useState<string | null>(null);
+  const onCheck = () => {
+    void Effect.runPromise(lookup({ ticketCode }))
+      .then(({ status }) => setStatus(status))
+      .catch(() => setStatus("Could not check ticket."));
+  };
+  return (
+    <>
+      <button onClick={onCheck}>Check ticket</button>
+      <p aria-live="polite">{status}</p>
+    </>
+  );
 }
 ```
 
@@ -52,10 +63,23 @@ Use it when an Effect Reactivity atom is a better fit for the component's loadin
 "use client";
 
 import { queryAtom } from "@effront/core/query";
+import { useAtom } from "@effect/atom-react";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { useEffect } from "react";
 import { lookupTicket } from "./ticket";
 
-export const ticketStatus = queryAtom(lookupTicket);
-// Read ticketStatus({ ticketCode }) with the Effect Reactivity API used by the component.
+const ticketStatus = queryAtom(lookupTicket);
+
+export function TicketStatusAtom({ ticketCode }: { ticketCode: string }) {
+  const [result, run] = useAtom(ticketStatus);
+  useEffect(() => {
+    run([{ ticketCode }]);
+  }, [ticketCode, run]);
+
+  if (AsyncResult.isInitial(result)) return <p>Loading…</p>;
+  if (AsyncResult.isFailure(result)) return <p role="alert">Could not check ticket.</p>;
+  return <p>{result.value.status}</p>;
+}
 ```
 
 The atom accepts the Server Function's original arguments.
@@ -64,26 +88,10 @@ The framework-only cancellation marker is not part of the encoded input, so the 
 ## Set up optional atom integration {#atom-setup}
 
 `query` works without an atom registry.
-Use `queryAtom` only when the application opts into Effect Reactivity with [`@effect/atom-react`](https://www.npmjs.com/package/@effect/atom-react), installed at a version compatible with the application's Effect 4 release:
-
-```sh
-npm install @effect/atom-react
-```
-
-Place its `RegistryProvider` in the application's persistent Root Layout, not inside a page that navigation replaces.
-That gives atom results one application-owned registry across page transitions.
-
-```tsx
-import { RegistryProvider } from "@effect/atom-react";
-import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-
-export const RootLayout = EFFRONT.Layout.make({
-  render: ({ children }) => Effect.succeed(<RegistryProvider>{children}</RegistryProvider>),
-});
-```
-
-Read `ticketStatus({ ticketCode })` below that provider with the `@effect/atom-react` API selected by the component.
+Use `queryAtom` only when the application opts into Effect Reactivity. For installation and React integration with your Effect 4 release, follow the [official `@effect/atom-react` package](https://github.com/Effect-TS/effect/tree/main/packages/atom/react).
+Place its `RegistryProvider` in a client boundary under the persistent Root Layout, not inside a page that navigation replaces.
+See the check-in example's [client-side provider](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/features/check-in/registry.tsx) and [Root Layout](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/entry.effront.tsx).
+Render the `TicketStatusAtom` shown above below that provider.
 
 ## Handle typed failures {#errors}
 
@@ -98,6 +106,26 @@ Queries fail in the Effect error channel with `ServerFnError`, exported by `@eff
 Handle known tags with Effect error operators, and show a safe, user-facing message rather than exposing a defect detail or stack.
 Expected business outcomes, such as a ticket that is already checked in, are usually clearer as a successful tagged value returned by the handler.
 That keeps them separate from invalid input, defects, and transport failures.
+
+```tsx
+"use client";
+
+import { query } from "@effront/core/query";
+import { Effect } from "effect";
+import { lookupTicket } from "./ticket";
+
+export const lookupMessage = (ticketCode: string) =>
+  query(lookupTicket)({ ticketCode }).pipe(
+    Effect.map(({ status }) => status),
+    Effect.catchTags({
+      ServerFnInputError: () => Effect.succeed("Invalid ticket code."),
+      ServerFnDefect: () => Effect.succeed("Could not check ticket."),
+      ServerFnTransportError: () => Effect.succeed("Connection lost. Please retry."),
+    }),
+  );
+```
+
+`lookupMessage` returns an Effect with a safe display message. Treat expected business outcomes as successful values from `lookupTicket`.
 
 ## Cancellation and request lifetime {#cancellation}
 

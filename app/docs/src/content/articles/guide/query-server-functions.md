@@ -29,20 +29,31 @@ Client Component では、import した Server Function を `query` で包みま
 
 import { Effect } from "effect";
 import { query } from "@effront/core/query";
+import { useState } from "react";
 import { lookupTicket } from "./ticket";
 
 const lookup = query(lookupTicket);
 
 export function TicketStatus({ ticketCode }: { ticketCode: string }) {
-  const onCheck = () => void Effect.runPromiseExit(lookup({ ticketCode }));
-  return <button onClick={onCheck}>Check ticket</button>;
+  const [status, setStatus] = useState<string | null>(null);
+  const onCheck = () => {
+    void Effect.runPromise(lookup({ ticketCode }))
+      .then(({ status }) => setStatus(status))
+      .catch(() => setStatus("チケットを確認できませんでした。"));
+  };
+  return (
+    <>
+      <button onClick={onCheck}>確認する</button>
+      <p aria-live="polite">{status}</p>
+    </>
+  );
 }
 ```
 
 `query(lookupTicket)` の Effect の結果型は `Effect<Output, ServerFnError>` です。
 クエリが成功すると、Flight の応答が完全に終了してリクエストのリソースが解放された後に値を返します。通常の Server Function のルート更新は要求しません。
 そのため、遅れて起きた転送失敗も成功したクエリ結果にはならず、`ServerFnTransportError` になります。
-通常の mutation 更新に UI が依存する書き込みには使わないでください。
+データを書き換えたあとに画面を更新したい場合は、通常の Server Function を使ってください。
 
 ## リアクティブな結果を保持する {#atom}
 
@@ -53,10 +64,23 @@ Effect Reactivity の atom がコンポーネントの読み込み中、成功�
 "use client";
 
 import { queryAtom } from "@effront/core/query";
+import { useAtom } from "@effect/atom-react";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { useEffect } from "react";
 import { lookupTicket } from "./ticket";
 
-export const ticketStatus = queryAtom(lookupTicket);
-// コンポーネントで使う Effect Reactivity API を通じて ticketStatus({ ticketCode }) を読み取ります。
+const ticketStatus = queryAtom(lookupTicket);
+
+export function TicketStatusAtom({ ticketCode }: { ticketCode: string }) {
+  const [result, run] = useAtom(ticketStatus);
+  useEffect(() => {
+    run([{ ticketCode }]);
+  }, [ticketCode, run]);
+
+  if (AsyncResult.isInitial(result)) return <p>読み込み中…</p>;
+  if (AsyncResult.isFailure(result)) return <p role="alert">確認できませんでした。</p>;
+  return <p>{result.value.status}</p>;
+}
 ```
 
 atom は元の Server Function と同じ引数を受け取ります。
@@ -66,26 +90,10 @@ atom は元の Server Function と同じ引数を受け取ります。
 
 `query` に atom registry は必要ありません。
 `queryAtom` は、アプリケーションが Effect Reactivity を使う場合だけ利用します。
-その場合は、アプリケーションの Effect 4 リリースと互換性のある [`@effect/atom-react`](https://www.npmjs.com/package/@effect/atom-react) をインストールします。
-
-```sh
-npm install @effect/atom-react
-```
-
-`RegistryProvider` は、ナビゲーションで置き換わる Page ではなく、アプリケーションの永続的な Root Layout に配置します。
-これにより、ページ遷移をまたいで atom の結果が一つのアプリケーション所有 registry を使えます。
-
-```tsx
-import { RegistryProvider } from "@effect/atom-react";
-import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-
-export const RootLayout = EFFRONT.Layout.make({
-  render: ({ children }) => Effect.succeed(<RegistryProvider>{children}</RegistryProvider>),
-});
-```
-
-`ticketStatus({ ticketCode })` はこの provider の下で、コンポーネントが選ぶ `@effect/atom-react` の API から読み取ります。
+インストールと React への統合は、使用中の Effect 4 リリースに合わせて [`@effect/atom-react` の公式パッケージ](https://github.com/Effect-TS/effect/tree/main/packages/atom/react)を参照してください。
+`RegistryProvider` はナビゲーションで置き換わる Page ではなく、永続的な Root Layout のクライアント境界に配置します。
+[チェックインサンプルのクライアント側 provider](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/features/check-in/registry.tsx) と [Root Layout](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/entry.effront.tsx)を参照してください。
+上の `TicketStatusAtom` はその provider の下で使用します。
 
 ## 型付きの失敗を扱う {#errors}
 
@@ -101,6 +109,26 @@ export const RootLayout = EFFRONT.Layout.make({
 defect の詳細や stack をそのまま表示しないでください。
 すでにチェックイン済みのチケットのような想定内の業務上の結果は、ハンドラーから成功したタグ付きの値として返す方が通常は明確です。
 そのようにすれば、無効な入力、defect、転送失敗と区別できます。
+
+```tsx
+"use client";
+
+import { query } from "@effront/core/query";
+import { Effect } from "effect";
+import { lookupTicket } from "./ticket";
+
+export const lookupMessage = (ticketCode: string) =>
+  query(lookupTicket)({ ticketCode }).pipe(
+    Effect.map(({ status }) => status),
+    Effect.catchTags({
+      ServerFnInputError: () => Effect.succeed("チケット番号が無効です。"),
+      ServerFnDefect: () => Effect.succeed("確認に失敗しました。"),
+      ServerFnTransportError: () => Effect.succeed("通信できません。再試行してください。"),
+    }),
+  );
+```
+
+`lookupMessage` は安全な表示用メッセージを返す Effect です。業務上の結果は `lookupTicket` の成功値から判定してください。
 
 ## キャンセルとリクエストの生存期間 {#cancellation}
 

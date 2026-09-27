@@ -49,14 +49,13 @@ Alchemy が受け付けるエラーの union はより狭いため、`fetch` を
 - HTTP サービス、Scope、Layer のメモ化状態、Alchemy の `RuntimeContext`、Worker self、汎用の `Self`、Cloudflare 環境、元の Request、Worker 環境、実行コンテキストは捕捉しません。
 - 参照の捕捉はサービスの取得や寿命の延長を行いません。所有者は、それを使うすべてのレスポンスの処理が終わるまで保持する必要があります。
 - アプリケーション Layer はリクエストごとに取得します。Alchemy はストリーミングの完了、失敗、キャンセルまでリクエスト Scope を保持します。
-- 構築時の Context を絞り込んでも、名前付きのアプリケーション capability を含む明示的なホスト外サービスの要件は残ります。アプリケーション Layer または捕捉する外部 Context から提供してください。
 
 Worker と Stack の宣言は [Alchemy のセットアップ](../platforms/alchemy.md) を参照してください。
 
 ## effrontAlchemy {#vite}
 
 `@effront/alchemy/cloudflare/vite` の `effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` は、`effront()` より後に登録する必要があります。
-プラグインの順序を逆にすると `TypeError` になります。正しい順序は次のとおりです。
+正しい順序は次のとおりです。
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
@@ -67,6 +66,9 @@ export default defineConfig({
   plugins: [effront(), effrontAlchemy()],
 });
 ```
+
+> [!WARNING]
+> プラグインの順序を逆にすると `TypeError` になります。
 
 | オプション | 型       | 既定値                   | 契約                                                                                                  |
 | ---------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |

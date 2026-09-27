@@ -49,14 +49,13 @@ The [Basic example](https://github.com/totto2727-org/effront/tree/main/examples/
 - Capture excludes HTTP services, Scope, Layer memoization state, Alchemy `RuntimeContext`, Worker self, generic `Self`, Cloudflare environment, raw Request, Worker environment, and execution context.
 - Capturing a reference does not acquire the service or extend its lifetime. Its owner must retain it through every response that uses it.
 - The application Layer is acquired per request. Alchemy retains the request Scope through streaming completion, failure, or cancellation.
-- Explicitly required non-host services, including named application capabilities, remain application dependencies after construction-context filtering. Provide them through the application Layer or a captured external Context.
 
 For Worker and Stack declarations, see [Alchemy setup](../platforms/alchemy.md).
 
 ## effrontAlchemy {#vite}
 
 `effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` from `@effront/alchemy/cloudflare/vite` must follow `effront()`.
-Reversing their plugin order throws `TypeError`. Use this order:
+Use this order:
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
@@ -67,6 +66,9 @@ export default defineConfig({
   plugins: [effront(), effrontAlchemy()],
 });
 ```
+
+> [!WARNING]
+> Reversing the plugin order throws `TypeError`.
 
 | Option   | Type     | Default                  | Contract                                                                                                 |
 | -------- | -------- | ------------------------ | -------------------------------------------------------------------------------------------------------- |
