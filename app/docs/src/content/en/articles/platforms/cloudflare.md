@@ -1,6 +1,6 @@
 ## Run the example {#setup}
 
-Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then run:
+Install the current Node.js LTS and [Vite+](https://viteplus.dev/), then run:
 
 ```bash
 vp create effront -- my-app --platform cloudflare

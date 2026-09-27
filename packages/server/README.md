@@ -13,7 +13,7 @@ Follow the [Node.js guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w
 
 ## Prerequisites
 
-Use a supported Node.js development runtime and matching Effect platform packages. The Bun production host requires Bun 1.4.2 or later. See the [runtime requirements](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/server) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/server)).
+Use the current Node.js LTS and matching Effect platform packages. The Bun production host requires the current Bun release. See the [runtime requirements](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/server) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/server)).
 
 ## Setup
 

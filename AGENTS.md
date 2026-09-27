@@ -18,6 +18,7 @@
 - Use VitePlus for package management, formatting, linting, checks, and test entry points; retain its default formatting and lint rules.
 - Keep temporary evidence under the owning repository or package's ignored `tmp/`; never commit credentials, `.dev.vars`, generated output, or temporary reports.
 - Automated local acceptance must not require Cloudflare authentication or remote services. Official Alchemy CLI development has a separate profile prerequisite documented by its adapter; do not force verification through an authentication boundary.
+- Target the current Node.js LTS and the current Bun release only. Do not add compatibility shims, dual code paths, or documented floors for older runtimes, and prefer the modern runtime APIs those versions provide.
 
 ### Standard tasks
 

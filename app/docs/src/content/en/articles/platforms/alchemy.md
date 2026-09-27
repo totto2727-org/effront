@@ -1,6 +1,6 @@
 ## Prepare the example {#setup}
 
-Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
+Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
 
 > [!IMPORTANT]
 > The example pins Alchemy to `2.0.0-beta.79`, whose CLI requires a configured Cloudflare profile even for local development.

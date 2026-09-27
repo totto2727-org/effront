@@ -1,7 +1,7 @@
 ## サンプルを起動する {#setup}
 
-Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールします。
-本番サーバー用に [Bun 1.4.2 以降](https://bun.sh/docs/installation) もインストールします。
+最新の Node.js LTS と [Vite+](https://viteplus.dev/) をインストールします。
+本番サーバー用に[最新の Bun](https://bun.sh/docs/installation) もインストールします。
 Vite の開発サーバーは Node.js を使うため、両方のランタイムを用意してください。
 
 ```bash

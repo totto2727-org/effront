@@ -8,7 +8,7 @@ Follow [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.t
 
 ## Prerequisites
 
-Use Node.js 24.11 or later for VitePlus and Bun 1.4.2 or later for a Bun production host. Alchemy local development requires a configured Cloudflare profile.
+Use the current Node.js LTS for VitePlus and the current Bun release for a Bun production host. Alchemy local development requires a configured Cloudflare profile.
 
 ## Setup
 

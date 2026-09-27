@@ -1,7 +1,7 @@
 ## Run the example {#setup}
 
-Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
-Also install [Bun 1.4.2 or later](https://bun.sh/docs/installation) for the production server.
+Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
+Also install the [current Bun release](https://bun.sh/docs/installation) for the production server.
 Vite development uses Node.js, so keep both runtimes installed.
 Create a Bun project and install its dependencies:
 

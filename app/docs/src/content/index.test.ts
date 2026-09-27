@@ -458,9 +458,10 @@ describe("documentation catalog", () => {
       expect(await render(`/platforms/${host}`)).toContain('href="/api-reference/server"');
     }
     const bun = await text("/platforms/bun");
-    for (const required of ["Bun 1.4.2", "@effect/platform-node", "@effect/platform-bun"]) {
+    for (const required of ["Bun", "@effect/platform-node", "@effect/platform-bun"]) {
       expect(bun).toContain(required);
     }
+    expect(await render("/platforms/bun")).toContain('href="https://bun.sh/docs/installation"');
     const alchemy = await render("/platforms/alchemy");
     expect(alchemy).toContain("profile");
     expect(alchemy).toContain('href="https://alchemy.run/');
