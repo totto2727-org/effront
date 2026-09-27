@@ -81,8 +81,8 @@ The application does not use a custom parser, runtime filesystem loader, Git exe
 Only rendered content and navigation metadata cross the client boundary, not the collection or highlighter.
 
 Markdown permits HTML, attributes, and components; it is not a sanitizer for untrusted submissions.
-Comark's standard renderer does not automatically register Math or Mermaid components, so do not promise their complete React SSR support.
-See the [Markdown collection guide](../../../packages/markdown/docs/GUIDE.md) for reference resolution and renderer limitations.
+The configured Effront renderer registers Math and Mermaid, but neither supports SSR.
+Maintain reference-resolution and renderer contracts in the [English Markdown reference](../src/content/en/articles/api-reference/markdown.md) and its [Japanese translation](../src/content/articles/api-reference/markdown.md), not in a separate package consumer guide.
 
 ### Code and shell rendering
 

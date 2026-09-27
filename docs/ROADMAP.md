@@ -63,13 +63,13 @@ See [the package API and example](../packages/markdown/README.md).
 
 The 2026-09-15 simplification keeps Vite responsible for raw document imports, asset URLs, bundling, and development updates.
 The package prepares collections and parsed documents through typed Effect operations and resolves source-file references to application page URLs or Vite-provided asset URLs.
-Applications render the result with Comark's standard `MarkdownDocument` and own any component mappings.
-The package does not register replacement Math/Mermaid components, generate their SSR markup, or rewrite generated SVG font imports.
-
-Comark React 0.6.2's standard document renderer does not automatically register its separate Math and Mermaid components.
-With no application mapping, math remains plain expression content and Mermaid does not produce a rendered diagram.
+The configured `@effront/markdown/document` renderer now supplies Math/Mermaid client leaves while preserving the standard Comark document renderer and user component mappings.
+The client leaves reuse Comark's default Math/Mermaid components rather than implementing replacement renderers.
+Its separate stylesheet supplies KaTeX CSS and packaged fonts; applications own prose, layout, alerts, and colors.
+Mermaid's upstream SVG styles, font imports, themes, and invalid-input behavior remain unchanged.
+Ordinary Markdown remains server-renderable, but Math starts as `...` and Mermaid as an empty container until hydration effects run.
 Full no-JavaScript math and diagram rendering remains a future task, rather than a current compatibility guarantee.
-Before adding support, verify the chosen upstream components through real RSC, Workers HTML/Flight, hydration, and no-JavaScript browser paths, including user mapping precedence and client dependency/network behavior.
+Before adding rich SSR support, verify real RSC, Workers HTML/Flight, hydration, and no-JavaScript browser paths, including user mapping precedence and client dependency/network behavior.
 Keep Comark's standard parser defaults and treat content, plugins, and embedded components as trusted authored inputs, not sanitized user submissions.
 
 ### Direction

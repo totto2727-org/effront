@@ -1,5 +1,7 @@
-import { MarkdownDocument as ComarkMarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
+import { MarkdownDocument } from "@effront/markdown/document";
+import { Math } from "@effront/markdown/math";
+import { Mermaid } from "@effront/markdown/mermaid";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { manual } from "../content";
@@ -11,6 +13,7 @@ import { Counter } from "./counter";
 import { GreetingAction } from "./greeting-action";
 import { HostLive } from "./greeting-host";
 import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";
+import { MarkdownHeading } from "./markdown-heading";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -141,10 +144,52 @@ const ManualPage = Manual.Page.make({
     const document = yield* parseMarkdown(entry);
     return (
       <article className="comark" data-markdown-page={entry.url} data-doc-page={entry.url}>
-        <ComarkMarkdownDocument value={document} />
+        <MarkdownDocument value={document} components={{ h1: MarkdownHeading }} />
       </article>
     );
   }),
+});
+
+const ServerMath = ({ content }: { readonly content: string }) => (
+  <span data-testid="server-math">Server math: {content}</span>
+);
+
+const ServerMermaid = ({ content }: { readonly content: string }) => (
+  <pre data-testid="server-mermaid">Server diagram: {content}</pre>
+);
+
+const ServerOverridesPage = EFFRONT.Page.make({
+  render: Effect.fn(function* () {
+    const collection = yield* manual;
+    const entry = collection.get("/manual");
+    if (!entry) throw new TypeError("The server-only Markdown fixture requires /manual content");
+    const document = yield* parseMarkdown(entry);
+    return (
+      <article data-testid="server-only-markdown">
+        <MarkdownDocument
+          value={document}
+          components={{ Math: ServerMath, Mermaid: ServerMermaid }}
+        />
+      </article>
+    );
+  }),
+});
+
+const RichComponentsPage = EFFRONT.Page.make({
+  render: () =>
+    Effect.succeed(
+      <article data-testid="public-rich-components">
+        <Math content="x^2" className="inline" />
+        <Mermaid
+          content={"flowchart LR\n Public --> API"}
+          className="custom-mermaid"
+          width="320px"
+          height="180px"
+          theme={{ bg: "#ffffff", fg: "#123456" }}
+          themeDark={{ bg: "#112233", fg: "#abcdef" }}
+        />
+      </article>,
+    ),
 });
 
 export default EFFRONT.make({
@@ -152,6 +197,8 @@ export default EFFRONT.make({
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", HomePage)
     .page("/about", AboutPage)
+    .page("/manual-server-only", ServerOverridesPage)
+    .page("/rich-components", RichComponentsPage)
     .mount("/transitions", transitionRoutes)
     .mount("/manual", Manual.Routes.make({ layout: ManualLayout }).page("/*path", ManualPage)),
 });

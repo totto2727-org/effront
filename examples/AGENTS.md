@@ -49,7 +49,7 @@ Workspace preparation is separate from development startup; example development 
 ## Task-specific documentation
 
 - When changing native host wiring or profile prerequisites: [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md).
-- When changing Markdown rendering or assets: [Markdown guide](../packages/markdown/docs/GUIDE.md).
+- When changing Markdown rendering or assets: [Markdown implementation](../packages/markdown/docs/IMPLEMENTATION.md) and [consumer API source](../app/docs/src/content/en/articles/api-reference/markdown.md).
 - When changing standalone host boundaries: [Workers architecture](../docs/WORKERS.md).
 - When exploring or changing the native Node Loading/Suspense regression fixture: [playground guide](../tests/e2e-server/fixtures/node/docs/LOADING.md).
 - When exploring the independent Alchemy Loading example: [Loading guide](loading/docs/LOADING.md).

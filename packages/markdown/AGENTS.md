@@ -5,7 +5,9 @@
 - `src/collection.ts` owns glob-map indexing, URL lookup, and source-relative references.
 - `src/parse.ts` owns Comark parsing, default mdts plugins, and post-parse link/image resolution.
 - `src/error.ts` owns the shared `MarkdownError` failure type.
-- `docs/GUIDE.md` owns the consumer API; `docs/IMPLEMENTATION.md` preserves the collection flowcharts and verification boundaries.
+- `src/document.tsx` owns the configured renderer, `src/math.tsx` and `src/mermaid.tsx` wrap upstream client components, and `src/styles.css` supplies required KaTeX styles.
+- Consumer documentation lives in the [English guide](../../app/docs/src/content/en/articles/guide/markdown.md) and [API reference](../../app/docs/src/content/en/articles/api-reference/markdown.md), with [Japanese guide](../../app/docs/src/content/articles/guide/markdown.md) and [API reference](../../app/docs/src/content/articles/api-reference/markdown.md) translations. Update both locales rather than adding package-local consumer guides.
+- `docs/IMPLEMENTATION.md` owns collection flowcharts, rendering graph boundaries, and packaging mechanics for maintainers.
 
 ## Architecture
 
@@ -13,7 +15,11 @@
 - Preserve segment-wise URL encoding and single decoding. Use Effect's `NodePath.layerPosix` for host-independent source-relative paths, with `node:path` and `node:url` available in the runtime.
 - Keep configuration, reference, and parsing failures typed as `MarkdownError`. Missing page lookup stays an ordinary `undefined` result so the application can choose a 404 before streaming.
 - Resolve literal `a.href` and `img.src` attributes after standard Comark parsing and user plugins. Preserve dynamic bindings and application component mappings.
-- Keep Comark's standard renderer unchanged. Do not introduce forced Math/Mermaid components, custom SVG/font rewriting, or SSR replacements as incidental fixes.
+- Keep the collection/parser entry point independent from the public document renderer and preserve Comark's document format and user component mappings.
+- Keep ordinary prose server-renderable and restrict client boundaries to rich leaves. Do not evaluate Mermaid's rendering dependency during SSR or claim completed no-JavaScript math/diagrams.
+- Reuse Comark's default Math/Mermaid components through minimal client wrappers. Do not add custom rendering, SVG/font rewriting, theme filtering, or parser AST rewrites for presentation.
+- Keep shared CSS minimal. Applications own prose, typography, layout, alerts, and colors; preserve upstream rendering defaults rather than imposing a shared theme.
+- Preserve local CSS/font resolution and the KaTeX license in the published archive. Verify the actual built browser host and public asset paths after changing renderer or pack settings.
 - Retain KaTeX while Comark's math parser imports it, independently of whether a consumer renders math components.
 
 ## Task-specific documentation

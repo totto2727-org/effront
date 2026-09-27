@@ -23,7 +23,7 @@
 - Write Effront-specific explanations and link generic React/Effect concepts to official documentation. Keep developer commands here or in the authoring guide, not consumer testing pages.
 - Author English from the verified API and reader task, review it, then translate it into Japanese. Keep both catalogs, stable heading IDs, and examples aligned; validate `/en` and `/ja` without falling back to another language.
 - Consumer guides describe required steps, observable results, and actionable caveats. Keep internal wiring in Architecture; avoid explanations of mechanisms users do not need to configure or unsupported scenarios unrelated to the guide.
-- Use the existing `@effront/markdown` collection/parser and standard Comark renderer for prose articles; preserve explicit routes and heading IDs and keep loading/parsing in the server graph.
+- Use the existing `@effront/markdown` collection/parser and configured `@effront/markdown/document` renderer for prose articles; preserve explicit routes and heading IDs and keep loading/parsing in the server graph.
 - Architecture excerpts are authored exact source selections; never read the filesystem, execute Git, or fetch GitHub while rendering pages.
 - Update source excerpts, explanations, and reviewed baseline metadata together when core changes. Tests compare the excerpts to both the current source and the explicit historical baseline.
 - Keep shared DocsShell/sidebar/search/scroll state persistent through route changes; transition only the Page article, not the entire shell.

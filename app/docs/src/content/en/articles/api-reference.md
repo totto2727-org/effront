@@ -20,6 +20,9 @@ Choose the other packages for hosting, Markdown, or styling.
 | `@effront/alchemy/cloudflare/vite` | `effrontAlchemy`                                               | [Alchemy](./api-reference/alchemy.md)                                                    |
 | `@effront/markdown`                | `createMarkdownCollection`, `parseMarkdown`, `MarkdownError`   | [Markdown](./api-reference/markdown.md)                                                  |
 | `@effront/tailwind`                | `effrontTailwind`                                              | [Tailwind](./api-reference/tailwind.md)                                                  |
+| `@effront/markdown/document`       | `MarkdownDocument`, `MarkdownDocumentProps`                    | [Markdown](./api-reference/markdown.md)                                                  |
+| `@effront/markdown/math`           | `Math`                                                         | [Markdown](./api-reference/markdown.md)                                                  |
+| `@effront/markdown/mermaid`        | `Mermaid`                                                      | [Markdown](./api-reference/markdown.md)                                                  |
 
 | `@effront/core/query` | `query`, `queryAtom`, `stream`, `streamAtom`, typed Server Function errors | [Query Server Functions](/en/guide/query-server-functions), [Stream Server Functions](/en/guide/stream-server-functions) |
 

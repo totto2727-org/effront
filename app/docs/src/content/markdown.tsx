@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
+import { MarkdownDocument } from "@effront/markdown/document";
 import { createMarkdownCollection, parseMarkdown } from "@effront/markdown";
 import { Effect } from "effect";
 import { articleCatalog } from "./catalog";
