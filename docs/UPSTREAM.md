@@ -11,7 +11,9 @@ It is distinct from the version of this Workers fork.
 | Baseline commit                           | `ed886996d1d3780b94166af4f798c53416d547c8`                                |
 | Commit timestamp                          | `2026-09-10T07:08:42Z`                                                    |
 | Commit subject                            | `Merge pull request #30 from nikhilsnayak/chore/update-package-homepages` |
-| Last fully incorporated upstream baseline | `ed886996d1d3780b94166af4f798c53416d547c8`                                |
+| Last fully incorporated upstream baseline | `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`                                |
+| Last incorporated commit timestamp        | `2026-09-19T10:02:00Z`                                                    |
+| Last incorporated commit subject          | `Merge pull request #53 from nikhilsnayak/schema/jit`                     |
 
 Sources: [upstream commit](https://github.com/nikhilsnayak/effective-rsc/commit/ed886996d1d3780b94166af4f798c53416d547c8) and [package manifest at that commit](https://github.com/nikhilsnayak/effective-rsc/blob/ed886996d1d3780b94166af4f798c53416d547c8/packages/effective-rsc/package.json).
 The version above is read from the manifest, not an assertion that the commit is a release tag or an exact npm publication.
@@ -25,20 +27,46 @@ The historical combined Cloudflare factory was superseded after the pinned compa
 
 ## Future incorporation
 
-Keep the original baseline immutable.
+Keep the historical baseline immutable as the comparison point, and advance the last fully incorporated baseline whenever a reviewed upstream range is fully accounted for.
 When upstream changes are incorporated, add one row per adopted upstream feature, naming the local commits that deliver it and why the Effront implementation differs from upstream.
 Record the reason for every intentional divergence; an undocumented divergence is treated as an untracked risk, so extend this document in the same change that adopts upstream behavior.
 Keep the existing Effront implementation whenever it already satisfies the upstream feature: adopt the behavior, not the upstream code. Upstream carries a different build tool, runtime, and deployment target, so import only the parts that are essentially required, and record everything else as a divergence instead of copying it.
-Advance the last fully incorporated baseline only when the complete change range has been accounted for; a selective cherry-pick does not imply all intervening upstream changes were incorporated.
+Account for every commit in the range, not only the adopted ones: a range is complete when each commit is either recorded as an adopted feature or recorded as deliberately deferred with a reason.
+Then advance the baseline to the last reviewed commit; a selective cherry-pick without that accounting does not imply the intervening upstream changes were incorporated.
 The Workers/VitePlus runtime intentionally replaces upstream Bun/Rspack behavior, so upstream changes need compatibility review rather than unconditional merging.
 
-## Reviewed range
+## Incorporated range
 
-The 2026-09-24 to 2026-09-26 work reviewed the upstream [0.2.0](https://github.com/nikhilsnayak/effective-rsc/releases/tag/v0.2.0) release merge `0b5cb20a` and every commit after it up to `d76104aa`, the upstream `main` head at review time.
-The release merge itself contains 34 commits after this baseline, including asset compilation (`0006bbca`, `635d2453`), React runtime graph resolution (`7ca83cb1`), the Atom registry root (`80bc27ec`), interruptible queries (`bcd3d255`), request-owned streams (`2df9211a`, `91fa61ea`), the streaming feed (`355d0b1f`, `c3dc57ab`), the check-in preview (`428fcd41`), documentation restructure (`8d22d8cc`), optional Server Function input (`1dbdb91b`), and source maps with cancellation (`6ab7e124`).
-The post-release commits in the reviewed range are `a98ee362`, `d8fad159`, `d8abb492`, `fdd8c135`, `cb3ce5d8`, and the `d76104aa` merge.
-Both ranges were enumerated with the upstream compare API rather than inferred, and the tables below record which features were adopted and why the remainder were deferred.
-The immutable baseline `ed886996d1d3780b94166af4f798c53416d547c8`, recorded on 2026-09-12 from the historical package manifest and the first local commit's parent, remains unchanged by this selective work.
+On 2026-09-27 the last fully incorporated baseline advanced from `ed886996d1d3780b94166af4f798c53416d547c8` (2026-09-10) to `d76104aaf3c18cf25191a64bff860a3f6cc08aa0` (2026-09-19), covering the [0.2.0](https://github.com/nikhilsnayak/effective-rsc/releases/tag/v0.2.0) release and the six commits that followed it.
+The range was enumerated with the upstream compare API rather than inferred: `ed886996...0b5cb20a` contains 34 commits and `0b5cb20a...d76104aa` contains six.
+Every commit in those ranges has an explicit disposition in the accounting table below, with the feature-level detail in [adopted upstream features](#adopted-upstream-features) and the reasons to skip the rest in [deferred upstream commits](#deferred-upstream-commits).
+The historical baseline `ed886996d1d3780b94166af4f798c53416d547c8`, recorded on 2026-09-12 from the historical package manifest and the first local commit's parent, stays as the immutable comparison point for the architecture excerpts and earlier provenance records.
+
+### Range accounting
+
+| Upstream commits                                        | Disposition                                                                                               |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `0006bbca`, `a248942a`, `635d2453`, `f230fd5f` (PR #31) | Deferred, Rspack asset compilation.                                                                       |
+| `ccb00df0`, `9be750c8` (PR #32)                         | Deferred, upstream test infrastructure.                                                                   |
+| `7ca83cb1`, `e6bbe8df` (PR #33)                         | Deferred, Rspack React runtime graphs.                                                                    |
+| `80bc27ec`, `f6ad8e51` (PR #37)                         | Adopted, Atom registry in the application root.                                                           |
+| `bcd3d255`, `d9804ba6` (PR #34)                         | Adopted, interruptible queries.                                                                           |
+| `2df9211a`, `f885a3e2` (PR #35)                         | Adopted, request-owned streams.                                                                           |
+| `428fcd41`, `aa033b75` (PR #36)                         | Adopted, check-in sample.                                                                                 |
+| `8d22d8cc`, `3676c079` (PR #38)                         | Partially adopted, bilingual guides for the adopted behavior.                                             |
+| `7dd34437`, `becd336e`, `61779f7c` (PR #40)             | Deferred, release-docs pipeline.                                                                          |
+| `1dbdb91b`, `4adf45c1` (PR #41)                         | Adopted, zero-argument Server Function input.                                                             |
+| `91fa61ea`                                              | Adopted, full Flight completion for streams.                                                              |
+| `355d0b1f`, `c1a47148` (PR #43)                         | Adopted, streaming-feed example.                                                                          |
+| `d9bdcf7c`, `ca4204a9` (PR #45)                         | Deferred, Vercel packaging.                                                                               |
+| `6ab7e124`, `925156a0` (PR #46)                         | Adopted, cancellation and Vite source-map verification.                                                   |
+| `c3dc57ab`, `bfe9cb5c` (PR #47)                         | Adopted, streaming-feed query retry.                                                                      |
+| `341473a9`, `0b5cb20a` (PR #48)                         | Deferred as code, upstream 0.2.0 release preparation; `0b5cb20a` bounds the release portion of the range. |
+| `a98ee362`                                              | Deferred, upstream documentation publication.                                                             |
+| `d8fad159`                                              | Adopted as Effront's own dependency pins.                                                                 |
+| `d8abb492`                                              | Deferred, upstream contributor documentation restructure.                                                 |
+| `fdd8c135`                                              | Adopted, dependency-driven Tailwind configuration.                                                        |
+| `cb3ce5d8`, `d76104aa` (PR #53)                         | Adopted, per-graph Schema JIT registration; `d76104aa` bounds the range.                                  |
 
 ## Adopted upstream features
 
@@ -65,6 +93,8 @@ The immutable baseline `ed886996d1d3780b94166af4f798c53416d547c8`, recorded on 2
 | `7dd34437`, `becd336e`, `61779f7c`             | Upstream documentation promotion and release-docs pipeline. Effront publishes its own bilingual site and does not pin released docs from the package.                                                                                                                                                                                             |
 | `d9bdcf7c`, `ca4204a9`                         | Vercel packaging for the streaming feed, together with the Vite-native Build Output adapter that was added locally as `726ea05c` and removed in `7706fdaf`. Local artifact tests passed, but hosted deployment, platform routing and limits, and disconnect propagation remain unauthorized and unverified, so the roadmap keeps Vercel deferred. |
 | `341473a9`                                     | Upstream 0.2.0 release preparation. Effront has its own release policy, versioning, and publication workflow.                                                                                                                                                                                                                                     |
+| `a98ee362`                                     | Upstream documentation publication for the released package. Effront documents the adopted behavior in its own bilingual site instead of pinning released docs from the package.                                                                                                                                                                  |
+| `d8abb492`                                     | Upstream contributor and package documentation restructure. Effront owns a different repository layout, package README policy, and documentation index.                                                                                                                                                                                           |
 
 Local-only commits in the same range (`19eb7087`, `4e0c982c`, `3e2e5ecc`, `f9942315`, `f8587bb4`, and the merge commits `cdefb834` and `54dcd2b8`) record provenance, lock the check-in sample's CI dependency, resolve merges with `main`, and port the Effect CLI; they have no upstream counterpart.
 
