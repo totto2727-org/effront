@@ -1,30 +1,22 @@
 # Event check-in
 
-A Node and Vite-native Effront example for an organizer-scoped event check-in screen.
+A Node-hosted Effront example of organizer-scoped queries, a native check-in action, and shared reactive preview state. Authentication and persistence are deliberately simulated.
 
-## Run
+## Usage
 
-From the repository root, prepare workspace packages, then run this example:
+After preparing the workspace as described in [examples/AGENTS.md](../AGENTS.md), start the example from its directory:
 
 ```sh
-vp exec --filter "./packages/*" -- vp pack
 cd examples/check-in
 vp dev
 ```
 
-Use `SUMMIT-ADA` to check in the seeded attendee.
-A repeated submission reports that the attendee was already checked in and does not add another audit record.
+Open the URL reported by Vite, then submit the seeded ticket code `SUMMIT-ADA`. Repeating the submission reports an existing check-in without adding another audit record.
 
-## Security model demonstrated
+## API
 
-- This sample uses a fixed, server-only `currentOrganizer = demoOrganizer` to model the authentication boundary. It is not real authentication or role-scoped middleware, and browser input never supplies an organizer identity.
-- Queries return only the event owned by that fixed demo organizer.
-- The Server Function decodes an object input and the domain validates the ticket-code format before a state change.
-- The in-memory transition checks the current state and appends its audit entry in one synchronous operation, making retrying the same request idempotent for this single-process demonstration.
+- [`src/features/check-in/server.ts`](src/features/check-in/server.ts) exposes the query and action; [`src/features/check-in/client.tsx`](src/features/check-in/client.tsx) consumes them through an atom registry shared by the page.
+- The server fixes the current organizer to a demo identity. Browser input cannot choose the organizer, but this example does not implement authentication or role-scoped middleware.
+- Ticket state and audit entries live only in one Node process. A production implementation needs authenticated authorization and a durable database transaction that updates the ticket and inserts its audit entry together.
 
-## Deliberate limitation
-
-This is deterministic, seeded, process-lifetime state only.
-Restarting the Node host resets tickets and audit records.
-It does not claim durable persistence or multi-instance atomicity.
-A production adopter needs verified request authentication and role-scoped middleware, plus a database transaction that conditionally updates the ticket and inserts the audit record together.
+_This README was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._

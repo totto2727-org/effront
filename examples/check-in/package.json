@@ -3,12 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp build",
-    "start": "node dist/rsc/server.js",
-    "test": "vp vitest run",
-    "test:e2e:dev": "playwright test",
-    "test:e2e:prod": "vp build && CHECK_IN_HOST=production playwright test"
+    "start": "node dist/rsc/server.js"
   },
   "dependencies": {
     "@effect/atom-react": "catalog:",
@@ -21,7 +16,6 @@
   },
   "devDependencies": {
     "@effront/vite": "workspace:*",
-    "@playwright/test": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

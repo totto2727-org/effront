@@ -1,6 +1,5 @@
 import { Effect } from "effect";
 import { CheckInConsole } from "./features/check-in/client";
-import { RegistryProvider } from "./features/check-in/registry";
 import { EFFRONT } from "./effront";
 
 const RootLayout = EFFRONT.Layout.make({
@@ -19,13 +18,7 @@ const RootLayout = EFFRONT.Layout.make({
 });
 
 const CheckInPage = EFFRONT.Page.make({
-  render: Effect.fn("CheckInPage.render")(() =>
-    Effect.succeed(
-      <RegistryProvider>
-        <CheckInConsole />
-      </RegistryProvider>,
-    ),
-  ),
+  render: Effect.fn("CheckInPage.render")(() => Effect.succeed(<CheckInConsole />)),
 });
 
 export default EFFRONT.make({

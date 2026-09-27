@@ -1,7 +1,9 @@
 import { defineConfig } from "@playwright/test";
+import { fileURLToPath } from "node:url";
 
+const example = fileURLToPath(new URL("../../examples/streaming-feed/", import.meta.url));
 const hosts = [
-  { name: "production", port: 18221, command: "vp build && vp run start" },
+  { name: "production", port: 18221, command: "node dist/rsc/server.js" },
   {
     name: "development",
     port: 18222,
@@ -10,13 +12,14 @@ const hosts = [
 ];
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: ".",
   testMatch: "*.e2e.ts",
   fullyParallel: false,
   workers: 1,
   use: { browserName: "chromium" },
   projects: hosts.map(({ name, port }) => ({ name, use: { baseURL: `http://127.0.0.1:${port}` } })),
   webServer: hosts.map(({ port, command }) => ({
+    cwd: example,
     command,
     env: { PORT: String(port), HOST: "127.0.0.1" },
     url: `http://127.0.0.1:${port}`,

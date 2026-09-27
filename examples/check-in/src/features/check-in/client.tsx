@@ -1,7 +1,7 @@
 "use client";
 
 import { queryAtom } from "@effront/core/query";
-import { useAtom } from "@effect/atom-react";
+import { RegistryProvider, useAtom } from "@effect/atom-react";
 import { AsyncResult } from "effect/unstable/reactivity";
 import { useActionState, useEffect } from "react";
 import { checkInAttendee, previewCheckIn } from "./server";
@@ -11,6 +11,14 @@ const previewAtom = queryAtom(previewCheckIn);
 type ActionState = Awaited<ReturnType<typeof checkInAttendee>> | null;
 
 export function CheckInConsole() {
+  return (
+    <RegistryProvider>
+      <CheckInContent />
+    </RegistryProvider>
+  );
+}
+
+function CheckInContent() {
   const [preview, queryPreview] = useAtom(previewAtom);
   const [result, submit, pending] = useActionState<ActionState, FormData>(
     async (_previous, formData) => {

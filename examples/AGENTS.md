@@ -6,6 +6,7 @@
 - `basic/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
 - `loading/`: native Alchemy Worker demonstrating Loading, Suspense, and browser-side Query without KV.
 - `markdown/`: feature-rich native Alchemy consumer of file-relative Markdown routing and assets.
+- `check-in/` and `streaming-feed/`: native Node showcases of query atoms and incremental Server Function streams; their Playwright harnesses live under `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/`.
 - The feature-rich native Node/Bun applications are test-owned fixtures under `../tests/e2e-server/fixtures/`, not public examples.
 
 See [example selection](README.md) for runnable commands and the distinction between platform starters and feature demonstrations.
@@ -22,6 +23,7 @@ Workspace preparation is separate from development startup; example development 
 - `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `cloudflare/` serves the built artifact independently of Vite after `vp build`.
 - `vp run dev` in `alchemy-cloudflare/` starts the minimal Alchemy-managed Worker without a fixed development port.
 - `vp run dev` in `basic/`, `loading/`, or `markdown/` invokes `alchemy dev`; Basic and Markdown declare Worker ports 1337 and 1338 respectively, while Loading does not fix a development port.
+- `vp dev` in `check-in/` or `streaming-feed/` starts the Node-hosted feature showcases. Their independent real-host checks run from `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/` with `vp run test`.
 - `vp dev`, `vp build`, and `vp run start` in `../tests/e2e-server/fixtures/node/` or `../tests/e2e-server/fixtures/bun/` exercise the feature-rich native regression applications. `PORT` and `HOST` configure production listening.
 - `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host; official CLI acceptance is separate.
 

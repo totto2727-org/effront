@@ -71,7 +71,32 @@ export function ProgressView() {
 
 各値の到着時にリストが更新され、コンポーネントが外れると通信とサーバー側の処理を中断します。
 Effect Reactivity から最新のチャンクを使う場合は、`streamAtom` で任意の atom result function を作成します。
-これには [Query Server Function](./query-server-functions.md#atom-setup) の永続的な `RegistryProvider` のセットアップが必要ですが、`stream` 自体には不要です。
+これには [Query Server Function](./query-server-functions.md#atom-setup) の `RegistryProvider` のセットアップが必要ですが、`stream` 自体には不要です。
+
+```tsx
+"use client";
+
+import { streamAtom } from "@effront/core/query";
+import { useAtom } from "@effect/atom-react";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { useEffect } from "react";
+import { streamProgress } from "./progress";
+
+const latestProgress = streamAtom(streamProgress);
+
+export function LatestProgress() {
+  const [result, run] = useAtom(latestProgress);
+  useEffect(() => {
+    run([{ count: 3 }]);
+  }, [run]);
+
+  if (AsyncResult.isInitial(result)) return <p>最初のチャンクを待機中…</p>;
+  if (AsyncResult.isFailure(result)) return <p role="alert">進捗を取得できませんでした。</p>;
+  return <output>{result.value}</output>;
+}
+```
+
+`LatestProgress` は `RegistryProvider` の下で描画します。`streamAtom` は最新値を保持するため、全チャンクを蓄積して表示する場合は上の `Stream.runForEach` の例を使います。
 最初のチャンクより前では、エラーチャネルに Effect の `Cause.NoSuchElementError` も含まれます。コンポーネントでは、まだ値がない状態を扱ってください。
 
 ## 失敗、キャンセル、生存期間 {#lifetime}
@@ -85,8 +110,8 @@ Stream または Effect のエラーチャネルで扱い、defect の stack や
 取得したリソースはストリーミング中だけ利用でき、応答の完了、失敗、キャンセル後に解放されます。
 キャンセル時には、Effront が stream producer を中断して join するため、非同期 finalizer もリクエストスコープを解放する前に完了します。
 finalizer と I/O はキャンセルに協調するように記述してください。
-core のプロトコルテストと Node の開発・本番ブラウザーテストで、ストリーミングと中断を確認しています。
-別のホストでの動作や切断伝播は、そのホストの実環境で別途検証してください。
+[ストリーミングフィードの Node サンプル](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed)を実行すると、ページ単位の段階的な表示、失敗時の再試行、中断を確認できます。[開発・本番ブラウザーテスト](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed)では、それらと JavaScript 無効時の初期表示を検証しています。
+ほかのホストへの展開時は、そのホストでも切断時の中断伝播を確認してください。
 
 ## query、stream、mutation を選ぶ {#choose}
 

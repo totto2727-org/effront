@@ -36,8 +36,7 @@ CSS ファイルやコンポーネントからの CSS インポートは不要�
 @import "tailwindcss";
 ```
 
-このインポートには、アプリケーションの依存関係に `tailwindcss` が必要です。
-アプリケーションで `vp add -D @tailwindcss/vite@4.3.3 tailwindcss@4.3.3` を実行します。
+アプリケーションの CSS からこのインポートを解決するには、`vp add -D tailwindcss@4.3.3` で `tailwindcss` を直接追加します。`@tailwindcss/vite` は `@effront/tailwind` の依存関係に含まれるため、アプリケーションでの追加は不要です。
 指定したファイルは生成エントリーを置き換えるため、コンポーネントからの追加インポートは不要です。
 [`@theme`](https://tailwindcss.com/docs/theme) や [`@plugin`](https://tailwindcss.com/docs/functions-and-directives) ディレクティブを記述できます。
 Typography などのプラグインは別途インストールします。

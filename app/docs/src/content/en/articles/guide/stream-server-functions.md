@@ -71,7 +71,32 @@ export function ProgressView() {
 
 Each value updates the list as it arrives, and unmounting the component interrupts the request and server work.
 `streamAtom` creates an optional atom result function when a component needs the latest streamed chunk through Effect Reactivity.
-It requires the persistent `RegistryProvider` setup from [Query Server Functions](./query-server-functions.md#atom-setup), but `stream` itself does not.
+It requires the `RegistryProvider` setup from [Query Server Functions](./query-server-functions.md#atom-setup), but `stream` itself does not.
+
+```tsx
+"use client";
+
+import { streamAtom } from "@effront/core/query";
+import { useAtom } from "@effect/atom-react";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { useEffect } from "react";
+import { streamProgress } from "./progress";
+
+const latestProgress = streamAtom(streamProgress);
+
+export function LatestProgress() {
+  const [result, run] = useAtom(latestProgress);
+  useEffect(() => {
+    run([{ count: 3 }]);
+  }, [run]);
+
+  if (AsyncResult.isInitial(result)) return <p>Waiting for the first chunk…</p>;
+  if (AsyncResult.isFailure(result)) return <p role="alert">Could not load progress.</p>;
+  return <output>{result.value}</output>;
+}
+```
+
+Render `LatestProgress` below `RegistryProvider`. `streamAtom` retains the latest value; use the `Stream.runForEach` example above when the UI needs to accumulate every chunk.
 Before the first chunk, its error channel can also contain Effect's `Cause.NoSuchElementError`; handle the empty-yet state in the component.
 
 ## Failures, cancellation, and lifetime {#lifetime}
@@ -84,8 +109,8 @@ The server stream is request-scoped, not application-scoped.
 Resources acquired for it stay available through streaming and are released after the response completes, fails, or is cancelled.
 On cancellation, Effront interrupts and joins the stream producer so its asynchronous finalizers complete before the request scope releases.
 Write finalizers and I/O so that they cooperate with cancellation.
-Core protocol tests and Node development and production browser tests cover streaming and cancellation.
-Validate behavior and disconnect propagation separately on any other host in its actual environment.
+Run the [Node streaming-feed example](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed) to see incremental pages, retries, and cancellation. The [development and production browser tests](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed) also verify the initial render without JavaScript.
+When deploying to another host, verify cancellation propagation on that host too.
 
 ## Choose query, stream, or mutation {#choose}
 

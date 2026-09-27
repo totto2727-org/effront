@@ -1,0 +1,12 @@
+{
+  "name": "@effront/e2e-streaming-feed",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "cd ../../examples/streaming-feed && vp build && cd ../../tests/e2e-streaming-feed && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:"
+  }
+}
