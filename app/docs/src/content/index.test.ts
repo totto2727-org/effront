@@ -45,6 +45,7 @@ const retainedUrls = [
   "/api-reference/alchemy",
   "/api-reference/tailwind",
   "/best-practices/authentication-and-authorization",
+  "/best-practices/server-function-error-handling",
   "/advanced/request-runtime-and-lifetimes",
   "/advanced/client-navigation",
   "/advanced/server-function-execution-and-refresh",
@@ -169,6 +170,7 @@ describe("documentation catalog", () => {
           .map((item) => documentPath(item.slug)),
       ).toEqual([
         "/best-practices/authentication-and-authorization",
+        "/best-practices/server-function-error-handling",
         "/advanced/request-runtime-and-lifetimes",
         "/best-practices/testing",
       ]);
@@ -182,6 +184,7 @@ describe("documentation catalog", () => {
           "/best-practices/authentication-and-authorization",
           ["entry-points", "shared-policy", "authorization"],
         ],
+        ["/best-practices/server-function-error-handling", ["expected", "operational"]],
         [
           "/advanced/request-runtime-and-lifetimes",
           ["resource-design", "request-layer", "response-lifetime"],
@@ -283,6 +286,15 @@ describe("documentation catalog", () => {
     expect(englishArticleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
     for (const locale of ["ja", "en"] as const) {
       expect(() => getPage(`/${locale}/index`)).toThrow("Documentation route is missing content");
+    }
+  });
+
+  it("registers the Server Function error-handling page at every published locale URL", () => {
+    const entry = readFileSync(new URL("../entry.effront.tsx", import.meta.url), "utf8");
+    const source = "/best-practices/server-function-error-handling";
+    for (const prefix of ["", "/ja", "/en"]) {
+      const slug = `${prefix}${source}`;
+      expect(entry).toContain(`.page(\n      "${slug}",\n      documentPage("${slug}"),\n    )`);
     }
   });
 
@@ -422,14 +434,26 @@ describe("documentation catalog", () => {
   );
 
   it.each(["en", "ja"] as const)(
-    "keeps query and stream guides actionable with an Alchemy warning in %s",
+    "keeps query and stream guides concise and documents shared Server Function failures in %s",
     async (locale) => {
       const queryGuide = await text(`/${locale}/guide/query-server-functions`);
       expect(queryGuide).not.toContain("effective-rsc");
-      expect(await text(`/${locale}/guide/stream-server-functions`)).not.toContain("effective-rsc");
+      expect(queryGuide).not.toMatch(/AbortSignal|request lifetime|リクエストの生存期間/);
+      const streamGuide = await text(`/${locale}/guide/stream-server-functions`);
+      expect(streamGuide).not.toContain("effective-rsc");
+      expect(streamGuide).toContain("streamFeed");
+      expect(streamGuide).toContain("Stream.runForEach");
+      expect(streamGuide).toContain("Effect.sleep(350)");
+      expect(streamGuide).toContain("controller.abort");
+      expect(streamGuide).toMatch(/Retry|再試行/);
       expect(queryGuide).toContain("useAtom(ticketStatus)");
       expect(queryGuide).toContain("run([{ ticketCode }])");
-      expect(queryGuide).toContain("Effect.catchTags({");
+      const failures = await text(`/${locale}/best-practices/server-function-error-handling`);
+      expect(failures).toContain("&quot;use server&quot;");
+      expect(failures).toContain("import { Effect, Schema } from &quot;effect&quot;");
+      expect(failures).toContain("import { EFFRONT } from &quot;./effront&quot;");
+      expect(failures).toContain("Effect.catchTags({");
+      expect(failures).toContain("ServerFnTransportError");
       expect(await render(`/${locale}/guide/query-server-functions`)).toContain(
         'href="https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation"',
       );

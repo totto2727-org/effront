@@ -151,8 +151,6 @@ export const englishArticleCatalog = [
       { id: "call", title: "Call a query" },
       { id: "atom", title: "Keep a reactive result" },
       { id: "atom-setup", title: "Set up optional atom integration" },
-      { id: "errors", title: "Handle typed failures" },
-      { id: "cancellation", title: "Cancellation and request lifetime" },
     ],
     source: "/guide/query-server-functions",
   },
@@ -163,9 +161,8 @@ export const englishArticleCatalog = [
       "Render progressive server results without turning the read into a route-refreshing mutation.",
     section: "Guides",
     headings: [
-      { id: "server", title: "Return a stream" },
-      { id: "client", title: "Consume chunks" },
-      { id: "lifetime", title: "Failures, cancellation, and lifetime" },
+      { id: "feed", title: "Stream a feed" },
+      { id: "render", title: "Render arriving stories" },
     ],
     source: "/guide/stream-server-functions",
   },
@@ -272,6 +269,18 @@ export const englishArticleCatalog = [
       { id: "authorization", title: "Authorize each operation" },
     ],
     source: "/best-practices/authentication-and-authorization",
+  },
+  {
+    slug: "/best-practices/server-function-error-handling",
+    title: "Error handling for Server Functions",
+    description:
+      "Return expected outcomes as data and show safe messages for Server Function failures.",
+    section: "Best practices",
+    headings: [
+      { id: "expected", title: "Return expected outcomes as data" },
+      { id: "operational", title: "Show safe failure messages" },
+    ],
+    source: "/best-practices/server-function-error-handling",
   },
   {
     slug: "/advanced/request-runtime-and-lifetimes",

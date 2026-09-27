@@ -1,11 +1,10 @@
-Use a Query Server Function to read server data from a Client Component without treating the call as a mutation or refreshing the current route.
-It runs an existing Server Function through an Effect-aware client API.
+Use a Query Server Function to read one server value from a Client Component without refreshing the current route.
 Use an ordinary Server Function or a form action when the operation changes state and the UI should navigate or refresh.
 
 ## Call a query {#call}
 
-Export a read-only Server Function in a module that starts with `"use server"`.
-Its input Schema remains the server-side trust boundary.
+Export a read-only Server Function in a module that starts with `"use server"`, then wrap its client import with `query`.
+The input Schema remains the server-side trust boundary.
 
 ```typescript
 // src/ticket.ts
@@ -20,10 +19,8 @@ export const lookupTicket = EFFRONT.ServerFn.make({
 });
 ```
 
-In a Client Component, wrap the imported Server Function with `query`.
-The returned function accepts the same positional arguments and returns an `Effect`.
-
 ```tsx
+// src/ticket-status.tsx
 "use client";
 
 import { Effect } from "effect";
@@ -49,15 +46,12 @@ export function TicketStatus({ ticketCode }: { ticketCode: string }) {
 }
 ```
 
-`query(lookupTicket)` has the Effect result type `Effect<Output, ServerFnError>`.
-A successful query returns its value after the Flight response fully completes and request resources release, and it does not request the standard Server Function route refresh.
-A late transport failure therefore still becomes `ServerFnTransportError` rather than a successful query result.
-Do not use it for writes whose UI depends on the normal mutation refresh.
+`query(lookupTicket)` accepts the Server Function's original arguments and returns an `Effect` without requesting the standard Server Function route refresh.
+For expected outcomes and operational failures, use [Error handling for Server Functions](../best-practices/server-function-error-handling.md).
 
 ## Keep a reactive result {#atom}
 
-`queryAtom` creates an `AtomResultFn` for the same Server Function.
-Use it when an Effect Reactivity atom is a better fit for the component's loading, success, and failure states.
+Use `queryAtom` when an Effect Reactivity atom is a better fit for the component's loading, success, and failure states.
 
 ```tsx
 "use client";
@@ -82,55 +76,9 @@ export function TicketStatusAtom({ ticketCode }: { ticketCode: string }) {
 }
 ```
 
-The atom accepts the Server Function's original arguments.
-The framework-only cancellation marker is not part of the encoded input, so the server still receives only `{ ticketCode }`.
-
 ## Set up optional atom integration {#atom-setup}
 
 `query` works without an atom registry.
 Use `queryAtom` only when the application opts into Effect Reactivity. For installation and React integration with your Effect 4 release, follow the [official `@effect/atom-react` README](https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation).
 To share atom state across pages, place `RegistryProvider` in a client boundary that persists across navigation. The single-page [check-in example](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/features/check-in/client.tsx) instead places it inside that page's Client Component.
-Render the `TicketStatusAtom` shown above below that provider.
-
-## Handle typed failures {#errors}
-
-Queries fail in the Effect error channel with `ServerFnError`, exported by `@effront/core/query`:
-
-| Error                    | Meaning                                                      | Useful fields                                   |
-| ------------------------ | ------------------------------------------------------------ | ----------------------------------------------- |
-| `ServerFnInputError`     | The Server Function input could not be decoded or validated. | `detail.name`, `detail.message`                 |
-| `ServerFnDefect`         | The handler failed unexpectedly.                             | `digest`, optional `detail`                     |
-| `ServerFnTransportError` | The browser could not complete the query transport.          | `detail.name`, `detail.message`, `detail.stack` |
-
-Handle known tags with Effect error operators, and show a safe, user-facing message rather than exposing a defect detail or stack.
-Expected business outcomes, such as a ticket that is already checked in, are usually clearer as a successful tagged value returned by the handler.
-That keeps them separate from invalid input, defects, and transport failures.
-
-```tsx
-"use client";
-
-import { query } from "@effront/core/query";
-import { Effect } from "effect";
-import { lookupTicket } from "./ticket";
-
-export const lookupMessage = (ticketCode: string) =>
-  query(lookupTicket)({ ticketCode }).pipe(
-    Effect.map(({ status }) => status),
-    Effect.catchTags({
-      ServerFnInputError: () => Effect.succeed("Invalid ticket code."),
-      ServerFnDefect: () => Effect.succeed("Could not check ticket."),
-      ServerFnTransportError: () => Effect.succeed("Connection lost. Please retry."),
-    }),
-  );
-```
-
-`lookupMessage` returns an Effect with a safe display message. Treat expected business outcomes as successful values from `lookupTicket`.
-
-## Cancellation and request lifetime {#cancellation}
-
-Interrupting the Effect that `query` returns aborts its browser request through an `AbortSignal`.
-Write handlers and dependent I/O so they honor cancellation.
-
-On the server, the query runs in the request scope.
-Resources acquired for that request remain available only while the response is active, then release when the response completes, fails, or is cancelled.
-Do not use a query as a way to keep an application-wide service alive.
+Render `TicketStatusAtom` below that provider.

@@ -199,4 +199,5 @@ Schema のデコードに失敗した場合、ハンドラーは実行されま�
 例えば、既存の `Schema.NonEmptyString` は、どちらの分岐にも進む前に空の名前を拒否します。
 デコードやハンドラーの失敗はアクションの失敗になり、`state.message` は自動で更新されません。
 不正なフィールドにインラインで説明を出す必要がある場合は、先に拒否するのではなく、ハンドラーが値を受け取って報告できる Schema を選びます。
+[想定内の結果と実行時の失敗の共通の扱い](../best-practices/server-function-error-handling.md)も参照してください。
 状態とエラーの扱いは React の [useActionState リファレンス](https://react.dev/reference/react/useActionState)を参照してください。

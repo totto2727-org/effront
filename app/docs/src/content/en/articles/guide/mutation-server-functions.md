@@ -199,4 +199,5 @@ Schema decoding failures prevent the handler from running.
 For example, the existing `Schema.NonEmptyString` rejects an empty name before it reaches either branch.
 Decoding and handler failures become action failures, not automatic updates to `state.message`.
 If invalid fields need inline feedback, choose a Schema that lets the handler receive and report those values rather than rejecting them first.
+For the shared distinction between expected outcomes and operational failures, see [Error handling for Server Functions](../best-practices/server-function-error-handling.md).
 See React's [useActionState reference](https://react.dev/reference/react/useActionState) for state and error handling.

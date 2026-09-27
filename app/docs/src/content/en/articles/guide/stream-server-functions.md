@@ -1,67 +1,76 @@
-Use a Stream Server Function when a server read produces a sequence of values and the Client Component should render each value as it arrives.
-A standard mutation is still the right choice for writes that navigate or refresh the current route.
+Use a Stream Server Function when a server read produces a sequence and the Client Component should render each value as it arrives.
+Use a standard mutation for writes that navigate or refresh the current route.
 
-## Return a stream {#server}
+## Stream a feed {#feed}
 
-A Stream Server Function has the usual validated input and returns an Effect `Stream` from its handler.
-For example, the handler can emit a finite sequence of counters:
+Return an Effect `Stream` from a read-only Server Function.
+Every successful branch must return a `Stream`, including `Stream.empty` when there is nothing to emit.
 
 ```typescript
-// src/progress.ts
+// src/feed.ts
 "use server";
 
 import { Effect, Schema, Stream } from "effect";
 import { EFFRONT } from "./effront";
+import { storiesAfter } from "./feed-data";
 
-export const streamProgress = EFFRONT.ServerFn.make({
-  input: Schema.Struct({ count: Schema.Finite }),
-  handler: ({ count }) => Effect.succeed(Stream.range(1, count)),
+export const streamFeed = EFFRONT.ServerFn.make({
+  input: Schema.Struct({ after: Schema.Natural }),
+  handler: ({ after }) =>
+    Effect.succeed(
+      Stream.fromIterable(storiesAfter(after)).pipe(
+        Stream.mapEffect((story) => Effect.sleep(350).pipe(Effect.as(story))),
+      ),
+    ),
 });
 ```
 
-A query must return one value.
-A stream must return a `Stream` for every successful alternative, including `Stream.empty` when there is no value to emit.
-Do not mix a plain value and a stream in the same Server Function result.
+## Render arriving stories {#render}
 
-## Consume chunks {#client}
-
-Wrap the imported Server Function with `stream` from `@effront/core/query`.
-It returns an Effect `Stream` whose chunks have the handler's element type.
+Wrap the imported Server Function with `stream`, then update component state for every story.
 
 ```tsx
-// src/progress-view.tsx
+// src/feed-view.tsx
 "use client";
 
 import { stream } from "@effront/core/query";
 import { Effect, Stream } from "effect";
 import { useEffect, useState } from "react";
-import { streamProgress } from "./progress";
+import { streamFeed } from "./feed";
 
-const readProgress = stream(streamProgress);
+const readFeed = stream(streamFeed);
 
-export function ProgressView() {
-  const [values, setValues] = useState<number[]>([]);
+export function FeedView() {
+  const [stories, setStories] = useState<{ id: number; title: string }[]>([]);
   const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
+    setStories([]);
+    setFailed(false);
     void Effect.runPromise(
-      Stream.runForEach(readProgress({ count: 3 }), (value) =>
-        Effect.sync(() => setValues((current) => [...current, value])),
+      Stream.runForEach(readFeed({ after: 0 }), (story) =>
+        Effect.sync(() => setStories((current) => [...current, story])),
       ),
       { signal: controller.signal },
     ).catch(() => {
       if (!controller.signal.aborted) setFailed(true);
     });
     return () => controller.abort();
-  }, []);
+  }, [attempt]);
 
   return (
     <section>
-      {failed && <p role="alert">Could not load progress.</p>}
+      {failed && (
+        <p role="alert">
+          Could not load stories.{" "}
+          <button onClick={() => setAttempt((value) => value + 1)}>Retry</button>
+        </p>
+      )}
       <ol>
-        {values.map((value) => (
-          <li key={value}>{value}</li>
+        {stories.map((story) => (
+          <li key={story.id}>{story.title}</li>
         ))}
       </ol>
     </section>
@@ -69,48 +78,6 @@ export function ProgressView() {
 }
 ```
 
-Each value updates the list as it arrives, and unmounting the component interrupts the request and server work.
-`streamAtom` creates an optional atom result function when a component needs the latest streamed chunk through Effect Reactivity.
-It requires the `RegistryProvider` setup from [Query Server Functions](./query-server-functions.md#atom-setup), but `stream` itself does not.
-
-```tsx
-"use client";
-
-import { streamAtom } from "@effront/core/query";
-import { useAtom } from "@effect/atom-react";
-import { AsyncResult } from "effect/unstable/reactivity";
-import { useEffect } from "react";
-import { streamProgress } from "./progress";
-
-const latestProgress = streamAtom(streamProgress);
-
-export function LatestProgress() {
-  const [result, run] = useAtom(latestProgress);
-  useEffect(() => {
-    run([{ count: 3 }]);
-  }, [run]);
-
-  if (AsyncResult.isInitial(result)) return <p>Waiting for the first chunk…</p>;
-  if (AsyncResult.isFailure(result)) return <p role="alert">Could not load progress.</p>;
-  return <output>{result.value}</output>;
-}
-```
-
-Render `LatestProgress` below `RegistryProvider`. `streamAtom` retains the latest value; use the `Stream.runForEach` example above when the UI needs to accumulate every chunk.
-Before the first chunk, its error channel can also contain Effect's `Cause.NoSuchElementError`; handle the empty-yet state in the component.
-
-## Failures, cancellation, and lifetime {#lifetime}
-
-Stream calls use the same `ServerFnError` union as Query Server Functions: `ServerFnInputError`, `ServerFnDefect`, and `ServerFnTransportError`.
-Handle them in the Stream or Effect error channel and do not expose a defect stack or detail as a user-facing error.
-
-When the client stops consuming, replaces a stream, or interrupts its Effect, Effront aborts the corresponding request.
-The server stream is request-scoped, not application-scoped.
-Resources acquired for it stay available through streaming and are released after the response completes, fails, or is cancelled.
-On cancellation, Effront interrupts and joins the stream producer so its asynchronous finalizers complete before the request scope releases.
-Write finalizers and I/O so that they cooperate with cancellation.
-Run the [Alchemy Worker streaming-feed example](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed) to see incremental pages, retries, and cancellation. Its [local Worker development and built-preview browser tests](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed) also verify the initial render without JavaScript.
-When deploying to another host, verify cancellation propagation on that host too.
-
-The public contract is the API exported from `@effront/core/query`.
-Do not rely on an internal query URL, HTTP method, or a particular transport implementation.
+Use `streamAtom` when the UI needs only the latest chunk through Effect Reactivity. It has the same optional `RegistryProvider` setup as [`queryAtom`](./query-server-functions.md#atom-setup).
+For expected outcomes and operational failures, use [Error handling for Server Functions](../best-practices/server-function-error-handling.md).
+The complete [streaming-feed example](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed) includes progressive page rendering as well as client retries.

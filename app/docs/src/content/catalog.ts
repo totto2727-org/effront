@@ -149,8 +149,6 @@ export const articleCatalog = [
       { id: "call", title: "クエリを呼び出す" },
       { id: "atom", title: "リアクティブな結果を保持する" },
       { id: "atom-setup", title: "任意の atom 統合をセットアップする" },
-      { id: "errors", title: "型付きの失敗を扱う" },
-      { id: "cancellation", title: "キャンセルとリクエストの生存期間" },
     ],
     source: "/guide/query-server-functions",
   },
@@ -160,9 +158,8 @@ export const articleCatalog = [
     description: "段階的なサーバー結果を、ルートを更新する mutation にせず表示します。",
     section: "Guides",
     headings: [
-      { id: "server", title: "ストリームを返す" },
-      { id: "client", title: "チャンクを消費する" },
-      { id: "lifetime", title: "失敗、キャンセル、生存期間" },
+      { id: "feed", title: "フィードをストリーミングする" },
+      { id: "render", title: "到着したストーリーを表示する" },
     ],
     source: "/guide/stream-server-functions",
   },
@@ -268,6 +265,18 @@ export const articleCatalog = [
       { id: "authorization", title: "操作ごとに認可する" },
     ],
     source: "/best-practices/authentication-and-authorization",
+  },
+  {
+    slug: "/best-practices/server-function-error-handling",
+    title: "Server Function のエラーハンドリング",
+    description:
+      "想定内の結果をデータとして返し、Server Function の失敗には安全なメッセージを表示します。",
+    section: "Best practices",
+    headings: [
+      { id: "expected", title: "想定内の結果をデータとして返す" },
+      { id: "operational", title: "安全な失敗メッセージを表示する" },
+    ],
+    source: "/best-practices/server-function-error-handling",
   },
   {
     slug: "/advanced/request-runtime-and-lifetimes",

@@ -164,6 +164,10 @@ export default EFFRONT.make({
       "/best-practices/authentication-and-authorization",
       documentPage("/best-practices/authentication-and-authorization"),
     )
+    .page(
+      "/best-practices/server-function-error-handling",
+      documentPage("/best-practices/server-function-error-handling"),
+    )
     .page("/best-practices/testing", documentPage("/best-practices/testing"))
     .page("/guide/server-functions", documentPage("/guide/server-functions"))
     .page("/guide/mutation-server-functions", documentPage("/guide/mutation-server-functions"))
@@ -235,6 +239,10 @@ export default EFFRONT.make({
     .page(
       "/ja/best-practices/authentication-and-authorization",
       documentPage("/ja/best-practices/authentication-and-authorization"),
+    )
+    .page(
+      "/ja/best-practices/server-function-error-handling",
+      documentPage("/ja/best-practices/server-function-error-handling"),
     )
     .page("/ja/best-practices/testing", documentPage("/ja/best-practices/testing"))
     .page("/ja/guide/server-functions", documentPage("/ja/guide/server-functions"))
@@ -310,6 +318,10 @@ export default EFFRONT.make({
     .page(
       "/en/best-practices/authentication-and-authorization",
       documentPage("/en/best-practices/authentication-and-authorization"),
+    )
+    .page(
+      "/en/best-practices/server-function-error-handling",
+      documentPage("/en/best-practices/server-function-error-handling"),
     )
     .page("/en/best-practices/testing", documentPage("/en/best-practices/testing"))
     .page("/en/guide/server-functions", documentPage("/en/guide/server-functions"))
