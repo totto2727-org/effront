@@ -420,9 +420,11 @@ describe("documentation catalog", () => {
   );
 
   it.each(["en", "ja"] as const)(
-    "shows actionable query examples and an Alchemy plugin-order warning in %s",
+    "keeps query and stream guides actionable with an Alchemy warning in %s",
     async (locale) => {
       const queryGuide = await text(`/${locale}/guide/query-server-functions`);
+      expect(queryGuide).not.toContain("effective-rsc");
+      expect(await text(`/${locale}/guide/stream-server-functions`)).not.toContain("effective-rsc");
       expect(queryGuide).toContain("useAtom(ticketStatus)");
       expect(queryGuide).toContain("run([{ ticketCode }])");
       expect(queryGuide).toContain("Effect.catchTags({");

@@ -70,9 +70,3 @@ Validate behavior and disconnect propagation separately on any other host in its
 
 The public contract is the API exported from `@effront/core/query`.
 Do not rely on an internal query URL, HTTP method, or a particular transport implementation.
-
-## Design provenance {#provenance}
-
-Effront's stream design is a selective Vite adaptation informed by upstream effective-rsc commits [bcd3d255](https://github.com/nikhilsnayak/effective-rsc/commit/bcd3d255), [2df9211a](https://github.com/nikhilsnayak/effective-rsc/commit/2df9211a), and [91fa61ea](https://github.com/nikhilsnayak/effective-rsc/commit/91fa61ea).
-Those changes include upstream stream completion handling, but they do not define Effront's host protocol or lifetime model.
-Effront Vite hosts retain request resources only for the active response rather than making stream resources application-lifetime services.

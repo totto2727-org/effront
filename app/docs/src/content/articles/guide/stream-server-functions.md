@@ -71,9 +71,3 @@ core のプロトコルテストと Node の開発・本番ブラウザーテス
 
 公開契約は `@effront/core/query` から export される API です。
 内部の query URL、HTTP メソッド、特定の転送実装には依存しないでください。
-
-## 設計の来歴 {#provenance}
-
-Effront の stream 設計は、上流 effective-rsc のコミット [bcd3d255](https://github.com/nikhilsnayak/effective-rsc/commit/bcd3d255)、[2df9211a](https://github.com/nikhilsnayak/effective-rsc/commit/2df9211a)、[91fa61ea](https://github.com/nikhilsnayak/effective-rsc/commit/91fa61ea) を参考に選択的に Vite へ適応したものです。
-これらには上流の stream 完了処理も含まれますが、Effront のホストプロトコルや生存期間モデルを定義するものではありません。
-Effront の Vite ホストは、stream のリソースをアプリケーション生存期間のサービスにせず、アクティブな応答に対してだけ保持します。

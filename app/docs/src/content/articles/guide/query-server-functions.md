@@ -138,9 +138,3 @@ export const lookupMessage = (ticketCode: string) =>
 サーバーでは、クエリはリクエストスコープで実行されます。
 そのリクエストで取得したリソースは、応答が有効な間だけ使え、応答の完了、失敗、キャンセル時に解放されます。
 Query をアプリケーション全体のサービスを生かしておく方法として使わないでください。
-
-## 設計の来歴 {#provenance}
-
-Effront の Query Server Function 設計は、上流 effective-rsc のコミット [bcd3d255](https://github.com/nikhilsnayak/effective-rsc/commit/bcd3d255)、[2df9211a](https://github.com/nikhilsnayak/effective-rsc/commit/2df9211a)、[91fa61ea](https://github.com/nikhilsnayak/effective-rsc/commit/91fa61ea) を参考に選択的に Vite へ適応したものです。
-Effront の公開契約は `@effront/core/query` から export される API です。
-Effront の Vite ホストはリクエストスコープの統合を使うため、上流のエンドポイントパス、HTTP メソッド、起動スコープの生存期間を前提にしないでください。

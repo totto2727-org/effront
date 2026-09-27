@@ -135,9 +135,3 @@ Write handlers and dependent I/O so they honor cancellation.
 On the server, the query runs in the request scope.
 Resources acquired for that request remain available only while the response is active, then release when the response completes, fails, or is cancelled.
 Do not use a query as a way to keep an application-wide service alive.
-
-## Design provenance {#provenance}
-
-Effront's Query Server Function design is a selective Vite adaptation informed by upstream effective-rsc commits [bcd3d255](https://github.com/nikhilsnayak/effective-rsc/commit/bcd3d255), [2df9211a](https://github.com/nikhilsnayak/effective-rsc/commit/2df9211a), and [91fa61ea](https://github.com/nikhilsnayak/effective-rsc/commit/91fa61ea).
-The public Effront contract is the API exported from `@effront/core/query`.
-Do not depend on upstream endpoint paths, HTTP methods, or startup-scoped lifetime assumptions, because Effront's Vite hosts use their own request-scoped integration.
