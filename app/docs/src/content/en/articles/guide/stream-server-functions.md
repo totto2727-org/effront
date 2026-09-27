@@ -109,7 +109,7 @@ The server stream is request-scoped, not application-scoped.
 Resources acquired for it stay available through streaming and are released after the response completes, fails, or is cancelled.
 On cancellation, Effront interrupts and joins the stream producer so its asynchronous finalizers complete before the request scope releases.
 Write finalizers and I/O so that they cooperate with cancellation.
-Run the [Node streaming-feed example](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed) to see incremental pages, retries, and cancellation. The [development and production browser tests](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed) also verify the initial render without JavaScript.
+Run the [Alchemy Worker streaming-feed example](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed) to see incremental pages, retries, and cancellation. Its [local Worker development and built-preview browser tests](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed) also verify the initial render without JavaScript.
 When deploying to another host, verify cancellation propagation on that host too.
 
 The public contract is the API exported from `@effront/core/query`.

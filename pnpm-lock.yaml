@@ -478,15 +478,15 @@ importers:
       '@effect/atom-react':
         specifier: 'catalog:'
         version: 4.0.0-rc.116(effect@4.0.0-rc.116)(react@19.3.0)(scheduler@0.27.0)
-      '@effect/platform-node':
-        specifier: 4.0.0-rc.116
-        version: 4.0.0-rc.116(effect@4.0.0-rc.116)(redis@6.2.1)
+      '@effront/alchemy':
+        specifier: workspace:*
+        version: link:../../packages/alchemy
       '@effront/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@effront/server':
-        specifier: workspace:*
-        version: link:../../packages/server
+      alchemy:
+        specifier: 'catalog:'
+        version: 2.0.0-beta.79(@effect/platform-bun@4.0.0-rc.116(effect@4.0.0-rc.116))(@effect/platform-node@4.0.0-rc.116(effect@4.0.0-rc.116)(redis@6.2.1))(@types/node@22.20.2)(@types/react@19.3.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.116)(typescript@7.0.2)(vitest@4.1.11)(ws@8.21.3)
       effect:
         specifier: 4.0.0-rc.116
         version: 4.0.0-rc.116
@@ -500,9 +500,6 @@ importers:
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.20.2
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -708,15 +705,15 @@ importers:
       '@effect/platform-browser':
         specifier: 4.0.0-rc.116
         version: 4.0.0-rc.116(effect@4.0.0-rc.116)
-      '@effect/platform-node':
-        specifier: 4.0.0-rc.116
-        version: 4.0.0-rc.116(effect@4.0.0-rc.116)(redis@6.2.1)
+      '@effront/alchemy':
+        specifier: workspace:*
+        version: link:../../packages/alchemy
       '@effront/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@effront/server':
-        specifier: workspace:*
-        version: link:../../packages/server
+      alchemy:
+        specifier: 'catalog:'
+        version: 2.0.0-beta.79(@effect/platform-bun@4.0.0-rc.116(effect@4.0.0-rc.116))(@effect/platform-node@4.0.0-rc.116(effect@4.0.0-rc.116)(redis@6.2.1))(@types/node@22.20.2)(@types/react@19.3.0)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.116)(typescript@7.0.2)(vitest@4.1.11)(ws@8.21.3)
       effect:
         specifier: 4.0.0-rc.116
         version: 4.0.0-rc.116
@@ -1016,12 +1013,24 @@ importers:
 
   tests/e2e-check-in:
     devDependencies:
+      '@alchemy.run/cloudflare-runtime':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.79(@distilled.cloud/cloudflare@1.0.0-rc.12(effect@4.0.0-rc.116))(@effect/platform-bun@4.0.0-rc.116(effect@4.0.0-rc.116))(@effect/platform-node@4.0.0-rc.116(effect@4.0.0-rc.116)(redis@6.2.1))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.116)(rolldown@1.2.5)(typescript@7.0.2)
+      '@effront/alchemy':
+        specifier: workspace:*
+        version: link:../../packages/alchemy
+      '@effront/vite':
+        specifier: workspace:*
+        version: link:../../packages/vite
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.2
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
 
   tests/e2e-dev:
     devDependencies:
@@ -1192,12 +1201,24 @@ importers:
 
   tests/e2e-streaming-feed:
     devDependencies:
+      '@alchemy.run/cloudflare-runtime':
+        specifier: 'catalog:'
+        version: 2.0.0-beta.79(@distilled.cloud/cloudflare@1.0.0-rc.12(effect@4.0.0-rc.116))(@effect/platform-bun@4.0.0-rc.116(effect@4.0.0-rc.116))(@effect/platform-node@4.0.0-rc.116(effect@4.0.0-rc.116)(redis@6.2.1))(@types/node@22.20.2)(@voidzero-dev/vite-plus-core@0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1))(effect@4.0.0-rc.116)(rolldown@1.2.5)(typescript@7.0.2)
+      '@effront/alchemy':
+        specifier: workspace:*
+        version: link:../../packages/alchemy
+      '@effront/vite':
+        specifier: workspace:*
+        version: link:../../packages/vite
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
       '@types/node':
         specifier: 'catalog:'
         version: 22.20.2
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.3.1(@types/node@22.20.2)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.51.2)(typescript@7.0.2)(yaml@2.9.1)
 
 packages:
 

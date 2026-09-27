@@ -1,22 +1,22 @@
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
-import { CacheClient } from "./features/greeting/services";
-export const Cache = Cloudflare.KV.Namespace("Cache");
+import { makeCheckInStore } from "./features/check-in/data";
+import { CheckInStore } from "./features/check-in/services";
 
-export default class App extends Cloudflare.Worker<App>()(
-  "App",
+export default Cloudflare.Worker(
+  "CheckIn",
   {
     main: import.meta.url,
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
   },
   Effect.gen(function* () {
-    const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
-    // Fixed application loading. Keep this dynamic import unchanged.
+    // One store per Worker instance, supplied to every request through the application host.
+    const store = makeCheckInStore();
     const fetch = yield* makeApplicationHttpEffect(() =>
       import("./entry.effront").then((module) => module.default),
-    ).pipe(Effect.provideService(CacheClient, cache));
+    ).pipe(Effect.provideService(CheckInStore, store));
     return { fetch: fetch.pipe(Effect.orDie) };
-  }).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding)),
-) {}
+  }),
+);
