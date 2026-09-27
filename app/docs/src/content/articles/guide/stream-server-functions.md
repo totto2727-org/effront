@@ -110,7 +110,7 @@ Stream または Effect のエラーチャネルで扱い、defect の stack や
 取得したリソースはストリーミング中だけ利用でき、応答の完了、失敗、キャンセル後に解放されます。
 キャンセル時には、Effront が stream producer を中断して join するため、非同期 finalizer もリクエストスコープを解放する前に完了します。
 finalizer と I/O はキャンセルに協調するように記述してください。
-[ストリーミングフィードの Node サンプル](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed)を実行すると、ページ単位の段階的な表示、失敗時の再試行、中断を確認できます。[開発・本番ブラウザーテスト](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed)では、それらと JavaScript 無効時の初期表示を検証しています。
+[Alchemy Worker のストリーミングフィードサンプル](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed)を実行すると、ページ単位の段階的な表示、失敗時の再試行、中断を確認できます。[ローカル Worker の開発・ビルド後ブラウザーテスト](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed)では、それらと JavaScript 無効時の初期表示を検証しています。
 ほかのホストへの展開時は、そのホストでも切断時の中断伝播を確認してください。
 
 公開契約は `@effront/core/query` から export される API です。

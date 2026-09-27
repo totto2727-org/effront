@@ -3,20 +3,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node dist/rsc/server.js"
+    "dev": "alchemy dev"
   },
   "dependencies": {
     "@effect/atom-react": "catalog:",
-    "@effect/platform-node": "catalog:",
+    "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
-    "@effront/server": "workspace:*",
+    "alchemy": "catalog:",
     "effect": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
     "@effront/vite": "workspace:*",
-    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",

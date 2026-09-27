@@ -3,10 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "cd ../../examples/streaming-feed && vp build && cd ../../tests/e2e-streaming-feed && playwright test"
+    "test": "playwright test"
   },
   "devDependencies": {
+    "@alchemy.run/cloudflare-runtime": "catalog:",
+    "@effront/alchemy": "workspace:*",
+    "@effront/vite": "workspace:*",
     "@playwright/test": "catalog:",
-    "@types/node": "catalog:"
+    "@types/node": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

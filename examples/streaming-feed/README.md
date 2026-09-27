@@ -4,14 +4,14 @@ A self-contained Effront example that server-renders six notes, streams subseque
 
 ## Usage
 
-After preparing workspace packages as described in [examples/AGENTS.md](../AGENTS.md), start Vite development:
+After preparing workspace packages as described in [examples/AGENTS.md](../AGENTS.md), start the Alchemy-managed Cloudflare Worker:
 
 ```sh
 cd examples/streaming-feed
-vp dev
+vp run dev
 ```
 
-Open the URL reported by Vite. To run the native Node production host from this example directory, use `vp build` and `vp run start`. Set `PORT` and `HOST` to override its default `127.0.0.1:18220` listener.
+Open the URL reported by Alchemy. Its development command requires a configured Alchemy profile; the independent browser suite at [`tests/e2e-streaming-feed`](../../tests/e2e-streaming-feed/) runs the same Worker application locally without Cloudflare authentication.
 
 The first six cards are visible without JavaScript. With JavaScript, **Load 6 more notes** emits cards as the server streams them. **Read note** queries a detail independently, so an expanded card stays open while more cards load. Failed requests can be retried without losing received cards.
 

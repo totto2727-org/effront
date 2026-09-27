@@ -12,7 +12,7 @@ test("uses one root atom registry for scoped preview refreshes and idempotent ch
 
   await page.goto("/");
   await expect(page.getByTestId("scope")).toHaveText("Authorized organizer: Ada Organizer");
-  await expect(page.getByText("Node Summit check-in")).toBeVisible();
+  await expect(page.getByText("Workers Summit check-in")).toBeVisible();
   await expect(page.getByTestId("audit-count")).toHaveText("0");
 
   await page.getByLabel("Ticket code").fill("PRIVATE-BEN");
