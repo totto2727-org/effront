@@ -11,7 +11,7 @@ cd examples/streaming-feed
 vp dev
 ```
 
-Open the URL reported by Vite. To run the native Node production host from this example directory, use `vp build` and `vp run start`. Set `PORT` and `HOST` to override its default `127.0.0.1:18220` listener.
+Open the URL reported by Vite. To run the native Node production host from this example directory, use `vp build` and `vp run start`.
 
 The first six cards are visible without JavaScript. With JavaScript, **Load 6 more notes** emits cards as the server streams them. **Read note** queries a detail independently, so an expanded card stays open while more cards load. Failed requests can be retried without losing received cards.
 
