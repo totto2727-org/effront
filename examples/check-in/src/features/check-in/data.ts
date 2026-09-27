@@ -49,9 +49,9 @@ type AuditEntry = {
 const fixedNow = "2026-09-24T03:00:00.000Z";
 
 /**
- * An intentionally Worker-instance-local store for the example. Its synchronous transition
- * inserts its audit record in the same operation. It is reset when the Worker instance restarts
- * and must be replaced by a database transaction in a real service.
+ * An intentionally process-local store for the example. Its synchronous transition is atomic
+ * in one Node event-loop turn and inserts its audit record in the same operation. It is reset
+ * whenever the host restarts and must be replaced by a database transaction in a real service.
  */
 export function makeCheckInStore() {
   const organizers: ReadonlyArray<Organizer> = [
@@ -59,7 +59,7 @@ export function makeCheckInStore() {
     { id: "organizer-ben", name: "Ben Organizer" },
   ];
   const events = [
-    { id: "event-summit", name: "Workers Summit", organizerId: "organizer-ada" },
+    { id: "event-summit", name: "Node Summit", organizerId: "organizer-ada" },
     { id: "event-private", name: "Private Workshop", organizerId: "organizer-ben" },
   ] as const;
   const tickets: Ticket[] = [
@@ -146,4 +146,5 @@ export function makeCheckInStore() {
   return { preview, checkIn };
 }
 
+export const checkInStore = makeCheckInStore();
 export const demoOrganizer = { id: "organizer-ada", name: "Ada Organizer" } as const;

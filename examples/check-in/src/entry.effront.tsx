@@ -1,6 +1,5 @@
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import { CheckInConsole } from "./features/check-in/client";
-import { CheckInStore } from "./features/check-in/services";
 import { EFFRONT } from "./effront";
 
 const RootLayout = EFFRONT.Layout.make({
@@ -23,6 +22,5 @@ const CheckInPage = EFFRONT.Page.make({
 });
 
 export default EFFRONT.make({
-  layer: Layer.effect(CheckInStore, CheckInStore),
   routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", CheckInPage),
 });

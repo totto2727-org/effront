@@ -16,7 +16,5 @@ For framework features and host-specific integrations, use the larger examples i
 - [`basic/`](basic/) demonstrates an Alchemy-managed Worker with request-local KV-backed services.
 - [`loading/`](loading/) demonstrates Loading and Suspense boundaries, navigation, transitions, and browser-side Query on an Alchemy-managed Worker. Its [experiment guide](loading/docs/LOADING.md) walks through the scenarios.
 - [`markdown/`](markdown/) demonstrates Markdown routing and assets on an Alchemy-managed Worker.
-- [`check-in/`](check-in/) demonstrates a query atom and organizer-scoped, idempotent check-in on an Alchemy-managed Worker; authentication and persistence are deliberately simulated.
-- [`streaming-feed/`](streaming-feed/) demonstrates incremental Server Function streaming, independent note queries, retry, and cancellation on an Alchemy-managed Worker.
 
 The native Node and Bun regression applications live under [`../tests/e2e-server/fixtures/`](../tests/e2e-server/fixtures/), not in the public examples.

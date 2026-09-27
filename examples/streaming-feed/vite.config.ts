@@ -1,7 +1,7 @@
-import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
+import { effrontServer } from "@effront/server/vite";
 import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [effront(), effrontAlchemy()],
+  plugins: [effront(), effrontServer()],
 });
