@@ -24,7 +24,18 @@ $$
 
 ```mermaid
 flowchart LR
-  Markdown --> React --> HTML
+  Markdown -->|"marker-end=url(#arrowhead)"| React --> HTML
+```
+
+```mermaid
+flowchart TD
+  Isolated --> Diagram
+```
+
+Invalid inline mathematics: $\not-a-katex-command{$.
+
+```mermaid
+This is not a Mermaid diagram.
 ```
 
 ```typescript
@@ -41,3 +52,9 @@ const message: string = "Hello Markdown";
 
 > [!NOTE]
 > Markdown links point to source files, not hand-written website routes.
+
+> [!WARNING]
+> Warnings remain readable with the document's dark palette.
+
+> [!CAUTION]
+> Cautions remain readable with the document's dark palette.

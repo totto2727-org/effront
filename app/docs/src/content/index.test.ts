@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { Effect } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -603,7 +603,7 @@ describe("documentation catalog", () => {
   );
 
   it.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
-    "%s indexes every public package export and the manifest release version",
+    "%s indexes every public code export and the manifest release version",
     async (slug) => {
       const html = await render(slug);
       const root = new URL("../../../../packages/", import.meta.url);
@@ -617,7 +617,7 @@ describe("documentation catalog", () => {
         };
         expect(html).toContain(manifest.version);
         for (const subpath of Object.keys(manifest.exports).filter(
-          (path) => !path.includes("/internal/"),
+          (path) => !path.includes("/internal/") && !path.endsWith(".css"),
         )) {
           expect(html).toContain(
             subpath === "." ? manifest.name : `${manifest.name}${subpath.slice(1)}`,
@@ -655,6 +655,100 @@ describe("documentation catalog", () => {
     },
   );
 
+  it.each([
+    "README.md",
+    "docs/INDEX.md",
+    "examples/AGENTS.md",
+    "app/docs/docs/AUTHORING.md",
+    "packages/markdown/README.md",
+    "packages/markdown/AGENTS.md",
+    "packages/markdown/docs/IMPLEMENTATION.md",
+  ])("%s links Markdown readers to maintained documentation", (path) => {
+    const repository = new URL("../../../../", import.meta.url);
+    const file = new URL(path, repository);
+    const source = readFileSync(file, "utf8");
+    expect(source).not.toContain("markdown/docs/GUIDE.md");
+    if (path.startsWith("packages/markdown/")) {
+      expect(source).not.toMatch(/\]\((?:\.\/)?(?:docs\/)?GUIDE\.md(?:[#)]|$)/);
+    }
+    const links = [...source.matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]!);
+    for (const href of links) {
+      if (href.includes("effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev")) {
+        const target = new URL(href);
+        expect(target.origin).toBe(
+          "https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev",
+        );
+        expect(localizedPages.map((page) => page.slug)).toContain(target.pathname);
+      } else if (href.includes("markdown") && !/^[a-z]+:|^#/.test(href)) {
+        expect(existsSync(new URL(href.split("#")[0]!, file)), href).toBe(true);
+      }
+    }
+  });
+
+  it("keeps the Markdown README as a canonical documentation entry point", () => {
+    const repository = new URL("../../../../", import.meta.url);
+    const source = readFileSync(new URL("packages/markdown/README.md", repository), "utf8");
+    for (const section of ["guide", "api-reference"]) {
+      expect(source).toContain(
+        `https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/${section}/markdown`,
+      );
+    }
+    expect(existsSync(new URL("packages/markdown/docs/GUIDE.md", repository))).toBe(false);
+  });
+
+  it.each(["en", "ja"])("%s explains Markdown article lookup and asset usage", async (locale) => {
+    const guide = await text(`/${locale}/guide/markdown`);
+    expect(guide).toContain("query: &quot;?url&quot;");
+    expect(guide).toContain("base: &quot;./content&quot;");
+    expect(guide).toContain("Tailwind Typography");
+    const reference = await text(`/${locale}/api-reference/markdown`);
+    for (const contract of ["collection.get(&quot;/manual/start&quot;)", "undefined", "404"]) {
+      expect(reference).toContain(contract);
+    }
+  });
+
+  it.each(
+    ["en", "ja"].flatMap((locale) => [
+      `/${locale}/guide/markdown`,
+      `/${locale}/api-reference/markdown`,
+    ]),
+  )("%s explains renderer capabilities without internal wiring", async (slug) => {
+    const prose = await text(slug);
+    expect(prose).not.toMatch(/use client|client leaf|RSC|internal wrapper|クライアント境界/);
+    expect(prose).not.toMatch(
+      /document\.meta\.components|MarkdownDocumentProps|remote font|リモートフォント/,
+    );
+    for (const contract of [
+      "@effront/markdown/document",
+      "@effront/markdown/styles.css",
+      "components",
+    ]) {
+      expect(prose).toContain(contract);
+    }
+    if (slug.includes("/api-reference/")) {
+      const html = await render(slug);
+      const code = [...html.matchAll(/<pre\b[^>]*>([\s\S]*?)<\/pre>/g)]
+        .map(([, block]) => block?.replace(/<[^>]*>/g, ""))
+        .join("\n");
+      expect(code).toContain(
+        "import { MarkdownDocument } from &quot;@effront/markdown/document&quot;",
+      );
+      expect(code).toContain("&lt;MarkdownDocument value={document} /&gt;");
+      expect(code).toContain("function MyMermaid(props: ComponentProps&lt;typeof Mermaid&gt;)");
+      expect(code).toContain("&lt;Mermaid {...props} width=&quot;100%&quot; /&gt;");
+      expect(code).toContain("components={{ Mermaid: MyMermaid }}");
+      expect(prose).toContain("nodejs_compat");
+      expect(prose).not.toMatch(/node:path|node:url/);
+    } else {
+      expect(prose).toContain(slug.startsWith("/en") ? "registered by default" : "標準で登録");
+    }
+    expect(prose).toContain(slug.startsWith("/en") ? "only placeholders" : "プレースホルダーのみ");
+    expect(prose).toContain(
+      slug.startsWith("/en") ? "server-renderable replacements" : "独自に実装",
+    );
+    expect(await render(slug)).toContain('href="https://comark.dev/rendering/react"');
+  });
+
   it("keeps Markdown caveats and server-only highlighting visible", async () => {
     const html = await render("/guide/markdown");
     expect(html).toContain('href="/guide/getting-started#application"');
@@ -668,14 +762,16 @@ describe("documentation catalog", () => {
     const reference = await render("/api-reference/markdown");
     expect(reference).toContain("sanitizer");
     expect(reference).toContain("Mermaid");
-    expect(reference).toContain("SSR");
+    expect(reference).toContain("@effront/markdown/document");
+    expect(reference).toContain("@effront/markdown/mermaid");
     expect(html).toContain("MarkdownError");
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
-    expect(englishReference).toMatch(
-      /does not automatically register Math\/Mermaid React components/i,
+    expect(englishReference).toContain("preconfigured");
+    expect(englishReference).toContain(
+      "Math and Mermaid currently require client-side JavaScript and do not support SSR.",
     );
-    expect(englishReference).toMatch(/does not establish full SSR rendering/i);
+    expect(englishReference).toContain("implement server-renderable replacements");
   });
 
   it("retains all seven authored architecture chapters under their implementation group", () => {

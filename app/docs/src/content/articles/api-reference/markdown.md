@@ -22,9 +22,8 @@ Cloudflare Workers では Wrangler 設定の `nodejs_compat` が必要です。
 | `entries`                                              | 公開 URL 順の readonly エントリー配列        |
 | `resolveLink(entry, href)`、`resolveImage(entry, src)` | [参照解決の Effect](#references)             |
 
-検索には絶対パスを指定します。
-URL エスケープは一度デコードし、末尾のスラッシュを一つ許容し、クエリとフラグメントを無視します。
-該当エントリーがなければ、型付きの失敗ではなく `undefined` を返します。
+`collection.get("/manual/start")` で、そのサイト内パスの記事を取得します。
+該当エントリーがなければ `undefined` を返します。
 解析前に、404 レスポンスなどで処理してください。
 
 | `MarkdownEntry` のフィールド             | 値                                      |
@@ -54,18 +53,42 @@ Effront が追加するプラグインを削除するオプションはありま
 `registerDefaultPlugins: false` が無効にするのは Comark 自体の既定プラグインだけです。
 `linkify` など、その他のオプションは [Comark](https://comark.dev) に従います。
 
-解析結果は、`@comark/react/components/MarkdownDocument` の `MarkdownDocument` に `value` prop として渡します。
-標準の `components` prop は `components={{ ProseA: MyLink }}` などの置き換えに対応します。
-[Comark React API](https://comark.dev/rendering/react) を参照してください。
-Comark 0.6.2 は Math/Mermaid の React コンポーネントを自動登録せず、`document.meta.components` を renderer の対応表に統合しません。
-そのため、解析対応だけでは完全な SSR 描画を保証しません。
-必要な場合は対応するコンポーネントを指定し、描画結果を検証してください。
-
 > [!WARNING]
 > 対象は信頼できる執筆済み Markdown とプラグインに限ります。
 > この parser は sanitizer ではありません。
 
 parser の例外は、元の例外を `cause` に持つ `MarkdownError` になります。
+
+## Markdown のレンダリング {#rendering}
+
+初期設定済みの `@effront/markdown/document` の `MarkdownDocument` と `@effront/markdown/styles.css` を利用することができます。
+
+```tsx
+import { MarkdownDocument } from "@effront/markdown/document";
+import "@effront/markdown/styles.css";
+
+<MarkdownDocument value={document} />;
+```
+
+カスタマイズする場合:
+
+```tsx
+import { Mermaid } from "@effront/markdown/mermaid";
+import type { ComponentProps } from "react";
+
+function MyMermaid(props: ComponentProps<typeof Mermaid>) {
+  return <Mermaid {...props} width="100%" />;
+}
+
+<MarkdownDocument value={document} components={{ Mermaid: MyMermaid }} />;
+```
+
+各コンポーネントのオプションは [Comark React API](https://comark.dev/rendering/react) を参照してください。
+
+> [!WARNING]
+> 現状、Math と Mermaid はクライアント JavaScript が必須であり、SSR に対応していません。
+> サーバー側では数式と図のレンダリングをスキップし、プレースホルダーのみを出力します。
+> SSR が必要な場合は、サーバーでレンダリングできるコンポーネントを独自に実装し、`components` で差し替えてください。
 
 ## リンク、アセット、MarkdownError {#references}
 
@@ -80,11 +103,7 @@ parser の例外は、元の例外を `cause` に持つ `MarkdownError` にな�
 | フラグメントのみ、`/` 始まり、外部 URL                   | 変更なし                          |
 | 相対参照先がない、またはコレクションの基準位置の外を指す | `MarkdownError`                   |
 
-相対パスはソース文書のディレクトリを基準にします。
-クエリとフラグメントは保持されます。
-`/manual` 配下では、`./guide/start.md` からの `./details.md#example` は `/manual/guide/details#example` になります。
-アセットの接尾辞はインポート済み URL にそのまま追加し、既存のクエリやフラグメントと統合しません。
-競合する接尾辞を避けるか、完成した URL を使ってください。
+相対パスは、各 Markdown ファイルを基準に解決します。
 
 `MarkdownError` は `_tag: "MarkdownError"`、診断用の `message`、省略可能な `cause` を持ちます。
 コレクション設定、参照解決、parser の失敗を表します。

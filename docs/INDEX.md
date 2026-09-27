@@ -17,7 +17,7 @@ For framework maintenance, choose the reference below that matches your change.
 
 - [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md): native construction, host context, and local profile boundaries.
 - [Page View Transitions](../packages/core/docs/VIEW-TRANSITIONS.md): core navigation and transition semantics.
-- [Markdown guide](../packages/markdown/docs/GUIDE.md): collections, rendering, assets, and parser contracts.
+- [Markdown implementation](../packages/markdown/docs/IMPLEMENTATION.md): collection flowcharts, rendering boundaries, and packaging mechanics. Consumer instructions belong in the [published Markdown guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/markdown) and [API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/markdown).
 - [External Gitignore generator](https://jsr.io/@totto2727/gitignore-patterns/doc): the separately maintained dependency used by repository formatting and lint configuration.
 - [Documentation-site authoring](../app/docs/docs/AUTHORING.md): page and implementation-excerpt maintenance.
 
