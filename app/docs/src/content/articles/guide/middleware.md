@@ -156,4 +156,4 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 送信すると、`Form received` と送信時の URL がログに出ます。
 ページを開いたときの値を保存して使うわけではありません。
 
-フォームの状態を返す方法は [Server Functions](/guide/server-functions) を参照してください。
+フォームの状態を返す方法は [Mutation Server Function](/guide/mutation-server-functions) を参照してください。

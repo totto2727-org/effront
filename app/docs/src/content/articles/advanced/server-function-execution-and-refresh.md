@@ -11,7 +11,7 @@ Server Function の戻り値は、フォームへのフィードバックに使�
 
 送信ハンドラーから画面更新用のリクエストを追加する必要はありません。
 JavaScript がない場合、ネイティブフォームの送信が成功すると、React のフォーム状態を含む完全な HTML ページが返ります。
-[Server Functions ガイド](/ja/guide/server-functions)のように、Server Function をフォームや `useActionState` に直接渡してください。
+[Server Functions ガイド](/ja/guide/mutation-server-functions)のように、Server Function をフォームや `useActionState` に直接渡してください。
 
 ## 画面より先に関数の結果が届く {#result-and-refresh}
 
@@ -22,7 +22,7 @@ JavaScript がない場合、ネイティブフォームの送信が成功する
 
 <span id="input-boundary"></span>
 
-想定内の失敗は、[フォームの状態](/ja/guide/server-functions#state)として返します。
+想定内の失敗は、[フォームの状態](/ja/guide/mutation-server-functions#state)として返します。
 [入力 Schema や未処理のハンドラーの失敗](/ja/api-reference/server-functions#arguments)は、呼び出しを reject します。
 
 ## 画面更新の順序と書き込み順序は別 {#concurrency}

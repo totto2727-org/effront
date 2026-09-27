@@ -33,7 +33,7 @@ export const describe = EFFRONT.ServerFn.make({
 > [!WARNING]
 > ホストのバインディングや秘密情報を返さないでください。
 
-関数を呼び出す React コンポーネントは [Server Functions](/ja/guide/server-functions) を参照してください。
+関数を呼び出す React コンポーネントは [Mutation Server Function](/ja/guide/mutation-server-functions) を参照してください。
 
 ## 引数の形式 {#arguments}
 

@@ -31,6 +31,18 @@ for (const reader of locales) {
     page,
   }) => {
     await openGuide(page, reader, "/guide/server-functions");
+    for (const kind of ["mutation", "query", "stream"]) {
+      await expect(
+        page
+          .locator("article")
+          .locator(`a[href="/${reader.locale}/guide/${kind}-server-functions"]`),
+      ).toBeVisible();
+    }
+    await page
+      .locator("article")
+      .locator(`a[href="/${reader.locale}/guide/mutation-server-functions"]`)
+      .click();
+    await expect(page).toHaveURL(`/${reader.locale}/guide/mutation-server-functions`);
     expect(
       await page
         .locator("article h2")

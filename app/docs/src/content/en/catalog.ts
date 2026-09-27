@@ -120,8 +120,15 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/server-functions",
     title: "Server Functions",
-    description:
-      "Handle form submissions and client calls with server-side validation and responses your UI can use.",
+    description: "Choose between mutation, query, and stream Server Function calls.",
+    section: "Guides",
+    headings: [{ id: "choose", title: "Choose a call" }],
+    source: "/guide/server-functions",
+  },
+  {
+    slug: "/guide/mutation-server-functions",
+    title: "Mutation Server Functions",
+    description: "Submit forms and render the current route after a server-side change.",
     section: "Guides",
     headings: [
       { id: "identity", title: "Share the application definition" },
@@ -132,7 +139,7 @@ export const englishArticleCatalog = [
       { id: "refresh", title: "Handle updates" },
       { id: "errors", title: "Handle failures" },
     ],
-    source: "/guide/server-functions",
+    source: "/guide/mutation-server-functions",
   },
   {
     slug: "/guide/query-server-functions",
@@ -159,7 +166,6 @@ export const englishArticleCatalog = [
       { id: "server", title: "Return a stream" },
       { id: "client", title: "Consume chunks" },
       { id: "lifetime", title: "Failures, cancellation, and lifetime" },
-      { id: "choose", title: "Choose query, stream, or mutation" },
     ],
     source: "/guide/stream-server-functions",
   },

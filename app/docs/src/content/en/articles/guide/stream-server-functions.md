@@ -112,13 +112,5 @@ Write finalizers and I/O so that they cooperate with cancellation.
 Run the [Node streaming-feed example](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed) to see incremental pages, retries, and cancellation. The [development and production browser tests](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed) also verify the initial render without JavaScript.
 When deploying to another host, verify cancellation propagation on that host too.
 
-## Choose query, stream, or mutation {#choose}
-
-| Need                                                         | Use                                 |
-| ------------------------------------------------------------ | ----------------------------------- |
-| Read one value without route refresh                         | `query` or `queryAtom`              |
-| Read progressive values without route refresh                | `stream` or `streamAtom`            |
-| Submit a form or update state with normal navigation refresh | A standard Server Function mutation |
-
 The public contract is the API exported from `@effront/core/query`.
 Do not rely on an internal query URL, HTTP method, or a particular transport implementation.

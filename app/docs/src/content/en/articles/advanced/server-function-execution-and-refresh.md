@@ -11,7 +11,7 @@ For a settings form, Effront processes the save in this order:
 
 The submit handler does not need a second refresh request.
 Without JavaScript, a successful native form submission returns a complete HTML page with React's form state.
-Pass the Server Function directly to the form or `useActionState`, as in the [Server Functions guide](/en/guide/server-functions).
+Pass the Server Function directly to the form or `useActionState`, as in the [Server Functions guide](/en/guide/mutation-server-functions).
 
 ## The result can arrive before the view {#result-and-refresh}
 
@@ -22,7 +22,7 @@ Wait for the refreshed component to render before you focus or measure those ele
 
 <span id="input-boundary"></span>
 
-Return expected failures as [form state](/en/guide/server-functions#state).
+Return expected failures as [form state](/en/guide/mutation-server-functions#state).
 [Input Schema and uncaught handler failures](/en/api-reference/server-functions#arguments) reject the invocation instead.
 
 ## Refresh ordering is not write ordering {#concurrency}

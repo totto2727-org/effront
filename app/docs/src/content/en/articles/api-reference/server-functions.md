@@ -33,7 +33,7 @@ Inputs and outputs must satisfy [React's serialization contract](https://react.d
 > [!WARNING]
 > Do not return host bindings or secrets.
 
-For React components that call the function, see [Server Functions](/en/guide/server-functions).
+For React components that call the function, see [Mutation Server Functions](/en/guide/mutation-server-functions).
 
 ## Argument shapes {#arguments}
 

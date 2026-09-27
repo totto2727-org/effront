@@ -166,6 +166,7 @@ export default EFFRONT.make({
     )
     .page("/best-practices/testing", documentPage("/best-practices/testing"))
     .page("/guide/server-functions", documentPage("/guide/server-functions"))
+    .page("/guide/mutation-server-functions", documentPage("/guide/mutation-server-functions"))
     .page("/guide/query-server-functions", documentPage("/guide/query-server-functions"))
     .page("/guide/stream-server-functions", documentPage("/guide/stream-server-functions"))
     .page("/guide/middleware", documentPage("/guide/middleware"))
@@ -237,6 +238,10 @@ export default EFFRONT.make({
     )
     .page("/ja/best-practices/testing", documentPage("/ja/best-practices/testing"))
     .page("/ja/guide/server-functions", documentPage("/ja/guide/server-functions"))
+    .page(
+      "/ja/guide/mutation-server-functions",
+      documentPage("/ja/guide/mutation-server-functions"),
+    )
     .page("/ja/guide/query-server-functions", documentPage("/ja/guide/query-server-functions"))
     .page("/ja/guide/stream-server-functions", documentPage("/ja/guide/stream-server-functions"))
     .page("/ja/guide/middleware", documentPage("/ja/guide/middleware"))
@@ -308,6 +313,10 @@ export default EFFRONT.make({
     )
     .page("/en/best-practices/testing", documentPage("/en/best-practices/testing"))
     .page("/en/guide/server-functions", documentPage("/en/guide/server-functions"))
+    .page(
+      "/en/guide/mutation-server-functions",
+      documentPage("/en/guide/mutation-server-functions"),
+    )
     .page("/en/guide/query-server-functions", documentPage("/en/guide/query-server-functions"))
     .page("/en/guide/stream-server-functions", documentPage("/en/guide/stream-server-functions"))
     .page("/en/guide/middleware", documentPage("/en/guide/middleware"))

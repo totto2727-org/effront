@@ -119,8 +119,15 @@ export const articleCatalog = [
   {
     slug: "/guide/server-functions",
     title: "Server Function",
-    description:
-      "フォームの送信やクライアントからの呼び出しに対し、サーバー側で入力を検証し、UI で使える応答を返します。",
+    description: "Mutation、Query、Stream から目的に合う Server Function の呼び出し方を選びます。",
+    section: "Guides",
+    headings: [{ id: "choose", title: "呼び出し方を選ぶ" }],
+    source: "/guide/server-functions",
+  },
+  {
+    slug: "/guide/mutation-server-functions",
+    title: "Mutation Server Function",
+    description: "フォームを送信し、更新後の現在のルートを表示する Server Function を作ります。",
     section: "Guides",
     headings: [
       { id: "identity", title: "アプリケーション定義を共有する" },
@@ -131,7 +138,7 @@ export const articleCatalog = [
       { id: "refresh", title: "更新を扱う" },
       { id: "errors", title: "失敗を扱う" },
     ],
-    source: "/guide/server-functions",
+    source: "/guide/mutation-server-functions",
   },
   {
     slug: "/guide/query-server-functions",
@@ -156,7 +163,6 @@ export const articleCatalog = [
       { id: "server", title: "ストリームを返す" },
       { id: "client", title: "チャンクを消費する" },
       { id: "lifetime", title: "失敗、キャンセル、生存期間" },
-      { id: "choose", title: "query、stream、mutation を選ぶ" },
     ],
     source: "/guide/stream-server-functions",
   },

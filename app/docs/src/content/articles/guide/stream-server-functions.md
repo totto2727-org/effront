@@ -113,13 +113,5 @@ finalizer と I/O はキャンセルに協調するように記述してくだ�
 [ストリーミングフィードの Node サンプル](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed)を実行すると、ページ単位の段階的な表示、失敗時の再試行、中断を確認できます。[開発・本番ブラウザーテスト](https://github.com/totto2727-org/effront/tree/main/tests/e2e-streaming-feed)では、それらと JavaScript 無効時の初期表示を検証しています。
 ほかのホストへの展開時は、そのホストでも切断時の中断伝播を確認してください。
 
-## query、stream、mutation を選ぶ {#choose}
-
-| 必要なこと                                                         | 使うもの                        |
-| ------------------------------------------------------------------ | ------------------------------- |
-| ルートを更新せずに値を一つ読む                                     | `query` または `queryAtom`      |
-| ルートを更新せずに段階的な値を読む                                 | `stream` または `streamAtom`    |
-| フォームを送信する、または通常のナビゲーション更新で状態を変更する | 通常の Server Function mutation |
-
 公開契約は `@effront/core/query` から export される API です。
 内部の query URL、HTTP メソッド、特定の転送実装には依存しないでください。
