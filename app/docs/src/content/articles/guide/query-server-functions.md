@@ -90,7 +90,7 @@ atom は元の Server Function と同じ引数を受け取ります。
 
 `query` に atom registry は必要ありません。
 `queryAtom` は、アプリケーションが Effect Reactivity を使う場合だけ利用します。
-インストールと React への統合は、使用中の Effect 4 リリースに合わせて [`@effect/atom-react` の公式パッケージ](https://github.com/Effect-TS/effect/tree/main/packages/atom/react)を参照してください。
+インストールと React への統合は、使用中の Effect 4 リリースに合わせて [`@effect/atom-react` の公式 README](https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation)を参照してください。
 `RegistryProvider` はナビゲーションで置き換わる Page ではなく、永続的な Root Layout のクライアント境界に配置します。
 [チェックインサンプルのクライアント側 provider](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/features/check-in/registry.tsx) と [Root Layout](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/entry.effront.tsx)を参照してください。
 上の `TicketStatusAtom` はその provider の下で使用します。

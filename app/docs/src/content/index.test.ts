@@ -427,7 +427,7 @@ describe("documentation catalog", () => {
       expect(queryGuide).toContain("run([{ ticketCode }])");
       expect(queryGuide).toContain("Effect.catchTags({");
       expect(await render(`/${locale}/guide/query-server-functions`)).toContain(
-        'href="https://github.com/Effect-TS/effect/tree/main/packages/atom/react"',
+        'href="https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation"',
       );
       const alchemy = await render(`/${locale}/api-reference/alchemy`);
       expect(alchemy).toContain('data-alert="warning"');

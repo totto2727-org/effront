@@ -88,7 +88,7 @@ The framework-only cancellation marker is not part of the encoded input, so the 
 ## Set up optional atom integration {#atom-setup}
 
 `query` works without an atom registry.
-Use `queryAtom` only when the application opts into Effect Reactivity. For installation and React integration with your Effect 4 release, follow the [official `@effect/atom-react` package](https://github.com/Effect-TS/effect/tree/main/packages/atom/react).
+Use `queryAtom` only when the application opts into Effect Reactivity. For installation and React integration with your Effect 4 release, follow the [official `@effect/atom-react` README](https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation).
 Place its `RegistryProvider` in a client boundary under the persistent Root Layout, not inside a page that navigation replaces.
 See the check-in example's [client-side provider](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/features/check-in/registry.tsx) and [Root Layout](https://github.com/totto2727-org/effront/blob/main/examples/check-in/src/entry.effront.tsx).
 Render the `TicketStatusAtom` shown above below that provider.
