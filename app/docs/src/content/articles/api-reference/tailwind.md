@@ -1,6 +1,6 @@
 ## effrontTailwind {#plugin}
 
-`@effront/tailwind` の `effrontTailwind(options?: EffrontTailwindOptions): Promise<PluginOption[]>` は、アプリケーションで宣言した `@tailwindcss/vite` と `tailwindcss` を読み込み、スタイルシートを一つ追加します。
+`@effront/tailwind` の `effrontTailwind(options?: EffrontTailwindOptions): PluginOption[]` は、アプリケーションで宣言した `@tailwindcss/vite` と `tailwindcss` を同期的に読み込み、スタイルシートを一つ追加します。
 アプリケーションの Effront プラグインとホストアダプターに加えて、一度だけ登録します。
 
 ```typescript
@@ -10,7 +10,7 @@ import { effrontTailwind } from "@effront/tailwind";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [effront(), effrontCloudflare(), await effrontTailwind({ root: import.meta.dirname })],
+  plugins: [effront(), effrontCloudflare(), effrontTailwind({ root: import.meta.dirname })],
 });
 ```
 

@@ -21,7 +21,7 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   // Added: effrontTailwind().
-  plugins: [effront(), effrontServer(), await effrontTailwind()],
+  plugins: [effront(), effrontServer(), effrontTailwind()],
 });
 ```
 
@@ -54,7 +54,7 @@ JavaScript を無効にしていても初期 HTML からスタイルが適用さ
 
 ```typescript
 // vite.config.ts: replace effrontTailwind() in the plugins array.
-await effrontTailwind({ stylesheet: "./src/styles.css" });
+effrontTailwind({ stylesheet: "./src/styles.css" });
 ```
 
 パスは Vite root を基準にします。

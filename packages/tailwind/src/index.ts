@@ -1,7 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 
 import { normalizePath, type Plugin, type PluginOption } from "vite";
 
@@ -25,16 +24,17 @@ const declares = (manifest: ApplicationManifest, name: string) =>
   Object.hasOwn(manifest.dependencies ?? {}, name) ||
   Object.hasOwn(manifest.devDependencies ?? {}, name);
 
-/** Enables the application's own Tailwind Vite plugin only when both packages are declared. */
-export const effrontTailwind = async (
-  options: EffrontTailwindOptions = {},
-): Promise<PluginOption[]> => {
+/**
+ * Enables the application's own Tailwind Vite plugin only when both packages are declared.
+ * Resolution is synchronous so application configuration keeps the plain plugin-array shape.
+ */
+export const effrontTailwind = (options: EffrontTailwindOptions = {}): PluginOption[] => {
   if (options.stylesheet === "") throw new TypeError("A stylesheet path must not be empty.");
   const root = resolve(options.root ?? process.cwd());
   const manifestPath = resolve(root, "package.json");
   let manifest: ApplicationManifest;
   try {
-    const parsed: unknown = JSON.parse(await readFile(manifestPath, "utf8"));
+    const parsed: unknown = JSON.parse(readFileSync(manifestPath, "utf8"));
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
       throw new TypeError("Application package.json must contain an object.");
     }
@@ -65,9 +65,8 @@ export const effrontTailwind = async (
     } catch (error) {
       throw new Error(`Install the declared Tailwind dependencies in ${root}`, { cause: error });
     }
-    const { default: tailwindcss } = (await import(
-      pathToFileURL(pluginPath).href
-    )) as typeof import("@tailwindcss/vite");
+    // The application's own plugin is loaded from its install location, not this package's.
+    const { default: tailwindcss } = require(pluginPath) as typeof import("@tailwindcss/vite");
     tailwindPlugins = tailwindcss();
   }
 

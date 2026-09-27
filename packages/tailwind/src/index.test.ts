@@ -15,7 +15,7 @@ async function integration(stylesheet?: string, applicationRoot = root) {
     {
       root: applicationRoot,
       configFile: false,
-      plugins: await effrontTailwind({
+      plugins: effrontTailwind({
         root: applicationRoot,
         ...(stylesheet === undefined ? {} : { stylesheet }),
       }),
@@ -93,8 +93,8 @@ describe("Effront Tailwind", () => {
     expect(plugin.transform('"use client";', "/app/client.tsx?raw")).toBeUndefined();
   });
 
-  it("rejects an empty explicit stylesheet path", async () => {
-    await expect(effrontTailwind({ stylesheet: "" })).rejects.toThrow(TypeError);
+  it("rejects an empty explicit stylesheet path", () => {
+    expect(() => effrontTailwind({ stylesheet: "" })).toThrow(TypeError);
   });
 
   it("does not inject generated CSS or the official plugin without app dependencies", async () => {
@@ -133,7 +133,7 @@ describe("Effront Tailwind", () => {
           devDependencies: { tailwindcss: "4", "@tailwindcss/vite": "4" },
         }),
       );
-      await expect(effrontTailwind({ root: appRoot })).rejects.toThrow(
+      expect(() => effrontTailwind({ root: appRoot })).toThrow(
         `Install the declared Tailwind dependencies in ${appRoot}`,
       );
     } finally {

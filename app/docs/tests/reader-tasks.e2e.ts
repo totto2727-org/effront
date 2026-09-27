@@ -256,11 +256,11 @@ for (const reader of locales) {
     await followHeading(page, reader, "setup");
     const defaults = page
       .locator("article pre code")
-      .filter({ hasText: "plugins: [effront(), effrontServer(), await effrontTailwind()]" });
+      .filter({ hasText: "plugins: [effront(), effrontServer(), effrontTailwind()]" });
     await expect(defaults).toHaveCount(1);
     await expect(defaults).toContainText('from "@effront/tailwind"');
     await expect(defaults).toContainText(
-      "plugins: [effront(), effrontServer(), await effrontTailwind()]",
+      "plugins: [effront(), effrontServer(), effrontTailwind()]",
     );
     await expect(defaults).not.toContainText("stylesheet:");
     await expect(page.locator("article")).not.toContainText("stylingPlugins");

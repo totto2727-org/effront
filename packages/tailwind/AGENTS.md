@@ -16,6 +16,7 @@
 - Preserve the CSS-shaped absolute virtual module ID and its `effront-tailwind` query so Vite and Tailwind resolve imports from the application root without creating a physical stylesheet.
 - Exclude `raw`, `url`, `worker`, and `sharedworker` module requests from client-boundary transformation.
 - Resolve the official Tailwind Vite plugin from the application's installed dependencies before Vite plugin collection. Declare both `@tailwindcss/vite` and `tailwindcss` to enable it; neither declared means no injected CSS, and explicit CSS paths still load normally. Explicit CSS paths replace the generated stylesheet and resolve against the Vite root.
+- Resolve the application's plugin synchronously with `createRequire` from the application `package.json`, because `effrontTailwind()` returns a plain `PluginOption[]` that consumers place directly in their plugin array. This relies on Node 24 `require(esm)`; do not reintroduce a dynamic `import()` without also accepting a `Promise` return type.
 
 ## Package-specific rules
 

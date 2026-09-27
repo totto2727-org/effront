@@ -1,6 +1,6 @@
 ## effrontTailwind {#plugin}
 
-`effrontTailwind(options?: EffrontTailwindOptions): Promise<PluginOption[]>` from `@effront/tailwind` loads the application's declared `@tailwindcss/vite` and `tailwindcss` packages, then adds one stylesheet.
+`effrontTailwind(options?: EffrontTailwindOptions): PluginOption[]` from `@effront/tailwind` loads the application's declared `@tailwindcss/vite` and `tailwindcss` packages synchronously, then adds one stylesheet.
 Register it once alongside the application's Effront plugin and host adapter:
 
 ```typescript
@@ -10,7 +10,7 @@ import { effrontTailwind } from "@effront/tailwind";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [effront(), effrontCloudflare(), await effrontTailwind({ root: import.meta.dirname })],
+  plugins: [effront(), effrontCloudflare(), effrontTailwind({ root: import.meta.dirname })],
 });
 ```
 

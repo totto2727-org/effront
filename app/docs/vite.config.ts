@@ -5,7 +5,7 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   plugins: [
-    await effrontTailwind({ root: import.meta.dirname, stylesheet: "./src/styles.css" }),
+    effrontTailwind({ root: import.meta.dirname, stylesheet: "./src/styles.css" }),
     effront(),
     effrontAlchemy(),
   ],
