@@ -3,7 +3,7 @@ import { Effect, Fiber, Layer } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
 
 import { InitialFlightStream } from "./initial-flight-stream";
-import { ServerFnIdHeader, type FlightPayload } from "../rsc/flight";
+import { ServerFnIdHeader, type FlightPayload, type ServerFnResult } from "../rsc/flight";
 
 const decodedPayload = {
   formState: null,
@@ -18,7 +18,7 @@ const decodeFlight = vi.fn(
   (
     _stream: ReadableStream<Uint8Array>,
     _options?: { readonly startTime?: number; readonly temporaryReferences?: unknown },
-  ) => Promise.resolve(decodedPayload),
+  ): Promise<FlightPayload | ServerFnResult> => Promise.resolve(decodedPayload),
 );
 
 vi.doMock("@vitejs/plugin-rsc/browser", () => ({
@@ -293,6 +293,51 @@ it.effect("releases the Flight transport when decoding fails", () =>
     expect(error.reason).toBe("DecodeFailed");
     expect(requestSignal?.aborted).toBe(true);
   }),
+);
+
+it.effect("rejects a Server Function result where a route payload was expected", () =>
+  Effect.gen(function* () {
+    decodeFlight.mockResolvedValueOnce({ _tag: "Success", value: "unexpected" });
+    const error = yield* loadFlight({
+      _tag: "Navigation",
+      destination: new URL("https://effront.test/"),
+    }).pipe(
+      Effect.provideService(
+        HttpClient.HttpClient,
+        makeClient(
+          () => new Response(new Uint8Array(), { headers: { "content-type": "text/x-component" } }),
+        ),
+      ),
+      Effect.flip,
+    );
+
+    expect(error.reason).toBe("DecodeFailed");
+  }),
+);
+
+it.effect("rejects a route payload where a query result was expected", () =>
+  Effect.gen(function* () {
+    const client = yield* FlightClient;
+    const error = yield* client
+      .loadQuery({
+        _tag: "Query",
+        body: "encoded-arguments",
+        destination: new URL("https://effront.test/_effront/query"),
+        id: "query-id",
+        temporaryReferences: {},
+      })
+      .pipe(Effect.flip);
+
+    expect(error.reason).toBe("DecodeFailed");
+  }).pipe(
+    Effect.provide(FlightClientTestLayer),
+    Effect.provideService(
+      HttpClient.HttpClient,
+      makeClient(
+        () => new Response(new Uint8Array(), { headers: { "content-type": "text/x-component" } }),
+      ),
+    ),
+  ),
 );
 
 it.effect("rejects a non-Flight Server Function response", () =>

@@ -78,6 +78,32 @@ export function FeedView() {
 }
 ```
 
-Effect Reactivity で最新のチャンクだけを使う場合は `streamAtom` を使います。これは [`queryAtom`](./query-server-functions.md#atom-setup) と同じ任意の `RegistryProvider` セットアップを使います。
+すべてのストーリーを蓄積せず、Effect Reactivity で最新のチャンクだけを表示する場合は `streamAtom` を使います。これは [`queryAtom`](./query-server-functions.md#atom-setup) と同じ任意の `RegistryProvider` セットアップを使います。次のコンポーネントをその provider の下で表示します。
+
+```tsx
+// src/latest-story.tsx
+"use client";
+
+import { streamAtom } from "@effront/core/query";
+import { useAtom } from "@effect/atom-react";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { useEffect } from "react";
+import { streamFeed } from "./feed";
+
+const latestStory = streamAtom(streamFeed);
+
+export function LatestStory() {
+  const [result, run] = useAtom(latestStory);
+  useEffect(() => {
+    run([{ after: 0 }]);
+  }, [run]);
+
+  if (AsyncResult.isInitial(result)) return <p>ストーリーを待っています…</p>;
+  if (AsyncResult.isFailure(result)) return <p role="alert">ストーリーを読み込めませんでした。</p>;
+  return <p aria-live="polite">最新のストーリー: {result.value.title}</p>;
+}
+```
+
+ストーリーが届くたびに atom の値が置き換わります。すべて保持したい場合は上の `stream` の例を使います。空の Stream には最新値がないため、失敗結果になります。
 想定内の結果と実行時の失敗は、[Server Function のエラーハンドリング](../best-practices/server-function-error-handling.md)を参照してください。
 完全な[ストリーミングフィードのサンプル](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed)では、段階的なページ表示とクライアント側の再試行を確認できます。

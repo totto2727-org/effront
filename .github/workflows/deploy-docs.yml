@@ -19,9 +19,6 @@ jobs:
     if: startsWith(github.ref, 'refs/heads/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      stage: ${{ steps.stage.outputs.name }}
-      url: ${{ steps.deploy.outputs.url }}
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'docs-production' || 'docs-preview' }}
       url: ${{ steps.deploy.outputs.url }}
@@ -73,16 +70,3 @@ jobs:
               ')"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "[Documentation ($ALCHEMY_STAGE)]($url)" >> "$GITHUB_STEP_SUMMARY"
-
-  preview-link:
-    if: github.ref != 'refs/heads/main' && needs.deploy.result == 'success'
-    needs: deploy
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment:
-      # This metadata-only job has no checkout or Cloudflare credentials.
-      name: docs-${{ needs.deploy.outputs.stage }}
-      url: ${{ needs.deploy.outputs.url }}
-    steps:
-      # GitHub creates the branch-specific deployment for this job's environment.
-      - run: "true"

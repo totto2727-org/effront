@@ -204,17 +204,29 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
         });
 
         if (flightRequest._tag === "Query") {
+          if (!("_tag" in payload)) {
+            return yield* new FlightLoadError({
+              cause: new Error("Expected a Server Function result in the query response."),
+              reason: "DecodeFailed",
+            });
+          }
           return {
             _tag: "Query",
             completed: Deferred.await(completed),
-            payload: payload as ServerFnResult,
+            payload,
             release,
           } satisfies QueryResource;
+        }
+        if ("_tag" in payload) {
+          return yield* new FlightLoadError({
+            cause: new Error("Expected a route payload in the Flight response."),
+            reason: "DecodeFailed",
+          });
         }
         return {
           _tag: "Flight",
           completed: Deferred.await(completed),
-          payload: payload as FlightPayload,
+          payload,
           release,
           resolvedUrl,
         } satisfies FlightResource;

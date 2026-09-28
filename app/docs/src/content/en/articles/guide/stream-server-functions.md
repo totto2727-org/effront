@@ -78,6 +78,32 @@ export function FeedView() {
 }
 ```
 
-Use `streamAtom` when the UI needs only the latest chunk through Effect Reactivity. It has the same optional `RegistryProvider` setup as [`queryAtom`](./query-server-functions.md#atom-setup).
+Use `streamAtom` when the UI needs only the latest chunk through Effect Reactivity rather than a list of every story. It has the same optional `RegistryProvider` setup as [`queryAtom`](./query-server-functions.md#atom-setup). Render this component below that provider:
+
+```tsx
+// src/latest-story.tsx
+"use client";
+
+import { streamAtom } from "@effront/core/query";
+import { useAtom } from "@effect/atom-react";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { useEffect } from "react";
+import { streamFeed } from "./feed";
+
+const latestStory = streamAtom(streamFeed);
+
+export function LatestStory() {
+  const [result, run] = useAtom(latestStory);
+  useEffect(() => {
+    run([{ after: 0 }]);
+  }, [run]);
+
+  if (AsyncResult.isInitial(result)) return <p>Waiting for a story…</p>;
+  if (AsyncResult.isFailure(result)) return <p role="alert">Could not load a story.</p>;
+  return <p aria-live="polite">Latest story: {result.value.title}</p>;
+}
+```
+
+Each arriving story replaces the atom's value. Use the `stream` example above if the UI must retain all stories. An empty stream has no latest value and produces a failure result.
 For expected outcomes and operational failures, use [Error handling for Server Functions](../best-practices/server-function-error-handling.md).
 The complete [streaming-feed example](https://github.com/totto2727-org/effront/tree/main/examples/streaming-feed) includes progressive page rendering as well as client retries.
