@@ -140,8 +140,10 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
           (cause) =>
             new ServerFnInputError({ detail: { message: cause.message, name: cause.name } }),
         ),
-        // Normalization preserves the positional Type mapping, which the generic branch erases.
         Effect.flatMap((args: ReadonlyArray<unknown>) =>
+          // Array.ensure widens the input schemas to an array, so Tuple decoding loses the
+          // positional Type tuple. Successful decoding against those same schemas establishes
+          // the handler's argument types, but TypeScript cannot recover that relationship here.
           handler(...(args as Parameters<typeof handler>)).pipe(
             Effect.mapError((cause) => new ServerFnOperationError({ cause })),
           ),
