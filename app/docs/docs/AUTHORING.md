@@ -228,16 +228,17 @@ Do not set `ALCHEMY_STAGE=production` when running `alchemy dev`.
 
 The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to all branches of this repository and can also be dispatched manually from the chosen branch.
 It builds the required workspace packages before invoking `vp exec alchemy deploy --stage <stage> --yes` from `app/docs` directly in the workflow.
-After deployment it reads the URL from the Alchemy state output. The credential-bearing `docs-preview` job does not create a shared deployment record. A second metadata-only job publishes a separate URL-bearing GitHub deployment for each branch. That deployment is intended to appear in the corresponding PR's deployment section, while the deploy job's Actions summary also links it. Confirm the PR links remain available for two simultaneous branches after preview credentials are configured; this cannot be established without a real deployment.
+After deployment it reads the URL from the Alchemy state output and links it in the job's Actions summary. The `docs-preview` job does not create a GitHub deployment record, so a PR deployment link is not guaranteed; reviewers can open the workflow run to reach the branch's preview URL. Confirm that two simultaneous branches retain their separate preview URLs after credentials are configured; this cannot be established without a real deployment.
 Fork PRs do not trigger a push in this repository and do not receive credentials or an automatic remote preview.
 There is no package-level `deploy` script, to avoid accidental production deployment through a local task shortcut.
 Repository checks and tests belong to the separate CI workflow and are not repeated or awaited by the deployment workflow.
 Deployments of the same branch are serialized without cancelling an in-progress reconciliation. Production and separate preview branches may deploy concurrently.
 Alchemy builds the application as part of deployment; there is no separate Wrangler deployment or local-state artifact to restore.
 
-Keep the GitHub Environment `docs-production` restricted to `main`, with its existing approval rules and Cloudflare credentials available at the existing environment, repository, or organization scope.
+Keep the GitHub Environment `docs-production` restricted to `main`, with its existing approval rules.
 Create a separate `docs-preview` Environment for trusted in-repository branches and configure its approval/branch rules as appropriate for who can push to those branches.
-Configure `CLOUDFLARE_PREVIEW_ACCOUNT_ID` as a variable and `CLOUDFLARE_PREVIEW_API_TOKEN` as a secret in `docs-preview`, preferably for a separate preview account so concurrent deployments cannot affect the production state store. Preview deployments never fall back to the production credential names.
+Both jobs use the same credential names: the `CLOUDFLARE_ACCOUNT_ID` variable and `CLOUDFLARE_API_TOKEN` secret. Configure them in both Environments, or at an accessible repository or organization scope. No preview-specific credential names are required.
+If they grant access to the same Cloudflare account, preview branches have the same account-level permissions as production even though Alchemy uses separate deployment stages. Do not treat stage separation as a credential security boundary.
 Push workflows check out and execute the pushed revision, including its workflow and build scripts. Only trusted writers should be allowed to use the preview Environment.
 Environment-level credentials do not prevent branch workflows from accessing any repository- or organization-level credentials that are already available to the repository.
 Credentials are passed only to the deployment step; Alchemy reads them directly in CI without a saved local profile.

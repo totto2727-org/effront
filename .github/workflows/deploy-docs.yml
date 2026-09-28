@@ -22,8 +22,7 @@ jobs:
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'docs-production' || 'docs-preview' }}
       url: ${{ steps.deploy.outputs.url }}
-      # The preview credentials remain protected here, but this shared environment
-      # must not inactivate another branch's deployment record.
+      # Protect the preview environment for trusted branches; Alchemy isolates their stages.
       deployment: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -49,8 +48,8 @@ jobs:
         shell: bash
         working-directory: app/docs
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars[github.ref == 'refs/heads/main' && 'CLOUDFLARE_ACCOUNT_ID' || 'CLOUDFLARE_PREVIEW_ACCOUNT_ID'] }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets[github.ref == 'refs/heads/main' && 'CLOUDFLARE_API_TOKEN' || 'CLOUDFLARE_PREVIEW_API_TOKEN'] }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           ALCHEMY_STAGE: ${{ steps.stage.outputs.name }}
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
