@@ -2,6 +2,7 @@ name: Deploy documentation
 
 on:
   push:
+    branches: ["**"]
   workflow_dispatch:
 
 permissions:
@@ -15,8 +16,6 @@ concurrency:
 
 jobs:
   deploy:
-    # An unfiltered push also fires for tags, which have no PR preview stage.
-    if: startsWith(github.ref, 'refs/heads/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -59,7 +58,9 @@ jobs:
                 let input = "";
                 process.stdin.on("data", (chunk) => { input += chunk; });
                 process.stdin.on("end", () => {
-                  const value = JSON.parse(input);
+                  // Cloudflare credential refresh prints a progress task before the JSON.
+                  const jsonStart = input.lastIndexOf("\n{");
+                  const value = JSON.parse(input.slice(jsonStart < 0 ? 0 : jsonStart + 1));
                   const url = new URL(value.url);
                   if (url.protocol !== "https:" || !url.hostname.endsWith(".workers.dev")) {
                     throw new Error("Alchemy did not return a public Workers URL");
