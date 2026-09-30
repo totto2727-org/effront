@@ -1,6 +1,6 @@
 # npm publication
 
-All public libraries release together at version `0.1.4` with public access and the `latest` dist-tag.
+All public libraries release together at version `0.2.0` with public access and the `latest` dist-tag.
 The release includes `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@effront/markdown`, `@effront/tailwind`, `@effront/alchemy`, and `@effront/server`, plus the `create-effront` initializer at the same version.
 
 ## Prepare a release
@@ -51,7 +51,7 @@ References: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/)
 
 ## Alchemy release boundary
 
-Alchemy participates in the same `0.1.4` release as every other library under `packages/`.
+Alchemy participates in the same `0.2.0` release as every other library under `packages/`.
 Its public package retains the documented compatibility limits; inclusion in npm publication does not authorize infrastructure deployment.
 First-time publication and Trusted Publisher setup for Alchemy remain package-owner prerequisites.
 See [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md).

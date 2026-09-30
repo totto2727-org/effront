@@ -79,7 +79,7 @@ it("creates a standalone Cloudflare Worker without Alchemy or bindings", async (
   const worker = await readFile(join(directory, "src/entry.workers.ts"), "utf8");
   const config = await readFile(join(directory, "vite.config.ts"), "utf8");
   const wrangler = JSON.parse(await readFile(join(directory, "wrangler.json"), "utf8"));
-  expect(manifest.dependencies).toHaveProperty("@effront/cloudflare", "0.1.4");
+  expect(manifest.dependencies).toHaveProperty("@effront/cloudflare", "0.2.0");
   expect(manifest.dependencies).not.toHaveProperty("@effront/alchemy");
   expect(manifest.dependencies).not.toHaveProperty("alchemy");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
@@ -102,7 +102,7 @@ it("keeps standalone Cloudflare hosting out of the Alchemy project", async () =>
   const worker = await readFile(join(directory, "src/entry.workers.ts"), "utf8");
   const config = await readFile(join(directory, "vite.config.ts"), "utf8");
   const runner = await readFile(join(directory, "alchemy.run.ts"), "utf8");
-  expect(manifest.dependencies).toHaveProperty("@effront/alchemy", "0.1.4");
+  expect(manifest.dependencies).toHaveProperty("@effront/alchemy", "0.2.0");
   expect(manifest.dependencies).not.toHaveProperty("@effront/cloudflare");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
   expect(worker).toContain("makeApplicationHttpEffect");

@@ -22,7 +22,7 @@ For a KV-backed application with a Server Function, see the [Alchemy Basic examp
 Install the adapter and matching host dependencies:
 
 ```sh
-vp add @effront/alchemy@0.1.4 alchemy@2.0.0-beta.79 effect@4.0.0-rc.116 @effront/core@0.1.4 @effront/vite@0.1.4
+vp add @effront/alchemy@0.2.0 alchemy@2.0.0-beta.79 effect@4.0.0-rc.116 @effront/core@0.2.0 @effront/vite@0.2.0
 ```
 
 Use the [core runtime peer requirements](../core/README.md#setup) for React and `@effect/platform-browser`.
