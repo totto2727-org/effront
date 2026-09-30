@@ -34,6 +34,10 @@
       "types": "./dist/http.d.ts",
       "default": "./dist/http.js"
     },
+    "./query": {
+      "types": "./dist/query.d.ts",
+      "default": "./dist/query.js"
+    },
     "./internal/client-entry": {
       "types": "./dist/client/entry.d.ts",
       "default": "./dist/client/entry.js"

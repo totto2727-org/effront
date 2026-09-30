@@ -120,8 +120,15 @@ export const englishArticleCatalog = [
   {
     slug: "/guide/server-functions",
     title: "Server Functions",
-    description:
-      "Handle form submissions and client calls with server-side validation and responses your UI can use.",
+    description: "Choose between mutation, query, and stream Server Function calls.",
+    section: "Guides",
+    headings: [{ id: "choose", title: "Choose a call" }],
+    source: "/guide/server-functions",
+  },
+  {
+    slug: "/guide/mutation-server-functions",
+    title: "Mutation Server Functions",
+    description: "Submit forms and render the current route after a server-side change.",
     section: "Guides",
     headings: [
       { id: "identity", title: "Share the application definition" },
@@ -132,7 +139,32 @@ export const englishArticleCatalog = [
       { id: "refresh", title: "Handle updates" },
       { id: "errors", title: "Handle failures" },
     ],
-    source: "/guide/server-functions",
+    source: "/guide/mutation-server-functions",
+  },
+  {
+    slug: "/guide/query-server-functions",
+    title: "Query Server Functions",
+    description:
+      "Read one server value from a Client Component without refreshing the current route.",
+    section: "Guides",
+    headings: [
+      { id: "call", title: "Call a query" },
+      { id: "atom", title: "Keep a reactive result" },
+      { id: "atom-setup", title: "Set up optional atom integration" },
+    ],
+    source: "/guide/query-server-functions",
+  },
+  {
+    slug: "/guide/stream-server-functions",
+    title: "Stream Server Functions",
+    description:
+      "Render progressive server results without turning the read into a route-refreshing mutation.",
+    section: "Guides",
+    headings: [
+      { id: "feed", title: "Stream a feed" },
+      { id: "render", title: "Render arriving stories" },
+    ],
+    source: "/guide/stream-server-functions",
   },
   {
     slug: "/guide/effect",
@@ -237,6 +269,18 @@ export const englishArticleCatalog = [
       { id: "authorization", title: "Authorize each operation" },
     ],
     source: "/best-practices/authentication-and-authorization",
+  },
+  {
+    slug: "/best-practices/server-function-error-handling",
+    title: "Error handling for Server Functions",
+    description:
+      "Return expected outcomes as data and show safe messages for Server Function failures.",
+    section: "Best practices",
+    headings: [
+      { id: "expected", title: "Return expected outcomes as data" },
+      { id: "operational", title: "Show safe failure messages" },
+    ],
+    source: "/best-practices/server-function-error-handling",
   },
   {
     slug: "/advanced/request-runtime-and-lifetimes",

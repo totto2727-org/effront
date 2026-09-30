@@ -60,6 +60,17 @@ The factory exposes [rendering factories](./components.md), [Routes and Middlewa
 `Requirements` retains its external service requirements.
 The HTTP handler supplies `HttpRouter.HttpRouter`, so a Layer can register custom HTTP routes even when `Services` is `never`.
 
+For a definition inferred by `make`, import `ApplicationServices<Application>` and `ApplicationRequirements<Application>` from `@effront/core` to extract the service and external-requirement types.
+`ApplicationRequirements` excludes the runtime-owned `HttpRouter.HttpRouter` requirement.
+
+```typescript
+import type { ApplicationRequirements, ApplicationServices } from "@effront/core";
+import application from "./entry.effront";
+
+type Services = ApplicationServices<typeof application>;
+type HostRequirements = ApplicationRequirements<typeof application>;
+```
+
 The Layer is acquired for each request, not when `make` is called.
 The host must retain its request Scope until the response body completes, fails, or is cancelled.
 

@@ -184,6 +184,66 @@ describe("ServerFn.make", () => {
     }),
   );
 
+  it.effect("runs an omitted-input handler lazily with no arguments", () =>
+    Effect.gen(function* () {
+      let invoked = false;
+      const EFFRONT = Application.effront();
+      const action = EFFRONT.ServerFn.make({
+        handler: (...args) =>
+          Effect.sync(() => {
+            invoked = true;
+            return args;
+          }),
+      });
+      const invocation = action();
+      expect(invoked).toBe(false);
+      const result = yield* invocationEffect(invocation, getEFFRONTIdentity(EFFRONT));
+      expect(result).toEqual([]);
+      expect(invoked).toBe(true);
+    }),
+  );
+
+  it.effect("rejects extra native arguments for omitted input before running the handler", () =>
+    Effect.gen(function* () {
+      let invoked = false;
+      const EFFRONT = Application.effront();
+      const action = EFFRONT.ServerFn.make({
+        handler: () =>
+          Effect.sync(() => {
+            invoked = true;
+          }),
+      });
+      for (const args of [["extra"], [undefined], [new FormData()]]) {
+        const error = yield* Effect.flip(
+          invocationEffect(Reflect.apply(action, null, args), getEFFRONTIdentity(EFFRONT)),
+        );
+        expect(error).toMatchObject({ _tag: "ServerFnInputError" });
+      }
+      expect(invoked).toBe(false);
+    }),
+  );
+
+  it.effect("rejects extra native arguments for empty input before running the handler", () =>
+    Effect.gen(function* () {
+      let invoked = false;
+      const EFFRONT = Application.effront();
+      const action = EFFRONT.ServerFn.make({
+        input: [],
+        handler: () =>
+          Effect.sync(() => {
+            invoked = true;
+          }),
+      });
+      for (const args of [["extra"], [undefined], [new FormData()]]) {
+        const error = yield* Effect.flip(
+          invocationEffect(Reflect.apply(action, null, args), getEFFRONTIdentity(EFFRONT)),
+        );
+        expect(error).toMatchObject({ _tag: "ServerFnInputError" });
+      }
+      expect(invoked).toBe(false);
+    }),
+  );
+
   it.effect("rejects untrusted input before invoking the handler", () =>
     Effect.gen(function* () {
       const invoked = yield* Ref.make(false);

@@ -4,6 +4,7 @@
 
 - `packages/`: core runtime, provider adapters, build integrations, Markdown support, the `create-effront` initializer, and development tooling; consult a package's local `AGENTS.md` for its unique constraints.
 - `examples/{node,bun,cloudflare,alchemy-cloudflare}/`: byte-identical one-page application starters; nonminimal features belong in the Alchemy-based `basic/` example. Rich Node/Bun host regression apps are test-owned fixtures under `tests/e2e-server/fixtures/`.
+- `examples/{check-in,streaming-feed}/`: focused interactive showcases, separate from the minimal starters.
 - `app/docs/`: the framework's own SSR documentation application.
 - `tests/`: independent browser integration packages, distinct from package-owned unit and integration tests.
 - [Documentation index](docs/INDEX.md): cross-package architecture, testing, release policy, roadmap, and upstream provenance only; single-owner guides belong under that package's `docs/`.
@@ -17,6 +18,7 @@
 - Use VitePlus for package management, formatting, linting, checks, and test entry points; retain its default formatting and lint rules.
 - Keep temporary evidence under the owning repository or package's ignored `tmp/`; never commit credentials, `.dev.vars`, generated output, or temporary reports.
 - Automated local acceptance must not require Cloudflare authentication or remote services. Official Alchemy CLI development has a separate profile prerequisite documented by its adapter; do not force verification through an authentication boundary.
+- Target the current Node.js LTS and the current Bun release only. Do not add compatibility shims, dual code paths, or documented floors for older runtimes, and prefer the modern runtime APIs those versions provide.
 
 ### Standard tasks
 

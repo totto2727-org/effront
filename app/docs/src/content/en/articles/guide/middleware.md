@@ -154,4 +154,4 @@ const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request
 
 Submitting logs `Form received` with the submission URL, not a value saved from the page request.
 
-See [Server Functions](/en/guide/server-functions) for returning form state.
+See [Mutation Server Functions](/en/guide/mutation-server-functions) for returning form state.

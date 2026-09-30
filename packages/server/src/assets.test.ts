@@ -191,20 +191,34 @@ describe("native static assets", () => {
       }),
   );
 
-  it.each([
-    "bytes=0-1,4-5",
-    "items=0-1",
-    "bytes=wat",
-    "bytes=-",
-    "bytes=999999999999999999999-",
-    "bytes=8-999999999999999999999",
-  ])("ignores unsupported or malformed %s", (range) =>
-    withServer(async (origin) => {
-      const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
-      expect(response.status).toBe(200);
-      expect(await response.text()).toBe("0123456789");
-    }),
+  it.each(["bytes=0-1,4-5", "items=0-1", "bytes=wat", "bytes=-"])(
+    "ignores unsupported or malformed %s",
+    (range) =>
+      withServer(async (origin) => {
+        const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
+        expect(response.status).toBe(200);
+        expect(await response.text()).toBe("0123456789");
+      }),
   );
+
+  it("handles arbitrarily large decimal byte positions without numeric precision loss", () =>
+    withServer(async (origin, opened) => {
+      const url = `${origin}/assets/app-a1b2.js`;
+      const beyondEnd = await fetch(url, { headers: { range: "bytes=999999999999999999999-" } });
+      expect(beyondEnd.status).toBe(416);
+      expect(beyondEnd.headers.get("content-range")).toBe("bytes */10");
+      expect(await beyondEnd.text()).toBe("");
+      expect(opened).toHaveLength(0);
+
+      const clampedEnd = await fetch(url, {
+        headers: { range: "bytes=8-999999999999999999999" },
+      });
+      expect(clampedEnd.status).toBe(206);
+      expect(clampedEnd.headers.get("content-range")).toBe("bytes 8-9/10");
+      expect(clampedEnd.headers.get("content-length")).toBe("2");
+      expect(await clampedEnd.text()).toBe("89");
+      expect(opened).toHaveLength(1);
+    }));
 
   it("handles empty files and their unsatisfiable ranges", () =>
     withServer(async (origin, opened) => {
@@ -219,17 +233,19 @@ describe("native static assets", () => {
       expect(opened).toHaveLength(1);
     }));
 
-  it("delegates HEAD ranges and ignored If-Range to Effect rc.112", () =>
+  it("ignores Range on HEAD and continues to ignore If-Range on GET", () =>
     withServer(async (origin, opened) => {
       const url = `${origin}/assets/app-a1b2.js`;
+      // RFC 9110 section 14.2 only defines Range for GET. Effect rc.116 ignores it on HEAD.
       const head = await fetch(url, { method: "HEAD", headers: { range: "bytes=2-3" } });
-      expect(head.status).toBe(206);
-      expect(head.headers.get("content-length")).toBe("2");
-      expect(head.headers.get("content-range")).toBe("bytes 2-3/10");
+      expect(head.status).toBe(200);
+      expect(head.headers.get("content-length")).toBe("10");
+      expect(head.headers.get("content-range")).toBeNull();
       expect(await head.text()).toBe("");
       const invalidHead = await fetch(url, { method: "HEAD", headers: { range: "bytes=10-" } });
-      expect(invalidHead.status).toBe(416);
-      expect(invalidHead.headers.get("content-range")).toBe("bytes */10");
+      expect(invalidHead.status).toBe(200);
+      expect(invalidHead.headers.get("content-length")).toBe("10");
+      expect(invalidHead.headers.get("content-range")).toBeNull();
       expect(await invalidHead.text()).toBe("");
       expect(opened).toHaveLength(0);
       const response = await fetch(url, {

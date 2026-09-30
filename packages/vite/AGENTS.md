@@ -8,6 +8,7 @@
 ## Architecture
 
 - Keep the portable compiler integration separate from host registration. The host adapter supplies the runtime, and `serverHandler: false` prevents this package from installing another HTTP handler.
+- Register Effect Schema's JIT before application schemas or parsers are captured in each independent execution graph. The RSC transform, browser and SSR entry imports, and native Node/Bun host imports have distinct owners; see [Schema JIT registration](docs/SCHEMA-JIT.md) for their exact paths and the native RSC entry override.
 - Keep `@effront/core/internal/*` as a version-matched integration contract rather than an application API.
 - Raw-import HMR must retain actual `?raw` modules while filtering queryless watch nodes. Deleting a raw file must invalidate live importers so native glob discovery updates.
 

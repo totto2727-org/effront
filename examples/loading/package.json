@@ -6,6 +6,7 @@
     "dev": "alchemy dev"
   },
   "dependencies": {
+    "@effect/platform-browser": "catalog:",
     "@effront/alchemy": "workspace:*",
     "@effront/core": "workspace:*",
     "@tanstack/react-query": "catalog:",

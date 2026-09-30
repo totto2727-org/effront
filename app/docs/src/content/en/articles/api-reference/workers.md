@@ -29,6 +29,7 @@ For arbitrary external service requirements, use [native HTTP capture](./http.md
 The application Layer is acquired for each invocation.
 Its Scope stays open until the response body completes, fails, or is cancelled.
 A bodyless response releases it immediately.
+Buffered responses can release request services after response construction; a streaming body must retain them through consumption.
 
 Invalid `Content-Length` values and values above 10 MiB produce `413`.
 Server Function POST requests also enforce a 10 MiB limit on received bytes without that header.
@@ -56,6 +57,7 @@ export const { getWorkersEnv, getWorkersRequestContext } = createWorkersContextA
 ```
 
 The factory creates readers, not a service or Layer.
+Its readers share the same request Context as the direct accessors and preserve the identity of the host-provided objects.
 Each reader returns an Effect that reads the current request when executed, including when the Effect was created earlier.
 It has no typed failure or service requirement.
 A missing request Context causes a `TypeError` defect.

@@ -17,11 +17,12 @@ import {
 import type { EncodedPageParams, PageParams } from "../application/page";
 import type { CompiledDestination } from "../application/route-graph";
 import { analyzeRoutePath, isAbsolutePath } from "../application/route-path";
-import { FlightMediaType } from "../rsc/flight";
+import { FlightMediaType, ServerFnQueryPath } from "../rsc/flight";
 import { renderRouteTree } from "../rsc/render-route-tree";
 import { FlightRenderer } from "./flight-renderer";
 import { HtmlRenderError, HtmlRenderer } from "./html-renderer";
 import type { RequestOutcome } from "./request-outcome";
+import { prepareServerFnQuery } from "./server-fn-query";
 import {
   prepareServerFnRequest,
   type PreparedServerFnRequest,
@@ -210,6 +211,44 @@ const httpLayer = <Services, ApplicationError, Requirements>(
           ),
         ),
       );
+      const QueryLayer = HttpRouter.add("POST", ServerFnQueryPath, (request) =>
+        prepareServerFnQuery(request, identity).pipe(
+          Effect.flatMap((prepared) =>
+            applyMiddleware(
+              prepared.middleware,
+              Effect.gen(function* () {
+                const result = yield* prepared.execute;
+                const renderer = yield* FlightRenderer;
+                const flight = yield* renderer.renderQuery({
+                  result,
+                  middleware: prepared.middleware,
+                  renderRuntime: identity.renderRuntime,
+                  temporaryReferences: prepared.temporaryReferences,
+                });
+                return HttpServerResponse.stream(
+                  fromWebStream(flight.stream, { releaseLockOnEnd: true }).pipe(
+                    Stream.ensuring(flight.release),
+                  ),
+                  {
+                    contentType: `${FlightMediaType};charset=utf-8`,
+                    headers: DynamicResponseHeaders,
+                    status: 200,
+                  },
+                );
+              }),
+            ),
+          ),
+          Effect.catchTag("ServerFnRequestError", (error) =>
+            Effect.succeed(
+              HttpServerResponse.text(error.message, {
+                headers: DynamicResponseHeaders,
+                status: error.status,
+              }),
+            ),
+          ),
+          HttpEffect.withPreResponseHandler(acceptVaryPreResponseHandler),
+        ),
+      ).pipe(Layer.provide(RequestContextMiddleware.layer));
       const makeRouteLayer = (destination: CompiledDestination<Services>) => {
         const { catchAll, matcher } = analyzeRoutePath(destination.pattern);
         const RouteParamsMiddleware = HttpRouter.middleware()((httpEffect) =>
@@ -265,6 +304,7 @@ const httpLayer = <Services, ApplicationError, Requirements>(
       };
       const [firstDestination, ...remainingDestinations] = applicationState.routes;
       return Layer.mergeAll(
+        QueryLayer,
         makeRouteLayer(firstDestination),
         ...remainingDestinations.map(makeRouteLayer),
       );

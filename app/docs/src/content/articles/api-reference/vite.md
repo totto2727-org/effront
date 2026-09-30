@@ -28,6 +28,8 @@ export default defineConfig({
 `application` が選ぶのは、ブラウザーエントリーではなくアプリケーション定義です。
 `@effront/core/application-entry` は Vite のエイリアスでそのモジュールに解決され、独立した公開パッケージサブパスではありません。
 `effrontServer` や `effrontAlchemy` などのホストアダプターは、それぞれのリクエストエントリーを設定します。
+Effect Schema JIT は、ブラウザー・SSR のエントリー、Node/Bun のホスト、`effront({ rsc })` が選ぶ RSC エントリーで個別に登録します。
+ネイティブホストでは `plugins: [effront({ rsc: "./src/entry.rsc.ts" }), effrontServer()]` のように RSC パスを合わせ、実際のエントリーに JIT 登録を適用してください。[実行グラフごとの所有者](https://github.com/totto2727-org/effront/blob/main/packages/vite/docs/SCHEMA-JIT.md)も参照してください。
 
 ## effrontCloudflare {#cloudflare}
 

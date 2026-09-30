@@ -89,4 +89,21 @@ describe("default native React Compiler", () => {
       expect(result?.code).not.toContain(memoSentinel);
     }
   });
+
+  it("resolves a linked React-dependent package through each runtime graph", async () => {
+    const importer = fileURLToPath(
+      new URL("../../core/src/application/definition.tsx", import.meta.url),
+    );
+    const client = await compiled.environments["client"]!.pluginContainer.resolveId(
+      "react",
+      importer,
+    );
+    const ssr = await compiled.environments["ssr"]!.pluginContainer.resolveId("react", importer);
+    const rsc = await compiled.environments["rsc"]!.pluginContainer.resolveId("react", importer);
+
+    expect(client?.id).toContain("/deps/react.js");
+    expect(ssr?.id).toContain("/deps_ssr/react.js");
+    expect(rsc?.id).toContain("/deps_rsc/react.js");
+    expect(rsc?.id).not.toBe(ssr?.id);
+  });
 });

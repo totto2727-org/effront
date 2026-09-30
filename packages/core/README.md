@@ -4,60 +4,18 @@ Build React pages and Server Functions with typed routes and request-local Effec
 
 ## Usage
 
-Serve a greeting at `/` by defining a page and its document layout in `src/entry.effront.tsx`:
-
-```tsx
-import { Application } from "@effront/core";
-import { Effect } from "effect";
-
-const EFFRONT = Application.effront();
-const Document = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.succeed(
-      <html lang="en">
-        <head>
-          <title>Greeting</title>
-        </head>
-        <body>{children}</body>
-      </html>,
-    ),
-});
-const Home = EFFRONT.Page.make({
-  render: () => Effect.succeed(<h1>Hello, world!</h1>),
-});
-
-export default EFFRONT.make({
-  routes: EFFRONT.Routes.make({ layout: Document }).page("/", Home),
-});
-```
-
-For a standalone Fetch host, expose the application from `src/entry.workers.ts`:
-
-```ts
-import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.effront";
-
-export default { fetch: createFetchHandler(application) };
-```
-
-Register the [Cloudflare integration](../cloudflare/README.md#usage) to serve this Fetch entry.
-A request to `/` returns HTML containing `Hello, world!`.
-The [minimal standalone Cloudflare example](../../examples/cloudflare/) supplies the complete host configuration. Add bindings separately when needed.
-Native Effect HTTP hosts can instead use [`toHttpEffect` or `makeHttpEffect`](docs/API.md#native-effect-http).
+Follow [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started)) to run a page that displays `Hello, world`.
+Then use [Pages, layouts, and routes](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/routes) to define your own pages and [Platforms](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) to choose a host.
 
 ## Key features
 
-- Compose typed Pages, Layouts, Components, Loading fallbacks, Routes, Middleware, and Server Functions from one application identity.
-- Acquire Effect application services per request and retain streaming resources through response completion, failure, or cancellation.
-- Use React's native Flight and Server Function protocols for SSR, hydration, and navigation.
-- Cross-fade routed pages while retaining shared Layout state, with request-local overrides and reduced-motion support.
-- Integrate through native Effect HTTP or a Web `Request` to `Response` handler.
+- Define typed pages, routes, middleware, and Server Functions with request-local Effect services.
+- Serve through native Effect HTTP or Web Fetch adapters with React RSC and SSR.
 
 ## Prerequisites
 
-- **React and Effect**: use versions matching this package's peer dependencies, including the matching `@effect/platform-browser` version.
-- **RSC compilation**: use the matching `@effront/vite` integration and its Vite/React Server Components toolchain.
-- **Host**: choose [Cloudflare Workers](../cloudflare/README.md), [Node.js or Bun](../server/README.md), or [Alchemy](../alchemy/README.md).
+- **React and Effect**: use versions matching this package's peer dependencies, including `@effect/platform-browser`.
+- **Compilation and host**: use matching `@effront/vite` and a supported [platform](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms).
 
 ## Setup
 
@@ -69,12 +27,13 @@ npm install --save-dev @effront/vite@0.1.4 @vitejs/plugin-rsc@0.5.35
 For the current compatibility baseline, install matching runtime peers:
 
 ```sh
-npm install effect@4.0.0-rc.112 @effect/platform-browser@4.0.0-rc.112 react@19.3.0 react-dom@19.3.0
+npm install effect@4.0.0-rc.116 @effect/platform-browser@4.0.0-rc.116 react@19.3.0 react-dom@19.3.0
 ```
 
 ## API
 
-See the [core API reference](docs/API.md) for application factories, page transitions, HTTP handlers, request-context readers, and contract types.
+The [API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference)) covers application factories, transitions, HTTP handlers, and request context.
+See [package integration notes](docs/API.md) for reserved entry points and tested host boundaries.
 
 ## Development
 

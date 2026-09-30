@@ -1,7 +1,9 @@
-import { Context, Effect, Option, Schema } from "effect";
+import { Context, Effect, Option, Schema, Stream } from "effect";
 import { useActionState } from "react";
+import { expectTypeOf } from "vitest";
 
 import { Application } from "../../src/application/effront";
+import { query, stream, streamAtom, type ServerFnError } from "../../src/query";
 
 const EFFRONT = Application.effront();
 const State = Schema.Struct({ count: Schema.Finite });
@@ -59,6 +61,32 @@ void noArgs();
 // @ts-expect-error An empty schema list declares no arguments.
 void noArgs("extra");
 
+const omittedInput = EFFRONT.ServerFn.make({ handler: () => Effect.succeed("done") });
+expectTypeOf<Parameters<typeof omittedInput>>().toEqualTypeOf<[]>();
+expectTypeOf<ReturnType<typeof omittedInput>>().toEqualTypeOf<Promise<string>>();
+void omittedInput();
+// @ts-expect-error Omitted input declares no arguments.
+void omittedInput("extra");
+EFFRONT.ServerFn.make({
+  // @ts-expect-error A handler cannot require arguments without an input schema.
+  handler: (value: string) => Effect.succeed(value),
+});
+// @ts-expect-error An explicitly declared input schema must be provided at runtime.
+EFFRONT.ServerFn.make<typeof Schema.String, string>({ handler: (value) => Effect.succeed(value) });
+// @ts-expect-error An explicitly declared positional schema list must be provided at runtime.
+EFFRONT.ServerFn.make<readonly [typeof Schema.String], string>({
+  handler: (value) => Effect.succeed(value),
+});
+declare const optionalSchema: typeof Schema.String | undefined;
+EFFRONT.ServerFn.make({
+  // @ts-expect-error Narrow uncertain schema presence before declaring a Server Function.
+  input: optionalSchema,
+  handler: () => Effect.void,
+});
+const failingWithoutInput = EFFRONT.ServerFn.make({ handler: () => Effect.fail("failure") });
+expectTypeOf<Parameters<typeof failingWithoutInput>>().toEqualTypeOf<[]>();
+void failingWithoutInput();
+
 class DecoderService extends Context.Service<DecoderService, object>()(
   "effront/tests/types/server-fn/DecoderService",
 ) {}
@@ -76,4 +104,26 @@ const ProvideDecoder = EFFRONT.Middleware.make<{ provides: DecoderService }>((op
 EFFRONT.withMiddleware(ProvideDecoder).ServerFn.make({
   input: [Schema.String, ServiceSchema],
   handler: (first, second) => Effect.succeed(first + second),
+});
+
+const streaming = EFFRONT.ServerFn.make({
+  handler: () => Effect.succeed(Stream.make("one", "two")),
+});
+const streamedPromise: Promise<ReadableStream<string>> = streaming();
+void streamedPromise;
+const readStreaming = stream(streaming);
+const streamValue: Stream.Stream<string, ServerFnError> = readStreaming();
+void streamValue;
+void streamAtom(streaming);
+// @ts-expect-error Streaming functions must use stream, not query.
+void query(streaming);
+// @ts-expect-error Value functions must use query, not stream.
+void stream(omittedInput);
+// @ts-expect-error A Stream must handle its own error channel.
+EFFRONT.ServerFn.make({
+  handler: () => Effect.succeed(Stream.fail("unhandled")),
+});
+// @ts-expect-error A Server Function cannot return either a Stream or a plain value.
+EFFRONT.ServerFn.make({
+  handler: (): Effect.Effect<Stream.Stream<number> | number> => Effect.succeed(1),
 });

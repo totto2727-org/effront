@@ -37,4 +37,24 @@ describe("Effront entry conventions", () => {
       replacement: resolve(root, "custom/app.tsx"),
     });
   });
+
+  it("registers Schema JIT before the RSC host entry without rewriting SSR or other modules", async () => {
+    const config = await resolveConfig({ configFile: false, root, plugins: effront() }, "build");
+    const plugin = config.plugins.find((entry) => entry.name === "effront:schema-jit")!;
+    const transform = plugin.transform!;
+    const invoke = (environment: string, id: string) =>
+      Reflect.apply(
+        typeof transform === "function" ? transform : transform.handler,
+        {
+          environment: { name: environment },
+        },
+        ['import application from "./entry.effront";', id],
+      );
+
+    expect(invoke("rsc", resolve(root, "src/entry.workers.ts"))).toBe(
+      'import "effect/unstable/schema/SchemaJITCompiler/enable";\nimport application from "./entry.effront";',
+    );
+    expect(invoke("ssr", resolve(root, "src/entry.workers.ts"))).toBeUndefined();
+    expect(invoke("rsc", resolve(root, "src/entry.effront.tsx"))).toBeUndefined();
+  });
 });

@@ -55,6 +55,7 @@ Worker と Stack の宣言は [Alchemy のセットアップ](../platforms/alche
 ## effrontAlchemy {#vite}
 
 `@effront/alchemy/cloudflare/vite` の `effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` は、`effront()` より後に登録する必要があります。
+正しい順序は次のとおりです。
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
@@ -66,14 +67,21 @@ export default defineConfig({
 });
 ```
 
+> [!WARNING]
+> プラグインの順序を逆にすると `TypeError` になります。
+
 | オプション | 型       | 既定値                   | 契約                                                                                                  |
 | ---------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `worker`   | `string` | `./src/entry.workers.ts` | Alchemy Worker を default export するモジュール。Vite root を基準に指定する。空文字列は `TypeError`。 |
 
 このアダプターに `application` オプションはなく、`effront()` の登録も行いません。
 アプリケーションエントリーの変更は `effront({ application })` と Worker のローダー内インポートに反映します。
+Worker エントリーは `effront({ rsc })` ではなく `effrontAlchemy({ worker })` で選びます。
+ブリッジには Alchemy が注入する `ALCHEMY_STACK_NAME` と `ALCHEMY_STAGE` のバインディングが必要です。欠損または空の値は `TypeError` になり、`alchemy dev` から起動する必要があります。
+SSR 出力は既定で RSC Worker 成果物の子ディレクトリに配置されます。明示した出力先は保持されますが、Worker 成果物と一緒にパッケージ化してください。
 
 Worker 宣言には `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }` が必要です。
 `vite.main`、別のランタイムプラグイン、Wrangler 設定は追加しないでください。
+開発中のサーバーコードからは、インフラの provider factory を含む Node 専用のデプロイ・ローカルホスト用 export を使用できません。デプロイ時の export と本番ビルドには影響しません。
 Alchemy は、Vite 単体ではなく `alchemy dev` を通じてホストプラグインとバインディングを提供します。
-Alchemy `2.0.0-beta.77` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。
+Alchemy `2.0.0-beta.79` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。

@@ -119,8 +119,15 @@ export const articleCatalog = [
   {
     slug: "/guide/server-functions",
     title: "Server Function",
-    description:
-      "フォームの送信やクライアントからの呼び出しに対し、サーバー側で入力を検証し、UI で使える応答を返します。",
+    description: "Mutation、Query、Stream から目的に合う Server Function の呼び出し方を選びます。",
+    section: "Guides",
+    headings: [{ id: "choose", title: "呼び出し方を選ぶ" }],
+    source: "/guide/server-functions",
+  },
+  {
+    slug: "/guide/mutation-server-functions",
+    title: "Mutation Server Function",
+    description: "フォームを送信し、更新後の現在のルートを表示する Server Function を作ります。",
     section: "Guides",
     headings: [
       { id: "identity", title: "アプリケーション定義を共有する" },
@@ -131,7 +138,30 @@ export const articleCatalog = [
       { id: "refresh", title: "更新を扱う" },
       { id: "errors", title: "失敗を扱う" },
     ],
-    source: "/guide/server-functions",
+    source: "/guide/mutation-server-functions",
+  },
+  {
+    slug: "/guide/query-server-functions",
+    title: "Query Server Function",
+    description: "現在のルートを更新せずに、Client Component からサーバーの値を一つ読み取ります。",
+    section: "Guides",
+    headings: [
+      { id: "call", title: "クエリを呼び出す" },
+      { id: "atom", title: "リアクティブな結果を保持する" },
+      { id: "atom-setup", title: "任意の atom 統合をセットアップする" },
+    ],
+    source: "/guide/query-server-functions",
+  },
+  {
+    slug: "/guide/stream-server-functions",
+    title: "Stream Server Function",
+    description: "段階的なサーバー結果を、ルートを更新する mutation にせず表示します。",
+    section: "Guides",
+    headings: [
+      { id: "feed", title: "フィードをストリーミングする" },
+      { id: "render", title: "到着したストーリーを表示する" },
+    ],
+    source: "/guide/stream-server-functions",
   },
   {
     slug: "/guide/effect",
@@ -235,6 +265,18 @@ export const articleCatalog = [
       { id: "authorization", title: "操作ごとに認可する" },
     ],
     source: "/best-practices/authentication-and-authorization",
+  },
+  {
+    slug: "/best-practices/server-function-error-handling",
+    title: "Server Function のエラーハンドリング",
+    description:
+      "想定内の結果をデータとして返し、Server Function の失敗には安全なメッセージを表示します。",
+    section: "Best practices",
+    headings: [
+      { id: "expected", title: "想定内の結果をデータとして返す" },
+      { id: "operational", title: "安全な失敗メッセージを表示する" },
+    ],
+    source: "/best-practices/server-function-error-handling",
   },
   {
     slug: "/advanced/request-runtime-and-lifetimes",

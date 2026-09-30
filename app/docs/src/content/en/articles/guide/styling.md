@@ -36,8 +36,6 @@ Use utilities in your component's JSX:
 <h1 className="p-4 text-xl font-bold">Hello</h1>
 ```
 
-The heading has padding and larger, bold text.
-
 ## Define a theme in a stylesheet {#stylesheet}
 
 To add a shared color or other theme value, install Tailwind as a direct dependency:

@@ -1,10 +1,11 @@
-import { Cause, Effect, Schema } from "effect";
+import { Cause, Effect, Schema, type Scope } from "effect";
 import { HttpServerRequest } from "effect/unstable/http";
 
 import type { EFFRONTIdentity } from "../application/effront-identity";
 import type { AnyMiddleware } from "../application/middleware";
-import { matchServerFnInvocation } from "../application/server-fn";
+import { matchServerFnInvocation, type ServerFnOperationError } from "../application/server-fn";
 import { ServerFnIdHeader } from "../rsc/flight";
+import { ServerFnInputError } from "../rsc/server-fn-error";
 import type { RequestOutcome } from "./request-outcome";
 import { serverFnOutcome } from "./server-fn-outcome";
 
@@ -44,16 +45,24 @@ const normalizeServerFnFailure = <Output, Error, Services>(
   );
 
 type ServerFnOperation<ApplicationServices> = {
-  readonly effect: Effect.Effect<unknown, ServerFnExecutionError, ApplicationServices>;
+  readonly effect: Effect.Effect<
+    unknown,
+    ServerFnExecutionError | ServerFnInputError | ServerFnOperationError,
+    ApplicationServices
+  >;
   readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
 };
 
 export type PreparedServerFnRequest<ApplicationServices> = {
-  readonly execute: Effect.Effect<RequestOutcome, ServerFnRequestError, ApplicationServices>;
+  readonly execute: Effect.Effect<
+    RequestOutcome,
+    ServerFnRequestError,
+    ApplicationServices | Scope.Scope
+  >;
   readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
 };
 
-const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
+export const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
   Effect.try({
     try: () => {
       const origin = request.headers["origin"];
@@ -135,7 +144,7 @@ const prepareServerFnOperation = <ApplicationServices>(
     switch (match._tag) {
       case "Match":
         return {
-          effect: normalizeServerFnFailure(match.effect),
+          effect: match.effect,
           middleware: match.middleware,
         };
       case "IdentityMismatch":
@@ -153,7 +162,7 @@ const prepareServerFnOperation = <ApplicationServices>(
     }
   }).pipe(normalizeServerFnFailure);
 
-const prepareClientServerFn = Effect.fnUntraced(function* <ApplicationServices>(
+export const decodeServerFnCall = Effect.fnUntraced(function* <ApplicationServices>(
   request: Request,
   actionId: string,
   identity: EFFRONTIdentity<ApplicationServices>,
@@ -186,6 +195,15 @@ const prepareClientServerFn = Effect.fnUntraced(function* <ApplicationServices>(
     args,
   );
 
+  return { operation, temporaryReferences };
+});
+
+const prepareClientServerFn = Effect.fnUntraced(function* <ApplicationServices>(
+  request: Request,
+  actionId: string,
+  identity: EFFRONTIdentity<ApplicationServices>,
+) {
+  const { operation, temporaryReferences } = yield* decodeServerFnCall(request, actionId, identity);
   const prepared: PreparedServerFnRequest<ApplicationServices> = {
     execute: serverFnOutcome(operation.effect).pipe(
       Effect.map(
@@ -232,8 +250,12 @@ const prepareProgressiveServerFn = Effect.fnUntraced(function* <ApplicationServi
   const operation = yield* prepareServerFnOperation(identity, decodedAction, []);
   const execute = Effect.gen(function* () {
     const actionResult = yield* operation.effect.pipe(
-      Effect.mapError((error) =>
-        requestError("The Server Function form action failed.", 500, error.cause),
+      Effect.catchCause((cause) =>
+        Cause.hasInterrupts(cause)
+          ? Effect.interrupt
+          : Effect.fail(
+              requestError("The Server Function form action failed.", 500, Cause.squash(cause)),
+            ),
       ),
     );
     const decodedFormState = yield* Effect.tryPromise({

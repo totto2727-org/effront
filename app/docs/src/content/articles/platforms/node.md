@@ -1,6 +1,6 @@
 ## サンプルを起動する {#setup}
 
-Node.js 24.11 以降と [Vite+](https://viteplus.dev/) をインストールします。
+最新の Node.js LTS と [Vite+](https://viteplus.dev/) をインストールします。
 Node.js 用のプロジェクトを作成し、依存パッケージをインストールします。
 
 ```bash

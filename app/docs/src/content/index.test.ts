@@ -27,6 +27,9 @@ const retainedUrls = [
   "/guide/effect",
   "/best-practices/testing",
   "/guide/server-functions",
+  "/guide/mutation-server-functions",
+  "/guide/query-server-functions",
+  "/guide/stream-server-functions",
   "/guide/middleware",
   "/guide/http",
   "/platforms",
@@ -42,6 +45,7 @@ const retainedUrls = [
   "/api-reference/alchemy",
   "/api-reference/tailwind",
   "/best-practices/authentication-and-authorization",
+  "/best-practices/server-function-error-handling",
   "/advanced/request-runtime-and-lifetimes",
   "/advanced/client-navigation",
   "/advanced/server-function-execution-and-refresh",
@@ -166,6 +170,7 @@ describe("documentation catalog", () => {
           .map((item) => documentPath(item.slug)),
       ).toEqual([
         "/best-practices/authentication-and-authorization",
+        "/best-practices/server-function-error-handling",
         "/advanced/request-runtime-and-lifetimes",
         "/best-practices/testing",
       ]);
@@ -179,6 +184,7 @@ describe("documentation catalog", () => {
           "/best-practices/authentication-and-authorization",
           ["entry-points", "shared-policy", "authorization"],
         ],
+        ["/best-practices/server-function-error-handling", ["expected", "operational"]],
         [
           "/advanced/request-runtime-and-lifetimes",
           ["resource-design", "request-layer", "response-lifetime"],
@@ -283,6 +289,15 @@ describe("documentation catalog", () => {
     }
   });
 
+  it("registers the Server Function error-handling page at every published locale URL", () => {
+    const entry = readFileSync(new URL("../entry.effront.tsx", import.meta.url), "utf8");
+    const source = "/best-practices/server-function-error-handling";
+    for (const prefix of ["", "/ja", "/en"]) {
+      const slug = `${prefix}${source}`;
+      expect(entry).toContain(`.page(\n      "${slug}",\n      documentPage("${slug}"),\n    )`);
+    }
+  });
+
   it.each(["ja", "en"] as const)(
     "registers every published page and serializable navigation item in %s",
     (locale) => {
@@ -324,6 +339,9 @@ describe("documentation catalog", () => {
       "/guide/components",
       "/guide/effect",
       "/guide/server-functions",
+      "/guide/mutation-server-functions",
+      "/guide/query-server-functions",
+      "/guide/stream-server-functions",
       "/guide/middleware",
       "/guide/http",
     ]) {
@@ -415,6 +433,41 @@ describe("documentation catalog", () => {
     },
   );
 
+  it.each(["en", "ja"] as const)(
+    "keeps query and stream guides concise and documents shared Server Function failures in %s",
+    async (locale) => {
+      const queryGuide = await text(`/${locale}/guide/query-server-functions`);
+      expect(queryGuide).not.toContain("effective-rsc");
+      expect(queryGuide).not.toMatch(/AbortSignal|request lifetime|リクエストの生存期間/);
+      const streamGuide = await text(`/${locale}/guide/stream-server-functions`);
+      expect(streamGuide).not.toContain("effective-rsc");
+      expect(streamGuide).toContain("streamFeed");
+      expect(streamGuide).toContain("Stream.runForEach");
+      expect(streamGuide).toContain("Effect.sleep(350)");
+      expect(streamGuide).toContain("controller.abort");
+      expect(streamGuide).toMatch(/Retry|再試行/);
+      expect(queryGuide).toContain("useAtom(ticketStatus)");
+      expect(queryGuide).toContain("run([{ ticketCode }])");
+      const failures = await text(`/${locale}/best-practices/server-function-error-handling`);
+      expect(failures).toContain("&quot;use server&quot;");
+      expect(failures).toContain("import { Effect, Schema } from &quot;effect&quot;");
+      expect(failures).toContain("import { EFFRONT } from &quot;./effront&quot;");
+      expect(failures).toContain("Effect.catchTags({");
+      expect(failures).toContain("ServerFnTransportError");
+      expect(await render(`/${locale}/guide/query-server-functions`)).toContain(
+        'href="https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation"',
+      );
+      const alchemy = await render(`/${locale}/api-reference/alchemy`);
+      expect(alchemy).toContain('data-alert="warning"');
+      const alchemyText = await text(`/${locale}/api-reference/alchemy`);
+      expect(alchemyText.indexOf("plugins: [effront(), effrontAlchemy()]")).toBeLessThan(
+        alchemyText.indexOf(
+          locale === "en" ? "Reversing the plugin order" : "プラグインの順序を逆にすると",
+        ),
+      );
+    },
+  );
+
   it.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
     (example) => {
@@ -454,9 +507,10 @@ describe("documentation catalog", () => {
       expect(await render(`/platforms/${host}`)).toContain('href="/api-reference/server"');
     }
     const bun = await text("/platforms/bun");
-    for (const required of ["Bun 1.4.2", "@effect/platform-node", "@effect/platform-bun"]) {
+    for (const required of ["Bun", "@effect/platform-node", "@effect/platform-bun"]) {
       expect(bun).toContain(required);
     }
+    expect(await render("/platforms/bun")).toContain('href="https://bun.sh/docs/installation"');
     const alchemy = await render("/platforms/alchemy");
     expect(alchemy).toContain("profile");
     expect(alchemy).toContain('href="https://alchemy.run/');

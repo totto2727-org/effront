@@ -6,7 +6,6 @@ export default Cloudflare.Worker(
   "Markdown",
   {
     main: import.meta.url,
-    dev: { port: 1338 },
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
   },

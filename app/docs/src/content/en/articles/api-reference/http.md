@@ -32,6 +32,7 @@ Creating the Effect does not run it or start a listener.
 Each execution acquires the [application Layer](./application.md#make) for the current request.
 **The host must keep the request Scope alive until the body completes, fails, or is cancelled.**
 Wrapping response production alone in `Effect.scoped` can release services before a streaming body finishes.
+HEAD responses have an empty body while retaining response metadata.
 
 `Content-Length` values that are negative, not safe integers, or greater than 10 MiB produce `413` before application services are acquired.
 Server Function POST requests also enforce a 10 MiB limit on received bytes, even without that header.

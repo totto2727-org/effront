@@ -2,7 +2,7 @@ Run a minimal Effront application that displays `Hello, world`, then explore the
 
 ## Run the sample {#setup}
 
-Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/), then create a Node.js starter:
+Install the current Node.js LTS and [Vite+](https://viteplus.dev/), then create a Node.js starter:
 
 ```bash
 vp create effront -- my-app --platform node

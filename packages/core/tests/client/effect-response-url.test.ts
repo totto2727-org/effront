@@ -3,9 +3,9 @@ import { createServer } from "node:http";
 import { expect, it } from "@effect/vitest";
 import { HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
 
-import { getResponseUrl } from "./response-url";
-
-it("preserves the final native Fetch URL after a real local redirect", async () => {
+// The Flight client reads `response.url` directly to learn the resolved route after a redirect.
+// These are dependency contract checks for that accessor, not tests of Effront code.
+it("resolves the final native Fetch URL after a real local redirect", async () => {
   const server = createServer((request, response) => {
     if (request.url === "/before") {
       response.writeHead(302, { location: "/after?redirected=yes" });
@@ -24,7 +24,7 @@ it("preserves the final native Fetch URL after a real local redirect", async () 
     const response = await fetch(`${origin}/before`);
     const wrapped = HttpClientResponse.fromWeb(HttpClientRequest.get(`${origin}/before`), response);
     expect(response.redirected).toBe(true);
-    expect(getResponseUrl(wrapped)).toBe(`${origin}/after?redirected=yes`);
+    expect(wrapped.url).toBe(`${origin}/after?redirected=yes`);
     await response.text();
   } finally {
     server.closeAllConnections();
@@ -39,20 +39,9 @@ it("uses the complete original URL without a fragment for synthetic responses", 
     HttpClientRequest.get("https://example.test/path?value=one#fragment"),
     new Response(),
   );
-  expect(getResponseUrl(response)).toBe("https://example.test/path?value=one");
+  expect(response.url).toBe("https://example.test/path?value=one");
 });
 
 it("does not invent a resolved URL for an invalid original request", () => {
-  expect(getResponseUrl(HttpClientResponse.fromWeb(HttpClientRequest.empty, new Response()))).toBe(
-    "",
-  );
-});
-
-it("honors an explicit final URL supplied by a custom HTTP transport", () => {
-  const response = HttpClientResponse.fromWeb(
-    HttpClientRequest.get("https://example.test/before"),
-    new Response(),
-  );
-  Object.defineProperty(response, "url", { value: "https://example.test/after#fragment" });
-  expect(getResponseUrl(response)).toBe("https://example.test/after");
+  expect(HttpClientResponse.fromWeb(HttpClientRequest.empty, new Response()).url).toBe("");
 });

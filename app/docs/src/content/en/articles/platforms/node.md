@@ -1,6 +1,6 @@
 ## Run the example {#setup}
 
-Install Node.js 24.11 or later and [Vite+](https://viteplus.dev/).
+Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
 Create a Node.js project and install its dependencies:
 
 ```bash

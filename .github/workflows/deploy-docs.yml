@@ -2,33 +2,70 @@ name: Deploy documentation
 
 on:
   push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
+  deployments: write
 
 concurrency:
-  group: docs-production
+  # Do not let an unrelated preview replace a pending production deployment.
+  group: docs-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    if: github.repository == 'totto2727-org/effront' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: docs-production
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'docs-production' || 'docs-preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+      # Protect the preview environment for trusted branches; Alchemy isolates their stages.
+      deployment: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
       - name: Build workspace packages
         uses: ./.github/actions/build-workspace
+      - name: Select deployment stage
+        id: stage
+        shell: bash
+        env:
+          PUSH_REF: ${{ github.ref }}
+        run: |
+          if [[ "$PUSH_REF" == refs/heads/main ]]; then
+            stage=production
+          else
+            # Stable for repeated pushes, bounded and safe for arbitrary branch names.
+            stage="preview-$(node -p 'require("node:crypto").createHash("sha256").update(process.env.PUSH_REF).digest("hex").slice(0, 12)')"
+          fi
+          echo "name=$stage" >> "$GITHUB_OUTPUT"
       - name: Deploy documentation
+        id: deploy
+        shell: bash
         working-directory: app/docs
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ALCHEMY_STAGE: ${{ steps.stage.outputs.name }}
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          vp exec alchemy deploy --stage production --yes
+          vp exec alchemy deploy --stage "$ALCHEMY_STAGE" --yes
+          url="$(vp exec alchemy state read "effront-docs/$ALCHEMY_STAGE/output" --backend cloudflare --no-input --log-level none \
+            | node -e '
+                let input = "";
+                process.stdin.on("data", (chunk) => { input += chunk; });
+                process.stdin.on("end", () => {
+                  // Cloudflare credential refresh prints a progress task before the JSON.
+                  const jsonStart = input.lastIndexOf("\n{");
+                  const value = JSON.parse(input.slice(jsonStart < 0 ? 0 : jsonStart + 1));
+                  const url = new URL(value.url);
+                  if (url.protocol !== "https:" || !url.hostname.endsWith(".workers.dev")) {
+                    throw new Error("Alchemy did not return a public Workers URL");
+                  }
+                  process.stdout.write(url.origin);
+                });
+              ')"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "[Documentation ($ALCHEMY_STAGE)]($url)" >> "$GITHUB_STEP_SUMMARY"

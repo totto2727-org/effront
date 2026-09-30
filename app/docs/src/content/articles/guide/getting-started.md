@@ -2,7 +2,7 @@
 
 ## サンプルを起動する {#setup}
 
-Node.js 24.11 以降と [Vite+](https://viteplus.dev/) を用意し、Node.js 用の最小構成を作成します。
+最新の Node.js LTS と [Vite+](https://viteplus.dev/) を用意し、Node.js 用の最小構成を作成します。
 
 ```bash
 vp create effront -- my-app --platform node

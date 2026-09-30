@@ -1,3 +1,4 @@
+import "effect/unstable/schema/SchemaJITCompiler/enable";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer } from "effect";
 import { HttpServer } from "effect/unstable/http";

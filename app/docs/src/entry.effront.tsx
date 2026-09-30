@@ -164,8 +164,15 @@ export default EFFRONT.make({
       "/best-practices/authentication-and-authorization",
       documentPage("/best-practices/authentication-and-authorization"),
     )
+    .page(
+      "/best-practices/server-function-error-handling",
+      documentPage("/best-practices/server-function-error-handling"),
+    )
     .page("/best-practices/testing", documentPage("/best-practices/testing"))
     .page("/guide/server-functions", documentPage("/guide/server-functions"))
+    .page("/guide/mutation-server-functions", documentPage("/guide/mutation-server-functions"))
+    .page("/guide/query-server-functions", documentPage("/guide/query-server-functions"))
+    .page("/guide/stream-server-functions", documentPage("/guide/stream-server-functions"))
     .page("/guide/middleware", documentPage("/guide/middleware"))
     .page("/guide/http", documentPage("/guide/http"))
     .page(
@@ -233,8 +240,18 @@ export default EFFRONT.make({
       "/ja/best-practices/authentication-and-authorization",
       documentPage("/ja/best-practices/authentication-and-authorization"),
     )
+    .page(
+      "/ja/best-practices/server-function-error-handling",
+      documentPage("/ja/best-practices/server-function-error-handling"),
+    )
     .page("/ja/best-practices/testing", documentPage("/ja/best-practices/testing"))
     .page("/ja/guide/server-functions", documentPage("/ja/guide/server-functions"))
+    .page(
+      "/ja/guide/mutation-server-functions",
+      documentPage("/ja/guide/mutation-server-functions"),
+    )
+    .page("/ja/guide/query-server-functions", documentPage("/ja/guide/query-server-functions"))
+    .page("/ja/guide/stream-server-functions", documentPage("/ja/guide/stream-server-functions"))
     .page("/ja/guide/middleware", documentPage("/ja/guide/middleware"))
     .page("/ja/guide/http", documentPage("/ja/guide/http"))
     .page(
@@ -302,8 +319,18 @@ export default EFFRONT.make({
       "/en/best-practices/authentication-and-authorization",
       documentPage("/en/best-practices/authentication-and-authorization"),
     )
+    .page(
+      "/en/best-practices/server-function-error-handling",
+      documentPage("/en/best-practices/server-function-error-handling"),
+    )
     .page("/en/best-practices/testing", documentPage("/en/best-practices/testing"))
     .page("/en/guide/server-functions", documentPage("/en/guide/server-functions"))
+    .page(
+      "/en/guide/mutation-server-functions",
+      documentPage("/en/guide/mutation-server-functions"),
+    )
+    .page("/en/guide/query-server-functions", documentPage("/en/guide/query-server-functions"))
+    .page("/en/guide/stream-server-functions", documentPage("/en/guide/stream-server-functions"))
     .page("/en/guide/middleware", documentPage("/en/guide/middleware"))
     .page("/en/guide/http", documentPage("/en/guide/http"))
     .page(
