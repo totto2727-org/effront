@@ -1,6 +1,6 @@
 {
   "name": "create-effront",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Create a minimal Effront application for Node.js, Bun, or standalone and Alchemy-managed Cloudflare Workers.",
   "license": "MIT",
   "repository": {

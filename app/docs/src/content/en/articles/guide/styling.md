@@ -6,7 +6,7 @@ It loads the stylesheet for you, whether you use Tailwind's default utilities or
 Install the integration:
 
 ```bash
-vp add -D @effront/tailwind@0.1.4
+vp add -D @effront/tailwind@0.2.0
 ```
 
 In `vite.config.ts` from [Getting started](./getting-started.md), add `effrontTailwind()`:
