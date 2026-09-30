@@ -221,12 +221,12 @@ A successful build, source inspection, or mocked parser does not replace real si
 
 This application uses `Cloudflare.state()` for shared remote state; the examples keep `localState()`.
 The stack remains `effront-docs`.
-Pushes to `main` deploy stage `production`. Pushes to another branch in this repository deploy a separate `preview-<hash>` stage, stable across pushes to that branch and isolated from production.
+Pushes to `main` deploy stage `production`. Pushes to another ref in this repository, including tags, deploy a separate `preview-<hash>` stage, stable across pushes to that ref and isolated from production.
 The hash is derived from the complete Git ref, so branch names containing `/` do not become invalid stages or collide after slash replacement.
 Local development keeps Alchemy's separate `dev_<user>` stage, but the docs state backend is Cloudflare, so do not assume that starting this application is credential-free or has no remote state-store operations.
 Do not set `ALCHEMY_STAGE=production` when running `alchemy dev`.
 
-The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to all branches of this repository and can also be dispatched manually from the chosen branch.
+The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to all branches and tags of this repository and can also be dispatched manually from the chosen ref.
 It builds the required workspace packages before invoking `vp exec alchemy deploy --stage <stage> --yes` from `app/docs` directly in the workflow.
 After deployment it reads the URL from the Alchemy state output and links it in the job's Actions summary. The `docs-preview` job does not create a GitHub deployment record, so a PR deployment link is not guaranteed; reviewers can open the workflow run to reach the branch's preview URL. Confirm that two simultaneous branches retain their separate preview URLs after credentials are configured; this cannot be established without a real deployment.
 Fork PRs do not trigger a push in this repository and do not receive credentials or an automatic remote preview.
