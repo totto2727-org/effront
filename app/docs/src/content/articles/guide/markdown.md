@@ -6,7 +6,7 @@ Markdown の記事を Effront アプリケーションのページとして表�
 コレクションとパーサー、React レンダラーをアプリケーションにインストールします。
 
 ```bash
-vp add @effront/markdown@0.3.0
+vp add @effront/markdown
 ```
 
 `src/content/intro.md` を作成します。

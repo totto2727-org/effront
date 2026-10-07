@@ -36,7 +36,7 @@ For `effrontTailwind({ stylesheet: "./src/styles.css" })`, `src/styles.css` must
 @import "tailwindcss";
 ```
 
-That import requires `tailwindcss` in the application's dependencies, for example `vp add -D tailwindcss@4.3.3`.
+That import requires `tailwindcss` in the application's dependencies, for example `vp add -D tailwindcss`.
 The selected file replaces the generated entry and needs no additional component import.
 It can contain [`@theme`](https://tailwindcss.com/docs/theme) and [`@plugin`](https://tailwindcss.com/docs/functions-and-directives) directives.
 Install plugins such as Typography separately.

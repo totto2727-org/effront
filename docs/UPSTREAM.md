@@ -29,17 +29,32 @@ The historical combined Cloudflare factory was superseded after the pinned compa
 
 The upstream comparison baseline remains `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`.
 Effront uses stable Effect v4 packages through the shared `^4.0.1` catalog range instead of the former exact `4.0.0-rc.116` pins.
-All eight public packages, including `create-effront`, advance together from 0.2.0 to 0.3.0 for this compatibility change. Generated starter dependencies and maintained installation guides target the same release.
+All eight public packages, including `create-effront`, advance together from 0.2.0 to 0.3.0 for this compatibility change.
+Generated starter dependencies and maintained installation guides target the same release.
 
-This affects public dependency and peer ranges, workspace overrides, and the `create-effront` templates. The range allows v4 minor and patch updates but excludes prereleases and v5.
+The subsequent 0.3.1 patch synchronizes all eight packages, generated starters, and maintained installation guides.
+It selects mature Vite Plus 1.0.0 without new release-age exclusions.
+Consumer installation examples now use unversioned package names.
+Compatibility guidance refers to the installed packages' peer metadata instead of duplicating the release catalog.
+This documentation policy leaves manifest ranges, generated starter dependencies, lockfile resolution, and runtime source unchanged.
+
+The stable Effect v4 compatibility change affects public dependency and peer ranges, workspace overrides, and the `create-effront` templates.
+The range allows v4 minor and patch updates but excludes prereleases and v5.
 The lockfile records concrete versions for reproducible installation, and consumers must retain one coherent Effect installation across the host and application graphs.
 
-`@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `^1.1.0` with Vitest `^5.0.3`. Package task inputs and outputs move under `cache` for VitePlus 1's task schema.
+`@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `^1.0.0` with Vitest `^5.0.1`.
+Package task inputs and outputs remain under `cache` for VitePlus 1's task schema.
+The lockfile selects VitePlus and its core alias at 1.0.0 and Vitest at 5.0.1.
+This preserves the package manager's default minimum release age instead of admitting the newly published VitePlus 1.1.0 through exclusions.
+For compatible future updates, select the latest mature release without lowering the threshold or automatically adding exceptions.
+
 The initializer templates use the same VitePlus range, allowing compatible minor and patch updates without admitting the next major.
 This is a test-tool compatibility update, not a runtime redesign.
-The Nix environment uses the current `nix-vite-plus` overlay revision `af16f6183aec0717d8975ee858c910ab43babee6`, which supplies the VitePlus 1.0.0 launcher. Repository-local tooling resolves to 1.1.0 through the catalog.
+The Nix environment uses the current `nix-vite-plus` overlay revision `af16f6183aec0717d8975ee858c910ab43babee6`, which supplies the VitePlus 1.0.0 launcher.
+Repository-local tooling also resolves to 1.0.0 through the catalog and lockfile.
 
-Stable Effect v4 promotes `effect/unstable/*` to public paths such as `effect/http`, `effect/cli`, `effect/schema`, and `effect/reactivity`. Runtime imports, JIT-generated imports, test fixtures, and maintained guides use those paths.
+Stable Effect v4 promotes `effect/unstable/*` to public paths such as `effect/http`, `effect/cli`, `effect/schema`, and `effect/reactivity`.
+Runtime imports, JIT-generated imports, test fixtures, and maintained guides use those paths.
 Alchemy and its Cloudflare runtime use beta.81 because beta.79 still imports the removed paths despite peer ranges admitting stable v4.
 
 When an application response omits status text, the Vite host supplies standard status text.
@@ -49,7 +64,7 @@ The native host browser suite checks response headers and the document charset. 
 Static assets follow stable Effect's `If-Range` handling: only matching strong ETags permit a range, while stale/weak validators and dates produce the full response.
 
 No upstream runtime source is incorporated by this change. External consumer repositories remain unchanged.
-Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.1.0](https://registry.npmjs.org/vite-plus/1.1.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
+Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.0.0](https://registry.npmjs.org/vite-plus/1.0.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
 
 ## Future incorporation
 

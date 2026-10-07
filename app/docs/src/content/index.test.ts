@@ -661,19 +661,20 @@ describe("documentation catalog", () => {
   );
 
   it.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
-    "%s indexes every public code export and the manifest release version",
+    "%s indexes every public code export without duplicating release versions",
     async (slug) => {
       const html = await render(slug);
+      expect(html).toContain("peerDependencies");
+      expect(html).toContain("lockfile");
+      expect(html).not.toMatch(/\b\d+\.\d+\.\d+\b/);
       const root = new URL("../../../../packages/", import.meta.url);
       for (const name of readdirSync(root).filter((name) => name !== "create-effront")) {
         const manifest = JSON.parse(
           readFileSync(new URL(`${name}/package.json`, root), "utf8"),
         ) as {
           name: string;
-          version: string;
           exports: Record<string, unknown>;
         };
-        expect(html).toContain(manifest.version);
         for (const subpath of Object.keys(manifest.exports).filter(
           (path) => !path.includes("/internal/") && !path.endsWith(".css"),
         )) {
@@ -684,6 +685,33 @@ describe("documentation catalog", () => {
       }
     },
   );
+
+  it("keeps ordinary installation examples unversioned in both locales and READMEs", () => {
+    const sources = ["articles", "en/articles"].flatMap((directory) =>
+      readdirSync(new URL(`./${directory}/`, import.meta.url), {
+        recursive: true,
+        encoding: "utf8",
+      })
+        .filter((path) => path.endsWith(".md"))
+        .map((path) => new URL(`./${directory}/${path}`, import.meta.url)),
+    );
+    sources.push(
+      new URL("../../../../README.md", import.meta.url),
+      ...readdirSync(new URL("../../../../packages/", import.meta.url)).map(
+        (name) => new URL(`../../../../packages/${name}/README.md`, import.meta.url),
+      ),
+    );
+    const commands = sources.flatMap(
+      (source) =>
+        readFileSync(source, "utf8").match(
+          /(?:vp add|npm install|pnpm add|bun add|yarn add)\b[^`\n]*/g,
+        ) ?? [],
+    );
+    expect(commands.length).toBeGreaterThan(0);
+    for (const command of commands) {
+      expect(command).not.toMatch(/(?:@[a-z\d._-]+\/)?[a-z\d._-]+@[^\s'"]+/i);
+    }
+  });
 
   it.each(["en", "ja"])(
     "%s explains the selected Markdown collection and ordinary index paths",

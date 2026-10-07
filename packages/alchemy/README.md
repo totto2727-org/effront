@@ -14,15 +14,15 @@ For a KV-backed application with a Server Function, see the [Alchemy Basic examp
 
 ## Prerequisites
 
-- **Compatibility**: Use Alchemy and its Cloudflare runtime `2.0.0-beta.81`. Keep the stable Effect v4 family (`^4.0.1`) consistent across application and host. Before upgrades, refer to [compatibility rationale](docs/INTEGRATION.md#compatibility).
-- **Host**: The pinned CLI requires a configured Cloudflare profile, even for local planning. Run the application with `alchemy dev`, not bare Vite.
+- **Compatibility**: Use Alchemy and Effect versions that match the installed adapter's `peerDependencies`. Keep one consistent Effect installation across application and host. Before upgrades, refer to [compatibility rationale](docs/INTEGRATION.md#compatibility).
+- **Host**: A configured Cloudflare profile is necessary for the supported CLI, even for local planning. Run the application with `alchemy dev`, not bare Vite.
 
 ## Setup
 
 Install the adapter and matching host dependencies:
 
 ```sh
-vp add @effront/alchemy@0.3.0 alchemy@2.0.0-beta.81 'effect@^4.0.1' @effront/core@0.3.0 @effront/vite@0.3.0
+vp add @effront/alchemy alchemy effect @effront/core @effront/vite
 ```
 
 Use the [core runtime peer requirements](../core/README.md#setup) for React and `@effect/platform-browser`.

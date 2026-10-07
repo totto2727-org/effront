@@ -164,12 +164,14 @@ Official specifications: [configuration and header precedence](https://developer
 
 ## Consumer compatibility and public packages
 
-The API index must match the Effront manifest version and compatible React, Effect, Alchemy, and Comark versions.
-Content tests compare it with every public manifest export and version, excluding internal build-only entries.
+The API index must match every public manifest export, excluding internal build-only entries.
+Ordinary installation commands use package names without version or major-range suffixes.
+Do not copy release numbers or dependency catalogs into consumer guides.
+For compatibility requirements, refer to the installed packages' `peerDependencies`.
+Retain the lockfile for reproducible installation.
+Content tests check public exports, version-independent compatibility guidance, and unversioned installation examples.
 Do not bump library versions for private documentation-only changes.
 
-All seven `0.1.3` packages were checked with read-only `vp view @effront/<package>@0.1.3 version --json` on 2026-09-18.
-The `0.3.0` instructions target the next release, not a verified publication.
 Check the registry before changing publication claims: a manifest does not establish publication.
 
 Keep Bun production separate from Vite's Node-compatible dev/preview middleware when describing host support.

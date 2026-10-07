@@ -7,7 +7,7 @@ The example renders an article with `@effront/markdown` and its configured Comar
 Install the collection/parser and React renderer in your application:
 
 ```bash
-vp add @effront/markdown@0.3.0
+vp add @effront/markdown
 ```
 
 Create `src/content/intro.md`:
