@@ -1,5 +1,5 @@
 import { Cause, Effect, Option } from "effect";
-import { HttpServerRequest } from "effect/unstable/http";
+import { HttpServerRequest } from "effect/http";
 import type { Scope } from "effect";
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
 

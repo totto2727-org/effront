@@ -16,8 +16,10 @@ export default defineConfig({
     tasks: {
       pack: {
         command: "vp pack",
-        input: [{ auto: true }, "!dist/**"],
-        output: ["dist/**"],
+        cache: {
+          input: [{ auto: true }, "!dist/**"],
+          output: ["dist/**"],
+        },
       },
     },
   },

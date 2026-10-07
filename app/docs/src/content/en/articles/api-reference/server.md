@@ -95,17 +95,17 @@ Do not pass the outer construction Effect as the request handler.
 | Request      | `HttpServerResponse`   | Original handler errors plus `HttpServerError` | Original requirements plus `HttpServerRequest` |
 
 The host owns request scopes and must consume or cancel response bodies.
-MIME types, weak ETags, conditionals, and ranges follow Effect `4.0.0-rc.116`:
+MIME types, weak ETags, conditionals, and ranges follow Effect `4.0.1`:
 
-| Condition                                  | Behavior                                                             |
-| ------------------------------------------ | -------------------------------------------------------------------- |
-| `HEAD` or conditional `304`                | No file stream acquired                                              |
-| Satisfiable single byte range              | `206`                                                                |
-| Multiple, unsupported, or malformed ranges | Range ignored                                                        |
-| Decimal range start beyond the file        | `416`, even when the value exceeds JavaScript's safe-integer limit   |
-| Decimal range end beyond the file          | Clamped to file length and returned as `206`                         |
-| Valid but unsatisfiable single range       | `416` with `Content-Range`, without asset cache or validator headers |
-| `If-Range`                                 | Ignored                                                              |
-| `Range` on `HEAD`                          | Ignored; returns full-file metadata without a body                   |
+| Condition                                  | Behavior                                                                                       |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `HEAD` or conditional `304`                | No file stream acquired                                                                        |
+| Satisfiable single byte range              | `206`                                                                                          |
+| Multiple, unsupported, or malformed ranges | Range ignored                                                                                  |
+| Decimal range start beyond the file        | `416`, even when the value exceeds JavaScript's safe-integer limit                             |
+| Decimal range end beyond the file          | Clamped to file length and returned as `206`                                                   |
+| Valid but unsatisfiable single range       | `416` with `Content-Range`, without asset cache or validator headers                           |
+| `If-Range`                                 | Range applies only for a matching strong ETag; stale/weak tags and dates receive the full body |
+| `Range` on `HEAD`                          | Ignored; returns full-file metadata without a body                                             |
 
 Caller-provided `HttpPlatform` or ETag services do not change asset responses.

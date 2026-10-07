@@ -89,7 +89,7 @@ for (const reader of locales) {
     await page.goto(`/${reader.locale}/platforms/alchemy`);
     const important = page.locator('article [data-alert="important"]');
     await expect(important).toBeVisible();
-    await expect(important).toContainText("2.0.0-beta.79");
+    await expect(important).toContainText("2.0.0-beta.81");
     await expect(important).not.toContainText("[!IMPORTANT]");
     await expect(important.locator(".docs-alert-title")).toHaveText("Important");
     await expect(important.locator("svg")).toBeVisible();

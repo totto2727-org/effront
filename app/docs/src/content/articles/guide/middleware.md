@@ -19,7 +19,7 @@ Middleware を適用できる対象:
 
 ```typescript
 import { Context, Effect } from "effect";
-import { HttpServerRequest } from "effect/unstable/http";
+import { HttpServerRequest } from "effect/http";
 import { Application } from "@effront/core";
 
 export class RequestInfo extends Context.Service<RequestInfo, { readonly url: string }>()(
@@ -77,7 +77,7 @@ export default EFFRONT.make({ routes });
 
 ```typescript
 import { Effect } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+import { HttpServerResponse } from "effect/http";
 import { EFFRONT } from "./request-scope";
 
 export const Maintenance = EFFRONT.Middleware.make(() =>

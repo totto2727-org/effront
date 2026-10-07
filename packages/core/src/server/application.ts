@@ -1,11 +1,6 @@
 import { Context, Effect, Layer, Option, Schema, Stream, type Types } from "effect";
 import type { PlatformError } from "effect/PlatformError";
-import {
-  HttpEffect,
-  HttpRouter,
-  HttpServerRequest,
-  HttpServerResponse,
-} from "effect/unstable/http";
+import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 import { type ApplicationDefinition, getApplicationState } from "../application/definition";
 import { getEFFRONTIdentity } from "../application/effront-identity";

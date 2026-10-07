@@ -1,11 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Layer, Scope, Stream } from "effect";
-import {
-  HttpEffect,
-  HttpRouter,
-  HttpServerRequest,
-  HttpServerResponse,
-} from "effect/unstable/http";
+import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 import { Application } from "./application/effront";
 import type { ApplicationRequirements, ApplicationServices } from "./application/definition";

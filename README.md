@@ -43,8 +43,8 @@ For other configurations, see [Platforms](app/docs/src/content/en/articles/platf
 
 - **Host**: Cloudflare Workers with Node compatibility, or the [native Node/Bun server](packages/server/README.md#prerequisites).
 - **Build integration**: VitePlus with the matching Effront integration and host adapter.
-- **Peers**: Effect `4.0.0-rc.116` and React/React DOM `19.3.0`; use matching versions across your application.
-- **Alchemy**: The adapter is pinned to beta.79; its official CLI requires a configured Cloudflare profile even for local use. Standalone Workers does not require that profile for local development.
+- **Peers**: Effect `^4.0.1` and React/React DOM `19.3.0`; use one coherent Effect v4 installation across your application. Effect minor and patch updates are supported by the dependency range, while v5 and prereleases are excluded.
+- **Alchemy**: The adapter is pinned to beta.81; its official CLI requires a configured Cloudflare profile even for local use. Standalone Workers does not require that profile for local development.
 
 ## Setup
 

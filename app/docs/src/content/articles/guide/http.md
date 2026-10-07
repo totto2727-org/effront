@@ -8,7 +8,7 @@
 
 ```typescript
 import { Effect } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerResponse } from "effect/http";
 import { Greeting } from "./greeting";
 
 export const GreetingApi = HttpRouter.use(
@@ -70,7 +70,7 @@ export default EFFRONT.make({ routes, layer: ApplicationLayer });
 
 ```typescript
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerResponse } from "effect/http";
 import { Greeting } from "./greeting";
 import { GreetingApi } from "./http";
 

@@ -10,7 +10,7 @@ import { CloudflareEnvironment } from "alchemy/Cloudflare";
 import { RuntimeContext } from "alchemy/RuntimeContext";
 import { Self } from "alchemy/Self";
 import { Context, Effect, Layer, Scope } from "effect";
-import { HttpRouter, HttpServerRequest } from "effect/unstable/http";
+import { HttpRouter, HttpServerRequest } from "effect/http";
 
 type HostServices =
   | Request

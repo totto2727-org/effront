@@ -2,7 +2,7 @@ import type { ApplicationDefinition } from "@effront/core";
 import { CloudflareEnvironment } from "alchemy/Cloudflare";
 import { RuntimeContext } from "alchemy/RuntimeContext";
 import { Context, Effect, Layer, Option, Scope } from "effect";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { describe, expect, expectTypeOf, it, vi } from "vite-plus/test";
 
 import { applicationHttpEffect, makeApplicationHttpEffect } from "./index";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Layer, Stream } from "effect";
-import { HttpServerResponse } from "effect/unstable/http";
+import { HttpServerResponse } from "effect/http";
 
 import { Application } from "../../src/application/effront";
 import {

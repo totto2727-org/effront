@@ -1,9 +1,10 @@
+import { STATUS_CODES } from "node:http";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { Effect, Exit, Layer, Scope } from "effect";
-import type { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpEffect, type HttpServerRequest, HttpServerResponse } from "effect/http";
 import { isRunnableDevEnvironment, type Connect, type Plugin } from "vite";
 
 export type EffrontServerOptions = {
@@ -48,7 +49,22 @@ const makeMiddleware = async (load: () => Promise<unknown>) => {
       Layer.buildWithScope(NodeHttpServer.layerHttpServices, scope),
     );
     const handler = await Effect.runPromise(
-      NodeHttpServer.makeHandler(application, { scope }).pipe(Effect.provideContext(context)),
+      NodeHttpServer.makeHandler(
+        application.pipe(
+          // Vite preview's compression middleware requires the three-argument
+          // writeHead call to carry a string reason, or it discards the headers.
+          HttpEffect.withPreResponseHandler((_request, response) =>
+            Effect.succeed(
+              HttpServerResponse.setStatus(
+                response,
+                response.status,
+                response.statusText ?? STATUS_CODES[response.status] ?? "",
+              ),
+            ),
+          ),
+        ),
+        { scope },
+      ).pipe(Effect.provideContext(context)),
     );
     const middleware: Connect.NextHandleFunction = (request, response, next) => {
       if (closing !== undefined) {

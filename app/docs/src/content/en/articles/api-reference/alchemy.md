@@ -84,4 +84,4 @@ The Worker declaration requires `vite: { viteEnvironments: { entry: "rsc", child
 Do not set `vite.main` or add a second runtime plugin or Wrangler configuration.
 Node-only deployment and local-host exports, including infrastructure provider factories, are unavailable to server code during development. Deployment-time exports and production builds are unaffected.
 Alchemy supplies the host plugin and bindings through `alchemy dev`, not Vite alone.
-Alchemy `2.0.0-beta.79` requires a configured Cloudflare profile even for [local startup](../platforms/alchemy.md#stack).
+Alchemy `2.0.0-beta.81` requires a configured Cloudflare profile even for [local startup](../platforms/alchemy.md#stack).

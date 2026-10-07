@@ -70,7 +70,11 @@ Both approaches use the official CLI and do not require a manually registered ru
 
 ## Compatibility
 
-The integration pins Alchemy and its Cloudflare runtime to `2.0.0-beta.79` and the Effect family to `4.0.0-rc.116`.
+The integration pins Alchemy and its Cloudflare runtime to `2.0.0-beta.81` and uses the stable Effect v4 family with the shared `^4.0.1` range.
+The range accepts v4 minor and patch releases but excludes prereleases and v5; the lockfile records the concrete tested versions.
+Stable Effect v4 moved `effect/unstable/*` modules to public paths such as `effect/http`, `effect/cli`, and `effect/schema`.
+Although beta.79's peer ranges accept stable v4, its source still imports the removed paths and fails during Vite configuration loading; beta.81 migrates those imports.
+Existing repository consumers only change Effect import paths, not their application behavior.
 Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, whose `Config.string` call is incompatible with Effect rc.116. Beta.79 uses rc.12 and passed the local Worker browser suite.
 Keep one coherent Effect version across native bridge, core, platform layers and SQL dependencies.
 The local workerd compatibility date is `2026-09-01`, supported by the pinned runtime.
@@ -105,7 +109,7 @@ The native browser suite checks the committed KV example; standalone Fetch/Worke
 Official Alchemy CLI planning and reconciliation require separate verification from the credential-free test host, and neither local check proves cloud deployment or remote permissions.
 
 References: [Alchemy](https://alchemy.run/), [state stores](https://alchemy.run/state-store), [native Worker bridge](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/WorkerBridge.ts), [Vite source integration](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/Sources/Vite.ts), and [KV binding construction](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/KV/NamespaceBinding.ts).
-The source links track upstream main. The dependency mismatch was checked against beta.77 and the working local suite against the pinned beta.79 package.
+The source links track upstream main. The earlier dependency mismatch was checked against beta.77 and the historical working local suite against beta.79 with Effect rc.116.
 
 ## Alternative host
 

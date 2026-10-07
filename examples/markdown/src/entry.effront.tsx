@@ -1,7 +1,7 @@
 import { MarkdownDocument } from "@effront/markdown/document";
 import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { Application } from "@effront/core";
 import { manual } from "../content";
 import { Shell } from "./components/shell";

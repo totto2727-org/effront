@@ -1,5 +1,5 @@
 import { Effect, Stream } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { describe, expect, it } from "vite-plus/test";
 
 import { responseCache } from "./response-cache";

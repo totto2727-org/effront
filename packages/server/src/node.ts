@@ -1,9 +1,9 @@
-import "effect/unstable/schema/SchemaJITCompiler/enable";
+import "effect/schema/SchemaJITCompiler/enable";
 import { NodeHttpServer } from "@effect/platform-node";
 import { createServer } from "node:http";
 import { Effect, Layer } from "effect";
-import { HttpServer } from "effect/unstable/http";
-import type { HttpServerResponse } from "effect/unstable/http/HttpServerResponse";
+import { HttpServer } from "effect/http";
+import type { HttpServerResponse } from "effect/http/HttpServerResponse";
 import { withAssets, type AssetOptions } from "./assets";
 
 export interface ServeOptions {

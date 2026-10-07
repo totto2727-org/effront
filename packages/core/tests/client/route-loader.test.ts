@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, Fiber, Layer } from "effect";
-import { HttpClient, HttpClientResponse } from "effect/unstable/http";
+import { HttpClient, HttpClientResponse } from "effect/http";
 import { vi } from "vitest";
 
 import type { RouteTreeModel } from "../../src/rsc/route-tree";

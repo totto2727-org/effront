@@ -1,6 +1,6 @@
 import { beforeEach, expect, it } from "@effect/vitest";
 import { Deferred, Effect, Fiber, Layer } from "effect";
-import { HttpClient } from "effect/unstable/http";
+import { HttpClient } from "effect/http";
 import { vi } from "vitest";
 
 vi.mock("@vitejs/plugin-rsc/browser", () => ({

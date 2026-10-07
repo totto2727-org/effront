@@ -1,6 +1,6 @@
 // Vite replaces `import.meta.env.DEV` at compile time.
 import { Context, Deferred, Effect, Exit, Layer, Schema, Scope, Stream } from "effect";
-import { HttpBody, HttpClient, HttpClientRequest } from "effect/unstable/http";
+import { HttpBody, HttpClient, HttpClientRequest } from "effect/http";
 import { createFromReadableStream, createTemporaryReferenceSet } from "@vitejs/plugin-rsc/browser";
 
 import {

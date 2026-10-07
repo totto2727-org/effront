@@ -1,5 +1,5 @@
 import { Context, Effect, Layer } from "effect";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { createFetchHandler, createWorkersContextAccessors } from "@effront/core/workers";
 import { describe, expect, it } from "vite-plus/test";
 

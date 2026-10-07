@@ -6,10 +6,10 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@effect/platform-browser": "4.0.0-rc.116",
+    "@effect/platform-browser": "^4.0.1",
     "@effront/cloudflare": "0.2.0",
     "@effront/core": "0.2.0",
-    "effect": "4.0.0-rc.116",
+    "effect": "^4.0.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -18,7 +18,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-rsc": "0.5.35",
-    "vite-plus": "0.3.1",
+    "vite-plus": "^1.1.0",
     "wrangler": "4.131.0"
   }
 }

@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "@effect/vitest";
 import { Effect, Fiber, Layer } from "effect";
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
+import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
 import { InitialFlightStream } from "./initial-flight-stream";
 import { ServerFnIdHeader, type FlightPayload, type ServerFnResult } from "../rsc/flight";

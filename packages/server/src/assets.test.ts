@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { Context, Effect, Exit, FileSystem, Result, Stream } from "effect";
 import { systemError } from "effect/PlatformError";
-import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { type AssetOptions, withAssets } from "./assets";
@@ -233,10 +233,10 @@ describe("native static assets", () => {
       expect(opened).toHaveLength(1);
     }));
 
-  it("ignores Range on HEAD and continues to ignore If-Range on GET", () =>
+  it("ignores Range on HEAD and serves the full body for nonmatching If-Range", () =>
     withServer(async (origin, opened) => {
       const url = `${origin}/assets/app-a1b2.js`;
-      // RFC 9110 section 14.2 only defines Range for GET. Effect rc.116 ignores it on HEAD.
+      // RFC 9110 section 14.2 only defines Range for GET. Effect v4 ignores it on HEAD.
       const head = await fetch(url, { method: "HEAD", headers: { range: "bytes=2-3" } });
       expect(head.status).toBe(200);
       expect(head.headers.get("content-length")).toBe("10");
@@ -248,14 +248,21 @@ describe("native static assets", () => {
       expect(invalidHead.headers.get("content-range")).toBeNull();
       expect(await invalidHead.text()).toBe("");
       expect(opened).toHaveLength(0);
-      const response = await fetch(url, {
-        headers: { range: "bytes=1-2", "if-range": '"stale"', "if-none-match": '"stale"' },
-      });
-      expect(response.status).toBe(206);
-      expect(await response.text()).toBe("12");
-      // StaticServer constructs a full response for the conditional check, but only
-      // the chosen range stream is consumed. No eager full-body stream is abandoned.
-      expect(opened).toHaveLength(1);
+      // The default ETag is weak, and Effect requires a matching strong tag.
+      for (const ifRange of [
+        '"stale"',
+        head.headers.get("etag")!,
+        head.headers.get("last-modified")!,
+      ]) {
+        const response = await fetch(url, {
+          headers: { range: "bytes=1-2", "if-range": ifRange, "if-none-match": '"stale"' },
+        });
+        expect(response.status).toBe(200);
+        expect(response.headers.get("content-range")).toBeNull();
+        expect(response.headers.get("content-length")).toBe("10");
+        expect(await response.text()).toBe("0123456789");
+      }
+      expect(opened).toHaveLength(3);
     }));
 
   it("does not install SPA/directory fallback, steal protocol requests, or handle POST", () =>

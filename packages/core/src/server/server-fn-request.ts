@@ -1,5 +1,5 @@
 import { Cause, Effect, Schema, type Scope } from "effect";
-import { HttpServerRequest } from "effect/unstable/http";
+import { HttpServerRequest } from "effect/http";
 
 import type { EFFRONTIdentity } from "../application/effront-identity";
 import type { AnyMiddleware } from "../application/middleware";
