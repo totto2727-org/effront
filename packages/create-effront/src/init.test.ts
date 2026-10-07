@@ -40,6 +40,7 @@ for (const platform of platforms) {
       expect(manifest.scripts).not.toHaveProperty("build");
     }
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
+    expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.1.0");
     for (const dependencies of [manifest.dependencies, manifest.devDependencies]) {
       for (const [name, version] of Object.entries(dependencies ?? {})) {
         if (name === "effect" || name.startsWith("@effect/")) {

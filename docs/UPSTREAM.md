@@ -30,14 +30,17 @@ The historical combined Cloudflare factory was superseded after the pinned compa
 Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront uses stable Effect v4 packages through the shared `^4.0.1` catalog range instead of the former exact `4.0.0-rc.116` pins.
 This affects public dependency and peer ranges, workspace overrides, and the `create-effront` templates; v4 minor and patch updates are allowed, while prereleases and v5 are excluded.
 The lockfile records concrete versions for reproducible installation, and consumers must retain one coherent Effect installation across the host and application graphs.
-`@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `1.0.0` with the bundled Vitest `5.0.1`; package task inputs and outputs move under `cache` for VitePlus 1's task schema. This is a test-tool compatibility update, not a runtime redesign.
+`@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `^1.1.0` with Vitest `^5.0.3`; package task inputs and outputs move under `cache` for VitePlus 1's task schema.
+The initializer templates use the same VitePlus range, allowing compatible minor and patch updates without admitting the next major.
+This is a test-tool compatibility update, not a runtime redesign.
+The Nix environment uses the current `nix-vite-plus` overlay revision `af16f6183aec0717d8975ee858c910ab43babee6`, which supplies the VitePlus 1.0.0 launcher; repository-local tooling resolves to 1.1.0 through the catalog.
 Stable Effect v4 promotes `effect/unstable/*` to public paths such as `effect/http`, `effect/cli`, `effect/schema`, and `effect/reactivity`; runtime imports, JIT-generated imports, test fixtures, and maintained guides use those paths.
 Alchemy and its Cloudflare runtime use beta.81 because beta.79 still imports the removed paths despite peer ranges admitting stable v4.
 The Vite host supplies a standard status text when an application response omits it: Effect's native three-argument `writeHead` otherwise loses response headers inside Vite preview's compression middleware, causing non-ASCII HTML to decode incorrectly.
 The native host browser suite checks response headers and the document charset; custom status text and streaming bodies remain intact.
 Static assets follow stable Effect's `If-Range` handling: only matching strong ETags permit a range, while stale/weak validators and dates produce the full response.
 No upstream runtime source is incorporated by this change; external consumer repositories remain unchanged.
-Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.0.0](https://registry.npmjs.org/vite-plus/1.0.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
+Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.1.0](https://registry.npmjs.org/vite-plus/1.1.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
 
 ## Future incorporation
 
