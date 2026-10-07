@@ -314,12 +314,12 @@ export const englishArticleCatalog = [
     slug: "/api-reference",
     title: "API reference",
     description:
-      "Find public import paths, application factory APIs, and compatible dependency versions.",
+      "Find public import paths, application factory APIs, and dependency compatibility requirements.",
     section: "API reference",
     headings: [
       { id: "exports", title: "Public API map" },
       { id: "index", title: "Application factory index" },
-      { id: "versions", title: "Dependency matrix" },
+      { id: "versions", title: "Dependency compatibility" },
     ],
     source: "/api-reference",
   },

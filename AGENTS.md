@@ -51,7 +51,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 
 ## Development tools
 
-- **VitePlus**: pinned in `pnpm-workspace.yaml`; root config owns shared checks and standard Vitest discovery.
+- **VitePlus**: versioned in `pnpm-workspace.yaml`; root config owns shared checks and standard Vitest discovery. Preserve the package manager's default minimum release age and normally select the latest compatible mature release. Do not lower the threshold or add release-age exclusions except for a genuinely urgent, explicitly authorized need. Use a command-only strict release-age flag when needed to prevent automatically generated exclusions.
 - **Gitignore exclusions**: `vite.config.ts` uses the published [JSR package](https://jsr.io/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
 - **Effect**: consult installed-version source and official documentation before changing APIs.
 - **Playwright/workerd**: browser acceptance exercises actual host behavior; a successful build or mock does not establish runtime correctness.
@@ -65,6 +65,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 - Colocate unit tests as `<module>.test.ts(x)`; reserve `tests/` for integration or black-box contracts. Keep all retained source/tests checked and standard Vitest discovery; Playwright uses `*.e2e.ts`.
 - Follow `share-artifact` for README/AGENTS: README is consumer-facing, Setup uses normal installation rather than `workspace:`/`catalog:`, and Development links to AGENTS. Package AGENTS supplements, not duplicates, root rules.
 - Keep user-facing guides host-neutral unless describing a specific platform. Describe only implemented guarantees; put deferred designs in the roadmap.
+- Keep ordinary documentation installation commands unversioned and refer to package metadata for compatibility rather than duplicating release numbers or dependency catalogs. Preserve version declarations in manifests, generated starter dependencies, lockfiles, and historical compatibility evidence.
 
 ## Task-specific documentation
 

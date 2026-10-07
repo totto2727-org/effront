@@ -42,20 +42,14 @@ Effront の API は、アプリケーションの定義、実行環境への接�
 | `withMiddleware`                         | 同じアプリケーション ID を保ち、ミドルウェアを追加した派生ファクトリー | [Application](/ja/api-reference/application)      |
 | `make`                                   | アプリケーション定義。サーバーの起動は行わない                         | [Application](/ja/api-reference/application)      |
 
-## 依存バージョン一覧 {#versions}
+## 依存関係の互換性 {#versions}
 
-| パッケージ群                                                     | バージョン      |
-| ---------------------------------------------------------------- | --------------- |
-| すべての Effront パッケージ                                      | `0.3.0`         |
-| `react`、`react-dom`                                             | `19.3.0`        |
-| `@vitejs/plugin-rsc`                                             | `0.5.35`        |
-| `effect`、`@effect/platform-browser`、ホスト別 Effect パッケージ | `^4.0.1`        |
-| `alchemy`                                                        | `2.0.0-beta.81` |
-| `@comark/react`                                                  | `0.6.2`         |
-
-任意のアダプターや連携パッケージを含め、Effront のバージョンを統一してください。
-React と React DOM は同じバージョンが必要で、`@vitejs/plugin-rsc@0.5.35` は対応する `19.3.0` の RSC トランスポートを含みます。
-[`ViewTransition`](https://react.dev/reference/react/ViewTransition) と [`addTransitionType`](https://react.dev/reference/react/addTransitionType) は React `19.3.0` の安定版 API です。
-Effect 系のバージョンも統一してください。
+通常のセットアップでは、バージョンを付けずにパッケージ名でインストールします。
+対応する依存バージョンの範囲は、版数一覧を複製せず、インストールした Effront パッケージの `peerDependencies` を参照してください。
+任意のアダプターや連携パッケージを含めて Effront のバージョンを統一し、再現可能なインストールのためにアプリケーションの lockfile を保持します。
+React と React DOM は同じバージョンが必要で、`@vitejs/plugin-rsc` が提供する RSC トランスポートも、その React と互換性が必要です。
+Effront のページ遷移は [`ViewTransition`](https://react.dev/reference/react/ViewTransition) と [`addTransitionType`](https://react.dev/reference/react/addTransitionType) を使用します。
+アプリケーションとホスト別 Effect パッケージで、整合性のある単一の Effect を使用してください。
+Alchemy の更新前には、インストールしたアダプターの peer 要件と[統合の互換性に関する説明](./api-reference/alchemy.md)を確認してください。
 Vite 連携の公開 Vite peer dependency は `*` です。
 セットアップガイドでは VitePlus を使用します。
