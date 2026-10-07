@@ -159,7 +159,7 @@ Content tests compare it with every public manifest export and version, excludin
 Do not bump library versions for private documentation-only changes.
 
 All seven `0.1.3` packages were checked with read-only `vp view @effront/<package>@0.1.3 version --json` on 2026-09-18.
-The `0.2.0` instructions target the next release, not a verified publication.
+The `0.3.0` instructions target the next release, not a verified publication.
 Check the registry before changing publication claims: a manifest does not establish publication.
 
 Keep Bun production separate from Vite's Node-compatible dev/preview middleware when describing host support.
