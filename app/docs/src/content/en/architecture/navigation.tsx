@@ -18,8 +18,8 @@ export const page: DocPage = {
     <>
       <p>
         React commit, browser history commit, and Flight completion are separate events. A route can
-        become visible while deferred data is still streaming, so navigation must track both the
-        visible tree and its unfinished resources.
+        become visible while deferred data streams. Navigation must track both the visible tree and
+        its unfinished resources.
       </p>
       <p>
         Hydration starts from{" "}
@@ -53,8 +53,8 @@ export const page: DocPage = {
       </figure>
       <p>
         Interception excludes hash-only changes, downloads, forms, reloads, and the two marked
-        navigation types. The document marker prevents Effront's fallback loads from being
-        intercepted again.
+        navigation types. The document marker prevents a second interception of Effront's fallback
+        loads.
       </p>
       <p>
         <code>browserMain</code> uses <code>Effect.scoped</code> and <code>Effect.never</code> to
@@ -82,7 +82,7 @@ export const page: DocPage = {
         <li>
           <strong>Flight:</strong> the result includes the payload, <code>completed</code>,{" "}
           <code>release</code>, and <code>resolvedUrl</code>. A decoded route tree does not mean the
-          stream has completed.
+          stream is completed.
         </li>
       </ul>
       <p>
@@ -95,7 +95,7 @@ export const page: DocPage = {
       <h2 id="transition-commit">Distinguish scheduling a render from committing it</h2>
       <p>
         An asynchronous Transition Action loads the route through <code>BrowserEffectRunner</code>.
-        After loading, an inner transition publishes the tree, but publication is not commit:
+        After the load, an inner transition publishes the tree. Publication is not commit:
       </p>
       <figure data-core-source={coreRuntimeSources.navigationPublication.path}>
         <figcaption>
@@ -146,9 +146,9 @@ export const page: DocPage = {
       </p>
       <p>
         An obsolete load is released rather than published. An already-scheduled render is
-        discarded, then released after retirement. <code>BrowserRenderer</code> retains trees that
+        discarded. Release occurs after retirement. <code>BrowserRenderer</code> retains trees that
         are visible or referenced by pending publications, including restoration requests. Aborting
-        navigation is therefore not equivalent to retiring a render. Unpublished or retired commits
+        navigation is therefore not equivalent to render retirement. Unpublished or retired commits
         and invalid lifecycle transitions throw <code>TypeError</code>.
       </p>
       <p>
@@ -171,8 +171,8 @@ export const page: DocPage = {
       <p>
         Render retirement also releases its resource, even after a newer generation starts. The
         cache holds trees, not open response streams. <code>RouteLoader</code> evicts disposed
-        history entries and replaces the cache Map on refresh, preventing delayed callbacks from
-        repopulating the new cache.{" "}
+        history entries and replaces the cache Map on refresh. Thus delayed callbacks cannot
+        repopulate the new cache.{" "}
         <a href="/en/architecture/implementation/server-functions">Server Function responses</a> use
         the same renderer lifecycle to update the current page.
       </p>

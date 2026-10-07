@@ -460,9 +460,13 @@ describe("documentation catalog", () => {
       const alchemy = await render(`/${locale}/api-reference/alchemy`);
       expect(alchemy).toContain('data-alert="warning"');
       const alchemyText = await text(`/${locale}/api-reference/alchemy`);
+      expect(alchemyText).toContain("plugins: [effront(), effrontAlchemy()]");
+      expect(alchemyText).toContain(
+        locale === "en" ? "The reverse plugin order" : "プラグインの順序を逆にすると",
+      );
       expect(alchemyText.indexOf("plugins: [effront(), effrontAlchemy()]")).toBeLessThan(
         alchemyText.indexOf(
-          locale === "en" ? "Reversing the plugin order" : "プラグインの順序を逆にすると",
+          locale === "en" ? "The reverse plugin order" : "プラグインの順序を逆にすると",
         ),
       );
     },
@@ -696,11 +700,11 @@ describe("documentation catalog", () => {
       );
       expect(prose).toContain(
         locale === "en"
-          ? "Markdown received from external sources at runtime"
+          ? "Markdown from external sources at runtime"
           : "実行時に外部から受け取る Markdown",
       );
       expect(prose).toContain(
-        locale === "en" ? "implement your own endpoint and rendering" : "独自のエンドポイント",
+        locale === "en" ? "implement your own endpoint and renderer" : "独自のエンドポイント",
       );
       expect(prose).toContain("content/");
       expect(prose).toContain("basePath");
@@ -794,11 +798,13 @@ describe("documentation catalog", () => {
       expect(prose).toContain("nodejs_compat");
       expect(prose).not.toMatch(/node:path|node:url/);
     } else {
-      expect(prose).toContain(slug.startsWith("/en") ? "registered by default" : "標準で登録");
+      expect(prose).toContain(
+        slug.startsWith("/en") ? "registers Math and Mermaid by default" : "標準で登録",
+      );
     }
     expect(prose).toContain(slug.startsWith("/en") ? "only placeholders" : "プレースホルダーのみ");
     expect(prose).toContain(
-      slug.startsWith("/en") ? "server-renderable replacements" : "独自に実装",
+      slug.startsWith("/en") ? "replacements that can render on the server" : "独自に実装",
     );
     expect(await render(slug)).toContain('href="https://comark.dev/rendering/react"');
   });
@@ -822,10 +828,9 @@ describe("documentation catalog", () => {
     const englishReference = await text("/en/api-reference/markdown");
     expect(englishReference).toMatch(/\bnot\b[^.]*\bsanitizer\b/i);
     expect(englishReference).toContain("preconfigured");
-    expect(englishReference).toContain(
-      "Math and Mermaid currently require client-side JavaScript and do not support SSR.",
-    );
-    expect(englishReference).toContain("implement server-renderable replacements");
+    expect(englishReference).toContain("Math and Mermaid need client-side JavaScript.");
+    expect(englishReference).toContain("They do not render on the server.");
+    expect(englishReference).toContain("implement replacements that can render on the server");
   });
 
   it("retains all seven authored architecture chapters under their implementation group", () => {

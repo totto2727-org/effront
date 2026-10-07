@@ -27,7 +27,8 @@ export const streamFeed = EFFRONT.ServerFn.make({
 
 ## Render arriving stories {#render}
 
-Wrap the imported Server Function with `stream`, then update component state for every story.
+Wrap the imported Server Function with `stream`.
+Then update component state for every story.
 
 ```tsx
 // src/feed-view.tsx

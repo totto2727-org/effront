@@ -1,19 +1,28 @@
 # Streaming feed
 
-A self-contained Effront example that server-renders six notes, streams subsequent notes, and queries full notes without replacing the page. It generates 10,000 fictional records in memory, so neither development nor production needs a database or external service.
+This self-contained Effront example server-renders six notes, streams subsequent notes, and queries full notes without a page replacement.
+It generates 10,000 fictional records in memory.
+A database or external service is not necessary for development or production.
 
 ## Usage
 
-After preparing workspace packages as described in [examples/AGENTS.md](../AGENTS.md), start the Alchemy-managed Cloudflare Worker:
+Prepare the workspace packages as specified in [examples/AGENTS.md](../AGENTS.md).
+Then start the Alchemy-managed Cloudflare Worker:
 
 ```sh
 cd examples/streaming-feed
 vp run dev
 ```
 
-Open the URL reported by Alchemy. Its development command requires a configured Alchemy profile; the independent browser suite at [`tests/e2e-streaming-feed`](../../tests/e2e-streaming-feed/) runs the same Worker application locally without Cloudflare authentication.
+Open the URL that Alchemy reports.
+A configured Alchemy profile is necessary for its development command.
+The independent browser suite at [`tests/e2e-streaming-feed`](../../tests/e2e-streaming-feed/) executes the same Worker application locally without Cloudflare authentication.
 
-The first six cards are visible without JavaScript. With JavaScript, **Load 6 more notes** emits cards as the server streams them. **Read note** queries a detail independently, so an expanded card stays open while more cards load. Failed requests can be retried without losing received cards.
+The first six cards are visible without JavaScript.
+With JavaScript, **Load 6 more notes** emits cards as the server streams them.
+**Read note** queries a detail independently.
+An expanded card stays open while more cards load.
+You can retry failed requests without the loss of received cards.
 
 ## API
 

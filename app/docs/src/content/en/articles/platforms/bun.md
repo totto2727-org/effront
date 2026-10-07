@@ -27,11 +27,14 @@ Start with these files when changing the page or the way the server runs:
 | `vite.config.ts`        | Registers `effront()` and `effrontServer()`.                                 |
 | `package.json`          | Lists dependencies and the `start` command.                                  |
 
-Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>` and save. The page updates without restarting the server.
+Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>`.
+Save the file.
+The page updates without a server restart.
 
 ## Check the production build locally {#assets}
 
-Stop development, then run these commands from the generated project:
+Stop development.
+Then run these commands from the generated project:
 
 ```bash
 vp build
@@ -51,7 +54,7 @@ vp run start
 The script runs `bun dist/rsc/server.js`.
 With `PORT` and `HOST` unset, open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 This URL serves the built application on Bun.
-To change the listening address, set `PORT` and `HOST` before starting the server.
+Before you start the server, set `PORT` and `HOST` to change the listening address.
 
 The minimal example uses `@effect/platform-bun` in production and `@effect/platform-node` for development.
 

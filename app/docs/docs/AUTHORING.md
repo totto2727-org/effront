@@ -39,7 +39,7 @@ Keep contributor commands and framework test implementation out of the consumer 
 
 ### Preserve URLs and heading links
 
-Catalog paths omit locale prefixes; `src/content/locale.ts` owns the locale/path helpers.
+Catalog paths omit locale prefixes. `src/content/locale.ts` owns the locale/path helpers.
 The language switch links to the same article in the other language.
 Article links, search results, and previous/next navigation stay in the selected language.
 
@@ -80,7 +80,7 @@ Parsing runs in the Page Effect with `MarkdownError` in the error channel.
 The application does not use a custom parser, runtime filesystem loader, Git execution, or network content loading.
 Only rendered content and navigation metadata cross the client boundary, not the collection or highlighter.
 
-Markdown permits HTML, attributes, and components; it is not a sanitizer for untrusted submissions.
+Markdown permits HTML, attributes, and components. It is not a sanitizer for untrusted submissions.
 The configured Effront renderer registers Math and Mermaid, but neither supports SSR.
 Maintain reference-resolution and renderer contracts in the [English Markdown reference](../src/content/en/articles/api-reference/markdown.md) and its [Japanese translation](../src/content/articles/api-reference/markdown.md), not in a separate package consumer guide.
 
@@ -90,8 +90,9 @@ The document starts in dark mode regardless of system preference.
 Tailwind Typography styles articles, and Comark's Shiki output supplies server-rendered Markdown code tokens.
 The `ProsePre` component mapping adds keyboard focus and code-block attributes without replacing Comark or reinterpreting its AST.
 The `.docs-markdown` dark-theme CSS affects only Markdown tokens.
+
 Architecture excerpts keep the exact-text `CodeBlock` renderer and locally imported Shiki grammars.
-Neither renderer has a copy button; code remains selectable text.
+Neither renderer has a copy button. Code remains selectable text.
 
 Keep DocsShell in RootLayout so sidebar, search, header, table of contents, and sidebar scrolling survive route changes.
 Only the Page article participates in the named page transition.
@@ -108,7 +109,7 @@ The docs site is public and request-independent: introducing authentication or c
 ### Native Workers Cache and browser freshness
 
 `src/entry.workers.ts` enables Cloudflare's [Workers Cache](https://developers.cloudflare.com/workers/cache/) with Alchemy's native `cache: { enabled: true }` option.
-The installed Alchemy provider forwards this to the Worker version's `cacheOptions` metadata; no Cache Rules, custom cache store, `caches.default`, or response buffering is needed.
+The installed Alchemy provider forwards this to the Worker version's `cacheOptions` metadata. No Cache Rules, custom cache store, `caches.default`, or response buffering is needed.
 Cloudflare serves cache hits before executing the Worker, using tiered caching and request collapsing.
 Workers Cache is distinct from both zone caching and the older Workers Cache API.
 
@@ -117,37 +118,46 @@ Workers Cache is distinct from both zone caching and the older Workers Cache API
 The Worker does not wrap its final fetch with this policy, and the middleware does not change response bodies or add a core API:
 
 - `Cache-Control: public, max-age=0, must-revalidate` keeps fixed URLs fresh in browsers and downstream caches.
-- `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache; Cloudflare consumes this header instead of forwarding it to clients.
+- `Cloudflare-CDN-Cache-Control: public, max-age=31536000` requests one-year retention only in Cloudflare's cache. Cloudflare consumes this header instead of forwarding it to clients.
 - `Vary: Accept` partitions HTML/Flight without partitioning by Cookie or Authorization.
 
 Workers Cache explicitly honors `Vary`, unlike assumptions made about zone caching.
-Its default key includes the path, full query string and Worker version, so `/en`, `/ja`, query variants and deployments are isolated without synthetic URLs or a purge job.
+Its default key includes the path, full query string and Worker version.
+Thus `/en`, `/ja`, query variants and deployments are isolated without synthetic URLs or a purge job.
 Do not enable cross-version caching.
-The request hostname is not part of the native key; this site must continue to render the same public content across its hostnames.
+The request hostname is not part of the native key. This site must continue to render the same public content across its hostnames.
 
 The middleware opts in only GET requests whose `Accept` contains `text/html` or `text/x-component`, with a 200 response.
 Cookie and Authorization request headers do not affect this public site's cache policy.
 The middleware does not inspect response cookies or Set-Cookie headers.
-Other responses returned through the middleware receive `private, no-store` in both cache-control headers; failures propagate without adding cache headers.
-This docs-specific policy does not additionally inspect Range, Content-Range, response Content-Type, or wildcard Vary; it is not a general-purpose caching middleware.
+Other responses returned through the middleware receive `private, no-store` in both cache-control headers. Failures propagate without adding cache headers.
+
+This docs-specific policy does not additionally inspect Range, Content-Range, response Content-Type, or wildcard Vary. It is not a general-purpose caching middleware.
 Cloudflare can satisfy HEAD and Range from a cached GET itself.
+
 HTTP caching does not inspect React's serialized payload: a render error encoded inside a normally completed HTTP 200 can be cached.
-This policy does not add a core rendering observer or claim to exclude such application-level errors; verify authored pages before deployment and roll out a corrected version if necessary.
+This policy does not add a core rendering observer or claim to exclude such application-level errors. Verify authored pages before deployment and roll out a corrected version if necessary.
+
 Response streams and their Effect scopes remain unchanged.
-Static assets use Cloudflare's default ETag and revalidation behavior; this application does not override their cache headers.
+Static assets use Cloudflare's default ETag and revalidation behavior. This application does not override their cache headers.
 
 Enabling Workers Cache changes billing: cache hits consume no Worker CPU, but all requests, including static assets, are billed at the standard Workers request rate.
-See [Workers Cache pricing](https://developers.cloudflare.com/workers/cache/#pricing) before enabling the production deployment.
+Refer to [Workers Cache pricing](https://developers.cloudflare.com/workers/cache/#pricing) before enabling the production deployment.
 
 ### Deployment generations and validation
 
-Cloudflare isolates each deployed Worker version automatically; this cache policy needs no application build ID or client protocol changes.
+Cloudflare isolates each deployed Worker version automatically. This cache policy needs no application build ID or client protocol changes.
 Compatibility between a previously opened tab and a newer deployment is a separate follow-up, [TOT-240](https://linear.app/totto2727/issue/TOT-240), and is not implemented here.
 Development disables the response cache policy so edits remain visible.
 
 The authentication-free local acceptance host verifies real rendered HTML/Flight, outgoing policy headers, and navigation, not the managed Cloudflare cache in front of the Worker.
-After an authorized deployment, repeat HTML and Flight GETs and inspect Cloudflare's `Cf-Cache-Status: MISS` then `HIT`, correct content types and bodies, and the absence of the consumed `Cloudflare-CDN-Cache-Control` header.
+
+After an authorized deployment, repeat HTML and Flight GETs.
+Inspect Cloudflare's `Cf-Cache-Status: MISS` then `HIT`.
+Make sure that the content types and bodies are correct.
+Make sure that the consumed `Cloudflare-CDN-Cache-Control` header is absent.
 Repeat with credentials, then deploy changed content and verify a fresh request receives the new article rather than the previous version's cache.
+
 These production cache observations are not established by local tests.
 
 Official specifications: [configuration and header precedence](https://developers.cloudflare.com/workers/cache/configuration/), [cache keys and version isolation](https://developers.cloudflare.com/workers/cache/cache-keys/), [limitations](https://developers.cloudflare.com/workers/cache/limitations/), and [static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/).
@@ -181,9 +191,10 @@ A Markdown migration does not change this historical contract.
 Run `vp install` and `vp exec --filter "./packages/*" -- vp pack` from the repository root before starting the application.
 From `app/docs`, `vp run dev` invokes `alchemy dev` and serves `http://localhost:1339` after the local Worker is ready.
 Bare `vp dev` bypasses Alchemy orchestration and is not the application's development entry.
+
 The pinned Alchemy beta.81 requires a configured Cloudflare profile even for local CLI planning.
 Do not force automated acceptance through this user-controlled prerequisite or supply fake credentials.
-See [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for official CLI setup and compatibility boundaries.
+Refer to [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md) for official CLI setup and compatibility boundaries.
 The separate built-site acceptance command below requires no Cloudflare authentication and performs no deployment.
 
 ## Validation
@@ -193,7 +204,7 @@ Site-owned unit tests cover catalogs, headings, internal links, public package c
 
 If ignored `tmp/` contains another checkout, use `vp test run --exclude '**/tmp/**'` for the full current-repository suite.
 For a focused site run, use `vp test run app/docs/src --exclude '**/tmp/**'`.
-Default discovery otherwise includes that checkout; the exclusion leaves unrelated worktrees unchanged.
+Default discovery otherwise includes that checkout. The exclusion leaves unrelated worktrees unchanged.
 
 From `app/docs`, run:
 
@@ -219,43 +230,52 @@ A successful build, source inspection, or mocked parser does not replace real si
 
 ## Production and preview deployment
 
-This application uses `Cloudflare.state()` for shared remote state; the examples keep `localState()`.
+This application uses `Cloudflare.state()` for shared remote state. The examples keep `localState()`.
 The stack remains `effront-docs`.
 Pushes to `main` deploy stage `production`. Pushes to another ref in this repository, including tags, deploy a separate `preview-<hash>` stage, stable across pushes to that ref and isolated from production.
 The hash is derived from the complete Git ref, so branch names containing `/` do not become invalid stages or collide after slash replacement.
-Local development keeps Alchemy's separate `dev_<user>` stage, but the docs state backend is Cloudflare, so do not assume that starting this application is credential-free or has no remote state-store operations.
+
+Local development keeps Alchemy's separate `dev_<user>` stage.
+The docs state backend is Cloudflare.
+Do not assume credential-free startup or the absence of remote state-store operations.
 Do not set `ALCHEMY_STAGE=production` when running `alchemy dev`.
 
 The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to all branches and tags of this repository and can also be dispatched manually from the chosen ref.
 It builds the required workspace packages before invoking `vp exec alchemy deploy --stage <stage> --yes` from `app/docs` directly in the workflow.
-After deployment it reads the URL from the Alchemy state output and links it in the job's Actions summary. The `docs-preview` job does not create a GitHub deployment record, so a PR deployment link is not guaranteed; reviewers can open the workflow run to reach the branch's preview URL. Confirm that two simultaneous branches retain their separate preview URLs after credentials are configured; this cannot be established without a real deployment.
+After deployment it reads the URL from the Alchemy state output and links it in the job's Actions summary. The `docs-preview` job does not create a GitHub deployment record, so a PR deployment link is not guaranteed. Reviewers can open the workflow run to reach the branch's preview URL. Confirm that two simultaneous branches retain their separate preview URLs after credentials are configured. This cannot be established without a real deployment.
+
 Fork PRs do not trigger a push in this repository and do not receive credentials or an automatic remote preview.
 There is no package-level `deploy` script, to avoid accidental production deployment through a local task shortcut.
 Repository checks and tests belong to the separate CI workflow and are not repeated or awaited by the deployment workflow.
 Deployments of the same branch are serialized without cancelling an in-progress reconciliation. Production and separate preview branches may deploy concurrently.
-Alchemy builds the application as part of deployment; there is no separate Wrangler deployment or local-state artifact to restore.
+Alchemy builds the application as part of deployment. There is no separate Wrangler deployment or local-state artifact to restore.
 
 Keep the GitHub Environment `docs-production` restricted to `main`, with its existing approval rules.
 Create a separate `docs-preview` Environment for trusted in-repository branches and configure its approval/branch rules as appropriate for who can push to those branches.
 Both jobs use the same credential names: the `CLOUDFLARE_ACCOUNT_ID` variable and `CLOUDFLARE_API_TOKEN` secret. Configure them in both Environments, or at an accessible repository or organization scope. No preview-specific credential names are required.
+
 If they grant access to the same Cloudflare account, preview branches have the same account-level permissions as production even though Alchemy uses separate deployment stages. Do not treat stage separation as a credential security boundary.
 Push workflows check out and execute the pushed revision, including its workflow and build scripts. Only trusted writers should be allowed to use the preview Environment.
+
 Environment-level credentials do not prevent branch workflows from accessing any repository- or organization-level credentials that are already available to the repository.
-Credentials are passed only to the deployment step; Alchemy reads them directly in CI without a saved local profile.
+Credentials are passed only to the deployment step. Alchemy reads them directly in CI without a saved local profile.
+
 The deploy command can create or upgrade Alchemy's account-wide `alchemy-state-store` Worker when needed.
-The API token must permit the docs Worker and assets deployment as well as state-store bootstrap/access, including its Durable Objects and Cloudflare Secrets Store resources; a token limited to uploading the docs Worker is not sufficient.
+The API token must permit the docs Worker and assets deployment as well as state-store bootstrap/access, including its Durable Objects and Cloudflare Secrets Store resources. A token limited to uploading the docs Worker is not sufficient.
 Review the pinned Alchemy provider's required permissions with the account administrator before the first run.
 An Alchemy upgrade can also update this shared state-store Worker, so coordinate upgrades with other stacks in the same account.
+
 Preview stages persist after a branch is deleted. Review the stage's resources before manually destroying unused previews with `alchemy destroy --stage <preview-stage> --yes`.
 
 Changing the backend does not migrate an existing local deployment's state.
-If `effront-docs` has already been deployed with local state, preserve that state and complete an explicit migration or adoption review before running this workflow against the same resources.
+If `effront-docs` already has a deployment with local state, preserve that state.
+Complete an explicit migration or adoption review before you execute this workflow against the same resources.
 Do not delete local state or assume that remote state will discover previously managed resources automatically.
 For a new, never-deployed production stage, the first approved workflow run initializes remote state.
 No cloud deployment or credential/permission validation is implied by local checks.
 
 References: [GitHub deployment URLs](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments), [environments without deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments#using-environments-without-deployments), [GitHub deployment status lifecycle](https://docs.github.com/en/rest/deployments/statuses#create-a-deployment-status), [Alchemy state stores](https://alchemy.run/state-store), [Cloudflare state implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/StateStore/State.ts), and [Cloudflare authentication implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Auth/AuthProvider.ts).
-The earlier API and CI behavior review used `alchemy@2.0.0-beta.79`; the source URLs track upstream main.
+The earlier API and CI behavior review used `alchemy@2.0.0-beta.79`. The source URLs track upstream main.
 
 ## Sources and licenses
 

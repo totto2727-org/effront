@@ -4,7 +4,7 @@ Serve Effront pages and static assets on Node.js or Bun with native Effect HTTP.
 
 ## Usage
 
-Follow the [Node.js guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/node) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/node)) or [Bun guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/bun) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/bun)) to create, build, and run a native HTTP application.
+Use the [Node.js guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/node) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/node)) or [Bun guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/bun) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/bun)) to create, build, and run a native HTTP application.
 
 ## Key features
 
@@ -17,7 +17,7 @@ Use the current Node.js LTS and matching Effect platform packages. The Bun produ
 
 ## Setup
 
-Follow the [Node.js setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/node#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/node#setup)) or [Bun setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/bun#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/bun#setup)) for host entries, assets, and dependencies.
+Use the [Node.js setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/node#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/node#setup)) or [Bun setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/bun#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/bun#setup)) for host entries, assets, and dependencies.
 
 ## API
 
@@ -26,7 +26,7 @@ For advanced consumers who configure custom entries and Effront developers, the 
 
 ## Development
 
-See [development instructions](AGENTS.md).
+Refer to [development instructions](AGENTS.md).
 
 ## License
 

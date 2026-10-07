@@ -4,8 +4,9 @@ Build React pages and Server Functions with typed routes and request-local Effec
 
 ## Usage
 
-Follow [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started)) to run a page that displays `Hello, world`.
-Then use [Pages, layouts, and routes](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/routes) to define your own pages and [Platforms](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) to choose a host.
+Use [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started)) to run a page that displays `Hello, world`.
+Then use [Pages, layouts, and routes](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/routes) to define your own pages.
+Use [Platforms](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) to select a host.
 
 ## Key features
 
@@ -33,11 +34,11 @@ npm install 'effect@^4.0.1' '@effect/platform-browser@^4.0.1' react@19.3.0 react
 ## API
 
 The [API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference)) covers application factories, transitions, HTTP handlers, and request context.
-See [package integration notes](docs/API.md) for reserved entry points and tested host boundaries.
+Refer to [package integration notes](docs/API.md) for reserved entry points and tested host boundaries.
 
 ## Development
 
-See [AGENTS.md](AGENTS.md).
+Refer to [AGENTS.md](AGENTS.md).
 
 ## License
 

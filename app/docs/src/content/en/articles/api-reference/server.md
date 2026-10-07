@@ -1,9 +1,10 @@
 `@effront/server` provides native Effect HTTP hosting and static files for Node.js and Bun.
-For installation and startup files, see [Node.js](../platforms/node.md) and [Bun](../platforms/bun.md).
+For installation and startup files, refer to [Node.js](../platforms/node.md) and [Bun](../platforms/bun.md).
 
 ## effrontServer {#vite}
 
-`effrontServer(options?: EffrontServerOptions): Plugin` from `@effront/server/vite` connects the native handler to Vite development and preview, and builds a separate production startup entry.
+`effrontServer(options?: EffrontServerOptions): Plugin` from `@effront/server/vite` connects the native handler to Vite development and preview.
+It builds a separate production startup entry.
 It must follow `effront()`:
 
 ```typescript
@@ -22,12 +23,13 @@ export default defineConfig({
 | `server?: string` | `./src/entry.server.ts` | Production startup that launches `serve`                                                    |
 
 Empty entry strings throw `TypeError`.
-When changing `rsc`, pass the same path to `effront({ rsc })` and `effrontServer({ rsc })` so the RSC entry receives Effect Schema JIT registration.
+When you change `rsc`, pass the same path to `effront({ rsc })` and `effrontServer({ rsc })`.
+This gives the RSC entry Effect Schema JIT registration.
 The RSC entry accepts HMR with `if (import.meta.hot) import.meta.hot.accept();`.
 
 Development and preview use Vite's listener through Node-compatible middleware, not the production startup entry.
 `serve` options therefore do not configure Vite's port or hostname.
-`@effect/platform-node` is required even when production uses Bun.
+Use `@effect/platform-node` even when production uses Bun.
 Bun-specific runtime behavior requires the built production entry, normally `bun dist/rsc/server.js`, not Vite preview.
 
 ## serve {#serve}
@@ -80,7 +82,8 @@ Mounts must match the actual output directories and URLs when Vite output or `ba
 
 There are no directory indexes or SPA fallbacks.
 Other filesystem failures remain typed HTTP errors.
-Roots are checked at request time, not validated at startup.
+The handler checks roots at request time.
+It does not validate them at startup.
 
 > [!WARNING]
 > Deploy trusted directories and manage their symbolic links.
@@ -97,15 +100,15 @@ Do not pass the outer construction Effect as the request handler.
 The host owns request scopes and must consume or cancel response bodies.
 MIME types, weak ETags, conditionals, and ranges follow Effect `4.0.1`:
 
-| Condition                                  | Behavior                                                                                       |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `HEAD` or conditional `304`                | No file stream acquired                                                                        |
-| Satisfiable single byte range              | `206`                                                                                          |
-| Multiple, unsupported, or malformed ranges | Range ignored                                                                                  |
-| Decimal range start beyond the file        | `416`, even when the value exceeds JavaScript's safe-integer limit                             |
-| Decimal range end beyond the file          | Clamped to file length and returned as `206`                                                   |
-| Valid but unsatisfiable single range       | `416` with `Content-Range`, without asset cache or validator headers                           |
-| `If-Range`                                 | Range applies only for a matching strong ETag; stale/weak tags and dates receive the full body |
-| `Range` on `HEAD`                          | Ignored; returns full-file metadata without a body                                             |
+| Condition                                  | Behavior                                                                                        |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `HEAD` or conditional `304`                | No file stream acquired                                                                         |
+| Satisfiable single byte range              | `206`                                                                                           |
+| Multiple, unsupported, or malformed ranges | Range ignored                                                                                   |
+| Decimal range start beyond the file        | `416`, even when the value exceeds JavaScript's safe-integer limit                              |
+| Decimal range end beyond the file          | Clamped to file length and returned as `206`                                                    |
+| Valid but unsatisfiable single range       | `416` with `Content-Range`, without asset cache or validator headers                            |
+| `If-Range`                                 | Range applies only for a matching strong ETag. Stale/weak tags and dates receive the full body. |
+| `Range` on `HEAD`                          | Handler ignores the range. It returns full-file metadata without a body.                        |
 
 Caller-provided `HttpPlatform` or ETag services do not change asset responses.

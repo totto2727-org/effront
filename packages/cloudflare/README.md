@@ -4,7 +4,7 @@ Serve Effront applications on Cloudflare Workers and read typed bindings in requ
 
 ## Usage
 
-Follow the [Cloudflare Workers guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare)) to create and run a standalone Worker with `effront()` and `effrontCloudflare()`.
+Use the [Cloudflare Workers guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare)) to create and run a standalone Worker with `effront()` and `effrontCloudflare()`.
 
 ## Key features
 
@@ -19,7 +19,7 @@ Local workerd development does not require Cloudflare credentials.
 
 ## Setup
 
-Follow the [Cloudflare setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare#setup)) for package installation, Worker entry, and Wrangler configuration.
+Use the [Cloudflare setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare#setup)) for package installation, Worker entry, and Wrangler configuration.
 
 ## API
 
@@ -27,7 +27,7 @@ The [Vite API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.t
 
 ## Development
 
-See [AGENTS.md](AGENTS.md).
+Refer to [AGENTS.md](AGENTS.md).
 
 ## License
 

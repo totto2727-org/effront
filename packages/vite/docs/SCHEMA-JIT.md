@@ -21,7 +21,9 @@ The direct Node/Bun host imports do not change this entry-path check.
 
 The enable import registers a compiler as a module side effect and must run before application schemas are first constructed or their parsers are captured.
 Parsers captured earlier remain usable but are not replaced by JIT versions.
-The RSC transform therefore prefixes the import to the host entry instead of adding it to an arbitrary application module or relying on another graph's registration.
+Thus the RSC transform prefixes the import to the host entry.
+It does not add it to an arbitrary application module or depend on another graph's registration.
+
 Applications using matched Effront entries do not need an additional JIT import.
 A custom entry or host that bypasses these integration entry points must arrange early registration in each graph it owns.
 When dynamic function construction is blocked, Effect retains interpreted parsing.

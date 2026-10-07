@@ -33,12 +33,12 @@ The richer [Alchemy Basic Worker](../../../examples/basic/src/entry.workers.ts) 
 5. Build `HostLive` inside each live request and perform KV operations there.
 6. Render only the resulting application data, never the capability object or host environment.
 
-`CacheClient` stores a reference to the native Alchemy client in Effect Context; it does not serialize values or introduce an RPC boundary.
+`CacheClient` stores a reference to the native Alchemy client in Effect Context. It does not serialize values or introduce an RPC boundary.
 The service uses Alchemy's client type, so it is not an Alchemy-independent cache contract.
 Applications requiring host independence should define their own capability contract, including errors and runtime requirements.
 
 The example also calls a React Server Function that reads the request's KV-backed service.
-KV is eventually consistent; the fixed greeting demonstrates binding use, not a transactional counter or database abstraction.
+KV is eventually consistent. The fixed greeting demonstrates binding use, not a transactional counter or database abstraction.
 
 ## Configuration and Wrangler
 
@@ -48,13 +48,14 @@ The Alchemy adapter does not register it implicitly.
 The adapter uses Alchemy's official `makeWorkerBridge`, rather than passing a Promise-based Fetch function to the Worker.
 Registering `effront()` first lets the adapter replace the portable RSC input before the Cloudflare host captures its Worker entry.
 A separate pre-order hook colocates the default SSR output before the portable compiler supplies its generic default, while preserving explicit output directories.
+
 Alchemy supplies the host configuration, so these applications do not maintain a separate Wrangler file.
 Vite remains responsible for React compilation, not infrastructure.
 Standalone Workers fixtures retain Wrangler configuration to test the non-Alchemy adapter.
 
 Alchemy CLI injects the Cloudflare runtime host and the bindings registered during native construction.
 Applications do not import the runtime plugin or inspect `ALCHEMY_CLOUDFLARE_VITE_INJECTED`.
-The independent browser test owns its local runtime plugin and KV simulator; that setup is not part of the application configuration.
+The independent browser test owns its local runtime plugin and KV simulator. That setup is not part of the application configuration.
 Independent E2E hosts supply the injected stack and stage explicitly instead of duplicating application stack configuration.
 
 ## Local orchestration
@@ -71,10 +72,12 @@ Both approaches use the official CLI and do not require a manually registered ru
 ## Compatibility
 
 The integration pins Alchemy and its Cloudflare runtime to `2.0.0-beta.81` and uses the stable Effect v4 family with the shared `^4.0.1` range.
-The range accepts v4 minor and patch releases but excludes prereleases and v5; the lockfile records the concrete tested versions.
+The range accepts v4 minor and patch releases but excludes prereleases and v5. The lockfile records the concrete tested versions.
+
 Stable Effect v4 moved `effect/unstable/*` modules to public paths such as `effect/http`, `effect/cli`, and `effect/schema`.
-Although beta.79's peer ranges accept stable v4, its source still imports the removed paths and fails during Vite configuration loading; beta.81 migrates those imports.
+Although beta.79's peer ranges accept stable v4, its source still imports the removed paths and fails during Vite configuration loading. Beta.81 migrates those imports.
 Existing repository consumers only change Effect import paths, not their application behavior.
+
 Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, whose `Config.string` call is incompatible with Effect rc.116. Beta.79 uses rc.12 and passed the local Worker browser suite.
 Keep one coherent Effect version across native bridge, core, platform layers and SQL dependencies.
 The local workerd compatibility date is `2026-09-01`, supported by the pinned runtime.
@@ -84,12 +87,15 @@ The adapter leaves `optimizeDeps` unchanged and does not reject an Alchemy packa
 Shared React/Effect deduplication remains in place.
 
 A temporary server-development plugin removes known deployment-only and local-host export modules from Alchemy's Cloudflare entry points.
-It reads the installed module exports, subtracts infrastructure-provider factories identified by their actual provider-builder calls, and preserves the remaining exports, including non-KV namespaces, HTTP clients, `BrowserLocal`, and `WorkerConfigProvider`.
-The exclusion list is in `src/cloudflare/runtime-projection.ts`; local emulators, artifact builders and stack-state management are not available inside a Worker through these development entry points.
+It reads the installed module exports and subtracts infrastructure-provider factories identified by their actual provider-builder calls.
+It preserves the remaining exports, including non-KV namespaces, HTTP clients, `BrowserLocal`, and `WorkerConfigProvider`.
+The exclusion list is in `src/cloudflare/runtime-projection.ts`. Local emulators, artifact builders and stack-state management are not available inside a Worker through these development entry points.
 Using a new Alchemy capability does not require adding it to an allowed-export list.
 
-Each requested entry is compiled once into an in-memory virtual runtime module using Vite's build API and Alchemy's purity transform, with Effect and host built-ins shared with the surrounding graph.
-This is a development compatibility compilation step, not an `optimizeDeps` setting; the host's own dependency discovery remains unchanged.
+Vite's build API and Alchemy's purity transform compile each requested entry once into an in-memory virtual runtime module.
+Effect and host built-ins are shared with the surrounding graph.
+This is a development compatibility compilation step, not an `optimizeDeps` setting. The host's own dependency discovery remains unchanged.
+
 Node-side deployment imports, browser modules and production builds are not projected.
 Missing actual modules or unsupported module structure still report errors rather than silently inventing exports.
 Preserving an API export is not proof of every cloud product's binding or remote behavior.
@@ -98,14 +104,20 @@ Removing all compatibility handling caused HTTP 500 in official CLI development 
 The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions and HMR as removal checks.
 
 The former Effect rc.112 pin lacked a public final-response URL and could transfer a streaming scope before a discarded HEAD body.
-Both boundaries were re-evaluated against the pinned rc.116 and removed: `HttpClientResponse.url` now exposes the resolved URL, so the Flight client reads it directly instead of a local guard, and the pinned Web handler plus the native Node and Bun hosts release the request scope for HEAD while preserving response metadata, so core passes responses through unchanged.
-HEAD metadata and scope release stay covered by the core handler regression tests, and the URL accessor contract the Flight client depends on is covered by `packages/core/tests/client/effect-response-url.test.ts`.
+Both boundaries were re-evaluated against the pinned rc.116 and removed.
+The `HttpClientResponse.url` accessor now exposes the resolved URL.
+The Flight client reads it directly instead of a local guard.
+The pinned Web handler and native Node and Bun hosts release the request scope for HEAD and preserve response metadata.
+Thus core passes responses through unchanged.
+
+The core handler regression tests cover HEAD metadata and scope release.
+The `packages/core/tests/client/effect-response-url.test.ts` test covers the URL accessor contract that the Flight client uses.
 
 ## Verification
 
 Use the [package development commands](../AGENTS.md#development-commands) for native helper tests and independent browser acceptance.
 The repository checks cover builds, public types, native capability/context propagation, and lifetime regressions.
-The native browser suite checks the committed KV example; standalone Fetch/Workers and HMR fixtures remain independent.
+The native browser suite checks the committed KV example. Standalone Fetch/Workers and HMR fixtures remain independent.
 Official Alchemy CLI planning and reconciliation require separate verification from the credential-free test host, and neither local check proves cloud deployment or remote permissions.
 
 References: [Alchemy](https://alchemy.run/), [state stores](https://alchemy.run/state-store), [native Worker bridge](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/WorkerBridge.ts), [Vite source integration](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Workers/Sources/Vite.ts), and [KV binding construction](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/KV/NamespaceBinding.ts).

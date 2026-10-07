@@ -4,7 +4,7 @@ Style Effront pages with Tailwind CSS, including the initial HTML, without manua
 
 ## Usage
 
-Follow the [Styling guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/styling) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/styling)) to install the integration, use utilities, customize the theme, and add optional Tailwind plugins.
+Use the [Styling guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/styling) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/styling)) for installation, utilities, theme options, and optional Tailwind plugins.
 
 ## Key features
 
@@ -13,7 +13,9 @@ Follow the [Styling guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w
 
 ## Prerequisites
 
-Use an Effront application with `@effront/vite` and a host adapter. Tailwind CSS ships with this package, and an application that imports `tailwindcss` from its own stylesheet must also declare it directly.
+Use an Effront application with `@effront/vite` and a host adapter.
+This package includes Tailwind CSS.
+If your application imports `tailwindcss` from its own stylesheet, declare it directly in the application's dependencies.
 
 ## Setup
 
@@ -25,7 +27,7 @@ The [Tailwind API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl
 
 ## Development
 
-See [AGENTS.md](AGENTS.md).
+Refer to [AGENTS.md](AGENTS.md).
 
 ## License
 

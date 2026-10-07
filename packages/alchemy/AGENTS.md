@@ -11,22 +11,24 @@
 ### Execution rules
 
 - Prepare this package with the [repository installation and workspace build commands](../../AGENTS.md#development-commands).
-- Publish with the synchronized Effront package release through the shared workflow. Keep explicit subpaths, dist-only publication, and the pinned compatibility limits; publishing does not authorize cloud deployment.
+- Publish with the synchronized Effront package release through the shared workflow. Keep explicit subpaths, dist-only publication, and the pinned compatibility limits. Publication does not authorize cloud deployment.
 - Alchemy CLI owns the migrated application host. Do not register a manual `@alchemy.run/cloudflare-runtime` plugin or an injection-environment guard in application Vite configuration.
 - The fixed browser test owns its own standalone workerd host and local KV configuration. Credential-free acceptance does not prove official CLI planning is authentication-free.
 - The pinned CLI requires a configured Cloudflare profile before planning even locally supported Worker/KV resources. Do not invent credentials or deploy resources to bypass this prerequisite.
 
 ### Standard tasks
 
-- From the repository root after shared package preparation, `vp test run packages/alchemy` checks lazy construction, context filtering, Vite composition, and temporary runtime projection and consumer optimizer setting preservation.
+- After shared package preparation, run `vp test run packages/alchemy` from the repository root. It checks lazy construction, context filtering, Vite composition, temporary runtime projection, and preservation of consumer optimizer settings.
 - From `tests/e2e-alchemy/`, `vp run test` builds and serves the committed KV example and checks native HTML, HEAD, hydration, Server Functions, navigation, Tailwind styling, and narrow-screen layout. See the [test package instructions](../../docs/TESTING.md#native-alchemy-integration).
-- For official CLI consumers, follow the [example commands and ports](../../examples/AGENTS.md#development-commands) or [documentation-site commands](../../app/docs/AGENTS.md#development-commands). Bare `vp dev` bypasses the Alchemy orchestration those consumers require.
+- For official CLI consumers, use the [example commands and ports](../../examples/AGENTS.md#development-commands) or [documentation-site commands](../../app/docs/AGENTS.md#development-commands). Bare `vp dev` bypasses the Alchemy orchestration those consumers require.
 - When the user chooses to configure the required profile, `vp exec alchemy profile edit --profile default --add Cloudflare` is the interactive CLI command. Profile authentication is user-controlled and distinct from cloud deployment.
 
 Stage selection follows Alchemy defaults: `ALCHEMY_STAGE` when configured, otherwise `dev_${USER}`.
 The application script must not force a shared stage.
 Local state belongs in ignored `.alchemy/` directories through `localState()`.
-An isolated empty-profile CLI check previously failed with `Provider 'Cloudflare' is not configured in profile 'default'`; a configured profile allows reconciliation of locally supported resources without proving remote permissions or deployment.
+An isolated empty-profile CLI check previously failed with `Provider 'Cloudflare' is not configured in profile 'default'`.
+A configured profile allows reconciliation of locally supported resources.
+This does not prove remote permissions or deployment.
 
 ## Architecture
 
@@ -42,9 +44,9 @@ An isolated empty-profile CLI check previously failed with `Provider 'Cloudflare
 
 - Consumers register `effront()` and `effrontAlchemy()` separately. Keep `application` exclusively in `effront({ application })` and Alchemy options limited to `worker`.
 - Register `effront()` before `effrontAlchemy()` and set the native bridge before the host captures its input. Do not import or invoke `@effront/vite` from the adapter implementation.
-- Keep Alchemy and Cloudflare runtime at `2.0.0-beta.81` with the coherent stable Effect v4 family (`^4.0.1`), allowing v4 minor and patch updates without admitting prereleases or v5. Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, which calls removed `Config.string`; beta.79 uses rc.12 and passed the local Alchemy Worker browser suite.
+- Keep Alchemy and Cloudflare runtime at `2.0.0-beta.81` with the coherent stable Effect v4 family (`^4.0.1`). This range allows v4 minor and patch updates but excludes prereleases and v5. Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, which calls removed `Config.string`. Beta.79 uses rc.12 and passed the local Alchemy Worker browser suite.
 - Capability selection belongs to consumers. The temporary server-development compiler subtracts deployment-only exports, never enumerates allowed features, leaves `optimizeDeps` unchanged, and has no version-number gate. Retain its removal TODO and do not claim untested remote product behavior.
-- Preserve React/Effect deduplication. The pinned development host limitation is documented in `docs/INTEGRATION.md`; do not infer working development from a successful production build.
+- Preserve React/Effect deduplication. The pinned development host limitation is documented in `docs/INTEGRATION.md`. Do not infer correct development behavior from a successful production build.
 - Keep default SSR output inside the RSC artifact while preserving explicit output directories. The host must package explicitly relocated modules together.
 
 ## Task-specific documentation

@@ -1,9 +1,11 @@
 Server Functions let forms and Client Components invoke Effect handlers on the server, where schemas validate their input.
-Start with a form that sends a name directly to a Server Function, then add a reply and pending state with `useActionState`.
+Start with a form that sends a name directly to a Server Function.
+Then add a reply and pending state with `useActionState`.
 
 ## Share the application definition {#identity}
 
-Create `src/effront.ts` and import this same `EFFRONT` in the application entry and Server Function modules:
+Create `src/effront.ts`.
+Import this same `EFFRONT` in the application entry and Server Function modules:
 
 ```typescript
 import { Application } from "@effront/core";
@@ -60,17 +62,20 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open `/`, enter `Ada`, and select **Record name**.
+Open `/`.
+Enter `Ada`.
+Select **Record name**.
 Submission writes `Name submitted` to the server log.
 It does not persist data or display a completion message.
 
 > [!WARNING]
 > Server Functions require input validation and access control independently of the page.
-> They are exposed as APIs that can be called independently of page navigation.
+> Callers can invoke these APIs independently of page navigation.
 
 ## Add form state with useActionState {#state}
 
-To display the server's reply and disable the button while submitting, add a state-returning Server Function and a Client Component.
+For a server reply and a disabled button during submission, add a Server Function that returns state.
+Then add a Client Component.
 
 Create `src/greet.ts` with `"use server"` first:
 
@@ -138,7 +143,9 @@ const HomePage = EFFRONT.Page.make({
 });
 ```
 
-Open `/`, enter `Ada`, and select **Greet**.
+Open `/`.
+Enter `Ada`.
+Select **Greet**.
 The form displays `Hello, Ada.` after submission.
 
 ## Accept an object argument {#input}
@@ -191,13 +198,17 @@ export const greet = EFFRONT.ServerFn.make({
 });
 ```
 
-Enter `Admin` and select **Greet** to display `That name is reserved.`.
-Enter `Ada` and submit again to display `Hello, Ada.`.
+Enter `Admin`.
+Select **Greet** to display `That name is reserved.`.
+Enter `Ada`.
+Submit again to display `Hello, Ada.`.
 The reserved-name branch returns state, so it updates `state.message` instead of failing the action.
 
 Schema decoding failures prevent the handler from running.
 For example, the existing `Schema.NonEmptyString` rejects an empty name before it reaches either branch.
 Decoding and handler failures become action failures, not automatic updates to `state.message`.
-If invalid fields need inline feedback, choose a Schema that lets the handler receive and report those values rather than rejecting them first.
-For the shared distinction between expected outcomes and operational failures, see [Error handling for Server Functions](../best-practices/server-function-error-handling.md).
-See React's [useActionState reference](https://react.dev/reference/react/useActionState) for state and error handling.
+
+For inline feedback on invalid fields, select a Schema that lets the handler receive those values.
+The handler can then report the invalid fields instead of Schema decoding rejecting them first.
+For the shared distinction between expected outcomes and operational failures, refer to [Error handling for Server Functions](../best-practices/server-function-error-handling.md).
+Refer to React's [useActionState reference](https://react.dev/reference/react/useActionState) for state and error handling.

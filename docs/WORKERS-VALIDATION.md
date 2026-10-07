@@ -8,24 +8,24 @@ The upstream history is preserved from `ed886996d1d3780b94166af4f798c53416d547c8
 
 The migration checks below predate the Effront rename, with later sections recording subsequent milestones.
 Commands, paths, API names, and results describe their respective executions, not the current checkout.
-References below to `examples/workers` record the former rich standalone consumer; the current minimal starter is `examples/cloudflare`, while `tests/e2e-build/` owns the binding and runtime regressions.
-Current code uses `@effront/core/*`, `Application.effront()`, and separate `effront()` from `@effront/vite` plus `effrontCloudflare()` from `@effront/cloudflare`; the latter direct options replaced the historical nested `cloudflare` options.
+References below to `examples/workers` record the former rich standalone consumer. The current minimal starter is `examples/cloudflare`, while `tests/e2e-build/` owns the binding and runtime regressions.
+Current code uses `@effront/core/*`, `Application.effront()`, and separate `effront()` from `@effront/vite` plus `effrontCloudflare()` from `@effront/cloudflare`. The latter direct options replaced the historical nested `cloudflare` options.
 
 ## Requirement-to-evidence mapping
 
 | Requirement                                       | Check and observed result                                                                                                                                                                                                                       |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Workers-native runtime without Bun or a container | Real workerd execution passed through Cloudflare's Vite plugin and through Wrangler `dev --local --no-bundle`.                                                                                                                                  |
-| Public Workers Fetch entry                        | The example imports `createFetchHandler` through `effective-rsc/workers` and exports `{ fetch }`; both hosts returned successful HTML and Flight responses.                                                                                     |
+| Public Workers Fetch entry                        | The example imports `createFetchHandler` through `effective-rsc/workers` and exports `{ fetch }`. Both hosts returned successful HTML and Flight responses.                                                                                     |
 | Development server with runtime environment       | `workers-dev` passed all 3 Playwright cases and rendered `APP_LABEL` from the configured Workers variables.                                                                                                                                     |
-| Wrangler local hosting independent of Vite        | The runner stopped Vite before starting Wrangler against generated `dist/rsc/wrangler.json`; `workers-wrangler-default` passed all 3 cases.                                                                                                     |
-| Runtime env changes without rebuilding            | The same build was started again with `APP_LABEL` and `SERVER_TOKEN` overrides; `workers-wrangler-overridden` passed all 3 cases and rendered the changed label and secret-presence indicator.                                                  |
+| Wrangler local hosting independent of Vite        | The runner stopped Vite before starting Wrangler against generated `dist/rsc/wrangler.json`. `workers-wrangler-default` passed all 3 cases.                                                                                                     |
+| Runtime env changes without rebuilding            | The same build was started again with `APP_LABEL` and `SERVER_TOKEN` overrides. `workers-wrangler-overridden` passed all 3 cases and rendered the changed label and secret-presence indicator.                                                  |
 | No implicit secret serialization                  | HTML, Flight, the rendered body, and a nonempty set of actually loaded browser scripts did not contain the test secret.                                                                                                                         |
 | Client hydration and navigation                   | Chromium changed the actual button from `Count: 0` to `Count: 1`, followed About, and returned home on both hosts.                                                                                                                              |
-| Development updates                               | A separate browser smoke check changed the Client Component label to `Clicks: 1` through Vite HMR without restarting the server; the source was restored afterward.                                                                             |
+| Development updates                               | A separate browser smoke check changed the Client Component label to `Clicks: 1` through Vite HMR without restarting the server. The source was restored afterward.                                                                             |
 | HTTP behavior                                     | HTML and Flight content types, `private, no-store`, `Vary: Accept`, and a 404 for an unknown route passed in all 3 host configurations.                                                                                                         |
 | Request isolation and lifecycle                   | The public Fetch adapter test passed per-request Layer acquisition, overlapping env isolation, original request/execution-context identity, EOF disposal, bodyless disposal before return, cancellation exactly once, and stream-error cleanup. |
-| VitePlus formatter and linter                     | `vp fmt --check` passed; `vp lint` reported 0 warnings and 0 errors with its 96 default rules. The root config adds ignore patterns, not custom style or lint rules.                                                                            |
+| VitePlus formatter and linter                     | `vp fmt --check` passed. `vp lint` reported 0 warnings and 0 errors with its 96 default rules. The root config adds ignore patterns, not custom style or lint rules.                                                                            |
 | Type safety of active workflow                    | `vp run typecheck` passed for all retained framework source and tests, the example, Playwright config, and browser test source.                                                                                                                 |
 | New sibling directory, local changes only         | Implementation is in the cloned sibling directory with local commits. No PR, push, publishing, or cloud deployment was performed.                                                                                                               |
 
@@ -61,7 +61,7 @@ These adapter checks complement, rather than replace, the real Workers browser a
 
 The final RSC, nested SSR, and client output contained 13 JavaScript, JSON, and CSS files.
 Scanning those files found zero matches for `bun:`, `Bun.`, `@effect/platform-bun`, `react-server-dom-rspack`, or `@rspack`.
-This static check is supplementary evidence; the workerd acceptance run establishes actual runtime behavior.
+This static check is supplementary evidence. The workerd acceptance run establishes actual runtime behavior.
 The obsolete sibling SSR output from earlier experiments was removed.
 The acceptance environment file was removed and ports 5173, 5174, 8787, and 8788 were confirmed closed after verification.
 
@@ -133,19 +133,21 @@ Observed checks:
 
 Initial acceptance caught that a root-level build output override did not relocate Cloudflare's RSC/client outputs.
 The test host now explicitly sets all three environment output directories, keeping nested SSR inside each isolated Worker artifact.
-The E2E TypeScript config enables `allowImportingTsExtensions` because the public framework source export uses explicit `.ts` imports; it adds no include/exclude overrides.
+The E2E TypeScript config enables `allowImportingTsExtensions` because the public framework source export uses explicit `.ts` imports. It adds no include/exclude overrides.
 Builds, state, failure traces, and test logs remain in the package's ignored `tmp/` directory for diagnosis.
 These checks cover local workerd hosting, not cloud deployment.
 
 ## Typed request-context factories
 
-The core factory accepts Env and ExecutionContext; the Cloudflare runtime wrapper accepts Env only and fixes the execution context to its waitUntil contract.
+The core factory accepts Env and ExecutionContext. The Cloudflare runtime wrapper accepts Env only and fixes the execution context to its waitUntil contract.
 Colocated type assertions run through vp check, including rejection of a second Cloudflare factory type argument.
 Runtime tests verify identical objects through independent readers of one Layer, reuse of pre-created Effects across distinct request contexts, missing-context failure, and forwarding of the original Promise to waitUntil.
+
 The existing real Fetch handler integration now uses factory-created readers during application Layer acquisition and middleware execution, retaining concurrent request isolation and EOF/cancel/error cleanup checks.
 The actual Workers example imports @effront/cloudflare/workers, binds Env once, and calls waitUntil while rendering its About page.
-All 250 tests in 35 files passed; Workers acceptance passed nine cases on Vite and independent default/overridden Wrangler hosts, and documentation acceptance passed ten cases.
+All 250 tests in 35 files passed. Workers acceptance passed nine cases on Vite and independent default/overridden Wrangler hosts, and documentation acceptance passed ten cases.
 The Workers build additionally traverses actual module IDs and rejects Cloudflare's Vite entry and Vite/Wrangler tooling in the application graphs.
-Actual pnpm tarballs contain the workers exports and exclude colocated tests; the Cloudflare core peer is normalized to ^0.1.4-workers.0.
-The workspace pnpm peers check still reports VitePlus alias version and workspace:^ peer-range warnings; this command is not green, while the packaged core peer range and real host execution are verified above.
+
+Actual pnpm tarballs contain the workers exports and exclude colocated tests. The Cloudflare core peer is normalized to ^0.1.4-workers.0.
+The workspace pnpm peers check still reports VitePlus alias version and workspace:^ peer-range warnings. This command is not green, while the packaged core peer range and real host execution are verified above.
 No registry publication or remote deployment was performed.

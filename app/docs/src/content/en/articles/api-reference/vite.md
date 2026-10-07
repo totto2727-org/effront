@@ -3,7 +3,7 @@
 `effront(options?: EffrontViteOptions): PluginOption[]` from `@effront/vite` configures the application's development and build plugins.
 It includes React Compiler, React, and RSC plugins.
 Do not register those plugins again.
-A host adapter is registered separately:
+Register a host adapter separately:
 
 ```typescript
 import { effront } from "@effront/vite";
@@ -16,7 +16,7 @@ export default defineConfig({
 ```
 
 The [Cloudflare Workers guide](/en/platforms/cloudflare#vite) identifies the application and Wrangler files for this configuration.
-For the introductory create-and-run workflow, see [Getting started](/en/guide/getting-started).
+For the introductory create-and-run workflow, refer to [Getting started](/en/guide/getting-started).
 
 ## EffrontViteOptions {#configuration}
 
@@ -29,8 +29,13 @@ Effront supplies browser startup code.
 `application` selects the application definition, not a browser entry.
 `@effront/core/application-entry` resolves to that module through a Vite alias, not a standalone public package subpath.
 Host adapters such as `effrontServer` and `effrontAlchemy` configure their own request entries.
-Effect Schema JIT is registered separately in the browser and SSR entries, the native Node/Bun host, and the RSC entry selected by `effront({ rsc })`.
-For native hosting, align the RSC paths with `plugins: [effront({ rsc: "./src/entry.rsc.ts" }), effrontServer()]` so JIT registration targets the actual RSC entry. See the [graph ownership explanation](https://github.com/totto2727-org/effront/blob/main/packages/vite/docs/SCHEMA-JIT.md).
+
+Effect Schema JIT has separate registrations in the browser and SSR entries.
+The native Node/Bun host and the RSC entry selected by `effront({ rsc })` also have separate registrations.
+
+For native hosting, align the RSC paths with `plugins: [effront({ rsc: "./src/entry.rsc.ts" }), effrontServer()]`.
+This makes JIT registration target the actual RSC entry.
+Refer to the [graph ownership explanation](https://github.com/totto2727-org/effront/blob/main/packages/vite/docs/SCHEMA-JIT.md).
 
 ## effrontCloudflare {#cloudflare}
 
@@ -48,7 +53,7 @@ export type EffrontCloudflareOptions = Omit<
 >;
 ```
 
-Accepted options are forwarded unchanged, directly rather than under a `cloudflare` property.
+The adapter forwards accepted options unchanged, directly rather than under a `cloudflare` property.
 Effront fixes `viteEnvironment` to the RSC environment with SSR as its child.
 Runtime bindings are read through `@effront/cloudflare/workers`, not this build-time entry.
 
@@ -58,7 +63,8 @@ Runtime bindings are read through `@effront/cloudflare/workers`, not this build-
 | `build.outDir`                  | `<outDir>/rsc/ssr`                                          |
 | `environments.rsc.build.outDir` | `<rsc outDir>/ssr`, taking precedence over the root setting |
 
-An explicit `environments.ssr.build.outDir` takes precedence and is preserved.
+An explicit `environments.ssr.build.outDir` takes precedence.
+The adapter keeps it unchanged.
 The selected path must remain accessible to Wrangler's Worker module bundling.
 Use the generated Wrangler configuration for a built Worker.
-See [Cloudflare Workers](/en/platforms/cloudflare) for host commands.
+Refer to [Cloudflare Workers](/en/platforms/cloudflare) for host commands.

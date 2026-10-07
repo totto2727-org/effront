@@ -4,7 +4,8 @@ Compile Effront pages for server rendering, browser hydration, and client naviga
 
 ## Usage
 
-Register `effront()` alongside a host adapter. Follow a platform guide for a runnable configuration:
+Register `effront()` alongside a host adapter.
+Use a platform guide for a runnable configuration:
 
 - [Cloudflare Workers](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare))
 - [Node.js](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/node) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/node))
@@ -12,8 +13,8 @@ Register `effront()` alongside a host adapter. Follow a platform guide for a run
 
 ## Key features
 
-- Configure browser, RSC, and SSR compilation together with React Compiler.
-- Register Effect Schema JIT independently in each execution graph.
+- Build the application's browser and server entries together with React Compiler.
+- Enable Effect Schema JIT separately in each browser and server execution graph.
 
 ## Prerequisites
 
@@ -26,11 +27,12 @@ See the [platform guides](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.
 ## API
 
 The [Vite API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/vite) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/vite)) covers plugin registration and application and RSC entry options.
-For advanced consumers who configure custom entries and Effront developers, the package-specific [Schema JIT registration note](docs/SCHEMA-JIT.md) explains separate execution graphs and native RSC entry alignment.
+For custom entries, use the package-specific [Schema JIT registration note](docs/SCHEMA-JIT.md).
+It gives advanced users and Effront developers the requirements for separate execution graphs and native RSC entry alignment.
 
 ## Development
 
-See [AGENTS.md](AGENTS.md).
+Refer to [AGENTS.md](AGENTS.md).
 
 ## License
 

@@ -29,10 +29,10 @@ export const page: DocPage = {
   content: () => (
     <>
       <p>
-        Request services must outlive response construction when the body is still streaming.
-        Effront acquires the application Layer per request and leaves response-body lifetime
-        management to the host's HTTP boundary. Capturing host-owned services is a separate
-        operation that transfers neither ownership nor lifetime.
+        Request services must outlive response construction while the body streams. Effront acquires
+        the application Layer per request and leaves response-body lifetime management to the host's
+        HTTP boundary. Capture of host-owned services is a separate operation that transfers neither
+        ownership nor lifetime.
       </p>
       <p>
         The <a href="/en/architecture/implementation/application">application definition</a>{" "}
@@ -44,20 +44,20 @@ export const page: DocPage = {
       <p>
         <code>toHttpEffect(application)</code> handles the current <code>HttpServerRequest</code>{" "}
         and produces an <code>HttpServerResponse</code>. The caller supplies a request Scope and the
-        application Layer's external requirements. Services are acquired when this Effect runs, not
-        when it is created:
+        application Layer's external requirements. This Effect acquires services during execution,
+        not during creation:
       </p>
       <SourceExcerpt source={coreRuntimeSources.requestHandler} />
       <p>
         A fresh <code>Layer.CurrentMemoMap</code> prevents reuse of application instances memoized
         during host construction. <code>HttpRouter.toHttpEffect</code> builds the application HTTP
-        Layer and immediately runs its handler in the current Context. Reusing the Effect still
-        acquires the Layer per evaluation.
+        Layer and immediately executes its handler in the current Context. Each evaluation of the
+        Effect still acquires the Layer.
       </p>
       <p>
         Before acquisition, a supplied Content-Length must convert to a safe nonnegative integer no
-        greater than 10 MiB, or the entry returns 413. This checks the header, not the measured body
-        size when the header is absent.{" "}
+        greater than 10 MiB. Otherwise, the entry returns 413. This checks the header, not the
+        measured body size when the header is absent.{" "}
         <a href="/en/architecture/implementation/server-functions">Server Function decoding</a>{" "}
         separately limits bytes read.
       </p>
@@ -87,22 +87,22 @@ export const page: DocPage = {
       </p>
       <h2 id="response-lifetime">3. Keep resources alive through the response body</h2>
       <p>
-        A streaming <code>HttpServerResponse</code> still needs its request Scope after headers are
-        produced. Effect HTTP's Web handler transfers that Scope to the body until completion,
+        A streaming <code>HttpServerResponse</code> still needs its request Scope after header
+        production. Effect HTTP's Web handler transfers that Scope to the body until completion,
         failure, or cancellation. Non-stream responses, such as generated text, release resources
         when handling finishes without waiting for a reader.
       </p>
       <SourceExcerpt source={coreRuntimeSources.responseLifetime} />
       <p>
         HEAD bodies are never consumed. Effect HTTP's Web handler and the native Node and Bun hosts
-        discard the stream while preserving the headers and release the request Scope, so core
-        passes the response through unchanged.
+        discard the stream, preserve the headers, and release the request Scope. Thus core passes
+        the response through unchanged.
       </p>
       <p>
         A direct HTTP host must preserve the same boundary. Applying <code>Effect.scoped</code> only
         to response production closes resources too early for deferred body work. A custom body that
-        reads services later must also capture the needed Context: keeping services alive does not
-        automatically provide them to a later Effect.
+        reads services later must also capture the necessary Context. A retained service lifetime
+        does not automatically supply services to a later Effect.
       </p>
       <p>
         Flight rendering adds a child Scope and release operation tied to stream completion.{" "}
@@ -114,7 +114,7 @@ export const page: DocPage = {
         <code>makeHttpEffect(application)</code> captures references to external services and
         returns a reusable HTTP Effect. It neither builds the application's request Layer during
         construction nor takes ownership of the references. Their owner must keep them alive until
-        all response bodies using them finish.
+        all response bodies that use them finish.
       </p>
       <SourceExcerpt source={coreRuntimeSources.externalContext} />
       <p>
@@ -134,7 +134,7 @@ export const page: DocPage = {
         <code>@effront/cloudflare/workers</code> specializes those readers with a{" "}
         <code>CloudflareExecutionContext</code> that includes{" "}
         <code>waitUntil(Promise&lt;unknown&gt;)</code>. These host values stay in Effect Context
-        rather than being implicitly serialized into Flight or HTML. The{" "}
+        without automatic serialization into Flight or HTML. The{" "}
         <a href="/en/architecture/implementation/overview">architecture overview</a> places this
         adapter boundary alongside the rendering and browser entrypoints.
       </p>

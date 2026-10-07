@@ -75,7 +75,8 @@ For example, Typography adds styles for article content:
 vp add -D @tailwindcss/typography
 ```
 
-Add the Typography plugin to `src/styles.css`, keeping the existing import and theme:
+Add the Typography plugin to `src/styles.css`.
+Keep the existing import and theme:
 
 ```css
 /* src/styles.css: add the plugin after the existing import. */

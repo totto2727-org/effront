@@ -310,15 +310,25 @@ for (const reader of locales) {
     await expect(rendererExample).toContainText('import "@effront/markdown/styles.css"');
     await expect(page.locator("article")).toContainText(
       reader.locale === "en"
-        ? "Markdown body styling is not provided."
+        ? "Effront does not supply Markdown body styles."
         : "Markdown 本文のスタイリングは提供しません。",
     );
     await expect(page.locator("article")).toContainText("Tailwind Typography");
-    const collectionScope = page
-      .locator('article [data-alert="note"]')
-      .filter({ hasText: "TanStack Markdown" });
+    const collectionScope =
+      reader.locale === "en"
+        ? page.locator("article")
+        : page.locator('article [data-alert="note"]').filter({ hasText: "TanStack Markdown" });
     await expect(collectionScope).toBeVisible();
-    await expect(collectionScope.locator(".docs-alert-title")).toHaveText("Note");
+    if (reader.locale === "en") {
+      await expect(
+        page.locator("article p").filter({ hasText: "Markdown files loaded at build time" }),
+      ).toBeVisible();
+      await expect(
+        page.locator('article [data-alert="note"]').filter({ hasText: "TanStack Markdown" }),
+      ).toHaveCount(0);
+    } else {
+      await expect(collectionScope.locator(".docs-alert-title")).toHaveText("Note");
+    }
     await expect(collectionScope).toContainText(
       reader.locale === "en"
         ? "Markdown files loaded at build time"
@@ -326,11 +336,11 @@ for (const reader of locales) {
     );
     await expect(collectionScope).toContainText(
       reader.locale === "en"
-        ? "Markdown received from external sources at runtime"
+        ? "Markdown from external sources at runtime"
         : "実行時に外部から受け取る Markdown",
     );
     await expect(collectionScope).toContainText(
-      reader.locale === "en" ? "implement your own endpoint and rendering" : "独自のエンドポイント",
+      reader.locale === "en" ? "implement your own endpoint and renderer" : "独自のエンドポイント",
     );
     for (const href of ["https://comark.dev/", "https://tanstack.com/markdown/latest"]) {
       await expect(collectionScope.locator(`a[href="${href}"]`)).toBeVisible();
@@ -340,10 +350,12 @@ for (const reader of locales) {
       .locator('article [data-alert="note"]')
       .filter({ hasText: "content/manual.md" });
     await expect(mappings).toBeVisible();
-    await expect(mappings).toContainText(reader.locale === "en" ? "is omitted" : "省略され");
+    await expect(mappings).toContainText(
+      reader.locale === "en" ? "omits the file extension" : "省略され",
+    );
     await expect(mappings).toContainText(
       reader.locale === "en"
-        ? "index.md is not treated specially"
+        ? "does not give index.md special treatment"
         : "index.md は特別扱いされません",
     );
     await expect(mappings).toContainText("content/");
@@ -368,8 +380,8 @@ for (const reader of locales) {
     }
     await expect(article.locator("code").filter({ hasText: /^ParserOptions$/ })).toBeVisible();
     const options = article.locator("p").filter({ hasText: "options.plugins" });
-    await expect(options).toContainText(/appended after|後に追加/);
-    await expect(options).toContainText(/not substituted|置き換えにはなりません/);
+    await expect(options).toContainText(/after these four plugins|後に追加/);
+    await expect(options).toContainText(/not instead of them|置き換えにはなりません/);
     await expect(article).toContainText(/No option removes|削除するオプションはありません/);
     await expect(
       article.locator("code").filter({ hasText: "registerDefaultPlugins: false" }),
@@ -391,11 +403,11 @@ for (const reader of locales) {
     await expect(customization).toContainText("components={{ Mermaid: MyMermaid }}");
     const ssrWarning = article.locator('[data-alert="warning"]').filter({ hasText: "SSR" });
     await expect(ssrWarning).toContainText(
-      /require client-side JavaScript|クライアント JavaScript が必須/,
+      /need client-side JavaScript|クライアント JavaScript が必須/,
     );
     await expect(ssrWarning).toContainText(/server skips rendering|レンダリングをスキップ/);
     await expect(ssrWarning).toContainText(
-      /implement server-renderable replacements|コンポーネントを独自に実装/,
+      /implement replacements that can render on the server|コンポーネントを独自に実装/,
     );
     await expect(article.locator('a[href="https://comark.dev"]')).toBeVisible();
     await expect(article.locator('a[href="https://comark.dev/rendering/react"]')).toBeVisible();

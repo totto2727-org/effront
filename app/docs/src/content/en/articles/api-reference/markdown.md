@@ -1,5 +1,5 @@
 `@effront/markdown` provides URL-based document collections and Comark parsing for applications that render imported Markdown.
-For page integration, see [Markdown](../guide/markdown.md).
+For page integration, refer to [Markdown](../guide/markdown.md).
 
 ## createMarkdownCollection {#collection}
 
@@ -48,7 +48,7 @@ It preserves Comark defaults and adds these plugins:
 | `mermaid({ theme: "tokyo-night", themeDark: "tokyo-night" })` | Mermaid parsing with one theme in both color modes |
 | `shiki()`                                                     | Code highlighting                                  |
 
-`options.plugins` is appended after these four plugins, not substituted for them.
+The parser adds `options.plugins` after these four plugins, not instead of them.
 No option removes Effront's added plugins.
 `registerDefaultPlugins: false` disables only Comark's defaults.
 Other options, such as `linkify`, follow [Comark](https://comark.dev).
@@ -83,12 +83,14 @@ function MyMermaid(props: ComponentProps<typeof Mermaid>) {
 <MarkdownDocument value={document} components={{ Mermaid: MyMermaid }} />;
 ```
 
-See the [Comark React API](https://comark.dev/rendering/react) for component options.
+Refer to the [Comark React API](https://comark.dev/rendering/react) for component options.
 
 > [!WARNING]
-> Math and Mermaid currently require client-side JavaScript and do not support SSR.
+> Math and Mermaid need client-side JavaScript.
+> They do not render on the server.
 > The server skips rendering equations and diagrams and emits only placeholders.
-> If you need SSR, implement server-renderable replacements and supply them through `components`.
+> For SSR, implement replacements that can render on the server.
+> Then supply them through `components`.
 
 ## Links, assets, and MarkdownError {#references}
 

@@ -7,13 +7,13 @@
 
 ## Development commands
 
-- For a consumer's local-link setup, first follow the [repository preparation commands](../../AGENTS.md#development-commands). The package must have installed dependencies and `dist/` exports before the consumer links it.
+- For a consumer's local-link setup, first use the [repository preparation commands](../../AGENTS.md#development-commands). The package must have installed dependencies and `dist/` exports before the consumer links it.
 - From this package, `vp run pack` regenerates the JavaScript and declarations used by linked consumers after source edits.
 
 ## Architecture
 
 - Load CSS through rendered `"use client"` boundaries so RSC includes it in initial HTML and browser hydration. Keep the directive prologue intact.
-- Preserve the CSS-shaped absolute virtual module ID and its `effront-tailwind` query so Vite and Tailwind resolve imports from the application root without creating a physical stylesheet.
+- Preserve the CSS-shaped absolute virtual module ID and its `effront-tailwind` query. Vite and Tailwind can then resolve imports from the application root without a physical stylesheet.
 - Exclude `raw`, `url`, `worker`, and `sharedworker` module requests from client-boundary transformation.
 - Include the official Tailwind Vite plugin once. Explicit CSS paths replace the generated stylesheet and resolve against the Vite root.
 

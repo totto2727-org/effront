@@ -26,4 +26,4 @@ For framework maintenance, choose the reference below that matches your change.
 - [Workers migration evidence](WORKERS-VALIDATION.md): the original runtime/build migration and its observed checks.
 - [Rename and plugin-boundary evidence](EFFRONT-VALIDATION.md): the framework-wide naming and compiler integration milestone.
 
-Historical commands and observations are not the current development workflow; use [AGENTS.md](../AGENTS.md) for current commands.
+Historical commands and observations are not the current development workflow. Use [AGENTS.md](../AGENTS.md) for current commands.

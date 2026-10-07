@@ -1,8 +1,10 @@
-Run a minimal Effront application that displays `Hello, world`, then explore the files that make up the page.
+Run a minimal Effront application that displays `Hello, world`.
+Then examine the files that define the page.
 
 ## Run the sample {#setup}
 
-Install the current Node.js LTS and [Vite+](https://viteplus.dev/), then create a Node.js starter:
+Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
+Then create a Node.js starter:
 
 ```bash
 vp create effront -- my-app --platform node
@@ -12,11 +14,11 @@ vp dev
 ```
 
 Open the local URL printed by the development server. The page displays `Hello, world`.
-For other configurations, see [Platforms](../platforms.md).
+For other configurations, refer to [Platforms](../platforms.md).
 
 ## Explore the sample {#application}
 
-The Node.js starter has one page and five principal files:
+The Node.js starter has one page and five primary files:
 
 | File                    | Purpose                                                             |
 | ----------------------- | ------------------------------------------------------------------- |
@@ -26,8 +28,10 @@ The Node.js starter has one page and five principal files:
 | `vite.config.ts`        | Configures Effront development and builds.                          |
 | `package.json`          | Lists dependencies and commands for running the example.            |
 
-The page is defined in `src/entry.effront.tsx` of the generated project (also available in the [Node example](https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx)).
-`HomePage` contains the displayed heading, `RootLayout` provides the surrounding HTML, and `Routes` makes the page available at `/`.
+The generated project's `src/entry.effront.tsx` defines the page (also available in the [Node example](https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx)).
+`HomePage` contains the displayed heading.
+`RootLayout` supplies the surrounding HTML.
+`Routes` makes the page available at `/`.
 
 ## Change the heading {#run}
 

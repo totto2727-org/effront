@@ -1,5 +1,6 @@
 Use Effect services to keep application logic separate from the Pages that call it.
-The greeting example gives a Page a replaceable service, with its implementation and lifetime managed through an Effect Layer.
+The greeting example gives a Page a service.
+An Effect Layer controls the service's implementation and lifetime.
 
 ## Use a service in a Page {#service}
 
@@ -18,7 +19,9 @@ export class Greeting extends Context.Service<
 }
 ```
 
-In `src/entry.effront.tsx`, declare `Greeting`, read it in the Page, and provide its Layer:
+In `src/entry.effront.tsx`, declare `Greeting`.
+Read it in the Page.
+Then supply its Layer:
 
 ```tsx
 // src/entry.effront.tsx: add to the imports.
@@ -48,16 +51,18 @@ To replace the implementation, pass another Layer that provides `Greeting` witho
 ## Choose the service scope {#lifetime}
 
 Application services are available to Pages, Layouts, Components, and Server Functions created from the same `EFFRONT`.
-For multiple services, declare a union such as `Application.effront<ServiceA | ServiceB>()` and supply a Layer that provides both.
-See Effect's [Services](https://effect.website/docs/requirements-management/services/) and [Layers](https://effect.website/docs/requirements-management/layers/) guides for composition.
+For multiple services, declare a union such as `Application.effront<ServiceA | ServiceB>()`.
+Then supply a Layer that supplies both services.
+Refer to Effect's [Services](https://effect.website/docs/requirements-management/services/) and [Layers](https://effect.website/docs/requirements-management/layers/) guides for composition.
 
 Effront builds the application Layer for each request.
-Returning JSX from a Page does not release its scoped resources.
-The resources remain available until the response body completes, fails, or is cancelled.
+A Page's JSX result does not release its scoped resources.
+The resources remain available until the response body completes, fails, or is canceled.
 
 > [!WARNING]
 > Do not cache request-specific service instances in module-level variables.
-> This can share user data across requests or reuse resources already released when the original request ended.
+> This can share user data across requests.
+> It can also use resources again after the original request released them.
 
 ## Fix missing-service errors {#missing-services}
 
@@ -67,4 +72,5 @@ The resources remain available until the response body completes, fails, or is c
 | `EFFRONT.make`     | When application services are declared, supply `layer`.                                            |
 | The supplied Layer | Provide every declared service. `Layer.empty` cannot provide `Greeting`.                           |
 
-For Middleware-provided services, fix the active scope rather than adding an application-wide implementation to suppress the error.
+For services supplied by Middleware, correct the active scope.
+Do not add an application-wide implementation only to suppress the error.

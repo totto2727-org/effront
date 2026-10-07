@@ -1,14 +1,17 @@
 # Effront
 
-Effront renders React applications on Cloudflare Workers, Node.js, and Bun, with streamed Server Components, request-scoped Effect services, typed Server Functions, and client navigation.
+Effront renders React applications on Cloudflare Workers, Node.js, and Bun.
+It supplies streamed Server Components, request-scoped Effect services, typed Server Functions, and client navigation.
 
 Effront is a fork of [effective-rsc](https://github.com/nikhilsnayak/effective-rsc).
 Implementation of this fork started from upstream commit [`ed886996d1d3780b94166af4f798c53416d547c8`](https://github.com/nikhilsnayak/effective-rsc/commit/ed886996d1d3780b94166af4f798c53416d547c8).
-See [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and subsequent incorporation history.
+Refer to [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and subsequent incorporation history.
 
 ## Quick start
 
-Create a one-page Node.js application, install its dependencies, and start the development server:
+Create a one-page Node.js application.
+Install its dependencies.
+Then start the development server.
 
 ```sh
 vp create effront -- my-app --platform node
@@ -17,7 +20,7 @@ vp install
 vp dev
 ```
 
-For other configurations, see [Platforms](app/docs/src/content/en/articles/platforms.md).
+For other configurations, refer to [Platforms](app/docs/src/content/en/articles/platforms.md).
 
 ## Usage
 
@@ -43,8 +46,8 @@ For other configurations, see [Platforms](app/docs/src/content/en/articles/platf
 
 - **Host**: Cloudflare Workers with Node compatibility, or the [native Node/Bun server](packages/server/README.md#prerequisites).
 - **Build integration**: VitePlus with the matching Effront integration and host adapter.
-- **Peers**: Effect `^4.0.1` and React/React DOM `19.3.0`; use one coherent Effect v4 installation across your application. Effect minor and patch updates are supported by the dependency range, while v5 and prereleases are excluded.
-- **Alchemy**: The adapter is pinned to beta.81; its official CLI requires a configured Cloudflare profile even for local use. Standalone Workers does not require that profile for local development.
+- **Peers**: Use Effect `^4.0.1` and React/React DOM `19.3.0`. Use one consistent Effect v4 installation across your application. The dependency range accepts Effect minor and patch updates, but excludes v5 and prereleases.
+- **Alchemy**: The adapter is pinned to beta.81. A configured Cloudflare profile is necessary for its official CLI, also for local use. That profile is not necessary for local development with standalone Workers.
 
 ## Setup
 
@@ -68,7 +71,7 @@ Install the packages for your application through their consumer setup instructi
 
 ## Development
 
-See [development instructions](AGENTS.md).
+Refer to [development instructions](AGENTS.md).
 
 ## License
 

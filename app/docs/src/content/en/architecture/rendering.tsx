@@ -18,7 +18,7 @@ export const page: DocPage = {
     <>
       <p>
         Document requests and client navigation share one Page rendering path. Both start with a
-        React Flight stream: navigation consumes it directly, while SSR decodes it into HTML and
+        React Flight stream. Navigation consumes it directly, while SSR decodes it into HTML and
         embeds a copy for hydration.
       </p>
       <h2 id="ssr-branch">One render, two response formats</h2>
@@ -45,7 +45,7 @@ export const page: DocPage = {
         </li>
       </ul>
       <p>
-        SSR consumes the RSC result rather than running the Page's server render Effect again. It
+        SSR consumes the RSC result. It does not execute the Page's server render Effect again. It
         also receives form state, a request-scoped abort signal, and a bootstrap script that imports
         the client entry. Both formats use <code>Cache-Control: private, no-store</code>. GET and
         POST pre-response handlers preserve existing Vary fields and add Accept unless Accept or{" "}
@@ -54,8 +54,8 @@ export const page: DocPage = {
       <h2 id="route-to-flight">Build the shared Flight payload</h2>
       <p>
         <code>renderRouteTree</code> in <code>rsc/render-route-tree.tsx</code> starts with the
-        matched Page and walks destination scopes from inner to outer, adding Loading boundaries and
-        Layouts. It produces a <code>RouteTreeModel</code> with <code>id</code>,{" "}
+        matched Page. It traverses destination scopes from inner to outer and adds Loading
+        boundaries and Layouts. It produces a <code>RouteTreeModel</code> with <code>id</code>,{" "}
         <code>content</code>, and <code>child</code>, not HTML. Layout IDs use scope identity. Page
         and Loading IDs also include the pathname.
       </p>
@@ -74,9 +74,9 @@ export const page: DocPage = {
       </p>
       <h2 id="render-runtime">Keep asynchronous rendering inside the request</h2>
       <p>
-        React may continue invoking Page, Layout, or Component Effects after returning a readable
-        stream. <code>FlightRenderer</code> gives that work a child Scope and returns its release
-        operation alongside the stream and abort signal:
+        React can invoke Page, Layout, or Component Effects after it returns a readable stream.{" "}
+        <code>FlightRenderer</code> gives that work a child Scope and returns its release operation
+        alongside the stream and abort signal:
       </p>
       <figure data-core-source={coreRuntimeSources.flightRuntime.path}>
         <figcaption>
@@ -92,8 +92,8 @@ export const page: DocPage = {
         fibers owned by <code>renderScope</code>. <code>renderRuntime.bind</code> in{" "}
         <code>application/render-runtime.ts</code> stores that runner and active middleware in
         AsyncLocalStorage. Each definition's <code>run</code> call requires both the binding and
-        every middleware scope it declared. Missing either throws <code>TypeError</code>, enforcing
-        the{" "}
+        every middleware scope it declared. Missing either throws <code>TypeError</code>. This
+        enforces the{" "}
         <a href="/en/architecture/implementation/application">
           definition's service and scope contract
         </a>{" "}
@@ -108,9 +108,9 @@ export const page: DocPage = {
       </p>
       <h2 id="html-eof">Deliver Flight without breaking the HTML stream</h2>
       <p>
-        HTML chunks can end inside tags or other syntax, so inserting Flight scripts at arbitrary
-        chunk boundaries could corrupt the document. <code>server/flight-html-stream.ts</code>{" "}
-        instead waits for HTML EOF:
+        HTML chunks can end inside tags or other syntax. Flight scripts at arbitrary chunk
+        boundaries could corrupt the document. <code>server/flight-html-stream.ts</code> instead
+        waits for HTML EOF.
       </p>
       <figure data-core-source={coreRuntimeSources.htmlEof.path}>
         <figcaption>
@@ -128,8 +128,8 @@ export const page: DocPage = {
         until insertion. Embedded Flight is not delivered incrementally beside each HTML chunk.
       </p>
       <p>
-        Each Flight chunk is independently decoded with a fatal UTF-8 decoder. Invalid or incomplete
-        UTF-8 falls back to base64 and reconstructs a <code>Uint8Array</code> in the browser. Inline
+        A fatal UTF-8 decoder decodes each Flight chunk independently. Invalid or incomplete UTF-8
+        falls back to base64 and reconstructs a <code>Uint8Array</code> in the browser. Inline
         scripts escape <code>{"</script"}</code> and <code>{"<!--"}</code> sequences.{" "}
         <code>client/initial-flight-stream.ts</code> converts strings in{" "}
         <code>self.__FLIGHT_DATA</code> back to bytes and forwards byte arrays unchanged. It closes
