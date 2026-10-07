@@ -7,6 +7,8 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
   const runtime = testInfo.project.name === "bun" ? "Bun" : "Node";
   const response = await request.get("/");
   expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("charset=utf-8");
+  expect(response.headers()["cache-control"]).toBe("private, no-store");
   expect(await response.text()).toContain(`Hello from ${runtime}!`);
   const head = await request.head("/");
   expect(head.status()).toBe(200);
@@ -18,8 +20,10 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
       errors.push(message.text());
     }
   });
-  await page.goto("/");
+  const documentResponse = await page.goto("/");
+  expect(documentResponse?.headers()["content-type"]).toContain("charset=utf-8");
   await page.waitForLoadState("networkidle");
+  expect(await page.evaluate(() => document.characterSet)).toBe("UTF-8");
   expect(errors).toEqual([]);
   await page.getByRole("button", { name: "Count: 0", exact: true }).click();
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();

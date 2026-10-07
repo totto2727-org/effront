@@ -33,7 +33,10 @@ The lockfile records concrete versions for reproducible installation, and consum
 `@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `1.0.0` with the bundled Vitest `5.0.1`; package task inputs and outputs move under `cache` for VitePlus 1's task schema. This is a test-tool compatibility update, not a runtime redesign.
 Stable Effect v4 promotes `effect/unstable/*` to public paths such as `effect/http`, `effect/cli`, `effect/schema`, and `effect/reactivity`; runtime imports, JIT-generated imports, test fixtures, and maintained guides use those paths.
 Alchemy and its Cloudflare runtime use beta.81 because beta.79 still imports the removed paths despite peer ranges admitting stable v4.
-No upstream runtime source is incorporated by this change; repository application behavior and external consumer repositories remain unchanged.
+The Vite host supplies a standard status text when an application response omits it: Effect's native three-argument `writeHead` otherwise loses response headers inside Vite preview's compression middleware, causing non-ASCII HTML to decode incorrectly.
+The native host browser suite checks response headers and the document charset; custom status text and streaming bodies remain intact.
+Static assets follow stable Effect's `If-Range` handling: only matching strong ETags permit a range, while stale/weak validators and dates produce the full response.
+No upstream runtime source is incorporated by this change; external consumer repositories remain unchanged.
 Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.0.0](https://registry.npmjs.org/vite-plus/1.0.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
 
 ## Future incorporation

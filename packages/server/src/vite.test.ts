@@ -172,6 +172,15 @@ const handlerSource = (version: string) => `
   import { HttpServerRequest, HttpServerResponse } from 'effect/http';
   export const handler = Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
+    if (request.url === '/custom' || request.url === '/failure') {
+      const response = yield* HttpServerResponse.text('日本語の応答', {
+        status: request.url === '/failure' ? 400 : 299,
+        statusText: request.url === '/failure' ? undefined : 'Application Status',
+        contentType: 'text/plain;charset=utf-8',
+        headers: { 'x-application': 'retained' },
+      }).pipe(HttpServerResponse.setCookie('session', 'retained'));
+      return request.url === '/failure' ? yield* Effect.fail(response) : response;
+    }
     if (request.url === '/stream') {
       yield* Effect.acquireRelease(
         Effect.sync(() => globalThis[${JSON.stringify(eventsKey)}].push('acquired')),
@@ -249,6 +258,23 @@ describe("effrontServer native middleware", () => {
     await expect
       .poll(async () => (await fetch(`${origin}/route`)).text())
       .toBe("second:GET:/route:IncomingMessage");
+  });
+
+  it("preserves custom status text, headers and cookies for success and failure responses", async () => {
+    const { server } = await setupServer();
+    const origin = await listen(server);
+    for (const [path, status, statusText] of [
+      ["/custom", 299, "Application Status"],
+      ["/failure", 400, "Bad Request"],
+    ] as const) {
+      const response = await fetch(`${origin}${path}`);
+      expect(response.status).toBe(status);
+      expect(response.statusText).toBe(statusText);
+      expect(response.headers.get("content-type")).toContain("charset=utf-8");
+      expect(response.headers.get("x-application")).toBe("retained");
+      expect(response.headers.get("set-cookie")).toContain("session=retained");
+      expect(await response.text()).toBe("日本語の応答");
+    }
   });
 
   it("retains request scope through streaming and releases it on client cancellation", async () => {
