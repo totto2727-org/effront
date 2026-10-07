@@ -84,7 +84,7 @@ export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
     transform(code, id) {
       if (this.environment.name !== "rsc" || id.split("?", 1)[0] !== resolvedRscEntry) return;
       // Register the compiler before the application module constructs or captures parsers.
-      return `import "effect/unstable/schema/SchemaJITCompiler/enable";\n${code}`;
+      return `import "effect/schema/SchemaJITCompiler/enable";\n${code}`;
     },
   };
   const applicationAlias: Plugin = {

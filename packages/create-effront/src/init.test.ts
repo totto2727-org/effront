@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { NodeServices } from "@effect/platform-node";
 import { Effect } from "effect";
-import { Command } from "effect/unstable/cli";
+import { Command } from "effect/cli";
 import packageJson from "../package.json" with { type: "json" };
 import { command } from "./cli.js";
 import { createProject, platforms } from "./init.js";
@@ -40,6 +40,13 @@ for (const platform of platforms) {
       expect(manifest.scripts).not.toHaveProperty("build");
     }
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
+    for (const dependencies of [manifest.dependencies, manifest.devDependencies]) {
+      for (const [name, version] of Object.entries(dependencies ?? {})) {
+        if (name === "effect" || name.startsWith("@effect/")) {
+          expect(version).toBe("^4.0.1");
+        }
+      }
+    }
     for (const example of examples) {
       const source = await readFile(
         new URL(`../../../examples/${example}/src/entry.effront.tsx`, import.meta.url),

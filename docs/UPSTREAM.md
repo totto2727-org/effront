@@ -25,6 +25,17 @@ The pinned baseline and comparison material predate the Effront rename. They int
 For current local code, use `packages/core`, package imports `@effront/core/*`, and `Application.effront()`.
 The historical combined Cloudflare factory was superseded after the pinned comparison: register `effront()` from `@effront/vite` and `effrontCloudflare()` from `@effront/cloudflare` separately; Cloudflare options are direct adapter options, not nested `cloudflare` options.
 
+## Stable Effect v4 dependency policy
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront uses stable Effect v4 packages through the shared `^4.0.1` catalog range instead of the former exact `4.0.0-rc.116` pins.
+This affects public dependency and peer ranges, workspace overrides, and the `create-effront` templates; v4 minor and patch updates are allowed, while prereleases and v5 are excluded.
+The lockfile records concrete versions for reproducible installation, and consumers must retain one coherent Effect installation across the host and application graphs.
+`@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `1.0.0` with the bundled Vitest `5.0.1`; package task inputs and outputs move under `cache` for VitePlus 1's task schema. This is a test-tool compatibility update, not a runtime redesign.
+Stable Effect v4 promotes `effect/unstable/*` to public paths such as `effect/http`, `effect/cli`, `effect/schema`, and `effect/reactivity`; runtime imports, JIT-generated imports, test fixtures, and maintained guides use those paths.
+Alchemy and its Cloudflare runtime use beta.81 because beta.79 still imports the removed paths despite peer ranges admitting stable v4.
+No upstream runtime source is incorporated by this change; repository application behavior and external consumer repositories remain unchanged.
+Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.0.0](https://registry.npmjs.org/vite-plus/1.0.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
+
 ## Future incorporation
 
 Keep the historical baseline immutable as the comparison point, and advance the last fully incorporated baseline whenever a reviewed upstream range is fully accounted for.

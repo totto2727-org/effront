@@ -1,5 +1,5 @@
 import { type Cause, type Effect, Stream } from "effect";
-import { Atom } from "effect/unstable/reactivity";
+import { Atom } from "effect/reactivity";
 
 import type { ServerFnError } from "../rsc/server-fn-error";
 import { callQuery, callQueryStream } from "./server-fn-protocol";

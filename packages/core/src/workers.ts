@@ -1,5 +1,5 @@
 import { Context, Effect } from "effect";
-import { HttpEffect, type HttpRouter, type HttpServerRequest } from "effect/unstable/http";
+import { HttpEffect, type HttpRouter, type HttpServerRequest } from "effect/http";
 
 import type { ApplicationDefinition } from "./application/definition";
 import { toHttpEffect } from "./http";

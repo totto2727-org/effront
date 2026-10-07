@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { HttpMiddleware, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpMiddleware, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 const privateCacheControl = "private, no-store";
 

@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 
 import { expect, it } from "@effect/vitest";
-import { HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
+import { HttpClientRequest, HttpClientResponse } from "effect/http";
 
 // The Flight client reads `response.url` directly to learn the resolved route after a redirect.
 // These are dependency contract checks for that accessor, not tests of Effront code.

@@ -1,5 +1,5 @@
 import { Console, Effect, Option } from "effect";
-import { Argument, CliError, Command, Flag, Prompt } from "effect/unstable/cli";
+import { Argument, CliError, Command, Flag, Prompt } from "effect/cli";
 import { stdin, stdout } from "node:process";
 import { createProject, platforms } from "./init.js";
 

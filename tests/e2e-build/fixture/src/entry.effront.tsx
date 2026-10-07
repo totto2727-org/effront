@@ -3,7 +3,7 @@ import { MarkdownDocument } from "@effront/markdown/document";
 import { Math } from "@effront/markdown/math";
 import { Mermaid } from "@effront/markdown/mermaid";
 import { Context, Effect, Result, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { manual } from "../content";
 import { ManualShell } from "./manual-shell";
 import { pages } from "./manual-pages";

@@ -169,7 +169,7 @@ const eventsKey = "__effront_native_http_test_events__";
 
 const handlerSource = (version: string) => `
   import { Effect, Stream } from 'effect';
-  import { HttpServerRequest, HttpServerResponse } from 'effect/unstable/http';
+  import { HttpServerRequest, HttpServerResponse } from 'effect/http';
   export const handler = Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
     if (request.url === '/stream') {

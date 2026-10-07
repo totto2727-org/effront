@@ -7,7 +7,7 @@ Create `src/http.ts`:
 
 ```typescript
 import { Effect } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerResponse } from "effect/http";
 import { Greeting } from "./greeting";
 
 export const GreetingApi = HttpRouter.use(
@@ -68,7 +68,7 @@ Create `src/application-layer.ts`:
 
 ```typescript
 import { Effect, Layer } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, HttpServerResponse } from "effect/http";
 import { Greeting } from "./greeting";
 import { GreetingApi } from "./http";
 

@@ -84,4 +84,4 @@ Worker 宣言には `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"]
 `vite.main`、別のランタイムプラグイン、Wrangler 設定は追加しないでください。
 開発中のサーバーコードからは、インフラの provider factory を含む Node 専用のデプロイ・ローカルホスト用 export を使用できません。デプロイ時の export と本番ビルドには影響しません。
 Alchemy は、Vite 単体ではなく `alchemy dev` を通じてホストプラグインとバインディングを提供します。
-Alchemy `2.0.0-beta.79` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。
+Alchemy `2.0.0-beta.81` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。

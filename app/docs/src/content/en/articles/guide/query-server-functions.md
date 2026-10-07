@@ -58,7 +58,7 @@ Use `queryAtom` when an Effect Reactivity atom is a better fit for the component
 
 import { queryAtom } from "@effront/core/query";
 import { useAtom } from "@effect/atom-react";
-import { AsyncResult } from "effect/unstable/reactivity";
+import { AsyncResult } from "effect/reactivity";
 import { useEffect } from "react";
 import { lookupTicket } from "./ticket";
 

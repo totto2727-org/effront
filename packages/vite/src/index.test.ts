@@ -52,7 +52,7 @@ describe("Effront entry conventions", () => {
       );
 
     expect(invoke("rsc", resolve(root, "src/entry.workers.ts"))).toBe(
-      'import "effect/unstable/schema/SchemaJITCompiler/enable";\nimport application from "./entry.effront";',
+      'import "effect/schema/SchemaJITCompiler/enable";\nimport application from "./entry.effront";',
     );
     expect(invoke("ssr", resolve(root, "src/entry.workers.ts"))).toBeUndefined();
     expect(invoke("rsc", resolve(root, "src/entry.effront.tsx"))).toBeUndefined();

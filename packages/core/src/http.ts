@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Scope } from "effect";
 import type { PlatformError } from "effect/PlatformError";
-import type { HttpServerError } from "effect/unstable/http";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import type { HttpServerError } from "effect/http";
+import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 import type { ApplicationDefinition } from "./application/definition";
 import { ServerApplication } from "./server/application";

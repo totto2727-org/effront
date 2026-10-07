@@ -58,7 +58,7 @@ export function TicketStatus({ ticketCode }: { ticketCode: string }) {
 
 import { queryAtom } from "@effront/core/query";
 import { useAtom } from "@effect/atom-react";
-import { AsyncResult } from "effect/unstable/reactivity";
+import { AsyncResult } from "effect/reactivity";
 import { useEffect } from "react";
 import { lookupTicket } from "./ticket";
 

@@ -26,4 +26,4 @@ Applications using matched Effront entries do not need an additional JIT import.
 A custom entry or host that bypasses these integration entry points must arrange early registration in each graph it owns.
 When dynamic function construction is blocked, Effect retains interpreted parsing.
 
-Source: [Effect 4.0.0-rc.116 `SchemaJITCompiler/enable` documentation and implementation](https://github.com/Effect-TS/effect/blob/effect%404.0.0-rc.116/packages/effect/src/unstable/schema/SchemaJITCompiler/enable.ts).
+Source: [Effect 4.0.1 `SchemaJITCompiler/enable` documentation and implementation](https://github.com/Effect-TS/effect/blob/effect%404.0.1/packages/effect/src/schema/SchemaJITCompiler/enable.ts).

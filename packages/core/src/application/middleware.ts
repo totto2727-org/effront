@@ -1,5 +1,5 @@
 import { type Effect, type Types } from "effect";
-import { HttpRouter, type HttpServerResponse } from "effect/unstable/http";
+import { HttpRouter, type HttpServerResponse } from "effect/http";
 
 import {
   type EFFRONTIdentity,

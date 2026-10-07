@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Deferred, Effect, Fiber, Stream } from "effect";
-import { AsyncResult, AtomRegistry } from "effect/unstable/reactivity";
+import { AsyncResult, AtomRegistry } from "effect/reactivity";
 import { vi } from "vitest";
 
 import { ServerFnDefect, ServerFnInputError, ServerFnTransportError } from "../rsc/server-fn-error";

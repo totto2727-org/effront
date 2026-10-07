@@ -1,6 +1,6 @@
 import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, Stream } from "effect";
-import { HttpEffect, HttpRouter, HttpServerResponse } from "effect/unstable/http";
+import { HttpEffect, HttpRouter, HttpServerResponse } from "effect/http";
 
 import { Application } from "../../src/application/effront";
 import { getScopedMiddlewareHandler } from "../../src/application/middleware";

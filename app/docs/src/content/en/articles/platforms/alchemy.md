@@ -3,7 +3,7 @@
 Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
 
 > [!IMPORTANT]
-> The example pins Alchemy to `2.0.0-beta.79`, whose CLI requires a configured Cloudflare profile even for local development.
+> The example pins Alchemy to `2.0.0-beta.81`, whose CLI requires a configured Cloudflare profile even for local development.
 > Complete the profile setup in the [Alchemy documentation](https://alchemy.run/docs) before starting the app.
 
 ```bash

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it } from "@effect/vitest";
 import { Deferred, Effect, Exit, Fiber, Layer, Scope } from "effect";
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
+import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 import { vi } from "vitest";
 
 const react = vi.hoisted(() => ({

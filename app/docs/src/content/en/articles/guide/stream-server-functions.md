@@ -86,7 +86,7 @@ Use `streamAtom` when the UI needs only the latest chunk through Effect Reactivi
 
 import { streamAtom } from "@effront/core/query";
 import { useAtom } from "@effect/atom-react";
-import { AsyncResult } from "effect/unstable/reactivity";
+import { AsyncResult } from "effect/reactivity";
 import { useEffect } from "react";
 import { streamFeed } from "./feed";
 

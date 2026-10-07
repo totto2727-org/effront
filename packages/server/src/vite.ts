@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { Effect, Exit, Layer, Scope } from "effect";
-import type { HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
+import type { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { isRunnableDevEnvironment, type Connect, type Plugin } from "vite";
 
 export type EffrontServerOptions = {
