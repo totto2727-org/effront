@@ -1,5 +1,5 @@
 Use a Query Server Function to read one server value from a Client Component without refreshing the current route.
-Use an ordinary Server Function or a form action when the operation changes state and the UI should navigate or refresh.
+When the operation changes state and the UI should navigate or refresh, use an ordinary Server Function or a form action.
 
 ## Call a query {#call}
 
@@ -51,7 +51,7 @@ For expected outcomes and operational failures, use [Error handling for Server F
 
 ## Keep a reactive result {#atom}
 
-Use `queryAtom` when an Effect Reactivity atom is a better fit for the component's loading, success, and failure states.
+When an Effect Reactivity atom is a better fit for the component's loading, success, and failure states, use `queryAtom`.
 
 ```tsx
 "use client";

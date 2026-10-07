@@ -1,5 +1,6 @@
-Effront is a React meta-framework built on Effect.
-It combines React Server Components for page rendering and Server Functions for user actions with Effect services and dependency injection.
+Use Effront to build React pages and handle user actions on the server.
+Effront renders pages with React Server Components and runs user actions with Server Functions.
+Use Effect services to provide the application logic that pages and Server Functions need.
 
 ## Get a page on screen {#boundaries}
 
@@ -17,4 +18,4 @@ Choose a [host setup](./platforms.md) to run it.
 - Render articles with [Markdown](./guide/markdown.md) or add Tailwind CSS with [Styling](./guide/styling.md).
 - Test application logic and browser behavior with [Testing applications](./best-practices/testing.md).
 - Look up options and types in the [API reference](./api-reference.md).
-- Follow the implementation in the [architecture walkthrough](/en/architecture/implementation/overview).
+- For advanced consumers and Effront developers, follow the implementation in the [architecture walkthrough](/en/architecture/implementation/overview).

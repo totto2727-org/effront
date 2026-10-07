@@ -21,7 +21,8 @@ Follow the [Node.js setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w
 
 ## API
 
-The [server API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/server) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/server)) covers `serve`, `effrontServer`, asset mounts, and static HTTP behavior. For RSC entry alignment with Vite's Effect Schema JIT registration, see the [package-specific note](../vite/docs/SCHEMA-JIT.md).
+The [server API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/server) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/server)) covers `serve`, `effrontServer`, asset mounts, and static HTTP behavior.
+For advanced consumers who configure custom entries and Effront developers, the [package-specific note](../vite/docs/SCHEMA-JIT.md) explains RSC entry alignment with Vite's Effect Schema JIT registration.
 
 ## Development
 

@@ -30,7 +30,7 @@ export const page: DocPage = {
       </p>
       <ul>
         <li>
-          <code>ApplicationServices</code> are supplied by the application's Layer.
+          The application's Layer supplies <code>ApplicationServices</code>.
         </li>
         <li>
           <code>AvailableServices</code> are usable by definitions from these factories, including

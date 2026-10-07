@@ -52,7 +52,8 @@ For multiple services, declare a union such as `Application.effront<ServiceA | S
 See Effect's [Services](https://effect.website/docs/requirements-management/services/) and [Layers](https://effect.website/docs/requirements-management/layers/) guides for composition.
 
 Effront builds the application Layer for each request.
-Scoped resources remain available through response-body completion, failure, or cancellation, not just until a Page returns JSX.
+Returning JSX from a Page does not release its scoped resources.
+The resources remain available until the response body completes, fails, or is cancelled.
 
 > [!WARNING]
 > Do not cache request-specific service instances in module-level variables.
@@ -63,7 +64,7 @@ Scoped resources remain available through response-body completion, failure, or 
 | Error location     | Check                                                                                              |
 | ------------------ | -------------------------------------------------------------------------------------------------- |
 | Page `render`      | Declare the service in `Application.effront<Services>()`, or use a Middleware-equipped definition. |
-| `EFFRONT.make`     | Supply `layer` when application services are declared.                                             |
+| `EFFRONT.make`     | When application services are declared, supply `layer`.                                            |
 | The supplied Layer | Provide every declared service. `Layer.empty` cannot provide `Greeting`.                           |
 
 For Middleware-provided services, fix the active scope rather than adding an application-wide implementation to suppress the error.

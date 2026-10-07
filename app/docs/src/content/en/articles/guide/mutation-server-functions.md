@@ -163,7 +163,7 @@ Callers pass encoded input and handlers receive decoded values.
 
 > [!WARNING]
 > Do not call Server Functions directly from a Page or other server-side code.
-> Extract a shared service or Effect function when server-side callers need the same operation.
+> When server-side callers need the same operation, extract a shared service or Effect function.
 
 ## Handle updates {#refresh}
 

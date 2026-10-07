@@ -9,10 +9,14 @@ The tests below target the [Basic example application](https://github.com/totto2
 Its [maintained Playwright setup](https://github.com/totto2727-org/effront/tree/main/tests/e2e-alchemy) builds the example and starts a local workerd host without Cloudflare authentication.
 The setup is a repository reference, not a test helper distributed with Effront.
 
-Follow the [setup and execution instructions](https://github.com/totto2727-org/effront/blob/main/docs/TESTING.md#native-alchemy-integration) to run the reference application.
-Save each code block below as the named file beside `alchemy.e2e.ts` in that test package, then rerun its browser suite.
-The existing [Playwright configuration](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts) supplies `baseURL` and manages the server lifecycle.
-For your own application, replace the URLs, selectors, and expected values with your application's outputs.
+To try the tests against the repository example, follow the [setup and execution instructions](https://github.com/totto2727-org/effront/blob/main/docs/TESTING.md#native-alchemy-integration).
+Save each code block below as the named file beside `alchemy.e2e.ts` in that test package.
+Then rerun its browser suite.
+The existing [Playwright configuration](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts) supplies `baseURL` and manages the server lifecycle for the reference application.
+
+To test your own application, save the tests in your application's Playwright test directory.
+Configure Playwright to start your application and set `baseURL` to its local URL.
+Replace the URLs, selectors, and expected values with your application's outputs.
 
 ## Test Route responses {#routes}
 

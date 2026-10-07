@@ -25,7 +25,8 @@ See the [platform guides](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.
 
 ## API
 
-The [Vite API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/vite) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/vite)) covers plugin registration and application and RSC entry options. For separate execution graphs and native RSC entry alignment, see the package-specific [Schema JIT registration note](docs/SCHEMA-JIT.md).
+The [Vite API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/vite) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/vite)) covers plugin registration and application and RSC entry options.
+For advanced consumers who configure custom entries and Effront developers, the package-specific [Schema JIT registration note](docs/SCHEMA-JIT.md) explains separate execution graphs and native RSC entry alignment.
 
 ## Development
 

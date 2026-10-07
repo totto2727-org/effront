@@ -33,8 +33,8 @@ export const page: DocPage = {
         <code>activateBrowser</code> in <code>client/application.ts</code> loads the initial Flight
         payload and calls <code>ReactDOMRenderer.hydrate</code>. Hydration passes{" "}
         <code>formState</code> to React and waits for a layout effect to initialize{" "}
-        <code>BrowserRenderer</code> with the tree and state setter. Only then are refresh, the
-        Server Function callback, and any supported client router installed.
+        <code>BrowserRenderer</code> with the tree and state setter. Only then does the browser
+        entry install refresh, the Server Function callback, and any supported client router.
       </p>
       <p>
         <code>client/browser-capabilities.ts</code> selects client routing only when both{" "}

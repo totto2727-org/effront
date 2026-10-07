@@ -26,7 +26,7 @@ export default defineConfig({
 ```
 
 > [!IMPORTANT]
-> Remove a separate `@tailwindcss/vite` plugin if present, because `effrontTailwind()` includes it.
+> If a separate `@tailwindcss/vite` plugin is present, remove it because `effrontTailwind()` includes it.
 
 No stylesheet or component-level CSS import is needed.
 

@@ -42,7 +42,7 @@ The build puts the server entry in `dist/rsc/server.js` and generated browser as
 
 ## Start the Bun server {#bun}
 
-After the build, run from `examples/bun`:
+After the build, run from the generated project:
 
 ```bash
 vp run start

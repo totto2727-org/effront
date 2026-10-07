@@ -41,7 +41,7 @@ export const page: DocPage = {
           <code>react-dom/server.edge</code> renders its <code>RouteTree</code> to HTML.
         </li>
         <li>
-          <strong>Browser:</strong> Flight bytes are embedded in the HTML for hydration.
+          <strong>Browser:</strong> SSR embeds Flight bytes in the HTML for hydration.
         </li>
       </ul>
       <p>
@@ -102,9 +102,9 @@ export const page: DocPage = {
       <p>
         <code>server/application.ts</code> attaches <code>Stream.ensuring(flight.release)</code> to
         both response formats and releases Flight if HTML startup fails. Flight startup failure also
-        closes the child Scope. React errors are logged through the runner unless its signal is
-        aborted. HTML loading or startup failures become <code>HtmlRenderError</code>, while later
-        failures propagate through the response body.
+        closes the child Scope. The runner logs React errors unless its signal is aborted. HTML
+        loading or startup failures become <code>HtmlRenderError</code>, while later failures
+        propagate through the response body.
       </p>
       <h2 id="html-eof">Deliver Flight without breaking the HTML stream</h2>
       <p>

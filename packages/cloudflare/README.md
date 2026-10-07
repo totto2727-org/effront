@@ -13,7 +13,9 @@ Follow the [Cloudflare Workers guide](https://effront-docs-docs-production-6rpcu
 
 ## Prerequisites
 
-Use the matching Effront core and Vite packages, with a Wrangler configuration and `nodejs_compat`. Publishing requires Cloudflare credentials; local workerd development does not.
+Use the matching Effront core and Vite packages, with a Wrangler configuration and `nodejs_compat`.
+To deploy a Worker to Cloudflare, provide Cloudflare credentials.
+Local workerd development does not require Cloudflare credentials.
 
 ## Setup
 

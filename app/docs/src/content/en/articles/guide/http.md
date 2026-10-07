@@ -56,7 +56,7 @@ The existing `/` Page still displays the greeting.
 
 ## Keep resources request-local {#boundary}
 
-The application Layer is built for each request, including custom HTTP requests.
+Effront builds the application Layer for each request, including custom HTTP requests.
 Keep connections and other scoped resources within that request, whose scope lasts through response-body completion, failure, or cancellation.
 
 > [!WARNING]

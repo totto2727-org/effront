@@ -64,7 +64,7 @@ const HomePage = EFFRONT.Page.make({
 ```
 
 Open `/` and click `Count: 0` to increment the counter.
-The `Welcome` component is rendered on the server.
+Effront renders the `Welcome` component on the server.
 
 > [!WARNING]
 > Keep server-only service imports out of Client Components and the modules they import.

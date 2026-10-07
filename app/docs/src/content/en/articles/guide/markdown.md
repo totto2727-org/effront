@@ -123,7 +123,8 @@ Relative asset references resolve from the article's directory to their imported
 Missing references fail with `MarkdownError`.
 
 For a catch-all route, follow the [complete collection example](https://github.com/totto2727-org/effront/blob/main/examples/markdown/src/entry.effront.tsx).
-Look up the requested article in HTTP middleware and return 404 before rendering starts when `get()` returns `undefined`.
+Look up the requested article in HTTP middleware.
+If `get()` returns `undefined`, return 404 before rendering starts.
 The fixed-route example above instead treats a missing registered article as a configuration error.
 Collection and parsing failures also use the `MarkdownError` Effect error channel.
 
