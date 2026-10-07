@@ -29,6 +29,7 @@ The historical combined Cloudflare factory was superseded after the pinned compa
 
 Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront uses stable Effect v4 packages through the shared `^4.0.1` catalog range instead of the former exact `4.0.0-rc.116` pins.
 All eight public packages, including `create-effront`, advance together from 0.2.0 to 0.3.0 for this compatibility change; generated starter dependencies and maintained installation guides target the same release.
+The subsequent 0.3.1 patch synchronizes all eight packages, generated starters, and maintained installation guides while selecting mature Vite Plus 1.0.0 without new release-age exclusions.
 This affects public dependency and peer ranges, workspace overrides, and the `create-effront` templates; v4 minor and patch updates are allowed, while prereleases and v5 are excluded.
 The lockfile records concrete versions for reproducible installation, and consumers must retain one coherent Effect installation across the host and application graphs.
 `@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `^1.0.0` with Vitest `^5.0.1`; package task inputs and outputs remain under `cache` for VitePlus 1's task schema.

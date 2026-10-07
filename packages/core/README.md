@@ -20,8 +20,8 @@ Then use [Pages, layouts, and routes](https://effront-docs-docs-production-6rpcu
 ## Setup
 
 ```sh
-npm install @effront/core@0.3.0
-npm install --save-dev @effront/vite@0.3.0 @vitejs/plugin-rsc@0.5.35
+npm install @effront/core@0.3.1
+npm install --save-dev @effront/vite@0.3.1 @vitejs/plugin-rsc@0.5.35
 ```
 
 For the current compatibility baseline, install matching runtime peers:

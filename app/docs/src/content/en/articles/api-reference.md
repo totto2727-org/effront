@@ -47,7 +47,7 @@ Related definitions must share one factory instance or a derivative from `withMi
 
 | Package or package family                                           | Version         |
 | ------------------------------------------------------------------- | --------------- |
-| All Effront packages                                                | `0.3.0`         |
+| All Effront packages                                                | `0.3.1`         |
 | `react`, `react-dom`                                                | `19.3.0`        |
 | `@vitejs/plugin-rsc`                                                | `0.5.35`        |
 | `effect`, `@effect/platform-browser`, host-specific Effect packages | `^4.0.1`        |

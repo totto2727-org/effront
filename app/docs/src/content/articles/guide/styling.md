@@ -6,7 +6,7 @@ Tailwind の標準ユーティリティを使う場合も、独自のテーマ�
 統合パッケージをインストールします。
 
 ```bash
-vp add -D @effront/tailwind@0.3.0
+vp add -D @effront/tailwind@0.3.1
 ```
 
 [Getting started](./getting-started.md) の `vite.config.ts` に、`effrontTailwind()` を追加します。
