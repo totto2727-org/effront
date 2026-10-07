@@ -7,14 +7,14 @@
   },
   "dependencies": {
     "@effect/platform-browser": "^4.0.1",
-    "@effront/cloudflare": "0.2.0",
-    "@effront/core": "0.2.0",
+    "@effront/cloudflare": "0.3.0",
+    "@effront/core": "0.3.0",
     "effect": "^4.0.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "@effront/vite": "0.2.0",
+    "@effront/vite": "0.3.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-rsc": "0.5.35",
