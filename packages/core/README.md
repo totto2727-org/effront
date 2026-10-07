@@ -20,14 +20,14 @@ Then use [Pages, layouts, and routes](https://effront-docs-docs-production-6rpcu
 ## Setup
 
 ```sh
-npm install @effront/core@0.3.1
-npm install --save-dev @effront/vite@0.3.1 @vitejs/plugin-rsc@0.5.35
+npm install @effront/core
+npm install --save-dev @effront/vite @vitejs/plugin-rsc
 ```
 
-For the current compatibility baseline, install matching runtime peers:
+Install the runtime peers and keep their versions compatible with the installed Effront packages' `peerDependencies`:
 
 ```sh
-npm install 'effect@^4.0.1' '@effect/platform-browser@^4.0.1' react@19.3.0 react-dom@19.3.0
+npm install effect @effect/platform-browser react react-dom
 ```
 
 ## API

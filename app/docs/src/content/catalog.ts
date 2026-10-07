@@ -310,12 +310,12 @@ export const articleCatalog = [
     slug: "/api-reference",
     title: "API リファレンス",
     description:
-      "公開 import パス、アプリケーションファクトリーの API、互換性のある依存バージョンを調べます。",
+      "公開 import パス、アプリケーションファクトリーの API、依存関係の互換性要件を調べます。",
     section: "API reference",
     headings: [
       { id: "exports", title: "公開 API の一覧" },
       { id: "index", title: "アプリケーションファクトリーの索引" },
-      { id: "versions", title: "依存バージョン一覧" },
+      { id: "versions", title: "依存関係の互換性" },
     ],
     source: "/api-reference",
   },

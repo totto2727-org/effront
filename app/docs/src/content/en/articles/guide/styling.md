@@ -6,7 +6,7 @@ It loads the stylesheet for you, whether you use Tailwind's default utilities or
 Install the integration:
 
 ```bash
-vp add -D @effront/tailwind@0.3.1
+vp add -D @effront/tailwind
 ```
 
 In `vite.config.ts` from [Getting started](./getting-started.md), add `effrontTailwind()`:
@@ -41,7 +41,7 @@ Use utilities in your component's JSX:
 To add a shared color or other theme value, install Tailwind as a direct dependency:
 
 ```bash
-vp add -D tailwindcss@4.3.3
+vp add -D tailwindcss
 ```
 
 Create `src/styles.css`:

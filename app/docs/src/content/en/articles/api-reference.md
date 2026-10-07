@@ -43,20 +43,14 @@ Related definitions must share one factory instance or a derivative from `withMi
 | `withMiddleware`                         | Derived factories with additional middleware and the same application identity | [Application](/en/api-reference/application)       |
 | `make`                                   | An application definition, not a running server                                | [Application](/en/api-reference/application)       |
 
-## Dependency matrix {#versions}
+## Dependency compatibility {#versions}
 
-| Package or package family                                           | Version         |
-| ------------------------------------------------------------------- | --------------- |
-| All Effront packages                                                | `0.3.1`         |
-| `react`, `react-dom`                                                | `19.3.0`        |
-| `@vitejs/plugin-rsc`                                                | `0.5.35`        |
-| `effect`, `@effect/platform-browser`, host-specific Effect packages | `^4.0.1`        |
-| `alchemy`                                                           | `2.0.0-beta.81` |
-| `@comark/react`                                                     | `0.6.2`         |
-
-Keep Effront package versions aligned, including optional adapters and integrations.
-React and React DOM must match, and `@vitejs/plugin-rsc@0.5.35` includes the matching `19.3.0` RSC transport.
-[`ViewTransition`](https://react.dev/reference/react/ViewTransition) and [`addTransitionType`](https://react.dev/reference/react/addTransitionType) are stable React `19.3.0` APIs.
-Keep Effect family versions aligned as well.
+Install packages by name without version suffixes in ordinary setup commands.
+Use the installed Effront packages' `peerDependencies` as the source of supported dependency ranges instead of a copied version table.
+Keep Effront package versions aligned, including optional adapters and integrations, and retain the application lockfile for reproducible installation.
+React and React DOM must match, and the RSC transport supplied by `@vitejs/plugin-rsc` must be compatible with that React installation.
+Effront's page transitions use [`ViewTransition`](https://react.dev/reference/react/ViewTransition) and [`addTransitionType`](https://react.dev/reference/react/addTransitionType).
+Keep one coherent Effect installation across the application and host-specific Effect packages.
+Before upgrading Alchemy, check the installed adapter's peer requirements and [integration compatibility notes](./api-reference/alchemy.md).
 Vite integrations declare a public Vite peer dependency of `*`.
 The setup guides use VitePlus.
