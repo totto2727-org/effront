@@ -14,7 +14,7 @@ Importing the enable module in one Vite graph does not initialize the others, an
 
 `effrontServer()` independently selects the native RSC entry, defaulting to `src/entry.rsc.ts`, while `effront()` still targets its own default `src/entry.workers.ts` for injection.
 Consequently, `plugins: [effront(), effrontServer()]` does not prepend the JIT import to the native RSC entry.
-Align `effront({ rsc: "./src/entry.rsc.ts" })` with the server adapter's `rsc` option if that Vite graph needs JIT.
+If that Vite graph needs JIT, align `effront({ rsc: "./src/entry.rsc.ts" })` with the server adapter's `rsc` option.
 The direct Node/Bun host imports do not change this entry-path check.
 
 ## Initialization order

@@ -15,7 +15,8 @@ export default defineConfig({
 });
 ```
 
-The application and Wrangler files for this configuration are in [Getting started](/en/guide/getting-started).
+The [Cloudflare Workers guide](/en/platforms/cloudflare#vite) identifies the application and Wrangler files for this configuration.
+For the introductory create-and-run workflow, see [Getting started](/en/guide/getting-started).
 
 ## EffrontViteOptions {#configuration}
 
