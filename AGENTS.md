@@ -51,7 +51,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 
 ## Development tools
 
-- **VitePlus**: pinned in `pnpm-workspace.yaml`; root config owns shared checks and standard Vitest discovery.
+- **VitePlus**: versioned in `pnpm-workspace.yaml`; root config owns shared checks and standard Vitest discovery. Preserve the package manager's default minimum release age and normally select the latest compatible mature release. Do not lower the threshold or add release-age exclusions except for a genuinely urgent, explicitly authorized need. Use a command-only strict release-age flag when needed to prevent automatically generated exclusions.
 - **Gitignore exclusions**: `vite.config.ts` uses the published [JSR package](https://jsr.io/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
 - **Effect**: consult installed-version source and official documentation before changing APIs.
 - **Playwright/workerd**: browser acceptance exercises actual host behavior; a successful build or mock does not establish runtime correctness.
