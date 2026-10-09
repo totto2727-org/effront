@@ -13,6 +13,7 @@ The release includes `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@
 Publication has no automatic version bump or tag trigger.
 The 0.3.0 release adopts stable Effect v4 and supersedes the Effect prerelease compatibility of 0.2.0; keep every Effront package at the matching release version.
 The 0.3.1 patch release aligns generated starters with mature Vite Plus 1.0.0 while preserving the default package release-age policy.
+The 0.3.2 patch release carries the caret dependency policy into all public manifests and generated starters without changing the locked external dependency versions.
 The workflow skips versions already on npm.
 
 ## Package builds

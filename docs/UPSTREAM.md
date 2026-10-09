@@ -52,6 +52,7 @@ Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [E
 
 Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront uses caret ranges for every external catalog dependency and every generated starter dependency, including Alchemy prereleases and `@effront/*` starter references.
 This replaces the remaining exact dependency pins without changing the minimum accepted versions or the upstream runtime source.
+All eight public packages advance together to 0.3.2, and generated starter references use `^0.3.2` so the release includes the updated dependency ranges.
 Compatible updates follow each package's caret range; for example, `^0.3.1` allows patches below 0.4.0, while `^2.0.0-beta.81` also admits stable 2.x releases but not unrelated prerelease versions.
 The lockfile retains concrete resolved versions for reproducible installation, and the package manager's release-age policy remains unchanged.
 Package release versions, the package-manager toolchain version, internal `workspace:` references, public Vite wildcard peers, and immutable upstream and Nix revisions are not dependency pins and retain their existing form.
