@@ -20,10 +20,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
+        with:
+          install-args: --frozen-lockfile
       - name: Build public packages
         uses: ./.github/actions/build-workspace
       - name: Publish public packages
-        uses: totto2727-org/monorepo/.github/actions/publish-npm@main
-        with:
-          working-directory: .
-          filters: "./packages/*"
+        run: |
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          vp run release:publish

@@ -3,7 +3,8 @@ Then examine the files that define the page.
 
 ## Run the sample {#setup}
 
-Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
+Install the current Node.js LTS, [Bun](https://bun.com/), and [Vite+](https://viteplus.dev/).
+All generated projects use Bun for dependency installation through VitePlus, independently of the selected application runtime.
 Then create a Node.js starter:
 
 ```bash

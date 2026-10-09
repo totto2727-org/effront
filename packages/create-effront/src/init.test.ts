@@ -7,6 +7,7 @@ import { Effect } from "effect";
 import { Command } from "effect/cli";
 import packageJson from "../package.json" with { type: "json" };
 import vitePlusPackage from "vite-plus/package.json" with { type: "json" };
+import workspace from "../../../package.json" with { type: "json" };
 import { command } from "./cli.js";
 import { createProject, platforms } from "./init.js";
 
@@ -25,15 +26,11 @@ afterEach(async () => {
   );
 });
 
-it("keeps required Vite+ overrides aligned with its installed toolchain", async () => {
-  const workspace = await readFile(
-    new URL("../../../pnpm-workspace.yaml", import.meta.url),
-    "utf8",
-  );
-  const overrides = workspace.split("\noverrides:\n")[1]?.split("\n\n")[0];
-  expect(overrides?.trim()).toBe(
-    `vite@*: npm:@voidzero-dev/vite-plus-core@${vitePlusPackage.version}\n  vitest@*: ${vitePlusPackage.dependencies.vitest}`,
-  );
+it("keeps required Vite+ overrides aligned with its installed toolchain", () => {
+  expect(workspace.overrides).toEqual({
+    vite: `npm:@voidzero-dev/vite-plus-core@${vitePlusPackage.version}`,
+    vitest: vitePlusPackage.dependencies.vitest,
+  });
 });
 
 for (const platform of platforms) {
@@ -45,6 +42,14 @@ for (const platform of platforms) {
     const examples = ["node", "bun", "cloudflare", "alchemy-cloudflare"];
 
     expect(manifest.name).toBe("my-app");
+    expect(manifest.packageManager).toBe(workspace.packageManager);
+    expect(manifest.overrides).toEqual(workspace.overrides);
+    expect(manifest.trustedDependencies).toEqual(
+      platform === "node" || platform === "bun" ? ["esbuild"] : ["esbuild", "workerd"],
+    );
+    expect(await readFile(join(directory, "bunfig.toml"), "utf8")).toBe(
+      await readFile(new URL("../../../bunfig.toml", import.meta.url), "utf8"),
+    );
     if (platform === "alchemy-cloudflare") {
       expect(manifest.scripts).toEqual({ dev: "alchemy dev" });
     } else {

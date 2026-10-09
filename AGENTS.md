@@ -15,7 +15,7 @@
 
 - Work in this independent repository at `workspace/package/effront/`, not the parent virtual monorepo.
 - Push and open pull requests only in `totto2727-org/effront`, never upstream. Do not publish packages or deploy without explicit authorization.
-- Use VitePlus for package management, formatting, linting, checks, and test entry points. Retain its default formatting and lint rules.
+- Use VitePlus for package management through Bun, formatting, linting, checks, and test entry points. Bun is the only dependency package manager and `bun.lock` is the only dependency lockfile. Retain VitePlus's default formatting and lint rules.
 - Keep temporary evidence under the owning repository or package's ignored `tmp/`. Never commit credentials, `.dev.vars`, generated output, or temporary reports.
 - Automated local acceptance must not require Cloudflare authentication or remote services. Official Alchemy CLI development has a separate profile prerequisite documented by its adapter. Do not force verification through an authentication boundary.
 - Target the current Node.js LTS and the current Bun release only. Do not add compatibility shims, dual code paths, or documented floors for older runtimes, and prefer the modern runtime APIs those versions provide.
@@ -56,7 +56,8 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 
 ## Development tools
 
-- **VitePlus**: versioned in `pnpm-workspace.yaml`. The root config owns shared checks and standard Vitest discovery. Select the latest compatible release accepted by the package manager's default minimum release age. Do not shorten or disable the waiting period, or add exclusions, without a genuinely urgent, explicitly authorized need. Keep `minimumReleaseAgeStrict: true` to prevent automatically generated exclusions. Do not add dependency overrides except the Vite+ prescribed Vite alias and exact matching toolchain Vitest. Document the official source for every unavoidable exception.
+- **VitePlus**: versioned in the shared `package.json` catalog. The root config owns shared checks and standard Vitest discovery. Select the latest compatible release accepted by the 24-hour minimum release age in `bunfig.toml`. Do not shorten or disable the waiting period, or add exclusions, without a genuinely urgent, explicitly authorized need. Keep `minimumReleaseAgeExcludes = []`. Bun does not use pnpm's `minimumReleaseAgeStrict` setting. Do not add dependency overrides except the Vite+ prescribed Vite alias and exact matching toolchain Vitest. Document the official source for every unavoidable exception.
+- **Bun**: keep `packageManager`, the Nix development shell, and generated starters aligned with the current supported Bun release. Define workspace globs and the shared catalog in `package.json`. Explicitly trust only `bun`, `esbuild`, and `workerd` lifecycle scripts, leaving `msgpackr-extract` untrusted. Bun package management does not replace the selected Node/Bun application runtime. For npm Trusted Publishing, pack with Bun first and use npm only for the registry upload boundary.
 - **Gitignore exclusions**: `vite.config.ts` uses the published [JSR package](https://jsr.io/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
 - **Effect**: consult installed-version source and official documentation before changing APIs.
 - **Playwright/workerd**: browser acceptance exercises actual host behavior. A successful build or mock does not establish runtime correctness.

@@ -10,6 +10,7 @@ Refer to [upstream provenance](docs/UPSTREAM.md) for the immutable baseline and 
 ## Quick start
 
 Create a one-page Node.js application.
+Generated projects use Bun for dependency installation through VitePlus, independently of their selected runtime.
 Install its dependencies.
 Then start the development server.
 
@@ -45,7 +46,7 @@ For other configurations, refer to [Platforms](app/docs/src/content/en/articles/
 ## Prerequisites
 
 - **Host**: Cloudflare Workers with Node compatibility, or the [native Node/Bun server](packages/server/README.md#prerequisites).
-- **Build integration**: VitePlus with the matching Effront integration and host adapter.
+- **Build integration**: VitePlus with the matching Effront integration and host adapter. Generated starters select Bun as their dependency package manager.
 - **Peers**: Use Effect and React/React DOM versions that match the installed packages' `peerDependencies`. Use one consistent Effect installation across your application. Use the same version for React and React DOM.
 - **Alchemy**: Use the version specified by the installed adapter's `peerDependencies`. A configured Cloudflare profile is necessary for its official CLI, also for local use. That profile is not necessary for local development with standalone Workers.
 

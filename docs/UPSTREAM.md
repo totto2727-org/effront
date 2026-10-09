@@ -78,6 +78,9 @@ The initializer tests require caret ranges in the generated dependencies and dev
 
 ## Mature dependency selection and override boundary
 
+This section records the final pnpm-based configuration before the Bun workspace migration below.
+The selected dependency versions and the two VitePlus toolchain exceptions remain unchanged by that migration.
+
 The 0.3.2 release refreshes the catalog and lockfile with `vp update -r` under the unchanged default release-age policy.
 The selected compatible releases include Effect 4.0.2, VitePlus and its core alias 1.1.0, Vitest 5.0.3, and Wrangler 4.148.0.
 Generated starter ranges use the same tested catalog baselines.
@@ -102,6 +105,29 @@ Node-side infrastructure tooling and browser graphs remain unprojected.
 A retained real-build regression checks runtime exports and absence of deployment tooling, and the documentation application's credential-free built workerd browser suite passes all 275 checks after installing its matching Chromium revision.
 Official Alchemy CLI planning, authenticated reconciliation, and deployment remain separately unverified.
 This changes fork-specific adapter compilation only and incorporates no upstream runtime source.
+
+## Bun workspace and publication boundary
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, this fork uses Bun as its only dependency package manager.
+Workspace globs, all 45 shared caret catalog entries, and the two required VitePlus overrides move from pnpm YAML to `package.json`.
+`bun.lock` replaces the pnpm lockfile, and `bunfig.toml` explicitly retains the previous 24-hour waiting period as `minimumReleaseAge = 86400` with an empty exclusion list.
+Bun has no pnpm `minimumReleaseAgeStrict` setting, so the pnpm-specific configuration is removed rather than implying that Bun interprets it.
+The age gate applies to newly resolved direct and transitive packages; frozen installs reproduce the committed resolution.
+As documented by Bun, registry versions without publication timestamps pass its native age filter.
+The explicit lifecycle allowlist contains only `bun`, `esbuild`, and `workerd`, preserving the denial of `msgpackr-extract` scripts without inheriting Bun's default trusted list.
+The JSR Gitignore package keeps its public import name and uses the official npm compatibility alias `npm:@jsr/totto2727__gitignore-patterns@^0.1.0` with the existing `npm.jsr.io` registry configuration.
+
+All four initializer platforms declare the same Bun package manager and ship the shared age configuration, exact matching VitePlus toolchain overrides, and a host-appropriate lifecycle allowlist.
+Node applications still start with Node and retain their Node engine requirement, while Bun applications start with Bun.
+The Nix input refresh aligns its Bun and VitePlus launcher versions with the workspace, and the shell asserts that its Bun version matches `packageManager`.
+CI installation is frozen through VitePlus.
+Bun packs the eight public tarballs and preserves normalized workspace caret peers and catalog ranges.
+Only their npm registry upload uses npm, because Bun's publishing command does not support provenance, Trusted Publishing, or recursive filtered publication.
+Release packing and uploading are separate root VitePlus tasks, and a registry failure stops uploading unless the exact version is explicitly absent.
+This changes fork-specific dependency management, starter metadata, CI installation, and publication orchestration only.
+The Effront release remains 0.3.2, the production Alchemy projection fix is retained, and no upstream runtime source is incorporated.
+
+Sources: [Bun workspaces](https://bun.com/docs/pm/workspaces), [Bun catalogs](https://bun.com/docs/pm/catalogs), [minimum release age](https://bun.com/docs/pm/cli/install#minimum-release-age), [Bun lifecycle allowlist](https://bun.com/docs/pm/lifecycle), [JSR package compatibility](https://jsr.io/docs/using-packages), [VitePlus package management](https://viteplus.dev/guide/install), and [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/).
 
 ## Future incorporation
 

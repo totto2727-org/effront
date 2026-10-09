@@ -19,6 +19,8 @@ jobs:
           fetch-depth: 0
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
+        with:
+          install-args: --frozen-lockfile
       - name: Build workspace packages
         uses: ./.github/actions/build-workspace
       - name: Check and test
