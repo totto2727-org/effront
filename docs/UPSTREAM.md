@@ -90,6 +90,17 @@ The Vitest override is the documented toolchain exception, not an exact direct d
 The historical 0.3.1 VitePlus 1.0.0 selection above describes that earlier release, not the current lockfile.
 The immutable upstream comparison revision and runtime source remain unchanged.
 
+## Alchemy server-runtime compilation boundary
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the fork's Alchemy adapter applies its existing subtractive runtime projection to production RSC/SSR compilation as well as development.
+Alchemy beta.81's `Cloudflare/Workers` barrel exports deployment modules including `Source`; its lazy `Sources/Vite` import reaches the Node-only runtime host and Vite artifact tooling.
+The previous serve-only gate allowed that deployment graph into built Workers, causing the actual documentation browser host build with VitePlus 1.1.0 to fail on Vite's internal `*?t=*` import.
+Removing that gate preserves the native Worker bridge, runtime capability exports, application source, and React/RSC protocols without externalizing Vite or adding dependency overrides or release-age exceptions.
+Node-side infrastructure tooling and browser graphs remain unprojected.
+A retained real-build regression checks runtime exports and absence of deployment tooling, and the documentation application's credential-free built workerd browser suite passes all 275 checks after installing its matching Chromium revision.
+Official Alchemy CLI planning, authenticated reconciliation, and deployment remain separately unverified.
+This changes fork-specific adapter compilation only and incorporates no upstream runtime source.
+
 ## Future incorporation
 
 Keep the historical baseline immutable as the comparison point, and advance the last fully incorporated baseline whenever a reviewed upstream range is fully accounted for.

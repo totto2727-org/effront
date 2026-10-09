@@ -86,22 +86,25 @@ Applications select capabilities through Alchemy's public APIs rather than an Ef
 The adapter leaves `optimizeDeps` unchanged and does not reject an Alchemy package based on its version number.
 Shared React/Effect deduplication remains in place.
 
-A temporary server-development plugin removes known deployment-only and local-host export modules from Alchemy's Cloudflare entry points.
+A temporary server-runtime plugin removes known deployment-only and local-host export modules from Alchemy's Cloudflare entry points in both development and production compilation.
 It reads the installed module exports and subtracts infrastructure-provider factories identified by their actual provider-builder calls.
 It preserves the remaining exports, including non-KV namespaces, HTTP clients, `BrowserLocal`, and `WorkerConfigProvider`.
-The exclusion list is in `src/cloudflare/runtime-projection.ts`. Local emulators, artifact builders and stack-state management are not available inside a Worker through these development entry points.
+The exclusion list is in `src/cloudflare/runtime-projection.ts`. Local emulators, artifact builders and stack-state management are not available inside a Worker through these runtime entry points.
 Using a new Alchemy capability does not require adding it to an allowed-export list.
 
 Vite's build API and Alchemy's purity transform compile each requested entry once into an in-memory virtual runtime module.
 Effect and host built-ins are shared with the surrounding graph.
-This is a development compatibility compilation step, not an `optimizeDeps` setting. The host's own dependency discovery remains unchanged.
+This is a server-runtime compatibility compilation step, not an `optimizeDeps` setting. The host's own dependency discovery remains unchanged.
 
-Node-side deployment imports, browser modules and production builds are not projected.
+Node-side deployment imports and browser modules are not projected.
+Production RSC/SSR graphs need the same boundary as development: Alchemy's `Cloudflare/Workers` barrel re-exports `Source`, whose lazy `Sources/Vite` import reaches Node-side artifact tooling.
+Without projection, VitePlus 1.1.0 attempts to bundle Vite itself into the Worker and fails to resolve its internal `*?t=*` import.
+The projection preserves runtime APIs, including `Worker`, `makeWorkerBridge`, and `WorkerConfigProvider`, rather than externalizing or replacing the deployment tools.
 Missing actual modules or unsupported module structure still report errors rather than silently inventing exports.
 Preserving an API export is not proof of every cloud product's binding or remote behavior.
 
 Removing all compatibility handling caused HTTP 500 in official CLI development because Node-only workerd code was evaluated inside a Worker.
-The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions and HMR as removal checks.
+The source TODO calls for removing the temporary filter/compiler when the dependency graph is runtime-safe, with official cold-start development, hydration, Server Functions, HMR and built Worker acceptance as removal checks.
 
 The former Effect rc.112 pin lacked a public final-response URL and could transfer a streaming scope before a discarded HEAD body.
 Both boundaries were re-evaluated against the pinned rc.116 and removed.
