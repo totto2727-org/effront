@@ -1,6 +1,9 @@
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { afterEach, expect, it, vi } from "vitest";
 import { NodeServices } from "@effect/platform-node";
 import { Effect } from "effect";
@@ -13,6 +16,7 @@ import { createProject, platforms } from "./init.js";
 
 const directories: string[] = [];
 const runCommand = Command.runWith(command, { version: packageJson.version });
+const runFile = promisify(execFile);
 
 async function temporaryDirectory(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), "create-effront-test-"));
@@ -31,6 +35,39 @@ it("keeps required Vite+ overrides aligned with its installed toolchain", () => 
     vite: `npm:@voidzero-dev/vite-plus-core@${vitePlusPackage.version}`,
     vitest: vitePlusPackage.dependencies.vitest,
   });
+});
+
+it("ships Bun's install policy through the published CLI for every platform", async () => {
+  const root = fileURLToPath(new URL("../../../", import.meta.url));
+  await mkdir(join(root, "tmp"), { recursive: true });
+  const directory = await mkdtemp(join(root, "tmp", "create-effront-publication-"));
+  directories.push(directory);
+  const archive = join(directory, "create-effront.tgz");
+  await runFile("bun", ["pm", "pack", "--filename", archive], {
+    cwd: fileURLToPath(new URL("../", import.meta.url)),
+  });
+  await runFile("tar", ["-xf", archive, "-C", directory]);
+  // Reuse the installed declared dependencies without another registry installation.
+  await symlink(
+    fileURLToPath(new URL("../node_modules", import.meta.url)),
+    join(directory, "package", "node_modules"),
+    "dir",
+  );
+  const published = JSON.parse(await readFile(join(directory, "package", "package.json"), "utf8"));
+  const policy = await readFile(join(root, "bunfig.toml"), "utf8");
+  for (const platform of platforms) {
+    const project = join(directory, "generated", platform);
+    await runFile(process.execPath, [
+      join(directory, "package", published.bin["create-effront"]),
+      project,
+      "--platform",
+      platform,
+    ]);
+    expect(await readFile(join(project, "bunfig.toml"), "utf8")).toBe(policy);
+    const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
+    expect(manifest.packageManager).toBe(workspace.packageManager);
+    expect(manifest.overrides).toEqual(workspace.overrides);
+  }
 });
 
 for (const platform of platforms) {

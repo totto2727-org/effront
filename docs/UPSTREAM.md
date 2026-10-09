@@ -118,6 +118,8 @@ The explicit lifecycle allowlist contains only `bun`, `esbuild`, and `workerd`, 
 The JSR Gitignore package keeps its public import name and uses the official npm compatibility alias `npm:@jsr/totto2727__gitignore-patterns@^0.1.0` with the existing `npm.jsr.io` registry configuration.
 
 All four initializer platforms declare the same Bun package manager and ship the shared age configuration, exact matching VitePlus toolchain overrides, and a host-appropriate lifecycle allowlist.
+The shared configuration is stored as `_bunfig.toml` and renamed to `bunfig.toml` during generation because Bun packing excludes files named `bunfig.toml`, including nested templates.
+A retained publication regression packs the actual initializer, extracts it, and executes its shipped CLI for all four platforms to verify the installed policy and toolchain metadata.
 Node applications still start with Node and retain their Node engine requirement, while Bun applications start with Bun.
 The Nix input refresh aligns its Bun and VitePlus launcher versions with the workspace, and the shell asserts that its Bun version matches `packageManager`.
 CI installation is frozen through VitePlus.
