@@ -84,9 +84,11 @@ Generated starter ranges use the same tested catalog baselines.
 All four previous `minimumReleaseAgeExclude` entries are removed.
 `minimumReleaseAgeStrict: true` prevents the package manager from adding exclusions automatically without shortening its default waiting period.
 Effect and React overrides are removed so ordinary dependency and peer constraints determine their resolution.
-Only the Vite alias and exact matching Vitest toolchain override remain, as prescribed by [Vite+ Manual Installation & Migration](https://github.com/voidzero-dev/vite-plus#manual-installation--migration).
+Only `vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0` and `vitest@*: 5.0.3` overrides remain, as prescribed by [Vite+ Manual Installation & Migration](https://viteplus.dev/guide/migrate).
+Both override values match the installed VitePlus toolchain exactly.
+Keep the direct VitePlus catalog range as a caret, and update both overrides together when upgrading the toolchain.
 `vp toolchain vitest` reports Vitest 5.0.3 for the installed VitePlus 1.1.0.
-The Vitest override is the documented toolchain exception, not an exact direct dependency pin.
+The exact core alias and Vitest overrides are documented toolchain exceptions, not exact direct dependency pins.
 The historical 0.3.1 VitePlus 1.0.0 selection above describes that earlier release, not the current lockfile.
 The immutable upstream comparison revision and runtime source remain unchanged.
 

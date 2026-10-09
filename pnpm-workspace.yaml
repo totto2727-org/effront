@@ -57,8 +57,8 @@ minimumReleaseAgeStrict: true
 # Vite+ requires its Vite alias and matching toolchain Vitest.
 # See node_modules/vite-plus/README.md, Manual Installation & Migration.
 overrides:
-  vite: "catalog:"
-  vitest: 5.0.3
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
+  vitest@*: 5.0.3
 
 allowBuilds:
   bun: true

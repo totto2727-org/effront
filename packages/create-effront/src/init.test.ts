@@ -6,6 +6,7 @@ import { NodeServices } from "@effect/platform-node";
 import { Effect } from "effect";
 import { Command } from "effect/cli";
 import packageJson from "../package.json" with { type: "json" };
+import vitePlusPackage from "vite-plus/package.json" with { type: "json" };
 import { command } from "./cli.js";
 import { createProject, platforms } from "./init.js";
 
@@ -21,6 +22,17 @@ async function temporaryDirectory(): Promise<string> {
 afterEach(async () => {
   await Promise.all(
     directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
+  );
+});
+
+it("keeps required Vite+ overrides aligned with its installed toolchain", async () => {
+  const workspace = await readFile(
+    new URL("../../../pnpm-workspace.yaml", import.meta.url),
+    "utf8",
+  );
+  const overrides = workspace.split("\noverrides:\n")[1]?.split("\n\n")[0];
+  expect(overrides?.trim()).toBe(
+    `vite@*: npm:@voidzero-dev/vite-plus-core@${vitePlusPackage.version}\n  vitest@*: ${vitePlusPackage.dependencies.vitest}`,
   );
 });
 
