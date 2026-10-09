@@ -58,8 +58,8 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 
 ## Package-specific rules
 
-- Manage all external dependency versions in the shared catalog, including single consumers; use `catalog:` in manifests and overrides.
-- Keep internal references as `workspace:`. Public Vite peers stay `"*"` to accept the consumer's Vite, while development uses the catalog-pinned VitePlus alias.
+- Manage all external dependency versions in the shared catalog, including single consumers; use `catalog:` in manifests and overrides. Use caret ranges for catalog entries and generated starter dependencies, including prereleases; do not use exact dependency pins.
+- Keep internal references as `workspace:`. Public Vite peers stay `"*"` to accept the consumer's Vite, while development uses the catalog-managed VitePlus alias.
 - Preserve explicit public subpaths, package-owned pack settings, and test-excluding publication entries. Keep every `packages/*` library at the same release version, including Alchemy; shared release requirements live in the release policy below.
 - Use path-qualified Effect service identifiers and implementation-free shared contracts. Use `Effect.fnUntraced` for internals, `Effect.fn` for application/examples/public API authoring, and typed failures for input/I/O; reserve `TypeError` for violated wiring invariants.
 - Colocate unit tests as `<module>.test.ts(x)`; reserve `tests/` for integration or black-box contracts. Keep all retained source/tests checked and standard Vitest discovery; Playwright uses `*.e2e.ts`.

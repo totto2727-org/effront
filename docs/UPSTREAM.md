@@ -48,6 +48,15 @@ Static assets follow stable Effect's `If-Range` handling: only matching strong E
 No upstream runtime source is incorporated by this change; external consumer repositories remain unchanged.
 Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.0.0](https://registry.npmjs.org/vite-plus/1.0.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
 
+## Dependency range policy
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront uses caret ranges for every external catalog dependency and every generated starter dependency, including Alchemy prereleases and `@effront/*` starter references.
+This replaces the remaining exact dependency pins without changing the minimum accepted versions or the upstream runtime source.
+Compatible updates follow each package's caret range; for example, `^0.3.1` allows patches below 0.4.0, while `^2.0.0-beta.81` also admits stable 2.x releases but not unrelated prerelease versions.
+The lockfile retains concrete resolved versions for reproducible installation, and the package manager's release-age policy remains unchanged.
+Package release versions, the package-manager toolchain version, internal `workspace:` references, public Vite wildcard peers, and immutable upstream and Nix revisions are not dependency pins and retain their existing form.
+The initializer tests require caret ranges in the generated dependencies and development dependencies for all four supported platforms.
+
 ## Future incorporation
 
 Keep the historical baseline immutable as the comparison point, and advance the last fully incorporated baseline whenever a reviewed upstream range is fully accounted for.

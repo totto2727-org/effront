@@ -43,8 +43,9 @@ for (const platform of platforms) {
     expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.0.0");
     for (const dependencies of [manifest.dependencies, manifest.devDependencies]) {
       for (const [name, version] of Object.entries(dependencies ?? {})) {
+        expect(version).toMatch(/^\^/);
         if (name.startsWith("@effront/")) {
-          expect(version).toBe(packageJson.version);
+          expect(version).toBe(`^${packageJson.version}`);
         }
         if (name === "effect" || name.startsWith("@effect/")) {
           expect(version).toBe("^4.0.1");
@@ -90,11 +91,11 @@ it("creates a standalone Cloudflare Worker without Alchemy or bindings", async (
   const worker = await readFile(join(directory, "src/entry.workers.ts"), "utf8");
   const config = await readFile(join(directory, "vite.config.ts"), "utf8");
   const wrangler = JSON.parse(await readFile(join(directory, "wrangler.json"), "utf8"));
-  expect(manifest.dependencies).toHaveProperty("@effront/cloudflare", packageJson.version);
+  expect(manifest.dependencies).toHaveProperty("@effront/cloudflare", `^${packageJson.version}`);
   expect(manifest.dependencies).not.toHaveProperty("@effront/alchemy");
   expect(manifest.dependencies).not.toHaveProperty("alchemy");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
-  expect(manifest.devDependencies).toHaveProperty("wrangler", "4.131.0");
+  expect(manifest.devDependencies).toHaveProperty("wrangler", "^4.131.0");
   expect(manifest.scripts).toEqual({ deploy: "wrangler deploy" });
   expect(worker).toContain("createFetchHandler(application)");
   expect(config).toContain("effrontCloudflare()");
@@ -113,7 +114,7 @@ it("keeps standalone Cloudflare hosting out of the Alchemy project", async () =>
   const worker = await readFile(join(directory, "src/entry.workers.ts"), "utf8");
   const config = await readFile(join(directory, "vite.config.ts"), "utf8");
   const runner = await readFile(join(directory, "alchemy.run.ts"), "utf8");
-  expect(manifest.dependencies).toHaveProperty("@effront/alchemy", packageJson.version);
+  expect(manifest.dependencies).toHaveProperty("@effront/alchemy", `^${packageJson.version}`);
   expect(manifest.dependencies).not.toHaveProperty("@effront/cloudflare");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
   expect(worker).toContain("makeApplicationHttpEffect");
