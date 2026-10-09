@@ -40,7 +40,7 @@ for (const platform of platforms) {
       expect(manifest.scripts).not.toHaveProperty("build");
     }
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
-    expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.0.0");
+    expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.1.0");
     for (const dependencies of [manifest.dependencies, manifest.devDependencies]) {
       for (const [name, version] of Object.entries(dependencies ?? {})) {
         expect(version).toMatch(/^\^/);
@@ -48,7 +48,7 @@ for (const platform of platforms) {
           expect(version).toBe(`^${packageJson.version}`);
         }
         if (name === "effect" || name.startsWith("@effect/")) {
-          expect(version).toBe("^4.0.1");
+          expect(version).toBe("^4.0.2");
         }
       }
     }
@@ -95,7 +95,7 @@ it("creates a standalone Cloudflare Worker without Alchemy or bindings", async (
   expect(manifest.dependencies).not.toHaveProperty("@effront/alchemy");
   expect(manifest.dependencies).not.toHaveProperty("alchemy");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
-  expect(manifest.devDependencies).toHaveProperty("wrangler", "^4.131.0");
+  expect(manifest.devDependencies).toHaveProperty("wrangler", "^4.148.0");
   expect(manifest.scripts).toEqual({ deploy: "wrangler deploy" });
   expect(worker).toContain("createFetchHandler(application)");
   expect(config).toContain("effrontCloudflare()");
