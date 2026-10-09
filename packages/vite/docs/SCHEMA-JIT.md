@@ -14,14 +14,16 @@ Importing the enable module in one Vite graph does not initialize the others, an
 
 `effrontServer()` independently selects the native RSC entry, defaulting to `src/entry.rsc.ts`, while `effront()` still targets its own default `src/entry.workers.ts` for injection.
 Consequently, `plugins: [effront(), effrontServer()]` does not prepend the JIT import to the native RSC entry.
-Align `effront({ rsc: "./src/entry.rsc.ts" })` with the server adapter's `rsc` option if that Vite graph needs JIT.
+If that Vite graph needs JIT, align `effront({ rsc: "./src/entry.rsc.ts" })` with the server adapter's `rsc` option.
 The direct Node/Bun host imports do not change this entry-path check.
 
 ## Initialization order
 
 The enable import registers a compiler as a module side effect and must run before application schemas are first constructed or their parsers are captured.
 Parsers captured earlier remain usable but are not replaced by JIT versions.
-The RSC transform therefore prefixes the import to the host entry instead of adding it to an arbitrary application module or relying on another graph's registration.
+Thus the RSC transform prefixes the import to the host entry.
+It does not add it to an arbitrary application module or depend on another graph's registration.
+
 Applications using matched Effront entries do not need an additional JIT import.
 A custom entry or host that bypasses these integration entry points must arrange early registration in each graph it owns.
 When dynamic function construction is blocked, Effect retains interpreted parsing.

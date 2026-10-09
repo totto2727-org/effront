@@ -2,50 +2,51 @@
 
 ## Repository structure
 
-- `node/`, `bun/`, `cloudflare/`, and `alchemy-cloudflare/`: minimal Node, Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers starters. Their `src/entry.effront.tsx` files must remain byte-identical; only hosting and infrastructure management differ.
+- `node/`, `bun/`, `cloudflare/`, and `alchemy-cloudflare/`: minimal Node, Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers starters. Their `src/entry.effront.tsx` files must remain byte-identical. Only hosting and infrastructure management differ.
 - `basic/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
 - `loading/`: native Alchemy Worker demonstrating Loading, Suspense, and browser-side Query without KV.
 - `markdown/`: feature-rich native Alchemy consumer of file-relative Markdown routing and assets.
-- `check-in/` and `streaming-feed/`: Alchemy-managed Worker showcases of query atoms and incremental Server Function streams; their auth-free local Worker Playwright harnesses live under `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/`.
+- `check-in/` and `streaming-feed/`: Alchemy-managed Worker showcases of query atoms and incremental Server Function streams. Their auth-free local Worker Playwright harnesses are under `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/`.
 - The feature-rich native Node/Bun applications are test-owned fixtures under `../tests/e2e-server/fixtures/`, not public examples.
 
-See [example selection](README.md) for runnable commands and the distinction between platform starters and feature demonstrations.
+Refer to [example selection](README.md) for runnable commands and the distinction between platform starters and feature demonstrations.
 
 ## Development commands
 
 ### Standard tasks
 
 Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before entering an example.
-Workspace preparation is separate from development startup; example development commands do not build workspace packages.
+Workspace preparation is separate from development startup.
+Example development commands do not build workspace packages.
 
-- `vp dev` in `node/` and `bun/` starts the minimal Vite host on an available port after root preparation. Use `vp build` followed by `vp run start` for their separate Node and Bun native production listeners; set `PORT` or `HOST` to override the server defaults.
-- `vp dev` in `cloudflare/` starts the minimal standalone Cloudflare Worker on an available Vite port; `vp build` emits its Worker artifact without Alchemy.
+- `vp dev` in `node/` and `bun/` starts the minimal Vite host on an available port after root preparation. Use `vp build` followed by `vp run start` for their separate Node and Bun native production listeners. To override the server defaults, set `PORT` or `HOST` before startup.
+- `vp dev` in `cloudflare/` starts the minimal standalone Cloudflare Worker on an available Vite port. `vp build` emits its Worker artifact without Alchemy.
 - `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `cloudflare/` serves the built artifact independently of Vite after `vp build`.
 - `vp run dev` in `alchemy-cloudflare/` starts the minimal Alchemy-managed Worker without a fixed development port.
 - `vp run dev` in `basic/`, `loading/`, or `markdown/` invokes `alchemy dev` without fixing an example-specific development port.
 - `vp run dev` in `check-in/` or `streaming-feed/` starts the Alchemy-managed feature showcases without fixed development ports. Their independent real-host checks run from `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/` with `vp run test`.
 - `vp dev`, `vp build`, and `vp run start` in `../tests/e2e-server/fixtures/node/` or `../tests/e2e-server/fixtures/bun/` exercise the feature-rich native regression applications. `PORT` and `HOST` configure production listening.
-- `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host; official CLI acceptance is separate.
+- `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host. Official CLI acceptance is separate.
 
 ## Architecture
 
 ### Application entry and host ownership
 
-- Export the application definition directly from `src/entry.effront.tsx`; do not restore a re-export-only `entry.client.ts`.
-- Native Alchemy construction keeps its fixed deferred `entry.effront` import through `makeApplicationHttpEffect`; static imports would evaluate RSC application code during infrastructure planning.
+- Export the application definition directly from `src/entry.effront.tsx`. Do not restore a re-export-only `entry.client.ts`.
+- Native Alchemy construction keeps its fixed deferred `entry.effront` import through `makeApplicationHttpEffect`. Static imports would evaluate RSC application code during infrastructure planning.
 - Alchemy CLI owns its Vite host. Do not add a manual runtime plugin, injection-environment guard, application stage fallback, or explicit stage flag to ordinary scripts.
-- Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront` and the native `worker` only on `effrontAlchemy`; keep the existing Tailwind integration separate.
-- Node/Bun use `entry.rsc.ts` for the native handler and `entry.server.ts` for production listening; never start the production server during Vite development.
-- Standalone Workers examples use a Fetch entry, `effront()` plus `effrontCloudflare()`, and Wrangler configuration; keep their dependency graphs free of Alchemy. Alchemy-managed examples instead use `effrontAlchemy()` and an Alchemy Worker definition.
+- Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront`. Configure the native `worker` only on `effrontAlchemy`. Keep the existing Tailwind integration separate.
+- Node/Bun use `entry.rsc.ts` for the native handler and `entry.server.ts` for production listening. Never start the production server during Vite development.
+- Standalone Workers examples use a Fetch entry, `effront()` plus `effrontCloudflare()`, and Wrangler configuration. Keep their dependency graphs free of Alchemy. Alchemy-managed examples instead use `effrontAlchemy()` and an Alchemy Worker definition.
 - Starter application code is exactly the same on Node, Bun, standalone Cloudflare, and Alchemy Cloudflare. Do not put platform branding, service wiring, feature demos, or deployment configuration in their `entry.effront.tsx` files.
 
 ## Package-specific rules
 
-- Keep all four flat starters limited to one heading and host configuration; verify their documented startup without adding Counter, Server Functions, or styling.
+- Keep all four flat starters limited to one heading and host configuration. Verify their documented startup without the addition of Counter, Server Functions, or styling.
 - Keep feature showcases focused: introductory routes, Counter, Server Function, and framework features with Tailwind utilities, not custom transition demos or CSS.
-- Put feature-independent React UI in `components/`; avoid redundant `Example` name prefixes.
+- Put feature-independent React UI in `components/`. Avoid redundant `Example` name prefixes.
 - Group greeting behavior under `features/greeting/`: `server.ts` for Server Functions, `client.tsx` for feature UI, and `services.ts` for capabilities/services. Keep client/server directives in separate files, without re-export barrels.
-- Use `effrontTailwind()` for generated styles; Markdown may select its Typography stylesheet explicitly. Do not hand-import styles in client shells or add ambient CSS types supplied by Vite.
+- Use `effrontTailwind()` for generated styles. Markdown may select its Typography stylesheet explicitly. Do not hand-import styles in client shells or add ambient CSS types supplied by Vite.
 - Verify visible SSR, hydration, Server Functions, navigation, and relevant CSS changes against the real host. Preserve existing independent regression fixtures rather than expanding the examples into test harnesses.
 
 ## Task-specific documentation

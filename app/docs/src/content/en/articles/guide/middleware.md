@@ -1,5 +1,5 @@
 Effront Middleware runs checks or provides request-specific services around page requests and Server Function calls.
-Use it for shared behavior such as checking authentication or making the current user available to application code.
+Use it for shared behavior, such as authentication checks or a service that supplies the current user to application code.
 
 ## Choose the request scope {#reach}
 
@@ -66,7 +66,8 @@ export default EFFRONT.make({ routes });
 ```
 
 Open `/request` to see the request URL.
-Creating the Page through `RequestEFFRONT` is not enough: its Routes must activate the Middleware too.
+The Page definition from `RequestEFFRONT` does not activate the Middleware.
+Its Routes must activate the Middleware too.
 Layouts and Components created through `RequestEFFRONT` can read the service when rendered inside that scope.
 To limit it to one section, mount these Routes inside parent Routes.
 
@@ -102,7 +103,10 @@ const routes = RequestEFFRONT.withMiddleware(Maintenance)
 Requests now receive status 503 and `Under maintenance` instead of the Page.
 For a conditional check, run `httpEffect` only when the request is allowed.
 
-Authentication follows the same pattern: verify the session, reject invalid requests, and provide the verified user before continuing.
+Authentication uses the same pattern.
+Validate the session first.
+Reject invalid requests.
+For valid requests, supply the validated user before downstream processing.
 
 Chained Middleware enters in declaration order and processes responses in reverse order.
 An early response skips the remaining inner handlers.
@@ -127,7 +131,9 @@ export const recordRequest = RequestEFFRONT.ServerFn.make({
 });
 ```
 
-In `src/entry.effront.tsx`, remove `Maintenance`, restore the Routes, and add the form to `RequestPage`:
+In `src/entry.effront.tsx`, remove `Maintenance`.
+Restore the Routes.
+Then add the form to `RequestPage`:
 
 ```tsx
 // src/entry.effront.tsx: replace the Maintenance import.
@@ -152,6 +158,6 @@ const RequestPage = RequestEFFRONT.Page.make({
 const routes = RequestEFFRONT.Routes.make({ layout: RootLayout }).page("/request", RequestPage);
 ```
 
-Submitting logs `Form received` with the submission URL, not a value saved from the page request.
+Form submission logs `Form received` with the submission URL, not a value saved from the page request.
 
-See [Mutation Server Functions](/en/guide/mutation-server-functions) for returning form state.
+Refer to [Mutation Server Functions](/en/guide/mutation-server-functions) for returning form state.

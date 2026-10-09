@@ -11,9 +11,12 @@ The release includes `@effront/core`, `@effront/vite`, `@effront/cloudflare`, `@
 3. Confirm that the package owner has configured npm Trusted Publishing for every package before relying on the workflow.
 
 Publication has no automatic version bump or tag trigger.
-The 0.3.0 release adopts stable Effect v4 and supersedes the Effect prerelease compatibility of 0.2.0; keep every Effront package at the matching release version.
-The 0.3.1 patch release aligns generated starters with mature Vite Plus 1.0.0 while preserving the default package release-age policy.
-The 0.3.2 patch release carries the caret dependency policy into all public manifests and generated starters without changing the locked external dependency versions.
+The 0.3.0 release adopts stable Effect v4 and supersedes the Effect prerelease compatibility of 0.2.0.
+Keep every Effront package at the matching release version.
+The 0.3.1 patch release aligned generated starters with mature Vite Plus 1.0.0.
+The 0.3.2 patch release uses caret dependencies and the latest compatible releases accepted by the default release-age policy.
+It removes release-age exclusions and unnecessary overrides.
+Only Vite+ prescribed Vite and matching Vitest overrides remain.
 The workflow skips versions already on npm.
 
 ## Package builds
@@ -56,12 +59,13 @@ References: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/)
 ## Alchemy release boundary
 
 Alchemy participates in the same synchronized release as every other library under `packages/`.
-Its public package retains the documented compatibility limits; inclusion in npm publication does not authorize infrastructure deployment.
+Its public package retains the documented compatibility limits.
+Inclusion in npm publication does not authorize infrastructure deployment.
 First-time publication and Trusted Publisher setup for Alchemy remain package-owner prerequisites.
-See [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md).
+Refer to [Alchemy integration](../packages/alchemy/docs/INTEGRATION.md).
 
 ## Native server release boundary
 
 `@effront/server` has separate Node, Bun, Vite, and assets entry points.
 The owner must perform its first publication if needed and configure its Trusted Publisher before relying on automated releases.
-Node and Bun host peers are optional; applications must install the peer required by their selected entry, and Vite tooling requires the Node platform peer.
+Node and Bun host peers are optional. Applications must install the peer required by their selected entry, and Vite tooling requires the Node platform peer.

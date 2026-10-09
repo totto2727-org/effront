@@ -1,5 +1,7 @@
-Custom HTTP endpoints let an Effront application return JSON alongside its rendered Pages, using the same application services.
-The example adds `GET /api/greeting` to the application from the [services guide](/en/guide/effect) and applies a shared response header to the Page and API.
+Custom HTTP endpoints let an Effront application return JSON alongside its rendered Pages.
+These endpoints use the same application services.
+The example adds `GET /api/greeting` to the application from the [services guide](/en/guide/effect).
+It applies a shared response header to the Page and API.
 
 ## Define a JSON endpoint {#router}
 
@@ -22,15 +24,19 @@ export const GreetingApi = HttpRouter.use(
 );
 ```
 
-Choose a path that does not overlap Page or Server Function URLs, and leave `/_effront` reserved.
+Select a path that does not overlap Page or Server Function URLs.
+Keep `/_effront` reserved.
 
 > [!WARNING]
-> Use `jsonUnsafe` only when the value is known to be JSON-serializable, as this string-valued object is.
-> For endpoints that accept external input, validate it and handle failures as HTTP responses.
+> Before you use `jsonUnsafe`, make sure that JSON can serialize the value.
+> This example uses an object with string values.
+> For endpoints that accept external input, validate that input.
+> Handle failures as HTTP responses.
 
 ## Register the route and its service {#services}
 
-In `src/entry.effront.tsx`, add `Layer` to the `effect` import and import `GreetingApi`.
+In `src/entry.effront.tsx`, add `Layer` to the `effect` import.
+Then import `GreetingApi`.
 
 ```typescript
 // src/entry.effront.tsx: replace the effect import.
@@ -56,8 +62,9 @@ The existing `/` Page still displays the greeting.
 
 ## Keep resources request-local {#boundary}
 
-The application Layer is built for each request, including custom HTTP requests.
-Keep connections and other scoped resources within that request, whose scope lasts through response-body completion, failure, or cancellation.
+Effront builds the application Layer for each request, including custom HTTP requests.
+Keep connections and other scoped resources within that request.
+The request scope lasts through response-body completion, failure, or cancellation.
 
 > [!WARNING]
 > Do not save request-specific services in module-level variables for later requests.
@@ -83,7 +90,8 @@ export const ApplicationLayer = Layer.mergeAll(GreetingApi, GlobalHeaders).pipe(
 );
 ```
 
-In `src/entry.effront.tsx`, import the shared Layer and remove the local definition and unused imports:
+In `src/entry.effront.tsx`, import the shared Layer.
+Then remove the local definition and unused imports:
 
 ```typescript
 // src/entry.effront.tsx: replace the effect import to remove Layer.
@@ -104,4 +112,5 @@ Use [scoped Middleware](/en/guide/middleware) for a policy limited to one Routes
 > This example maps only successful downstream responses.
 > An unmatched request fails with `RouteNotFound`, so its final 404 does not receive the header unless you handle that error and return a response.
 > Host-served static assets and the runtime's early oversized-request 413 response bypass the router entirely.
-> Configure asset headers on the host.
+
+Configure asset headers on the host.

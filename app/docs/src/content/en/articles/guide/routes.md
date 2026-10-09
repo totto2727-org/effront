@@ -1,7 +1,8 @@
 Use `Layout` for the HTML shared by pages, `Page` for each page's content, and `Routes` to connect them to URLs.
 This guide starts with a homepage, then adds path parameters and a section with its own layout and loading UI.
 
-The first three sections explain the parts of `src/entry.effront.tsx`; the [complete entry](#application) puts them together.
+The first three sections show the parts of `src/entry.effront.tsx`.
+The [complete entry](#application) combines them.
 
 ## Define the shared Layout {#layouts}
 
@@ -85,11 +86,14 @@ const routes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
 export default EFFRONT.make({ routes });
 ```
 
-Save, then open `/` to see `Home` where RootLayout renders `children`.
+Save the file.
+Then open `/` to see `Home` where RootLayout renders `children`.
 
 ## Read path parameters {#matching}
 
-In `src/entry.effront.tsx`, add `Schema`, define the two Pages before `routes`, and replace the route registration:
+In `src/entry.effront.tsx`, add `Schema`.
+Define the two Pages before `routes`.
+Then replace the route registration:
 
 ```tsx
 // src/entry.effront.tsx: replace the effect import.
@@ -123,7 +127,8 @@ A named parameter captures one segment.
 A terminal catch-all captures the remaining path, including an empty string, and must be last in the pattern.
 Do not also register `/manual`, because `/manual/*path` already owns that URL.
 More specific paths such as `/manual/about` and `/manual/:section` take precedence over the catch-all.
-Renaming a parameter does not create a distinct route: `/articles/:slug` conflicts with `/articles/:id`.
+A parameter-name change does not create a distinct route.
+`/articles/:slug` conflicts with `/articles/:id`.
 
 > [!WARNING]
 > Keep `/_effront` and patterns that could match it reserved.
@@ -136,7 +141,9 @@ For the complete matching and decoding contract, see the [routing API reference]
 
 ## Add a section layout and loading UI {#mount}
 
-In `src/entry.effront.tsx`, replace ArticlePage, then add the section definitions before `routes` and replace its registration:
+In `src/entry.effront.tsx`, replace ArticlePage.
+Add the section definitions before `routes`.
+Then replace the route registration:
 
 ```tsx
 // Replace ArticlePage to make the loading UI visible.

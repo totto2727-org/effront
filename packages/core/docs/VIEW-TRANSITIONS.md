@@ -5,7 +5,8 @@
 Effront adds a React ViewTransition boundary around each routed Page by default, outside the Page's content and inside its shared Layouts.
 The native router's commit and Flight stream lifecycle are unchanged.
 Configuration resolves built-in defaults, the `PageViewTransition` Effect reference, and `Page.make({ viewTransition })` in that order.
-Each supplied property overrides its predecessor; transition-type maps are replaced rather than deep-merged.
+Each supplied property overrides its predecessor. Transition-type maps are replaced rather than deep-merged.
+
 A page can disable its boundary with `viewTransition: false`, or re-enable an application-level opt-out with `enabled: true`.
 The outgoing and incoming pages keep their own settings.
 
@@ -37,9 +38,10 @@ The example's global stylesheet was moved to a rendered Client Component so Vite
 
 Browser acceptance uses Chromium and local workerd hosts, not a Cloudflare deployment or a cross-browser compatibility claim.
 Configuration and SSR tests are supporting evidence, not proof of visual animation.
-HMR and UA transition-type mappings are checked as configuration behavior; no OS-level UA gesture animation claim is made.
+HMR and UA transition-type mappings are checked as configuration behavior. No OS-level UA gesture animation claim is made.
 The framework does not add animation callbacks or transport them through Flight.
-Explicitly changing enabled adds or removes the boundary and may reset page-local state; this differs from changing OS motion preferences, which retains the boundary.
+
+Explicitly changing enabled adds or removes the boundary and may reset page-local state. This differs from changing OS motion preferences, which retains the boundary.
 Native Navigation API fallback remains the existing router contract.
 
 References: [React ViewTransition](https://react.dev/reference/react/ViewTransition), [React addTransitionType](https://react.dev/reference/react/addTransitionType).
