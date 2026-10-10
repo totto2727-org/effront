@@ -1,4 +1,0 @@
-[install]
-# Preserve the previous package manager's default 24-hour supply-chain waiting period.
-minimumReleaseAge = 86400
-minimumReleaseAgeExcludes = []

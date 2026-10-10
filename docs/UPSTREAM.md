@@ -110,16 +110,14 @@ This changes fork-specific adapter compilation only and incorporates no upstream
 
 Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, this fork uses Bun as its only dependency package manager.
 Workspace globs, all 45 shared caret catalog entries, and the two required VitePlus overrides move from pnpm YAML to `package.json`.
-`bun.lock` replaces the pnpm lockfile, and `bunfig.toml` explicitly retains the previous 24-hour waiting period as `minimumReleaseAge = 86400` with an empty exclusion list.
-Bun has no pnpm `minimumReleaseAgeStrict` setting, so the pnpm-specific configuration is removed rather than implying that Bun interprets it.
-The age gate applies to newly resolved direct and transitive packages; frozen installs reproduce the committed resolution.
-As documented by Bun, registry versions without publication timestamps pass its native age filter.
+`bun.lock` replaces the pnpm lockfile.
+The workspace and generated starters do not configure a minimum release age or exclusions.
+Frozen installs reproduce the committed resolution.
 The explicit lifecycle allowlist contains only `bun`, `esbuild`, and `workerd`, preserving the denial of `msgpackr-extract` scripts without inheriting Bun's default trusted list.
 The JSR Gitignore package keeps its public import name and uses the official npm compatibility alias `npm:@jsr/totto2727__gitignore-patterns@^0.1.0` with the existing `npm.jsr.io` registry configuration.
 
-All four initializer platforms declare the same Bun package manager and ship the shared age configuration, exact matching VitePlus toolchain overrides, and a host-appropriate lifecycle allowlist.
-The shared configuration is stored as `_bunfig.toml` and renamed to `bunfig.toml` during generation because Bun packing excludes files named `bunfig.toml`, including nested templates.
-A retained publication regression packs the actual initializer, extracts it, and executes its shipped CLI for all four platforms to verify the installed policy and toolchain metadata.
+All four initializer platforms declare the same Bun package manager and ship exact matching VitePlus toolchain overrides and a host-appropriate lifecycle allowlist.
+A retained publication regression packs the actual initializer, extracts it, and executes its shipped CLI for all four platforms to verify the toolchain metadata and absence of generated Bun install configuration.
 Node applications still start with Node and retain their Node engine requirement, while Bun applications start with Bun.
 The Nix input refresh aligns its Bun and VitePlus launcher versions with the workspace, and the shell asserts that its Bun version matches `packageManager`.
 CI installation is frozen through VitePlus.

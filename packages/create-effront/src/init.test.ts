@@ -37,7 +37,7 @@ it("keeps required Vite+ overrides aligned with its installed toolchain", () => 
   });
 });
 
-it("ships Bun's install policy through the published CLI for every platform", async () => {
+it("ships Bun toolchain metadata through the published CLI for every platform", async () => {
   const root = fileURLToPath(new URL("../../../", import.meta.url));
   await mkdir(join(root, "tmp"), { recursive: true });
   const directory = await mkdtemp(join(root, "tmp", "create-effront-publication-"));
@@ -54,7 +54,6 @@ it("ships Bun's install policy through the published CLI for every platform", as
     "dir",
   );
   const published = JSON.parse(await readFile(join(directory, "package", "package.json"), "utf8"));
-  const policy = await readFile(join(root, "bunfig.toml"), "utf8");
   for (const platform of platforms) {
     const project = join(directory, "generated", platform);
     await runFile(process.execPath, [
@@ -63,7 +62,7 @@ it("ships Bun's install policy through the published CLI for every platform", as
       "--platform",
       platform,
     ]);
-    expect(await readFile(join(project, "bunfig.toml"), "utf8")).toBe(policy);
+    expect(await readdir(project)).not.toContain("bunfig.toml");
     const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
     expect(manifest.packageManager).toBe(workspace.packageManager);
     expect(manifest.overrides).toEqual(workspace.overrides);
@@ -84,9 +83,7 @@ for (const platform of platforms) {
     expect(manifest.trustedDependencies).toEqual(
       platform === "node" || platform === "bun" ? ["esbuild"] : ["esbuild", "workerd"],
     );
-    expect(await readFile(join(directory, "bunfig.toml"), "utf8")).toBe(
-      await readFile(new URL("../../../bunfig.toml", import.meta.url), "utf8"),
-    );
+    expect(await readdir(directory)).not.toContain("bunfig.toml");
     if (platform === "alchemy-cloudflare") {
       expect(manifest.scripts).toEqual({ dev: "alchemy dev" });
     } else {

@@ -9,7 +9,6 @@ export type Platform = (typeof platforms)[number];
 const templates = fileURLToPath(new URL("../templates/", import.meta.url));
 const templateFileNames: Readonly<Record<string, string>> = {
   _gitignore: ".gitignore",
-  "_bunfig.toml": "bunfig.toml",
 };
 
 export function projectName(directory: string): string {

@@ -41,7 +41,7 @@ Preserve RSC module directives, runtime entry points, CSS assets, and conditiona
 - `.github/workflows/ci.yml` runs checks and tests for pull requests and `main` updates.
 - `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix and TypeScript setup actions on `@main`, followed by the repository-owned release task.
 - All workflows install the Bun workspace with `vp install --frozen-lockfile` through the setup action.
-- Bun is the sole dependency package manager, with workspace globs and catalogs in `package.json`, a single `bun.lock`, and a 24-hour minimum release age without exclusions in `bunfig.toml`.
+- Bun is the sole dependency package manager, with workspace globs and catalogs in `package.json` and a single `bun.lock`.
 - npm is used only to upload Bun-normalized tarballs through Trusted Publishing, not to install dependencies or create another lockfile.
 - Publication is serialized.
 
