@@ -1,7 +1,6 @@
 ## サンプルを起動する {#setup}
 
 最新の Node.js LTS、[Bun](https://bun.com/)、[Vite+](https://viteplus.dev/) をインストールします。
-生成されるプロジェクトはすべて、アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします。
 Node.js 用のプロジェクトを作成し、依存パッケージをインストールします。
 
 ```bash

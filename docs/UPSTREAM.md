@@ -121,10 +121,9 @@ A retained publication regression packs the actual initializer, extracts it, and
 Node applications still start with Node and retain their Node engine requirement, while Bun applications start with Bun.
 The Nix input refresh aligns its Bun and VitePlus launcher versions with the workspace, and the shell asserts that its Bun version matches `packageManager`.
 CI installation is frozen through VitePlus.
-Bun packs the eight public tarballs and preserves normalized workspace caret peers and catalog ranges.
-Only their npm registry upload uses npm, because Bun's publishing command does not support provenance, Trusted Publishing, or recursive filtered publication.
-Release packing and uploading are separate root VitePlus tasks, and a registry failure stops uploading unless the exact version is explicitly absent.
-This changes fork-specific dependency management, starter metadata, CI installation, and publication orchestration only.
+Publication retains the shared `publish-npm` action and its VitePlus entry point.
+The temporary repository-owned tarball packing and npm upload tasks have been removed.
+This changes fork-specific dependency management, starter metadata, and CI installation only; publication keeps the existing shared action.
 The Effront release remains 0.3.2, the production Alchemy projection fix is retained, and no upstream runtime source is incorporated.
 
 Sources: [Bun workspaces](https://bun.com/docs/pm/workspaces), [Bun catalogs](https://bun.com/docs/pm/catalogs), [minimum release age](https://bun.com/docs/pm/cli/install#minimum-release-age), [Bun lifecycle allowlist](https://bun.com/docs/pm/lifecycle), [JSR package compatibility](https://jsr.io/docs/using-packages), [VitePlus package management](https://viteplus.dev/guide/install), and [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/).

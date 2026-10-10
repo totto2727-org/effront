@@ -23,6 +23,7 @@ jobs:
       - name: Build public packages
         uses: ./.github/actions/build-workspace
       - name: Publish public packages
-        run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          vp run release:publish
+        uses: totto2727-org/monorepo/.github/actions/publish-npm@main
+        with:
+          working-directory: .
+          filters: "./packages/*"

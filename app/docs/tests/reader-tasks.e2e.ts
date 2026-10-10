@@ -158,11 +158,6 @@ for (const reader of locales) {
       await expect(page).toHaveURL(`/${reader.locale}/platforms/${host}`);
       await followHeading(page, reader, "setup");
       await expect(page.locator('article a[href="https://bun.com/"]')).toBeVisible();
-      await expect(page.locator("article")).toContainText(
-        reader.locale === "en"
-          ? "Bun for dependency installation through VitePlus, independently of the selected application runtime"
-          : "アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします",
-      );
       const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
       await expect(commands).toContainText(`vp create effront -- my-app --platform ${example}`);
       await expect(commands).toContainText("cd my-app");

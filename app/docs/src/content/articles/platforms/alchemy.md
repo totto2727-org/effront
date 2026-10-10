@@ -1,7 +1,6 @@
 ## サンプルを準備する {#setup}
 
 最新の Node.js LTS、[Bun](https://bun.com/)、[Vite+](https://viteplus.dev/) をインストールします。
-生成されるプロジェクトはすべて、アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします。
 
 > [!IMPORTANT]
 > サンプルは Alchemy を `2.0.0-beta.81` に固定しており、この版の CLI はローカル開発でも Cloudflare profile の設定を必要とします。

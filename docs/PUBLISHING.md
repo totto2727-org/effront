@@ -27,22 +27,17 @@ For the initial workspace build, call `vp exec --filter "./packages/*" -- vp pac
 It builds in workspace dependency order without a package-name list or package-specific `dependsOn`.
 Do not wrap this command in `vp run`: task discovery loads consumer configurations whose static imports require the package `dist/` exports to exist already.
 
-Publication uses `vp run release:pack` to create the eight public package tarballs with Bun through `vp pm pack`.
-Bun resolves `workspace:` and `catalog:` references while preserving their public caret and wildcard peer ranges.
-The tarballs stay under ignored `tmp/npm-publish/`.
-`vp run release:publish` depends on that packing task, checks each exact version with `vp info`, skips already-published versions, and uploads each missing version with `npm publish --provenance --access public --tag latest`.
-Registry failures other than Bun's explicit missing-version result stop the task without attempting publication.
-The root VitePlus task configuration owns both release entry points.
-Do not run the publishing task without explicit authorization.
+Publication uses the shared `publish-npm` action and filtered `vp pm publish -r` to resolve `workspace:` and `catalog:` ranges and create tarballs.
+The build and publication workflows do not stage or extract tarballs.
 Preserve RSC module directives, runtime entry points, CSS assets, and conditional exports.
 
 ## Publication workflow and authorization
 
 - `.github/workflows/ci.yml` runs checks and tests for pull requests and `main` updates.
-- `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix and TypeScript setup actions on `@main`, followed by the repository-owned release task.
+- `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix, TypeScript setup, and `publish-npm` actions on `@main`.
+- The publisher runs `vp pm publish -r --provenance` with the single directory filter `./packages/*`.
 - All workflows install the Bun workspace with `vp install --frozen-lockfile` through the setup action.
 - Bun is the sole dependency package manager, with workspace globs and catalogs in `package.json` and a single `bun.lock`.
-- npm is used only to upload Bun-normalized tarballs through Trusted Publishing, not to install dependencies or create another lockfile.
 - Publication is serialized.
 
 Before merging the publishing workflow, the package owner must ensure that all npm packages exist and configure each Trusted Publisher with these values:
@@ -61,11 +56,8 @@ The workflow uses GitHub-hosted runners and job-scoped `id-token: write`, withou
 Protect `main` and require the CI check before merging.
 Local checks and dry runs do not verify registry trust or package ownership.
 
-Bun 1.4.2 does not support npm Trusted Publishing/provenance or recursive filtered publication.
-The actual VitePlus dry run of the former recursive command warns that Bun does not support `--provenance`, `--recursive`, or `--filter`, then attempts to publish the private root package.
-Using npm only at the tarball upload boundary preserves GitHub OIDC without restoring a second dependency manager or a long-lived npm token.
-Bun's [publishing options](https://bun.com/docs/pm/cli/publish) and [catalog publication behavior](https://bun.com/docs/pm/catalogs#publishing) document the supported Bun boundary.
-References: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [npm publish](https://docs.npmjs.com/cli/commands/npm-publish/).
+References: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [VitePlus package management](https://viteplus.dev/guide/install).
+Actual registry publication is not verified by local checks.
 
 ## Alchemy release boundary
 

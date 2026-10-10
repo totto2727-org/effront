@@ -1,8 +1,7 @@
 ## Run the example {#setup}
 
 Install the current Node.js LTS, [Bun](https://bun.com/), and [Vite+](https://viteplus.dev/).
-Generated projects use Bun for dependency installation through VitePlus, independently of the selected application runtime.
-[Bun](https://bun.sh/docs/installation) also runs the production server.
+[Bun](https://bun.sh/docs/installation) runs the production server.
 Vite development uses Node.js, so keep both runtimes installed.
 Create a Bun project and install its dependencies:
 

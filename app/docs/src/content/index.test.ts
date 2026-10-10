@@ -488,7 +488,7 @@ describe("documentation catalog", () => {
   );
 
   it.each(["en", "ja"] as const)(
-    "documents Bun dependency installation separately from the selected runtime in %s",
+    "documents prerequisites and installation commands in %s",
     async (locale) => {
       for (const slug of [
         "/guide/getting-started",
@@ -499,11 +499,7 @@ describe("documentation catalog", () => {
       ]) {
         const path = `/${locale}${slug}`;
         expect(await render(path)).toContain('href="https://bun.com/"');
-        expect(await text(path)).toContain(
-          locale === "en"
-            ? "Bun for dependency installation through VitePlus, independently of the selected application runtime"
-            : "アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします",
-        );
+        expect(await text(path)).toContain("vp install");
       }
       for (const host of ["node", "bun"]) {
         const content = await text(`/${locale}/platforms/${host}`);

@@ -1,8 +1,7 @@
 ## サンプルを起動する {#setup}
 
 最新の Node.js LTS、[Bun](https://bun.com/)、[Vite+](https://viteplus.dev/) をインストールします。
-生成されるプロジェクトはすべて、アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします。
-[Bun](https://bun.sh/docs/installation) は本番サーバーの実行にも使います。
+[Bun](https://bun.sh/docs/installation) で本番サーバーを実行します。
 Vite の開発サーバーは Node.js を使うため、両方のランタイムを用意してください。
 Bun 用のプロジェクトを作成し、依存パッケージをインストールします。
 
