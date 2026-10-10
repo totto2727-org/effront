@@ -3,9 +3,7 @@ Then examine the files that define the page.
 
 ## Run the sample {#setup}
 
-Install the current Node.js LTS, [Bun](https://bun.com/), and [Vite+](https://viteplus.dev/).
-Install dependencies with `vp install`.
-Then create a Node.js starter:
+The current Node.js LTS, [Bun](https://bun.com/), and [Vite+](https://viteplus.dev/) are required.
 
 ```bash
 vp create effront -- my-app --platform node
