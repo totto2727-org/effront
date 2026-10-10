@@ -27,15 +27,15 @@ For the initial workspace build, call `vp exec --filter "./packages/*" -- vp pac
 It builds in workspace dependency order without a package-name list or package-specific `dependsOn`.
 Do not wrap this command in `vp run`: task discovery loads consumer configurations whose static imports require the package `dist/` exports to exist already.
 
-Publication uses the shared `publish-npm` action and filtered `vp pm publish -r` to resolve `workspace:` and `catalog:` ranges and create tarballs.
-The build and publication workflows do not stage or extract tarballs.
+Publication uses the shared `publish-npm` action and filtered `vp pm stage publish -r` to resolve `workspace:` and `catalog:` ranges and create tarballs.
+The repository does not implement separate tarball packing or extraction steps.
 Preserve RSC module directives, runtime entry points, CSS assets, and conditional exports.
 
 ## Publication workflow and authorization
 
 - `.github/workflows/ci.yml` runs checks and tests for pull requests and `main` updates.
 - `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix, TypeScript setup, and `publish-npm` actions on `@main`.
-- The publisher runs `vp pm publish -r --provenance` with the single directory filter `./packages/*`.
+- The publisher runs `vp pm stage publish -r --provenance` with the single directory filter `./packages/*`.
 - All workflows install the Bun workspace with `vp install --frozen-lockfile` through the setup action.
 - Bun is the sole dependency package manager, with workspace globs and catalogs in `package.json` and a single `bun.lock`.
 - Publication is serialized.
