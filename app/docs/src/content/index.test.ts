@@ -268,19 +268,6 @@ describe("documentation catalog", () => {
       expect(content).toContain(
         locale === "en" ? "without Cloudflare authentication" : "Cloudflare の認証なし",
       );
-      for (const step of locale === "en"
-        ? [
-            "save the tests in your application's Playwright test directory",
-            "Configure Playwright to start your application",
-            "Set baseURL to its local URL",
-          ]
-        : [
-            "そのアプリケーションの Playwright テストディレクトリーにテストを保存します",
-            "Playwright からアプリケーションを起動するように設定してください",
-            "baseURL には、アプリケーションのローカル URL を指定します",
-          ]) {
-        expect(content).toContain(step);
-      }
     },
   );
 

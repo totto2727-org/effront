@@ -14,11 +14,6 @@ Save each code block below as the named file beside `alchemy.e2e.ts` in that tes
 Then rerun its browser suite.
 The existing [Playwright configuration](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts) supplies `baseURL` and manages the server lifecycle for the reference application.
 
-For your own application, save the tests in your application's Playwright test directory.
-Configure Playwright to start your application.
-Set `baseURL` to its local URL.
-Replace the URLs, selectors, and expected values with your application's outputs.
-
 ## Test Route responses {#routes}
 
 The example registers `/` and `/about` with `EFFRONT.Routes.make().page(...)`.

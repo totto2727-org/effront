@@ -13,11 +13,6 @@ Effront は、Page / Layout の描画や Server Function のリクエストを V
 以下のコードブロックを指定したファイル名でテストパッケージの `alchemy.e2e.ts` と同じディレクトリーに保存し、ブラウザーテストを再実行します。
 既存の [Playwright 設定](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts)が、参照サンプルの `baseURL` とサーバーの起動・終了を管理します。
 
-自分のアプリケーションで使う場合は、そのアプリケーションの Playwright テストディレクトリーにテストを保存します。
-Playwright からアプリケーションを起動するように設定してください。
-`baseURL` には、アプリケーションのローカル URL を指定します。
-URL、セレクター、期待値をアプリケーションの出力に合わせて変更してください。
-
 ## Route の応答をテストする {#routes}
 
 サンプルは `EFFRONT.Routes.make().page(...)` で `/` と `/about` を登録しています。
