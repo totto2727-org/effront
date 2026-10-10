@@ -239,7 +239,9 @@ describe("documentation catalog", () => {
     "documents runnable Route, Page, Layout and Server Function checks against the example in %s",
     async (locale) => {
       const html = await render(`/${locale}/best-practices/testing`);
-      const content = (await text(`/${locale}/best-practices/testing`)).replaceAll("&quot;", '"');
+      const content = (await text(`/${locale}/best-practices/testing`))
+        .replaceAll("&quot;", '"')
+        .replaceAll("&#x27;", "'");
       for (const contract of [
         "@playwright/test",
         'request.get("/not-a-route")',
@@ -266,6 +268,19 @@ describe("documentation catalog", () => {
       expect(content).toContain(
         locale === "en" ? "without Cloudflare authentication" : "Cloudflare の認証なし",
       );
+      for (const step of locale === "en"
+        ? [
+            "save the tests in your application's Playwright test directory",
+            "Configure Playwright to start your application",
+            "Set baseURL to its local URL",
+          ]
+        : [
+            "そのアプリケーションの Playwright テストディレクトリーにテストを保存します",
+            "Playwright からアプリケーションを起動するように設定してください",
+            "baseURL には、アプリケーションのローカル URL を指定します",
+          ]) {
+        expect(content).toContain(step);
+      }
     },
   );
 
@@ -488,7 +503,7 @@ describe("documentation catalog", () => {
   );
 
   it.each(["en", "ja"] as const)(
-    "documents prerequisites and installation commands in %s",
+    "documents prerequisites, installation and native entry configuration in %s",
     async (locale) => {
       for (const slug of [
         "/guide/getting-started",
@@ -510,6 +525,11 @@ describe("documentation catalog", () => {
             : "ビルド後、生成したプロジェクトで次を実行します",
         );
       }
+      const server = await text(`/${locale}/api-reference/server`);
+      for (const contract of ["effront({ rsc })", "effrontServer({ rsc })", "Effect Schema JIT"]) {
+        expect(server).toContain(contract);
+      }
+      expect(server).toContain(locale === "en" ? "pass the same path" : "同じパスを指定");
     },
   );
 
@@ -890,7 +910,7 @@ describe("documentation catalog", () => {
     expect(englishReference).toContain("implement replacements that can render on the server");
   });
 
-  it("retains all seven authored architecture chapters under their implementation group", () => {
+  it("retains all seven authored architecture chapters under their implementation group", async () => {
     const architecture = pages.filter((page) => page.section === "アーキテクチャ");
     expect(architecture).toHaveLength(7);
     for (const page of architecture) {
@@ -898,6 +918,13 @@ describe("documentation catalog", () => {
       expect(page.slug).toMatch(/^\/architecture\/implementation\//);
     }
     expect(pages.some((page) => page.slug.startsWith("/reading/"))).toBe(false);
+    for (const locale of ["en", "ja"] as const) {
+      expect(await text(`/${locale}`)).toContain(
+        locale === "en"
+          ? "For advanced consumers and Effront developers"
+          : "高度な使い方をする利用者や Effront の開発者",
+      );
+    }
   });
 
   it.each(

@@ -17,4 +17,4 @@ React Server Components によるページの描画と、Server Functions によ
 - [Markdown](./guide/markdown.md) で記事を表示し、[スタイリング](./guide/styling.md)で Tailwind CSS を追加します。
 - 処理とブラウザー上の動作を検証するには、[アプリケーションのテスト](./best-practices/testing.md)を参照してください。
 - オプションや型は [API reference](./api-reference.md) で調べられます。
-- 実装を読むには、[アーキテクチャの実装解説](/architecture/implementation/overview)に進んでください。
+- 高度な使い方をする利用者や Effront の開発者が実装を読むには、[アーキテクチャの実装解説](/architecture/implementation/overview)に進んでください。
