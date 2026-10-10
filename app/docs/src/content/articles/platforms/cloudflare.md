@@ -1,6 +1,8 @@
 ## サンプルを起動する {#setup}
 
-最新の Node.js LTS と [Vite+](https://viteplus.dev/) をインストールし、次を実行します。
+最新の Node.js LTS、[Bun](https://bun.com/)、[Vite+](https://viteplus.dev/) をインストールします。
+生成されるプロジェクトはすべて、アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします。
+続いて、次を実行します。
 
 ```bash
 vp create effront -- my-app --platform cloudflare

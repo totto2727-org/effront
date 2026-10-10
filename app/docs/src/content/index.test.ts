@@ -487,6 +487,36 @@ describe("documentation catalog", () => {
     },
   );
 
+  it.each(["en", "ja"] as const)(
+    "documents Bun dependency installation separately from the selected runtime in %s",
+    async (locale) => {
+      for (const slug of [
+        "/guide/getting-started",
+        "/platforms/node",
+        "/platforms/bun",
+        "/platforms/cloudflare",
+        "/platforms/alchemy",
+      ]) {
+        const path = `/${locale}${slug}`;
+        expect(await render(path)).toContain('href="https://bun.com/"');
+        expect(await text(path)).toContain(
+          locale === "en"
+            ? "Bun for dependency installation through VitePlus, independently of the selected application runtime"
+            : "アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします",
+        );
+      }
+      for (const host of ["node", "bun"]) {
+        const content = await text(`/${locale}/platforms/${host}`);
+        expect(content).not.toContain(`examples/${host}`);
+        expect(content).toContain(
+          locale === "en"
+            ? "After the build, run from the generated project"
+            : "ビルド後、生成したプロジェクトで次を実行します",
+        );
+      }
+    },
+  );
+
   it("describes implemented hosts and separates Bun production from Vite middleware", async () => {
     const platforms = await render("/platforms");
     for (const host of ["cloudflare", "alchemy", "node", "bun"]) {
@@ -535,6 +565,9 @@ describe("documentation catalog", () => {
   it.each(["en", "ja"] as const)(
     "checks generated platform guides without fixing Vite development ports in %s",
     async (locale) => {
+      const viteReference = await render(`/${locale}/api-reference/vite`);
+      expect(viteReference).toContain(`href="/${locale}/platforms/cloudflare#vite"`);
+      expect(viteReference).toContain(`href="/${locale}/guide/getting-started"`);
       const repository = new URL("../../../../", import.meta.url);
       for (const [slug, example] of [
         ["node", "node"],

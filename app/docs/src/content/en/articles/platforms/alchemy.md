@@ -1,6 +1,7 @@
 ## Prepare the example {#setup}
 
-Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
+Install the current Node.js LTS, [Bun](https://bun.com/), and [Vite+](https://viteplus.dev/).
+Generated projects use Bun for dependency installation through VitePlus, independently of the selected application runtime.
 
 > [!IMPORTANT]
 > The example pins Alchemy to `2.0.0-beta.81`, whose CLI requires a configured Cloudflare profile even for local development.

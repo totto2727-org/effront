@@ -157,6 +157,12 @@ for (const reader of locales) {
       await page.locator(`article a[href="/${reader.locale}/platforms/${host}"]`).click();
       await expect(page).toHaveURL(`/${reader.locale}/platforms/${host}`);
       await followHeading(page, reader, "setup");
+      await expect(page.locator('article a[href="https://bun.com/"]')).toBeVisible();
+      await expect(page.locator("article")).toContainText(
+        reader.locale === "en"
+          ? "Bun for dependency installation through VitePlus, independently of the selected application runtime"
+          : "アプリケーションの実行環境とは別に、VitePlus 経由の Bun で依存パッケージをインストールします",
+      );
       const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
       await expect(commands).toContainText(`vp create effront -- my-app --platform ${example}`);
       await expect(commands).toContainText("cd my-app");
@@ -217,6 +223,12 @@ for (const reader of locales) {
         expect(colors.length).toBeGreaterThan(2);
       }
       if (host === "node" || host === "bun") {
+        await expect(page.locator("article")).not.toContainText(`examples/${host}`);
+        await expect(page.locator("article")).toContainText(
+          reader.locale === "en"
+            ? "After the build, run from the generated project"
+            : "ビルド後、生成したプロジェクトで次を実行します",
+        );
         await expect(page.locator("article")).not.toContainText("vp preview");
         await expect(
           page.locator("article pre code").filter({ hasText: /^vp build$/ }),
