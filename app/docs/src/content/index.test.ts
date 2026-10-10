@@ -500,7 +500,7 @@ describe("documentation catalog", () => {
         "/platforms/alchemy",
       ]) {
         const path = `/${locale}${slug}`;
-        expect(await render(path)).toContain('href="https://bun.com/"');
+        expect(await render(path)).toContain('href="https://pnpm.io/installation"');
         expect(await text(path)).toContain("vp install");
       }
       for (const host of ["node", "bun"]) {

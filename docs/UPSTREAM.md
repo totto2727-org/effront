@@ -106,7 +106,7 @@ A retained real-build regression checks runtime exports and absence of deploymen
 Official Alchemy CLI planning, authenticated reconciliation, and deployment remain separately unverified.
 This changes fork-specific adapter compilation only and incorporates no upstream runtime source.
 
-## Bun workspace and publication boundary
+## Historical Bun workspace and publication boundary
 
 Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, this fork uses Bun as its only dependency package manager.
 Workspace globs, all 45 shared caret catalog entries, and the two required VitePlus overrides move from pnpm YAML to `package.json`.
@@ -114,7 +114,8 @@ Workspace globs, all 45 shared caret catalog entries, and the two required ViteP
 The workspace and generated starters do not configure a minimum release age or exclusions.
 Frozen installs reproduce the committed resolution.
 The explicit lifecycle allowlist contains only `bun`, `esbuild`, and `workerd`, preserving the denial of `msgpackr-extract` scripts without inheriting Bun's default trusted list.
-The JSR Gitignore package keeps its public import name and uses the official npm compatibility alias `npm:@jsr/totto2727__gitignore-patterns@^0.1.0` with the existing `npm.jsr.io` registry configuration.
+At that stage, the Gitignore dependency used the JSR compatibility distribution under its public import name.
+The current official npm replacement and removal of the scoped registry configuration are documented below.
 
 All four initializer platforms declare the same Bun package manager and ship exact matching VitePlus toolchain overrides and a host-appropriate lifecycle allowlist.
 A retained publication regression packs the actual initializer, extracts it, and executes its shipped CLI for all four platforms to verify the toolchain metadata and absence of generated Bun install configuration.
@@ -127,6 +128,31 @@ This changes fork-specific dependency management, starter metadata, and CI insta
 The Effront release remains 0.3.2, the production Alchemy projection fix is retained, and no upstream runtime source is incorporated.
 
 Sources: [Bun workspaces](https://bun.com/docs/pm/workspaces), [Bun catalogs](https://bun.com/docs/pm/catalogs), [minimum release age](https://bun.com/docs/pm/cli/install#minimum-release-age), [Bun lifecycle allowlist](https://bun.com/docs/pm/lifecycle), [JSR package compatibility](https://jsr.io/docs/using-packages), [VitePlus package management](https://viteplus.dev/guide/install), and [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/).
+
+## Node.js and pnpm dependency management
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront standardizes development on Node.js, pnpm, and VitePlus.
+This supersedes the historical Bun package-manager configuration above without incorporating upstream runtime source or changing Effront's release version.
+The pinned Nix package set supplies pnpm 12.9.0, and the root and all four generated starters declare that same package manager.
+The default Nix shell retains Node.js and the existing VitePlus launcher, replaces Bun with pnpm, and asserts pnpm version alignment without refreshing the immutable Nix inputs.
+Workspace globs and all 45 caret catalog ranges move to `pnpm-workspace.yaml`, and `pnpm-lock.yaml` is the sole dependency lockfile.
+The Gitignore integration now uses the official npm publication `@totto2727/gitignore-patterns` at `^0.1.0` instead of its JSR compatibility alias.
+The obsolete JSR registry configuration is removed, with no vendoring, import-name changes, dependency overrides, or release-age workaround.
+The root VitePlus configuration loads that installed npm package directly.
+The official `vite@*` alias and `vitest@*` overrides stay exactly aligned with VitePlus 1.1.0 and its bundled Vitest 5.0.3.
+The root and generated projects intentionally configure no minimum release age or exclusions, preserving the latest explicit Effront exception rather than restoring the earlier waiting-period policy.
+The root lifecycle policy allows only `bun`, `esbuild`, and `workerd`, explicitly denies `msgpackr-extract`, and does not broadly enable dependency scripts.
+Generated Node/Bun applications allow only `esbuild`, while Workers applications additionally allow `workerd`, with `msgpackr-extract` denied on every platform.
+
+Bun remains a catalog-managed dependency of the native server browser suite because that suite executes the actual Bun production listener.
+Bun platform packages, host entries, runtime scripts, types, and examples remain intact, but Bun is not used for installation or tarball packaging.
+Node and Workers development do not require Bun; applications selecting Bun install it only for genuine runtime execution.
+The initializer's retained publication regression packages its built CLI with pnpm and exercises all four generated platforms, including their shipped YAML toolchain and lifecycle settings.
+English and Japanese prerequisites distinguish pnpm dependency management from optional Bun runtime support.
+Bootstrap remains `vp exec --filter "./packages/*" -- vp pack`, CI installation remains frozen through VitePlus, and publication remains the unchanged shared `publish-npm` action with pnpm stage publication.
+This is fork-specific dependency management and contributor/consumer configuration, not a runtime rewrite, deployment, or publication change.
+
+Sources: [pnpm workspace configuration](https://pnpm.io/pnpm-workspace_yaml), [pnpm catalogs](https://pnpm.io/catalogs), [pnpm build permissions](https://pnpm.io/settings#allowbuilds), and [Vite+ Manual Installation & Migration](https://viteplus.dev/guide/migrate).
 
 ## Future incorporation
 

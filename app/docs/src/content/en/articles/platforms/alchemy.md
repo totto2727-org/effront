@@ -1,6 +1,6 @@
 ## Prepare the example {#setup}
 
-Install the current Node.js LTS, [Bun](https://bun.com/), and [Vite+](https://viteplus.dev/).
+Install the current Node.js LTS, [pnpm](https://pnpm.io/installation), and [Vite+](https://viteplus.dev/).
 
 > [!IMPORTANT]
 > The example pins Alchemy to `2.0.0-beta.81`, whose CLI requires a configured Cloudflare profile even for local development.

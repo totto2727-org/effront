@@ -6,6 +6,7 @@ Bootstrap workspace packages first with root `vp exec --filter "./packages/*" --
 Make Node and Playwright Chromium available.
 Then run `vp run test` in this directory.
 This workspace package supplies the pinned Bun 1.4.2 test binary.
+pnpm installs that catalog-managed binary only for genuine Bun production-host acceptance, not dependency management.
 
 The suite owns ports 4451, 4452, 4453 and 4454 and starts production Node/Bun fixtures plus Node-hosted Vite development and preview.
 Preview uses the Node fixture output built by the first web server.

@@ -15,7 +15,7 @@
 
 - Work in this independent repository at `workspace/package/effront/`, not the parent virtual monorepo.
 - Push and open pull requests only in `totto2727-org/effront`, never upstream. Do not publish packages or deploy without explicit authorization.
-- Use VitePlus for package management through Bun, formatting, linting, checks, and test entry points. Bun is the only dependency package manager and `bun.lock` is the only dependency lockfile. Retain VitePlus's default formatting and lint rules.
+- Use Node.js, pnpm, and VitePlus for dependency management, formatting, linting, checks, and test entry points. pnpm is the only dependency package manager and `pnpm-lock.yaml` is the only dependency lockfile. Retain VitePlus's default formatting and lint rules.
 - Keep temporary evidence under the owning repository or package's ignored `tmp/`. Never commit credentials, `.dev.vars`, generated output, or temporary reports.
 - Automated local acceptance must not require Cloudflare authentication or remote services. Official Alchemy CLI development has a separate profile prerequisite documented by its adapter. Do not force verification through an authentication boundary.
 - Target the current Node.js LTS and the current Bun release only. Do not add compatibility shims, dual code paths, or documented floors for older runtimes, and prefer the modern runtime APIs those versions provide.
@@ -56,9 +56,10 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 
 ## Development tools
 
-- **VitePlus**: versioned in the shared `package.json` catalog. The root config owns shared checks and standard Vitest discovery. Do not add dependency overrides except the Vite+ prescribed Vite alias and exact matching toolchain Vitest. Document the official source for every unavoidable exception.
-- **Bun**: keep `packageManager`, the Nix development shell, and generated starters aligned with the current supported Bun release. Define workspace globs and the shared catalog in `package.json`. Explicitly trust only `bun`, `esbuild`, and `workerd` lifecycle scripts, leaving `msgpackr-extract` untrusted. Bun package management does not replace the selected Node/Bun application runtime. Publication uses the shared `publish-npm` action through VitePlus. Do not add repository-owned publishing tasks.
-- **Gitignore exclusions**: `vite.config.ts` uses the published [JSR package](https://jsr.io/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
+- **VitePlus**: versioned in the shared `pnpm-workspace.yaml` catalog. The root config owns shared checks and standard Vitest discovery. Do not add dependency overrides except the Vite+ prescribed Vite alias and exact matching toolchain Vitest. Document the official source for every unavoidable exception.
+- **pnpm**: keep `packageManager`, the Nix development shell, and generated starters aligned with the pinned Nix pnpm version. Define workspace globs, the shared catalog, and the official `vite@*` and `vitest@*` overrides in `pnpm-workspace.yaml`. Explicitly allow only necessary `bun`, `esbuild`, and `workerd` lifecycle scripts, leaving `msgpackr-extract` denied. Do not configure minimum release age or exclusions, preserving Effront's intentional exception. Publication uses the shared `publish-npm` action through VitePlus. Do not add repository-owned publishing tasks.
+- **Bun runtime**: optional only for genuine TypeScript-direct or Bun host execution, never dependency management. The native server browser suite owns its catalog-managed Bun binary. Node and Workers consumers do not require Bun, and the default Nix shell uses Node.js and pnpm.
+- **Gitignore exclusions**: `vite.config.ts` uses the published [npm package](https://www.npmjs.com/package/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
 - **Effect**: consult installed-version source and official documentation before changing APIs.
 - **Playwright/workerd**: browser acceptance exercises actual host behavior. A successful build or mock does not establish runtime correctness.
 

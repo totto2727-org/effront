@@ -2,7 +2,8 @@
 
 ## サンプルを起動する {#setup}
 
-最新の Node.js LTS、[Bun](https://bun.com/)、[Vite+](https://viteplus.dev/) が必要です。
+最新の Node.js LTS、[pnpm](https://pnpm.io/installation)、[Vite+](https://viteplus.dev/) が必要です。
+Bun が必要なのは、本番ランタイムに Bun を選ぶ場合だけです。
 
 ```bash
 vp create effront -- my-app --platform node

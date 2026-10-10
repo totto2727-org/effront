@@ -30,20 +30,28 @@ afterEach(async () => {
   );
 });
 
-it("keeps required Vite+ overrides aligned with its installed toolchain", () => {
-  expect(workspace.overrides).toEqual({
-    vite: `npm:@voidzero-dev/vite-plus-core@${vitePlusPackage.version}`,
-    vitest: vitePlusPackage.dependencies.vitest,
-  });
+const toolchainOverrides = `overrides:\n  "vite@*": npm:@voidzero-dev/vite-plus-core@${vitePlusPackage.version}\n  "vitest@*": ${vitePlusPackage.dependencies.vitest}`;
+
+async function expectPnpmConfiguration(directory: string, platform?: string): Promise<void> {
+  const configuration = await readFile(join(directory, "pnpm-workspace.yaml"), "utf8");
+  expect(configuration.replaceAll("'", '"')).toContain(toolchainOverrides);
+  expect(configuration).not.toMatch(/^minimumReleaseAge/m);
+  expect(configuration.split("allowBuilds:\n")[1]).toBe(
+    `${platform ? "" : "  bun: true\n"}  esbuild: true\n${!platform || platform.includes("cloudflare") ? "  workerd: true\n" : ""}  msgpackr-extract: false\n`,
+  );
+}
+
+it("keeps required Vite+ overrides and lifecycle policy aligned with its installed toolchain", async () => {
+  await expectPnpmConfiguration(fileURLToPath(new URL("../../../", import.meta.url)));
 });
 
-it("ships Bun toolchain metadata through the published CLI for every platform", async () => {
+it("ships pnpm toolchain metadata through the published CLI for every platform", async () => {
   const root = fileURLToPath(new URL("../../../", import.meta.url));
   await mkdir(join(root, "tmp"), { recursive: true });
   const directory = await mkdtemp(join(root, "tmp", "create-effront-publication-"));
   directories.push(directory);
   const archive = join(directory, "create-effront.tgz");
-  await runFile("bun", ["pm", "pack", "--filename", archive], {
+  await runFile("vp", ["pm", "pack", "--out", archive], {
     cwd: fileURLToPath(new URL("../", import.meta.url)),
   });
   await runFile("tar", ["-xf", archive, "-C", directory]);
@@ -65,7 +73,9 @@ it("ships Bun toolchain metadata through the published CLI for every platform", 
     expect(await readdir(project)).not.toContain("bunfig.toml");
     const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
     expect(manifest.packageManager).toBe(workspace.packageManager);
-    expect(manifest.overrides).toEqual(workspace.overrides);
+    expect(manifest).not.toHaveProperty("overrides");
+    expect(manifest).not.toHaveProperty("trustedDependencies");
+    await expectPnpmConfiguration(project, platform);
   }
 });
 
@@ -79,10 +89,9 @@ for (const platform of platforms) {
 
     expect(manifest.name).toBe("my-app");
     expect(manifest.packageManager).toBe(workspace.packageManager);
-    expect(manifest.overrides).toEqual(workspace.overrides);
-    expect(manifest.trustedDependencies).toEqual(
-      platform === "node" || platform === "bun" ? ["esbuild"] : ["esbuild", "workerd"],
-    );
+    expect(manifest).not.toHaveProperty("overrides");
+    expect(manifest).not.toHaveProperty("trustedDependencies");
+    await expectPnpmConfiguration(directory, platform);
     expect(await readdir(directory)).not.toContain("bunfig.toml");
     if (platform === "alchemy-cloudflare") {
       expect(manifest.scripts).toEqual({ dev: "alchemy dev" });
@@ -92,6 +101,9 @@ for (const platform of platforms) {
     }
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
     expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.1.0");
+    if (platform === "node" || platform === "bun") {
+      expect(manifest.scripts.start).toBe(`${platform} dist/rsc/server.js`);
+    }
     for (const dependencies of [manifest.dependencies, manifest.devDependencies]) {
       for (const [name, version] of Object.entries(dependencies ?? {})) {
         expect(version).toMatch(/^\^/);

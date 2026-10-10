@@ -17,6 +17,7 @@ Refer to [example selection](README.md) for runnable commands and the distinctio
 
 Run root `vp install` and `vp exec --filter "./packages/*" -- vp pack` before entering an example.
 Workspace preparation is separate from development startup.
+Installation uses pnpm through VitePlus on every platform; Bun is needed only to execute the Bun production listener.
 Example development commands do not build workspace packages.
 
 - `vp dev` in `node/` and `bun/` starts the minimal Vite host on an available port after root preparation. Use `vp build` followed by `vp run start` for their separate Node and Bun native production listeners. To override the server defaults, set `PORT` or `HOST` before startup.

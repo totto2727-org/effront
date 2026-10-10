@@ -36,8 +36,9 @@ Preserve RSC module directives, runtime entry points, CSS assets, and conditiona
 - `.github/workflows/ci.yml` runs checks and tests for pull requests and `main` updates.
 - `.github/workflows/publish.yml` publishes on pushes to `main`, including merged pull requests, using the shared Nix, TypeScript setup, and `publish-npm` actions on `@main`.
 - The publisher runs `vp pm stage publish -r --provenance` with the single directory filter `./packages/*`.
-- All workflows install the Bun workspace with `vp install --frozen-lockfile` through the setup action.
-- Bun is the sole dependency package manager, with workspace globs and catalogs in `package.json` and a single `bun.lock`.
+- All workflows install the pnpm workspace with `vp install --frozen-lockfile` through the setup action.
+- pnpm is the sole dependency package manager, with workspace globs, catalogs, toolchain overrides, and lifecycle permissions in `pnpm-workspace.yaml` and a single `pnpm-lock.yaml`.
+- Effront intentionally configures no minimum release age or exclusions. Bun is retained only as the native Bun host test runtime, not as a package manager.
 - Publication is serialized.
 
 Before merging the publishing workflow, the package owner must ensure that all npm packages exist and configure each Trusted Publisher with these values:

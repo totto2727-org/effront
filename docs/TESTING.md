@@ -32,8 +32,8 @@ Each `fixture/` consumes public package exports.
 From either package, `vp run test` runs its browser suite and `vp check` checks its configuration, fixture, and test source.
 The root package has no E2E runner script or Playwright dependency.
 
-The Gitignore pattern generator is an external JSR dependency.
-Its implementation and CLI tests belong to the [upstream package](https://jsr.io/@totto2727/gitignore-patterns).
+The Gitignore pattern generator is an external npm dependency.
+Its implementation and CLI tests belong to the [upstream package](https://www.npmjs.com/package/@totto2727/gitignore-patterns).
 Root `vp run check` exercises its integration with VitePlus. Do not copy the upstream suite into this repository.
 
 ## Standard E2E server lifecycle

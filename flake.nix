@@ -1,5 +1,5 @@
 {
-  description = "Effront Bun workspace development and npm publication environment";
+  description = "Effront Node.js and pnpm development and npm publication environment";
 
   inputs = {
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
@@ -31,11 +31,11 @@
         in
         {
           default =
-            assert manifest.packageManager == "bun@${pkgs.bun.version}";
+            assert manifest.packageManager == "pnpm@${pkgs.pnpm.version}";
             pkgs.mkShell {
               packages = [
                 pkgs.nodejs_24
-                pkgs.bun
+                pkgs.pnpm
                 pkgs.vite-plus
                 pkgs.nixfmt
               ];

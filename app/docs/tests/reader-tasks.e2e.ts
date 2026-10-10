@@ -108,7 +108,7 @@ for (const reader of locales) {
     await expect(commands).toHaveText(
       "vp create effront -- my-app --platform node\ncd my-app\nvp install\nvp dev",
     );
-    await expect(page.locator('article a[href="https://bun.com/"]')).toBeVisible();
+    await expect(page.locator('article a[href="https://pnpm.io/installation"]')).toBeVisible();
     await expect(
       page.locator(
         'article a[href="https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx"]',
@@ -157,7 +157,7 @@ for (const reader of locales) {
       await page.locator(`article a[href="/${reader.locale}/platforms/${host}"]`).click();
       await expect(page).toHaveURL(`/${reader.locale}/platforms/${host}`);
       await followHeading(page, reader, "setup");
-      await expect(page.locator('article a[href="https://bun.com/"]')).toBeVisible();
+      await expect(page.locator('article a[href="https://pnpm.io/installation"]')).toBeVisible();
       const commands = page.locator("article pre code").filter({ hasText: "vp create effront" });
       await expect(commands).toContainText(`vp create effront -- my-app --platform ${example}`);
       await expect(commands).toContainText("cd my-app");

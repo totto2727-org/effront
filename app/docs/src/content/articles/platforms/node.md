@@ -1,6 +1,6 @@
 ## サンプルを起動する {#setup}
 
-最新の Node.js LTS、[Bun](https://bun.com/)、[Vite+](https://viteplus.dev/) をインストールします。
+最新の Node.js LTS、[pnpm](https://pnpm.io/installation)、[Vite+](https://viteplus.dev/) をインストールします。
 Node.js 用のプロジェクトを作成し、依存パッケージをインストールします。
 
 ```bash

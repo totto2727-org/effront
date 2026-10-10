@@ -1,6 +1,6 @@
 ## Run the example {#setup}
 
-Install the current Node.js LTS, [Bun](https://bun.com/), and [Vite+](https://viteplus.dev/).
+Install the current Node.js LTS, [pnpm](https://pnpm.io/installation), and [Vite+](https://viteplus.dev/).
 Then run:
 
 ```bash
