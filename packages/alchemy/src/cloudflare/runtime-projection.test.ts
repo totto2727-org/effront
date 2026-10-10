@@ -1,4 +1,8 @@
+import { builtinModules } from "node:module";
+import { fileURLToPath } from "node:url";
+
 import * as Cloudflare from "alchemy/Cloudflare";
+import { build } from "vite";
 import { describe, expect, it } from "vite-plus/test";
 
 import { alchemyRuntimeProjection } from "./runtime-projection";
@@ -27,7 +31,7 @@ const exportsOf = (code: string) => {
   );
 };
 
-describe("subtractive Alchemy development compatibility", () => {
+describe("subtractive Alchemy runtime compatibility", () => {
   it("leaves deployment exports available to the real Node tooling", () => {
     expect(Cloudflare.providers).toBeTypeOf("function");
     expect(Cloudflare.KV.NamespaceProvider).toBeTypeOf("function");
@@ -77,9 +81,52 @@ describe("subtractive Alchemy development compatibility", () => {
     expect(names).not.toContain("ProviderLocal");
   }, 30000);
 
-  it("runs only in server development and never contributes optimizer configuration", () => {
+  it("builds the native Worker graph without bundling deployment tooling", async () => {
+    const entry = "\0effront-test:alchemy-worker";
+    const result = await build({
+      root: fileURLToPath(new URL("../../", import.meta.url)),
+      configFile: false,
+      logLevel: "silent",
+      define: { "globalThis.__ALCHEMY_RUNTIME__": "true" },
+      ssr: { noExternal: true },
+      plugins: [
+        alchemyRuntimeProjection(),
+        {
+          name: "effront-test:alchemy-worker",
+          resolveId: (id) => (id === entry ? id : undefined),
+          load: (id) => (id === entry ? 'export * from "alchemy/Cloudflare/Workers";' : undefined),
+        },
+      ],
+      build: {
+        ssr: true,
+        write: false,
+        minify: false,
+        rolldownOptions: {
+          input: entry,
+          external: (id) =>
+            id === "effect" ||
+            id.startsWith("effect/") ||
+            id.startsWith("node:") ||
+            id.startsWith("cloudflare:") ||
+            builtinModules.includes(id),
+        },
+      },
+    });
+    if ("on" in result) throw new TypeError("Unexpected test build watcher.");
+    const output = Array.isArray(result) ? result.flatMap((value) => value.output) : result.output;
+    const chunks = output.filter((value) => value.type === "chunk");
+    const code = chunks.map((value) => value.code).join("\n");
+    expect(exportsOf(chunks.find((value) => value.isEntry)!.code)).toEqual(
+      expect.arrayContaining(["Worker", "makeWorkerBridge", "WorkerConfigProvider"]),
+    );
+    expect(code).not.toContain("downloadedBinPath");
+    expect(code).not.toContain("import.meta.resolve");
+    expect(code).not.toContain("createViteServer");
+  }, 30000);
+
+  it("runs only in server graphs in both serve and build without optimizer configuration", () => {
     const { plugin, resolve, load } = hooks();
-    expect(plugin.apply).toBe("serve");
+    expect(plugin.apply).toBeUndefined();
     expect(plugin.config).toBeUndefined();
     expect(plugin.configEnvironment).toBeUndefined();
     expect(Reflect.apply(plugin.applyToEnvironment!, {}, [{ name: "client" }])).toBe(false);

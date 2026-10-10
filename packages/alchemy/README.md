@@ -14,8 +14,8 @@ For a KV-backed application with a Server Function, see the [Alchemy Basic examp
 
 ## Prerequisites
 
-- **Compatibility**: use Alchemy and Effect versions matching the installed adapter's `peerDependencies`, with one coherent Effect installation across application and host. See [compatibility rationale](docs/INTEGRATION.md#compatibility) before upgrades.
-- **Host**: The supported CLI requires a configured Cloudflare profile, even for local planning. Run the application with `alchemy dev`, not bare Vite.
+- **Compatibility**: Use Alchemy and Effect versions that match the installed adapter's `peerDependencies`. Keep one consistent Effect installation across application and host. Before upgrades, refer to [compatibility rationale](docs/INTEGRATION.md#compatibility).
+- **Host**: A configured Cloudflare profile is necessary for the supported CLI, even for local planning. Run the application with `alchemy dev`, not bare Vite.
 
 ## Setup
 
@@ -31,11 +31,11 @@ The adapter imports are `@effront/alchemy/cloudflare` and `@effront/alchemy/clou
 ## API
 
 The [Alchemy API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/alchemy) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/alchemy)) covers deferred HTTP handlers, capability capture, and the Vite adapter.
-See [package API links](docs/API.md) and [integration architecture](docs/INTEGRATION.md) for maintainer details.
+For Effront developers, [package API links](docs/API.md) and [integration architecture](docs/INTEGRATION.md) give implementation details.
 
 ## Development
 
-See [AGENTS.md](AGENTS.md).
+Refer to [AGENTS.md](AGENTS.md).
 
 ## License
 

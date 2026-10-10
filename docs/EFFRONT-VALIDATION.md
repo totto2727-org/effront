@@ -8,8 +8,9 @@ For current development commands, use [AGENTS.md](../AGENTS.md).
 
 The framework package is `@effront/core`, located at `packages/core`.
 Workspace support packages use the `@effront` scope.
-The source checkout directory remains `effective-rsc-workers`; its location is not a package identifier.
+The source checkout directory remains `effective-rsc-workers`. Its location is not a package identifier.
 The application factory is `Application.effront()`.
+
 Existing upstream URLs, copyrights, licenses, fixed comparison commits, and historical Git excerpt strings retain their original names.
 No package was published and no remote repository was renamed.
 
@@ -29,6 +30,7 @@ export default defineConfig({
 `effrontCloudflare()` owns only the Cloudflare plugin and its required RSC/SSR environment and output-layout configuration.
 The adapter does not invoke or import the core plugin.
 Cloudflare options are forwarded directly, without a nested `cloudflare` options object.
+
 Normal development leaves `persistState`, `remoteBindings`, server ports, and other ordinary Cloudflare/Vite settings at their defaults.
 Only the isolated E2E hosts disable persistence and the inspector.
 Future Node/Bun host adapters can omit `effrontCloudflare()`, but this change does not implement those adapters or claim a working Node/Bun host.
@@ -36,7 +38,7 @@ Future Node/Bun host adapters can omit `effrontCloudflare()`, but this change do
 ## Native React Compiler
 
 The installed `@vitejs/plugin-react` version is `6.1.1`.
-Its native compiler option defaults to disabled; Effront explicitly enables `react({ compiler: true })`.
+Its native compiler option defaults to disabled. Effront explicitly enables `react({ compiler: true })`.
 The required `oxc-transform-react` dependency resolves to `0.145.0` and is shipped as a framework tooling dependency rather than relying on a consumer's accidental installation.
 This uses the plugin's experimental Rust implementation, not a Babel fallback.
 The official plugin compiles client environments, leaving the SSR and RSC server-consumer environments outside client memoization.
@@ -65,7 +67,7 @@ Official references:
 - The real documentation suite passed all ten cases across Vite development and standalone Wrangler, including initial SSR, dark mode, navigation, highlighting, exact pinned diff text, and Effront document titles.
 - The built documentation client graph contains neither Shiki nor the native build-time React compiler implementation.
 - Local `vp pm pack` audits verified core (50 files), Vite (6 files), and Cloudflare (5 files), including every exported target, resolved workspace/catalog dependency ranges, and no shipped tests.
-- Core has no direct Cloudflare, React plugin, or native compiler dependency; Vite has no Cloudflare dependency.
+- Core has no direct Cloudflare, React plugin, or native compiler dependency. Vite has no Cloudflare dependency.
 - The immutable reading snippet object and all its reproduction commands remained byte-identical to the pre-rename revision.
 - Root, framework, and documentation third-party license files remained byte-identical.
 - The viewing server was restored on `http://127.0.0.1:5173/` and returned HTTP 200 with an Effront title.
@@ -77,7 +79,7 @@ Temporary build logs, packed artifacts, and browser screenshots remain ignored i
 
 `@effront/core` contains the application and Fetch runtime, `@effront/vite` owns build integration and the native compiler, and `@effront/cloudflare` owns only the Cloudflare Vite adapter.
 The adapter requires Vite integration but does not register it automatically.
-The core still uses `@vitejs/plugin-rsc` runtime exports for Flight and its SSR module-loading protocol; this split is not a claim of bundler-independent React Flight support.
+The core still uses `@vitejs/plugin-rsc` runtime exports for Flight and its SSR module-loading protocol. This split is not a claim of bundler-independent React Flight support.
 Core `internal/client-entry` and `internal/ssr-entry` exports let the matching Vite integration resolve shipped entries without relative cross-package source paths.
 
 The documentation app is located at `app/docs`.

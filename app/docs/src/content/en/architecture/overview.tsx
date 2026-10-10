@@ -19,14 +19,14 @@ export const page: DocPage = {
     <>
       <p>
         A page load connects a reusable application definition, request-owned services, and data
-        sent to the browser. These have different lifetimes: compiling Routes does not acquire
-        services, and rendering Flight does not transfer the server's Context to the client.
+        sent to the browser. These have different lifetimes. Route compilation does not acquire
+        services. Flight rendering does not transfer the server's Context to the client.
       </p>
       <h2 id="entries">Find the definition, request, and browser entrypoints</h2>
       <ol>
         <li>
           <strong>Definition:</strong> the default entry, <code>src/entry.effront.tsx</code>,
-          provides the application as its default export. Vite exposes it as{" "}
+          supplies the application as its default export. Vite exposes it as{" "}
           <code>@effront/core/application-entry</code>. <code>makeApplication</code> in{" "}
           <code>application/definition.tsx</code> compiles Routes and stores the service Layer
           without building it.
@@ -91,10 +91,10 @@ export const page: DocPage = {
       </ol>
       <p>
         Response headers can arrive before rendering finishes. Effect HTTP's Web handler keeps the
-        request Scope alive until a streaming body ends, fails, or is cancelled. Core removes HEAD
+        request Scope alive until a streaming body ends, fails, or is canceled. Core removes HEAD
         bodies before that transfer so unread streams cannot retain the Scope. Services borrowed
         through <code>makeHttpEffect</code> remain owned by the host, which must keep them alive
-        through all response bodies that use them. See{" "}
+        through all response bodies that use them. Refer to{" "}
         <a href="/en/architecture/implementation/request">request processing</a> for these ownership
         boundaries.
       </p>

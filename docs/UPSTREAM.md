@@ -23,47 +23,163 @@ The parent of this fork's first local implementation commit, `d391de2`, is the r
 
 The pinned baseline and comparison material predate the Effront rename. They intentionally retain the original upstream names, source URLs, licenses, paths, commands, and commit hashes.
 For current local code, use `packages/core`, package imports `@effront/core/*`, and `Application.effront()`.
-The historical combined Cloudflare factory was superseded after the pinned comparison: register `effront()` from `@effront/vite` and `effrontCloudflare()` from `@effront/cloudflare` separately; Cloudflare options are direct adapter options, not nested `cloudflare` options.
+The historical combined Cloudflare factory was superseded after the pinned comparison: register `effront()` from `@effront/vite` and `effrontCloudflare()` from `@effront/cloudflare` separately. Cloudflare options are direct adapter options, not nested `cloudflare` options.
 
 ## Stable Effect v4 dependency policy
 
-Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront uses stable Effect v4 packages through the shared `^4.0.1` catalog range instead of the former exact `4.0.0-rc.116` pins.
-All eight public packages, including `create-effront`, advance together from 0.2.0 to 0.3.0 for this compatibility change; generated starter dependencies and maintained installation guides target the same release.
-The subsequent 0.3.1 patch synchronizes all eight packages, generated starters, and maintained installation guides while selecting mature Vite Plus 1.0.0 without new release-age exclusions.
-Consumer installation examples now use unversioned package names, and compatibility guidance refers to the installed packages' peer metadata instead of duplicating the release catalog.
+The upstream comparison baseline remains `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`.
+Effront uses stable Effect v4 packages through the shared `^4.0.1` catalog range instead of the former exact `4.0.0-rc.116` pins.
+All eight public packages, including `create-effront`, advance together from 0.2.0 to 0.3.0 for this compatibility change.
+Generated starter dependencies and maintained installation guides target the same release.
+
+The subsequent 0.3.1 patch synchronizes all eight packages, generated starters, and maintained installation guides.
+It selects mature Vite Plus 1.0.0 without new release-age exclusions.
+Consumer installation examples now use unversioned package names.
+Compatibility guidance refers to the installed packages' peer metadata instead of duplicating the release catalog.
 This documentation policy leaves manifest ranges, generated starter dependencies, lockfile resolution, and runtime source unchanged.
-This affects public dependency and peer ranges, workspace overrides, and the `create-effront` templates; v4 minor and patch updates are allowed, while prereleases and v5 are excluded.
+
+The stable Effect v4 compatibility change affects public dependency and peer ranges, workspace overrides, and the `create-effront` templates.
+The range allows v4 minor and patch updates but excludes prereleases and v5.
 The lockfile records concrete versions for reproducible installation, and consumers must retain one coherent Effect installation across the host and application graphs.
-`@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `^1.0.0` with Vitest `^5.0.1`; package task inputs and outputs remain under `cache` for VitePlus 1's task schema.
-The lockfile selects VitePlus and its core alias at 1.0.0 and Vitest at 5.0.1, preserving the package manager's default minimum release age instead of admitting the newly published VitePlus 1.1.0 through exclusions.
-Compatible future updates should select the latest mature release without lowering the threshold or automatically adding exceptions.
+
+`@effect/vitest@4.0.1` requires Vitest 5, so VitePlus and its Vite alias use `^1.0.0` with Vitest `^5.0.1`.
+Package task inputs and outputs remain under `cache` for VitePlus 1's task schema.
+The lockfile selects VitePlus and its core alias at 1.0.0 and Vitest at 5.0.1.
+This preserves the package manager's default minimum release age instead of admitting the newly published VitePlus 1.1.0 through exclusions.
+For compatible future updates, select the latest mature release without lowering the threshold or automatically adding exceptions.
+
 The initializer templates use the same VitePlus range, allowing compatible minor and patch updates without admitting the next major.
 This is a test-tool compatibility update, not a runtime redesign.
-The Nix environment uses the current `nix-vite-plus` overlay revision `af16f6183aec0717d8975ee858c910ab43babee6`, which supplies the VitePlus 1.0.0 launcher; repository-local tooling also resolves to 1.0.0 through the catalog and lockfile.
-Stable Effect v4 promotes `effect/unstable/*` to public paths such as `effect/http`, `effect/cli`, `effect/schema`, and `effect/reactivity`; runtime imports, JIT-generated imports, test fixtures, and maintained guides use those paths.
+The Nix environment uses the current `nix-vite-plus` overlay revision `af16f6183aec0717d8975ee858c910ab43babee6`, which supplies the VitePlus 1.0.0 launcher.
+Repository-local tooling also resolves to 1.0.0 through the catalog and lockfile.
+
+Stable Effect v4 promotes `effect/unstable/*` to public paths such as `effect/http`, `effect/cli`, `effect/schema`, and `effect/reactivity`.
+Runtime imports, JIT-generated imports, test fixtures, and maintained guides use those paths.
 Alchemy and its Cloudflare runtime use beta.81 because beta.79 still imports the removed paths despite peer ranges admitting stable v4.
-The Vite host supplies a standard status text when an application response omits it: Effect's native three-argument `writeHead` otherwise loses response headers inside Vite preview's compression middleware, causing non-ASCII HTML to decode incorrectly.
-The native host browser suite checks response headers and the document charset; custom status text and streaming bodies remain intact.
+
+When an application response omits status text, the Vite host supplies standard status text.
+Otherwise, Effect's native three-argument `writeHead` loses response headers inside Vite preview's compression middleware.
+This causes incorrect decoding of non-ASCII HTML.
+The native host browser suite checks response headers and the document charset. Custom status text and streaming bodies remain intact.
 Static assets follow stable Effect's `If-Range` handling: only matching strong ETags permit a range, while stale/weak validators and dates produce the full response.
-No upstream runtime source is incorporated by this change; external consumer repositories remain unchanged.
+
+No upstream runtime source is incorporated by this change. External consumer repositories remain unchanged.
 Published contracts: [Effect 4.0.1](https://registry.npmjs.org/effect/4.0.1), [Effect Vitest 4.0.1](https://registry.npmjs.org/@effect%2fvitest/4.0.1), [VitePlus 1.0.0](https://registry.npmjs.org/vite-plus/1.0.0), and [Alchemy beta.81](https://registry.npmjs.org/alchemy/2.0.0-beta.81).
+
+## Dependency range policy
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront uses caret ranges for every external catalog dependency and every generated starter dependency, including Alchemy prereleases and `@effront/*` starter references.
+This replaces the remaining exact dependency pins without changing the minimum accepted versions or the upstream runtime source.
+All eight public packages advance together to 0.3.2, and generated starter references use `^0.3.2` so the release includes the updated dependency ranges.
+Compatible updates follow each package's caret range; for example, `^0.3.1` allows patches below 0.4.0, while `^2.0.0-beta.81` also admits stable 2.x releases but not unrelated prerelease versions.
+The lockfile retains concrete resolved versions for reproducible installation, and the package manager's release-age policy remains unchanged.
+Package release versions, the package-manager toolchain version, internal `workspace:` references, public Vite wildcard peers, and immutable upstream and Nix revisions are not dependency pins and retain their existing form.
+The initializer tests require caret ranges in the generated dependencies and development dependencies for all four supported platforms.
+
+## Mature dependency selection and override boundary
+
+This section records the final pnpm-based configuration before the Bun workspace migration below.
+The selected dependency versions and the two VitePlus toolchain exceptions remain unchanged by that migration.
+
+The 0.3.2 release refreshes the catalog and lockfile with `vp update -r` under the unchanged default release-age policy.
+The selected compatible releases include Effect 4.0.2, VitePlus and its core alias 1.1.0, Vitest 5.0.3, and Wrangler 4.148.0.
+Generated starter ranges use the same tested catalog baselines.
+All four previous `minimumReleaseAgeExclude` entries are removed.
+`minimumReleaseAgeStrict: true` prevents the package manager from adding exclusions automatically without shortening its default waiting period.
+Effect and React overrides are removed so ordinary dependency and peer constraints determine their resolution.
+Only `vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0` and `vitest@*: 5.0.3` overrides remain, as prescribed by [Vite+ Manual Installation & Migration](https://viteplus.dev/guide/migrate).
+Both override values match the installed VitePlus toolchain exactly.
+Keep the direct VitePlus catalog range as a caret, and update both overrides together when upgrading the toolchain.
+`vp toolchain vitest` reports Vitest 5.0.3 for the installed VitePlus 1.1.0.
+The exact core alias and Vitest overrides are documented toolchain exceptions, not exact direct dependency pins.
+The historical 0.3.1 VitePlus 1.0.0 selection above describes that earlier release, not the current lockfile.
+The immutable upstream comparison revision and runtime source remain unchanged.
+
+## Alchemy server-runtime compilation boundary
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the fork's Alchemy adapter applies its existing subtractive runtime projection to production RSC/SSR compilation as well as development.
+Alchemy beta.81's `Cloudflare/Workers` barrel exports deployment modules including `Source`; its lazy `Sources/Vite` import reaches the Node-only runtime host and Vite artifact tooling.
+The previous serve-only gate allowed that deployment graph into built Workers, causing the actual documentation browser host build with VitePlus 1.1.0 to fail on Vite's internal `*?t=*` import.
+Removing that gate preserves the native Worker bridge, runtime capability exports, application source, and React/RSC protocols without externalizing Vite or adding dependency overrides or release-age exceptions.
+Node-side infrastructure tooling and browser graphs remain unprojected.
+A retained real-build regression checks runtime exports and absence of deployment tooling, and the documentation application's credential-free built workerd browser suite passes all 275 checks after installing its matching Chromium revision.
+Official Alchemy CLI planning, authenticated reconciliation, and deployment remain separately unverified.
+This changes fork-specific adapter compilation only and incorporates no upstream runtime source.
+
+## Historical Bun workspace and publication boundary
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, this fork uses Bun as its only dependency package manager.
+Workspace globs, all 45 shared caret catalog entries, and the two required VitePlus overrides move from pnpm YAML to `package.json`.
+`bun.lock` replaces the pnpm lockfile.
+The workspace and generated starters do not configure a minimum release age or exclusions.
+Frozen installs reproduce the committed resolution.
+The explicit lifecycle allowlist contains only `bun`, `esbuild`, and `workerd`, preserving the denial of `msgpackr-extract` scripts without inheriting Bun's default trusted list.
+At that stage, the Gitignore dependency used the JSR compatibility distribution under its public import name.
+The current official npm replacement and removal of the scoped registry configuration are documented below.
+
+All four initializer platforms declare the same Bun package manager and ship exact matching VitePlus toolchain overrides and a host-appropriate lifecycle allowlist.
+A retained publication regression packs the actual initializer, extracts it, and executes its shipped CLI for all four platforms to verify the toolchain metadata and absence of generated Bun install configuration.
+Node applications still start with Node and retain their Node engine requirement, while Bun applications start with Bun.
+The Nix input refresh aligns its Bun and VitePlus launcher versions with the workspace, and the shell asserts that its Bun version matches `packageManager`.
+CI installation is frozen through VitePlus.
+Publication retains the shared `publish-npm` action and its VitePlus entry point.
+The temporary repository-owned tarball packing and npm upload tasks have been removed.
+This changes fork-specific dependency management, starter metadata, and CI installation only; publication keeps the existing shared action.
+The Effront release remains 0.3.2, the production Alchemy projection fix is retained, and no upstream runtime source is incorporated.
+
+Sources: [Bun workspaces](https://bun.com/docs/pm/workspaces), [Bun catalogs](https://bun.com/docs/pm/catalogs), [minimum release age](https://bun.com/docs/pm/cli/install#minimum-release-age), [Bun lifecycle allowlist](https://bun.com/docs/pm/lifecycle), [JSR package compatibility](https://jsr.io/docs/using-packages), [VitePlus package management](https://viteplus.dev/guide/install), and [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/).
+
+## Node.js and pnpm dependency management
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront standardizes development on Node.js, pnpm, and VitePlus.
+This supersedes the historical Bun package-manager configuration above without incorporating upstream runtime source or changing Effront's release version.
+The pinned Nix package set supplies pnpm 12.9.0, and the root and all four generated starters declare that same package manager.
+The default Nix shell retains Node.js and the existing VitePlus launcher, replaces Bun with pnpm, and asserts pnpm version alignment without refreshing the immutable Nix inputs.
+Workspace globs and all 45 caret catalog ranges move to `pnpm-workspace.yaml`, and `pnpm-lock.yaml` is the sole dependency lockfile.
+The Gitignore integration now uses the official npm publication `@totto2727/gitignore-patterns` at `^0.1.0` instead of its JSR compatibility alias.
+The obsolete JSR registry configuration is removed, with no vendoring, import-name changes, dependency overrides, or release-age workaround.
+The root VitePlus configuration loads that installed npm package directly.
+The official `vite@*` alias and `vitest@*` overrides stay exactly aligned with VitePlus 1.1.0 and its bundled Vitest 5.0.3.
+The root and generated projects intentionally configure no minimum release age or exclusions, preserving the latest explicit Effront exception rather than restoring the earlier waiting-period policy.
+The root lifecycle policy allows only `bun`, `esbuild`, and `workerd`, explicitly denies `msgpackr-extract`, and does not broadly enable dependency scripts.
+Generated Node/Bun applications allow only `esbuild`, while Workers applications additionally allow `workerd`, with `msgpackr-extract` denied on every platform.
+
+Bun remains a catalog-managed dependency of the native server browser suite because that suite executes the actual Bun production listener.
+Bun platform packages, host entries, runtime scripts, types, and examples remain intact, but Bun is not used for installation or tarball packaging.
+Node and Workers development do not require Bun; applications selecting Bun install it only for genuine runtime execution.
+The initializer's retained publication regression packages its built CLI with pnpm and exercises all four generated platforms, including their shipped YAML toolchain and lifecycle settings.
+English and Japanese prerequisites distinguish pnpm dependency management from optional Bun runtime support.
+Bootstrap remains `vp exec --filter "./packages/*" -- vp pack`, CI installation remains frozen through VitePlus, and publication remains the unchanged shared `publish-npm` action with pnpm stage publication.
+This is fork-specific dependency management and contributor/consumer configuration, not a runtime rewrite, deployment, or publication change.
+
+Sources: [pnpm workspace configuration](https://pnpm.io/pnpm-workspace_yaml), [pnpm catalogs](https://pnpm.io/catalogs), [pnpm build permissions](https://pnpm.io/settings#allowbuilds), and [Vite+ Manual Installation & Migration](https://viteplus.dev/guide/migrate).
 
 ## Future incorporation
 
 Keep the historical baseline immutable as the comparison point, and advance the last fully incorporated baseline whenever a reviewed upstream range is fully accounted for.
-When upstream changes are incorporated, add one row per adopted upstream feature, naming the local commits that deliver it and why the Effront implementation differs from upstream.
-Record the reason for every intentional divergence; an undocumented divergence is treated as an untracked risk, so extend this document in the same change that adopts upstream behavior.
+
+When you incorporate upstream changes, add one row per adopted upstream feature.
+Give the local commits that deliver it.
+Give the reason that the Effront implementation differs from upstream.
+Record the reason for every intentional divergence. An undocumented divergence is treated as an untracked risk, so extend this document in the same change that adopts upstream behavior.
+
 Keep the existing Effront implementation whenever it already satisfies the upstream feature: adopt the behavior, not the upstream code. Upstream carries a different build tool, runtime, and deployment target, so import only the parts that are essentially required, and record everything else as a divergence instead of copying it.
-Account for every commit in the range, not only the adopted ones: a range is complete when each commit is either recorded as an adopted feature or recorded as deliberately deferred with a reason.
-Then advance the baseline to the last reviewed commit; a selective cherry-pick without that accounting does not imply the intervening upstream changes were incorporated.
+
+Account for every commit in the range, not only the adopted ones.
+For full range accounting, record each commit as an adopted feature or as deliberately deferred with a reason.
+Then advance the baseline to the last reviewed commit. A selective cherry-pick without that accounting does not imply the intervening upstream changes were incorporated.
 The Workers/VitePlus runtime intentionally replaces upstream Bun/Rspack behavior, so upstream changes need compatibility review rather than unconditional merging.
 
 ## Incorporated range
 
 On 2026-09-27 the last fully incorporated baseline advanced from `ed886996d1d3780b94166af4f798c53416d547c8` (2026-09-10) to `d76104aaf3c18cf25191a64bff860a3f6cc08aa0` (2026-09-19), covering the [0.2.0](https://github.com/nikhilsnayak/effective-rsc/releases/tag/v0.2.0) release and the six commits that followed it.
 The range was enumerated with the upstream compare API rather than inferred: `ed886996...0b5cb20a` contains 34 commits and `0b5cb20a...d76104aa` contains six.
-Every commit in those ranges has an explicit disposition in the accounting table below, with the feature-level detail in [adopted upstream features](#adopted-upstream-features) and the reasons to skip the rest in [deferred upstream commits](#deferred-upstream-commits).
-The historical baseline `ed886996d1d3780b94166af4f798c53416d547c8`, recorded on 2026-09-12 from the historical package manifest and the first local commit's parent, stays as the immutable comparison point for the architecture excerpts and earlier provenance records.
+The accounting table below gives an explicit disposition for every commit in those ranges.
+[Adopted upstream features](#adopted-upstream-features) gives the feature-level details.
+[Deferred upstream commits](#deferred-upstream-commits) gives the reasons to omit the rest.
+
+The historical baseline `ed886996d1d3780b94166af4f798c53416d547c8` remains the immutable comparison point for the architecture excerpts and earlier provenance records.
+The record dates from 2026-09-12 and uses the historical package manifest and the first local commit's parent.
 
 ### Range accounting
 
@@ -84,23 +200,23 @@ The historical baseline `ed886996d1d3780b94166af4f798c53416d547c8`, recorded on 
 | `d9bdcf7c`, `ca4204a9` (PR #45)                         | Deferred, Vercel packaging.                                                                               |
 | `6ab7e124`, `925156a0` (PR #46)                         | Adopted, cancellation and Vite source-map verification.                                                   |
 | `c3dc57ab`, `bfe9cb5c` (PR #47)                         | Adopted, streaming-feed query retry.                                                                      |
-| `341473a9`, `0b5cb20a` (PR #48)                         | Deferred as code, upstream 0.2.0 release preparation; `0b5cb20a` bounds the release portion of the range. |
+| `341473a9`, `0b5cb20a` (PR #48)                         | Deferred as code, upstream 0.2.0 release preparation. `0b5cb20a` bounds the release portion of the range. |
 | `a98ee362`                                              | Deferred, upstream documentation publication.                                                             |
 | `d8fad159`                                              | Adopted as Effront's own dependency pins.                                                                 |
 | `d8abb492`                                              | Deferred, upstream contributor documentation restructure.                                                 |
-| `fdd8c135`                                              | Deferred, dependency-driven Tailwind configuration; the adapter-owned implementation is kept.             |
-| `cb3ce5d8`, `d76104aa` (PR #53)                         | Adopted, per-graph Schema JIT registration; `d76104aa` bounds the range.                                  |
+| `fdd8c135`                                              | Deferred, dependency-driven Tailwind configuration. The adapter-owned implementation is kept.             |
+| `cb3ce5d8`, `d76104aa` (PR #53)                         | Adopted, per-graph Schema JIT registration. `d76104aa` bounds the range.                                  |
 
 ## Adopted upstream features
 
 | Recorded on | Upstream commits                   | Upstream feature                                                              | Local commits                      | Effront behavior and the reason it differs from upstream                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | ----------- | ---------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-24  | `1dbdb91b`                         | Omitted input for zero-argument Server Functions                              | `eb91e73a`                         | Adopted: an omitted argument is accepted and extra arguments are rejected, with type tests. No protocol divergence; the call still travels through Effront's own `ServerFn` wiring.                                                                                                                                                                                                                                                                                                   |
+| 2026-09-24  | `1dbdb91b`                         | Omitted input for zero-argument Server Functions                              | `eb91e73a`                         | Adopted: an omitted argument is accepted and extra arguments are rejected, with type tests. No protocol divergence. The call still travels through Effront's own `ServerFn` wiring.                                                                                                                                                                                                                                                                                                   |
 | 2026-09-24  | `6ab7e124`                         | Flight argument-encoding cancellation and development source maps             | `eb91e73a`, `b5c77cef`             | Adopted the abort signal passed into React's argument encoder and confirmed Vite's existing RSC source-map endpoint against a real HTTP server. Divergence: Rspack's development file-server route is not copied, because Vite's RSC plugin already serves source maps.                                                                                                                                                                                                               |
 | 2026-09-24  | `bcd3d255`                         | Interruptible Server Function queries with framework errors                   | `90331dc4`, `daa7ce85`, `1349eb03` | Adopted typed failures and interruption, including waiting for the full Flight response before a value query settles. Divergence: queries are exposed through `@effront/core/query` and a separate `POST /_effront/query` transport instead of upstream's client transport.                                                                                                                                                                                                           |
 | 2026-09-24  | `2df9211a`, `91fa61ea`             | Stream Server Functions with request-owned cleanup                            | `11c81d1f`, `ef2aeaf8`, `daa7ce85` | Adopted producer ownership inside the request scope and completion of the full Flight response before the stream finishes. Divergence: the request Scope is owned by the Effront host and stays live until the response completes, fails, or is cancelled, so upstream's application-startup lifetime explanation is not reused.                                                                                                                                                      |
-| 2026-09-24  | `355d0b1f`, `c3dc57ab`             | Streamed Server Component feed example and query retry                        | `d99af874`                         | Re-implemented as an Alchemy-managed Worker showcase with incremental chunks, note queries, retry, cancellation, and client-state retention. Divergence: it uses Vite and a local Worker test harness rather than upstream Bun/Rspack or Vercel packaging; its consumer uses `stream` to retain every arrived item because `streamAtom` by itself exposes only the latest result, and per-card `queryAtom` would need separate atom instances without improving this demo's behavior. |
-| 2026-09-24  | `80bc27ec`, `428fcd41`             | Atom registry owned by the application root, check-in preview through queries | `b90ae611`, `e62fe140`             | Adopted the official Atom React registry inside the sample's single-page Client Component, organizer scoping, idempotent audit, and Worker browser acceptance. Divergence: the Alchemy-managed Worker fixes a demo actor and keeps a Worker-instance-local store; upstream's Bun SQLite event platform is not copied, and this is neither authentication nor a durable database.                                                                                                      |
+| 2026-09-24  | `355d0b1f`, `c3dc57ab`             | Streamed Server Component feed example and query retry                        | `d99af874`                         | Re-implemented as an Alchemy-managed Worker showcase with incremental chunks, note queries, retry, cancellation, and client-state retention. Divergence: it uses Vite and a local Worker test harness rather than upstream Bun/Rspack or Vercel packaging. Its consumer uses `stream` to retain every arrived item because `streamAtom` by itself exposes only the latest result, and per-card `queryAtom` would need separate atom instances without improving this demo's behavior. |
+| 2026-09-24  | `80bc27ec`, `428fcd41`             | Atom registry owned by the application root, check-in preview through queries | `b90ae611`, `e62fe140`             | Adopted the official Atom React registry inside the sample's single-page Client Component, organizer scoping, idempotent audit, and Worker browser acceptance. Divergence: the Alchemy-managed Worker fixes a demo actor and keeps a Worker-instance-local store. Upstream's Bun SQLite event platform is not copied, and this is neither authentication nor a durable database.                                                                                                      |
 | 2026-09-24  | `cb3ce5d8`                         | Effect Schema JIT compilation in every graph                                  | `ba4b5577`, `f9942315`             | Adopted early registration in each execution graph. Divergence: registration targets Vite's RSC, SSR, and browser entries, the RSC entry must be the same path passed to `effront({ rsc })` and `effrontServer({ rsc })`, and a CSP that blocks dynamic code generation falls back to the interpreter. Upstream registers inside its own Rspack build.                                                                                                                                |
 | 2026-09-26  | `d8fad159`                         | Effect, React, and workspace tooling upgrade                                  | `0d31983b`, `84040444`, `f8587bb4` | Adopted as Effront's own catalog pins (Effect rc.116, Alchemy beta.79, Atom React) rather than upstream's exact set, and verified the native host's Range and HEAD behavior against the upgraded Effect. Divergence: one catalog covers the whole workspace, so the later `packages/create-effront` Effect CLI work had to be ported to the rc.116 `effect/unstable/cli` names when main was merged.                                                                                  |
 | 2026-09-26  | `8d22d8cc`, `a98ee362`, `d8abb492` | Public guide and reference documentation                                      | `1c91fbe9`, `f9942315`, `8e603d0a` | Adopted the content that documents the adopted behavior, in Japanese and English. Divergence: Effront keeps package README files as short routing documents and the bilingual `app/docs` site as the canonical public contract, Markdown guide ownership is tracked separately, and upstream's documentation pipeline and release-docs promotion are not used.                                                                                                                        |
@@ -119,7 +235,7 @@ The historical baseline `ed886996d1d3780b94166af4f798c53416d547c8`, recorded on 
 | `d8abb492`                                     | Upstream contributor and package documentation restructure. Effront owns a different repository layout, package README policy, and documentation index.                                                                                                                                                                                                                                                |
 | `fdd8c135`                                     | Tailwind configured from the application's declared dependencies. Effront keeps the adapter-owned implementation: the adapter ships `@tailwindcss/vite` and `tailwindcss` and always includes the plugin, so delegated conditional injection removed the styles that the `tests/e2e-server` fixtures receive through that dependency. The attempted adoption was reverted before the baseline advance. |
 
-Local-only commits in the same range (`19eb7087`, `4e0c982c`, `3e2e5ecc`, `f9942315`, `f8587bb4`, and the merge commits `cdefb834` and `54dcd2b8`) record provenance, lock the check-in sample's CI dependency, resolve merges with `main`, and port the Effect CLI; they have no upstream counterpart.
+Local-only commits in the same range (`19eb7087`, `4e0c982c`, `3e2e5ecc`, `f9942315`, `f8587bb4`, and the merge commits `cdefb834` and `54dcd2b8`) record provenance, lock the check-in sample's CI dependency, resolve merges with `main`, and port the Effect CLI. They have no upstream counterpart.
 
 ## Re-evaluated compatibility boundaries
 

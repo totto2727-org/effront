@@ -3,7 +3,7 @@
 ## Repository structure
 
 - `src/application/` owns the shared identity, authoring factories, route graph, and request rendering contracts.
-- `src/http.ts` owns the native Effect HTTP boundary; `src/workers.ts` owns the compatibility Web Fetch boundary and host context.
+- `src/http.ts` owns the native Effect HTTP boundary. `src/workers.ts` owns the compatibility Web Fetch boundary and host context.
 - `src/rsc/`, `src/server/`, and `src/client/` separate Flight production, HTML rendering, and browser navigation.
 - `tests/` retains cross-module and tool-boundary contracts.
 
@@ -43,7 +43,7 @@ The retained suites under `tests/` have these package-owned responsibilities:
 
 - Maintain one opaque application identity across related factories and preserve runtime checks as well as compile-time authoring contracts.
 - Keep route grammar types and runtime parsing paired, with corresponding type/runtime tests for grammar changes.
-- Keep page-transition settings serializable. Live reduced-motion changes retain the mounted boundary, input value, and focus; changing explicit `enabled` may reset local state.
+- Keep page-transition settings serializable. Live reduced-motion changes retain the mounted boundary, input value, and focus. A change to explicit `enabled` may reset local state.
 - Keep `internal/client-entry` and `internal/ssr-entry` as explicit integration exports, not general application APIs.
 
 ## Package-specific rules

@@ -4,11 +4,15 @@ Create a minimal Effront React Server Components application for Node.js, Bun, s
 
 ## Usage
 
-Follow [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started)) to generate a Node.js project. Choose another host in the [platform guides](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms)).
+Use [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started)) to generate a Node.js project.
+Select another host in the [platform guides](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms)).
 
 ## Prerequisites
 
-Use the current Node.js LTS for VitePlus and the current Bun release for a Bun production host. Alchemy local development requires a configured Cloudflare profile.
+Use the current Node.js LTS, pnpm, and VitePlus on every platform.
+All generated projects use pnpm through `vp install`, independently of the production runtime.
+Install the current Bun release only for Bun applications.
+Alchemy local development requires a configured Cloudflare profile.
 
 ## Setup
 
@@ -20,7 +24,7 @@ Run `vp create effront -- [directory] --platform node|bun|cloudflare|alchemy-clo
 
 ## Development
 
-See [Effront development instructions](../../AGENTS.md).
+Refer to [Effront development instructions](../../AGENTS.md).
 
 ## License
 

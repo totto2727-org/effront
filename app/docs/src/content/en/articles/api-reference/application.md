@@ -1,4 +1,5 @@
-`Application` from `@effront/core` combines routes and a service Layer into an application definition, separate from the host that serves it.
+`Application` from `@effront/core` combines routes and a service Layer into an application definition.
+This definition is separate from the host that serves it.
 
 ## Application definition example {#example}
 
@@ -44,7 +45,7 @@ export const EFFRONT = Application.effront();
 ```
 
 Each call creates a distinct identity, even when its service types match.
-Mixing Routes, Page, Layout, Loading, or Middleware definitions from different identities throws `TypeError`.
+Routes, Page, Layout, Loading, and Middleware definitions from different identities cause `TypeError` if you combine them.
 The factory exposes [rendering factories](./components.md), [Routes and Middleware](./routing.md), and [ServerFn](./server-functions.md).
 
 ## EFFRONT.make {#make}
@@ -60,7 +61,8 @@ The factory exposes [rendering factories](./components.md), [Routes and Middlewa
 `Requirements` retains its external service requirements.
 The HTTP handler supplies `HttpRouter.HttpRouter`, so a Layer can register custom HTTP routes even when `Services` is `never`.
 
-For a definition inferred by `make`, import `ApplicationServices<Application>` and `ApplicationRequirements<Application>` from `@effront/core` to extract the service and external-requirement types.
+For a definition inferred by `make`, import `ApplicationServices<Application>` and `ApplicationRequirements<Application>` from `@effront/core`.
+These types give you the service and external-requirement types.
 `ApplicationRequirements` excludes the runtime-owned `HttpRouter.HttpRouter` requirement.
 
 ```typescript
@@ -71,8 +73,9 @@ type Services = ApplicationServices<typeof application>;
 type HostRequirements = ApplicationRequirements<typeof application>;
 ```
 
-The Layer is acquired for each request, not when `make` is called.
-The host must retain its request Scope until the response body completes, fails, or is cancelled.
+Each request acquires the Layer.
+A call to `make` does not acquire it.
+The host must retain its request Scope until the response body completes, fails, or is canceled.
 
 [Native HTTP](./http.md) preserves external requirements for the host to supply.
 [Workers Fetch](./workers.md) accepts only requirements satisfiable by `HttpRouter` and `HttpServerRequest`.
@@ -92,4 +95,4 @@ The derived factories add the middleware's provided services to their available 
 
 The middleware must have the same identity, and its required services must already be available to the factory.
 A foreign middleware or the same middleware twice in one chain throws `TypeError`.
-See [Routes and Middleware](./routing.md) for handler inputs and execution order.
+Refer to [Routes and Middleware](./routing.md) for handler inputs and execution order.

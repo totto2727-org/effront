@@ -1,6 +1,6 @@
 ## Run the example {#setup}
 
-Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
+Install the current Node.js LTS, [pnpm](https://pnpm.io/installation), and [Vite+](https://viteplus.dev/).
 Create a Node.js project and install its dependencies:
 
 ```bash
@@ -24,11 +24,14 @@ The example already contains the host configuration:
 | `vite.config.ts`        | Registers `effront()` and `effrontServer()`.                                       |
 | `package.json`          | Lists dependencies and the `start` command.                                        |
 
-Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>` and save. The page updates without restarting the server.
+Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>`.
+Save the file.
+The page updates without a server restart.
 
 ## Check the production build locally {#assets}
 
-Stop development, then run from the generated project:
+Stop development.
+Then run from the generated project:
 
 ```bash
 vp build
@@ -39,7 +42,7 @@ The build puts the server entry in `dist/rsc/server.js` and generated browser as
 
 ## Start the Node.js server {#node}
 
-After the build, run from `examples/node`:
+After the build, run from the generated project:
 
 ```bash
 vp run start
@@ -47,7 +50,7 @@ vp run start
 
 The script runs `node dist/rsc/server.js`.
 With `PORT` and `HOST` unset, open [http://127.0.0.1:3000](http://127.0.0.1:3000).
-To change the listening address, set `PORT` and `HOST` before starting the server.
+Before you start the server, set `PORT` and `HOST` to change the listening address.
 
 For listener and asset options, see the [server API reference](../api-reference/server.md).
 See the separate [Bun example](./bun.md) for that runtime.

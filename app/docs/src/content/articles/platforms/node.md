@@ -1,6 +1,6 @@
 ## サンプルを起動する {#setup}
 
-最新の Node.js LTS と [Vite+](https://viteplus.dev/) をインストールします。
+最新の Node.js LTS、[pnpm](https://pnpm.io/installation)、[Vite+](https://viteplus.dev/) をインストールします。
 Node.js 用のプロジェクトを作成し、依存パッケージをインストールします。
 
 ```bash
@@ -39,7 +39,7 @@ vp build
 
 ## Node.js サーバーを起動する {#node}
 
-ビルド後、`examples/node` で次を実行します。
+ビルド後、生成したプロジェクトで次を実行します。
 
 ```bash
 vp run start

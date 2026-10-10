@@ -1,6 +1,6 @@
 {
   "name": "@effront/alchemy",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Native Alchemy Cloudflare integration for Effront applications.",
   "license": "MIT",
   "repository": {

@@ -2,7 +2,7 @@
 
 Choose checks by the behavior changed: unit and integration tests cover framework contracts, built-host browser tests cover runtime behavior, and the development suite covers HMR.
 Unit tests live beside their implementation as `<module>.test.ts` or `<module>.test.tsx`.
-Vitest uses its standard discovery patterns; Playwright selects `*.e2e.ts` separately.
+Vitest uses its standard discovery patterns. Playwright selects `*.e2e.ts` separately.
 
 ## Verification
 
@@ -32,9 +32,9 @@ Each `fixture/` consumes public package exports.
 From either package, `vp run test` runs its browser suite and `vp check` checks its configuration, fixture, and test source.
 The root package has no E2E runner script or Playwright dependency.
 
-The Gitignore pattern generator is an external JSR dependency.
-Its implementation and CLI tests belong to the [upstream package](https://jsr.io/@totto2727/gitignore-patterns).
-Root `vp run check` exercises its integration with VitePlus; do not copy the upstream suite into this repository.
+The Gitignore pattern generator is an external npm dependency.
+Its implementation and CLI tests belong to the [upstream package](https://www.npmjs.com/package/@totto2727/gitignore-patterns).
+Root `vp run check` exercises its integration with VitePlus. Do not copy the upstream suite into this repository.
 
 ## Standard E2E server lifecycle
 
@@ -47,7 +47,7 @@ Each has one Vite configuration and one fixed command, without a build/dev mode 
 | `tests/e2e-dev`   | `vp dev` for HMR checks                                          | `4174` |
 
 Both run their fixed `fixture/` directly.
-Build output stays under `fixture/dist/`; Playwright reports use the standard `test-results/` directory.
+Build output stays under `fixture/dist/`. Playwright reports use the standard `test-results/` directory.
 The HMR test restores edited fixture bytes and removes added files in `finally`.
 Run each package independently with its own `vp run test` command.
 Same-package concurrent execution requires isolation in the execution environment, not additional Playwright configuration.
@@ -90,5 +90,9 @@ Both package archives were inspected and contained no unit, integration, or brow
 
 ## Historical task-interface validation
 
-Validated the real task interface with a temporary source probe: `check` rejected malformed formatting, `fix` repaired it, `check` then passed, and a separate TypeScript mismatch caused `check` to fail before the restored source passed again.
+A temporary source probe validated the real task interface.
+The `check` task rejected malformed formatting.
+The `fix` task repaired it, and `check` then passed.
+A separate TypeScript mismatch caused `check` to fail.
+After source restoration, `check` passed again.
 `vp run test` passed all 241 tests across 33 files.

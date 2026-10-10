@@ -29,9 +29,9 @@ const deploymentModules = new Set([
 ]);
 
 /**
- * TODO: Remove this development compatibility layer when Alchemy's runtime graph
+ * TODO: Remove this compatibility layer when Alchemy's runtime graph
  * no longer eagerly loads Node-only deployment code. Verify official cold-start
- * development, hydration, Server Functions and HMR before removing it.
+ * development, hydration, Server Functions, HMR and built Worker acceptance before removing it.
  * Preserve unlisted exports. This is a deployment-code denylist, not a feature allowlist.
  */
 export const alchemyRuntimeProjection = (): Plugin => {
@@ -183,7 +183,6 @@ export const alchemyRuntimeProjection = (): Plugin => {
 
   return {
     name: "effront:alchemy-runtime-projection",
-    apply: "serve",
     enforce: "pre",
     applyToEnvironment: (environment) => environment.name === "rsc" || environment.name === "ssr",
     resolveId(id) {

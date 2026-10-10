@@ -37,5 +37,5 @@ If save B starts after save A, a late A response cannot directly install its bun
 Save A can still change the database after B.
 Use server-side version checks or transactions to enforce the application's write-order rules.
 
-A lost response does not prove that the write was rolled back.
-Use duplicate detection for writes that may be retried.
+A lost response does not prove that the server reversed the write.
+Use duplicate detection for writes that callers can retry.

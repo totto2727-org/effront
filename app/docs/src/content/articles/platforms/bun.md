@@ -1,8 +1,9 @@
 ## サンプルを起動する {#setup}
 
-最新の Node.js LTS と [Vite+](https://viteplus.dev/) をインストールします。
-本番サーバー用に[最新の Bun](https://bun.sh/docs/installation) もインストールします。
+最新の Node.js LTS、[pnpm](https://pnpm.io/installation)、[Vite+](https://viteplus.dev/) をインストールします。
+[Bun](https://bun.sh/docs/installation) で本番サーバーを実行します。
 Vite の開発サーバーは Node.js を使うため、両方のランタイムを用意してください。
+Bun 用のプロジェクトを作成し、依存パッケージをインストールします。
 
 ```bash
 vp create effront -- my-app --platform bun
@@ -16,6 +17,7 @@ Vite が表示するローカル URL を開きます。一画面に `Hello, worl
 ## アプリケーションとサーバーのファイルを確認する {#entries}
 
 サンプルにはホストの設定が揃っています。
+ページやサーバーの動作を変更する場合は、次のファイルから確認します。
 
 | ファイル                | 役割                                                                          |
 | ----------------------- | ----------------------------------------------------------------------------- |
@@ -40,7 +42,7 @@ vp build
 
 ## Bun サーバーを起動する {#bun}
 
-ビルド後、`examples/bun` で次を実行します。
+ビルド後、生成したプロジェクトで次を実行します。
 
 ```bash
 vp run start
@@ -48,6 +50,7 @@ vp run start
 
 このスクリプトは `bun dist/rsc/server.js` を実行します。
 `PORT` と `HOST` が未設定なら、[http://127.0.0.1:3000](http://127.0.0.1:3000) を開きます。
+この URL では、ビルド済みアプリケーションが Bun 上で動作します。
 待ち受けアドレスを変更する場合は、起動前に `PORT` と `HOST` を設定してください。
 最小構成は本番で `@effect/platform-bun` を、開発時に `@effect/platform-node` を使います。
 

@@ -1,6 +1,7 @@
 ## Run the example {#setup}
 
-Install the current Node.js LTS and [Vite+](https://viteplus.dev/), then run:
+Install the current Node.js LTS, [pnpm](https://pnpm.io/installation), and [Vite+](https://viteplus.dev/).
+Then run:
 
 ```bash
 vp create effront -- my-app --platform cloudflare
@@ -29,7 +30,8 @@ Keep the `nodejs_compat` flag when changing Wrangler settings.
 
 ## Run the built Worker with Wrangler {#local}
 
-Stop development, then run these commands from the generated project:
+Stop development.
+Then run these commands from the generated project:
 
 ```bash
 vp build
@@ -43,7 +45,8 @@ These local commands do not deploy the example or require Cloudflare authenticat
 ## Read Worker bindings and request context {#context}
 
 Use the accessors inside request-scoped Effects, such as a Page, Server Function, or application Layer served by `createFetchHandler`.
-For a Worker with an `API_ORIGIN` variable, this helper reads the binding and request URL, and passes an audit task to `waitUntil()`:
+For a Worker with an `API_ORIGIN` variable, this helper reads the binding and request URL.
+It passes an audit task to `waitUntil()`:
 
 ```typescript
 import { getWorkersEnv, getWorkersRequestContext } from "@effront/cloudflare/workers";
@@ -62,7 +65,8 @@ export const readRequestSettings = Effect.fn("app/readRequestSettings")(function
 });
 ```
 
-Configure `API_ORIGIN` in your Worker and supply your own `recordAccess` function when calling this helper from an Effect.
+Configure `API_ORIGIN` in your Worker.
+When you call this helper from an Effect, supply your own `recordAccess` function.
 
 > [!WARNING]
 > The type argument describes host values but does not validate them.

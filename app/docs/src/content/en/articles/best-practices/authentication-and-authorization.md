@@ -1,9 +1,9 @@
 Protect page access and Server Function execution independently.
-A caller can invoke a Server Function without first visiting the Page that displays its form.
+A caller can invoke a Server Function without first opening the Page that displays its form.
 
 ## Apply checks at each entry point {#entry-points}
 
-Authenticate the current request before protected work begins.
+Authenticate the current request before protected work starts.
 
 | Entry point             | Protected work                          | Where to apply checks                            |
 | ----------------------- | --------------------------------------- | ------------------------------------------------ |
@@ -18,7 +18,8 @@ Custom HTTP endpoints use [HTTP middleware](/en/guide/http#global).
 Use one middleware-derived factory for the protected Routes and Server Function.
 In this example, `./auth` is an application-provided module, not an Effront authentication integration.
 Its `checkEditorAccess` Effect verifies the current request's session and editor permission.
-The helper returns `undefined` to allow access or an HTTP denial response, such as `401` or `403`, on failure.
+The helper returns `undefined` to allow access.
+On failure, it returns an HTTP denial response, such as `401` or `403`.
 
 Create `src/effront.ts`:
 
@@ -86,18 +87,18 @@ export default EFFRONT.make({
 
 The Routes registration checks access before rendering the Page and Layout.
 The Server Function registration applies the same policy before the handler logs the accepted action.
-Creating only a Page or Layout from `EditorEFFRONT` does not activate route middleware.
-See the [Middleware guide](/en/guide/middleware) for request-specific services and nested scopes.
+A Page or Layout definition from `EditorEFFRONT` alone does not activate route middleware.
+Refer to the [Middleware guide](/en/guide/middleware) for request-specific services and nested scopes.
 
 ## Authorize each operation {#authorization}
 
-After authentication, check whether the verified user may read or change the target record.
-For example, constrain a project update to projects the user may edit.
-Determine permissions from server-side data, not a submitted owner or role.
-See [Server Function input contracts](/en/api-reference/server-functions#arguments) for Schema validation and client-supplied state.
+After authentication, make sure that the validated user has permission to read or change the target record.
+For example, permit project updates only for projects the user can edit.
+Get permissions from server-side data, not a submitted owner or role.
+Refer to [Server Function input contracts](/en/api-reference/server-functions#arguments) for Schema validation and client-supplied state.
 
-Test these requests separately:
+Do separate tests of these requests:
 
 - An unauthorized user cannot view the protected Page.
 - The same user cannot submit its Server Function request successfully.
-- An authenticated user cannot change another user's record by submitting its ID.
+- An authenticated user cannot change another user's record through submission of its ID.
