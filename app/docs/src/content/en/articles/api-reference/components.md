@@ -65,18 +65,18 @@ Here `params.id` is a number.
 - A static path requires a Page without `params`.
 - A parameterized path requires exactly the Schema's `Encoded` keys, with no missing or extra names.
 - Encoded parameter values must accept URL strings.
-- The Schema must have known, nonempty string keys. Empty structs and arbitrary-key Records are rejected by the type contract.
+- The Schema must have known, nonempty string keys. The type contract rejects empty structs and arbitrary-key Records.
 
 ## PageViewTransition {#view-transition}
 
 `PageViewTransition` from `@effront/core` is an Effect `Context.Reference<PageViewTransitionConfig>` with built-in defaults.
 It configures the Page's React 19.3 ViewTransition boundary, which excludes shared Layouts.
 
-| Configuration                                                        | Scope                                             |
-| -------------------------------------------------------------------- | ------------------------------------------------- |
-| `Layer.succeed(PageViewTransition, config)` in the application Layer | Application default; import `Layer` from `effect` |
-| `Page.make({ viewTransition: config, render })`                      | Overrides specified properties for one Page       |
-| `Page.make({ viewTransition: false, render })`                       | Removes that Page's boundary                      |
+| Configuration                                                        | Scope                                              |
+| -------------------------------------------------------------------- | -------------------------------------------------- |
+| `Layer.succeed(PageViewTransition, config)` in the application Layer | Application default. Import `Layer` from `effect`. |
+| `Page.make({ viewTransition: config, render })`                      | Overrides specified properties for one Page        |
+| `Page.make({ viewTransition: false, render })`                       | Removes that Page's boundary                       |
 
 | Property                                      | Value                                                                                    |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -87,10 +87,11 @@ Built-in `default` classes are `"auto"`, with `"none"` for `hmr-refresh` and `na
 Overrides replace a mapping as a whole, rather than merging its entries.
 A Page can set `enabled: true` even when the application disables transitions.
 
-Only serializable settings are accepted, not callbacks.
+Effront accepts only serializable settings, not callbacks.
 For a custom React boundary, use an automatic or distinct name: `effront-page` is reserved.
-Changing explicit `enabled` on a displayed Page can reset its local state.
+A change to explicit `enabled` on a displayed Page can reset its local state.
 Live reduced-motion preference changes retain the boundary and preserve Page input state.
+
 Each Page uses its own configuration, so an enabled outgoing Page can still animate when the destination disables animations.
 The Page animation does not cover every later Suspense reveal.
 Use a separate [React ViewTransition](https://react.dev/reference/react/ViewTransition) for content that should animate on reveal.
@@ -109,4 +110,4 @@ An anchor can add an application transition type:
 | Class mapping         | A configuration such as `enter: { "photo-next": "photo-fade" }` selects a CSS class. Supply the matching View Transition pseudo-element styles in the application. |
 | Reserved names        | `navigation`, `navigation-*`, `server-function`, and `hmr-refresh` are ignored in the attribute.                                                                   |
 
-For Page and application configuration examples, see [Client navigation](/en/advanced/client-navigation#transition-scope).
+For Page and application configuration examples, refer to [Client navigation](/en/advanced/client-navigation#transition-scope).

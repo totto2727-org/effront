@@ -9,7 +9,8 @@
 ## Development commands
 
 After the [repository build prerequisites](../../AGENTS.md#development-commands), run `vp test run packages/cloudflare` from the repository root for runtime readers and real Vite configuration integration.
-Changes to host wiring also need the applicable [built Worker](../../docs/TESTING.md#independent-test-ownership) and [Vite HMR](../../docs/TESTING.md#independent-test-ownership) acceptance paths; these independently exercise standalone Fetch hosting rather than native Alchemy orchestration.
+Changes to host wiring also need the applicable [built Worker](../../docs/TESTING.md#independent-test-ownership) and [Vite HMR](../../docs/TESTING.md#independent-test-ownership) acceptance paths.
+These independently exercise standalone Fetch hosting rather than native Alchemy orchestration.
 
 ## Architecture
 
@@ -17,7 +18,7 @@ Changes to host wiring also need the applicable [built Worker](../../docs/TESTIN
 - Default SSR output belongs beneath the RSC Worker upload directory. Preserve explicit SSR output paths and forwarding of all Cloudflare options except invariant `viteEnvironment` wiring.
 - Accessors delegate to the core request Context without allocating another service or Layer. Preserve object identity and the Env-only generic factory with its fixed minimal `waitUntil` execution-context contract.
 - Keep plugin configuration separate from runtime imports and preserve the explicit `./workers` export.
-- Standalone Cloudflare compatibility tests remain separate from Alchemy's native Worker integration; do not register this host in Alchemy application Vite configs.
+- Standalone Cloudflare compatibility tests remain separate from Alchemy's native Worker integration. Do not register this host in Alchemy application Vite configs.
 
 ## Task-specific documentation
 

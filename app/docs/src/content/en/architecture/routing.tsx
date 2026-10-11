@@ -18,7 +18,7 @@ export const page: DocPage = {
     <>
       <p>
         A destination combines a Page with its full path, middleware, and surrounding Layout/Loading
-        scopes. Effront assembles destinations before serving requests, separating invalid
+        scopes. Effront assembles destinations before it serves requests. This separates invalid
         declarations from URLs that match a route but fail Page parameter validation.
       </p>
       <h2 id="compilation">Start with the destination the server receives</h2>
@@ -55,15 +55,15 @@ export const page: DocPage = {
       <p>
         The loop visits the current node's Pages, then its mounts, each in registration order.
         Interleaved <code>page</code> and <code>mount</code> calls therefore do not retain a
-        combined order. This is traversal order, not matching priority: Effect HTTP owns matching,
+        combined order. This is traversal order, not matching priority. Effect HTTP owns matching,
         and this compiler does not sort static and dynamic paths.
       </p>
       <p>
         <code>resolveRouteMiddleware</code> retains the inherited chain and appends the current
         declaration's suffix after their shared prefix. Remaining duplicates throw{" "}
-        <code>TypeError</code>. The compiler also requires a root Layout and at least one Page, then
-        returns a frozen, nonempty destination array. Requests use that array without traversing
-        Routes again.
+        <code>TypeError</code>. The compiler also requires a root Layout and at least one Page. It
+        then returns a frozen, nonempty destination array. Requests use that array without a new
+        traversal of Routes.
       </p>
       <h2 id="route-contract">Connect URL captures to Page input</h2>
       <p>
@@ -125,7 +125,7 @@ export const page: DocPage = {
       <p>
         Mounts check child paths after joining the prefix, so they can collide with Pages registered
         directly on the parent. <code>joinRoutePaths</code> treats <code>/</code> specially to avoid
-        an extra slash. Runtime collision checks throw <code>TypeError</code>, complementing the
+        an extra slash. Runtime collision checks throw <code>TypeError</code>. They supplement the
         type checks.
       </p>
       <p>

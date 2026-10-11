@@ -15,7 +15,8 @@ export default defineConfig({
 });
 ```
 
-この設定に対応するアプリケーションと Wrangler のファイルは [はじめに](/ja/guide/getting-started) を参照してください。
+この設定に対応するアプリケーションと Wrangler のファイルは [Cloudflare Workers ガイド](/ja/platforms/cloudflare#vite) を参照してください。
+プロジェクトを作成して起動する基本手順は [はじめに](/ja/guide/getting-started) を参照してください。
 
 ## EffrontViteOptions {#configuration}
 

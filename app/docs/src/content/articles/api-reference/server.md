@@ -22,6 +22,8 @@ export default defineConfig({
 | `server?: string` | `./src/entry.server.ts` | `serve` を起動する本番用コード                                                                   |
 
 エントリーに空文字列を指定すると `TypeError` になります。
+`rsc` を変更する場合は、`effront({ rsc })` と `effrontServer({ rsc })` に同じパスを指定してください。
+これにより、その RSC エントリーに Effect Schema JIT が登録されます。
 RSC エントリーは `if (import.meta.hot) import.meta.hot.accept();` で HMR を受け入れます。
 
 開発とプレビューは、Node 互換ミドルウェアを通じて Vite のリスナーを使い、本番起動用エントリーは使いません。

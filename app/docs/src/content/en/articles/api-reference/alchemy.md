@@ -43,14 +43,14 @@ Alchemy's accepted error union is narrower, so handle or map remaining applicati
 
 `makeApplicationHttpEffect` captures service references from its construction Context.
 `applicationHttpEffect` uses the explicit `context` option, which defaults to an empty Context.
-The [Basic example](https://github.com/totto2727-org/effront/tree/main/examples/basic) demonstrates capturing an application service backed by a KV client.
+The [Basic example](https://github.com/totto2727-org/effront/tree/main/examples/basic) shows an application service backed by a KV client and captured during construction.
 
 - Live request values override captured services with the same key.
 - Capture excludes HTTP services, Scope, Layer memoization state, Alchemy `RuntimeContext`, Worker self, generic `Self`, Cloudflare environment, raw Request, Worker environment, and execution context.
-- Capturing a reference does not acquire the service or extend its lifetime. Its owner must retain it through every response that uses it.
+- A captured reference does not acquire the service or extend its lifetime. Its owner must retain it through every response that uses it.
 - The application Layer is acquired per request. Alchemy retains the request Scope through streaming completion, failure, or cancellation.
 
-For Worker and Stack declarations, see [Alchemy setup](../platforms/alchemy.md).
+For Worker and Stack declarations, refer to [Alchemy setup](../platforms/alchemy.md).
 
 ## effrontAlchemy {#vite}
 
@@ -68,7 +68,7 @@ export default defineConfig({
 ```
 
 > [!WARNING]
-> Reversing the plugin order throws `TypeError`.
+> The reverse plugin order throws `TypeError`.
 
 | Option   | Type     | Default                  | Contract                                                                                                 |
 | -------- | -------- | ------------------------ | -------------------------------------------------------------------------------------------------------- |
@@ -76,9 +76,14 @@ export default defineConfig({
 
 The adapter has no `application` option and does not register `effront()`.
 Application entry changes belong in `effront({ application })` and the Worker's loader import.
-The Worker entry must be selected with `effrontAlchemy({ worker })`, not `effront({ rsc })`.
-The bridge requires Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` bindings; missing or empty bindings throw `TypeError` and require startup through `alchemy dev`.
-SSR output defaults to a child of the RSC Worker artifact. Explicit output directories are preserved but must be packaged with that artifact.
+Select the Worker entry with `effrontAlchemy({ worker })`, not `effront({ rsc })`.
+
+The bridge requires Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` bindings.
+Missing or empty bindings throw `TypeError`.
+Start the application through `alchemy dev` to supply those bindings.
+
+SSR output defaults to a child of the RSC Worker artifact.
+The adapter preserves explicit output directories, but you must package them with that artifact.
 
 The Worker declaration requires `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
 Do not set `vite.main` or add a second runtime plugin or Wrangler configuration.

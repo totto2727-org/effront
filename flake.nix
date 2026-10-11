@@ -1,5 +1,5 @@
 {
-  description = "Effront development and npm publication environment";
+  description = "Effront Node.js and pnpm development and npm publication environment";
 
   inputs = {
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
@@ -27,16 +27,19 @@
             inherit system;
             overlays = [ vite-plus-overlay.overlays.default ];
           };
+          manifest = builtins.fromJSON (builtins.readFile ./package.json);
         in
         {
-          default = pkgs.mkShell {
-            packages = [
-              pkgs.nodejs_24
-              pkgs.bun
-              pkgs.vite-plus
-              pkgs.nixfmt
-            ];
-          };
+          default =
+            assert manifest.packageManager == "pnpm@${pkgs.pnpm.version}";
+            pkgs.mkShell {
+              packages = [
+                pkgs.nodejs_24
+                pkgs.pnpm
+                pkgs.vite-plus
+                pkgs.nixfmt
+              ];
+            };
         }
       );
     };

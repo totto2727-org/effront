@@ -106,15 +106,17 @@ The suffix is appended as a string without reconstructing or merging the existin
 `parseMarkdown` resolves link/image attributes after the parser plugins, keeping URL resolution independent from rendering.
 `@effront/markdown/document` wraps Comark's direct document-rendering entry point with configurable defaults and an `effront-markdown` wrapper class.
 It does not import the collection/parser entry point or make the whole article a Client Component.
-Only the Math and Mermaid wrappers carry `use client`; they reuse Comark's default components and keep the Mermaid dependency out of the SSR graph.
+
+Only the Math and Mermaid wrappers carry `use client`. They reuse Comark's default components and keep the Mermaid dependency out of the SSR graph.
 Mermaid uses [`use(browser())`](https://react.dev/reference/react-dom/browser) inside a `Suspense` boundary to leave its fallback on the server, then [`lazy`](https://react.dev/reference/react/lazy) loads the upstream component in the browser.
 React manages loading and retries instead of a wrapper-owned Effect and mounted state.
+
 The document wrapper merges its default component mappings with the caller's mappings using object spread and leaves component resolution to Comark.
 The library build copies KaTeX's local fonts and license beside the emitted stylesheet so its relative font URLs survive package publication.
 The wrappers do not filter themes, rewrite SVG styles or IDs, or replace upstream invalid-input behavior.
 
 Ordinary prose stays in the server-rendering graph.
-Math starts as `...` and Mermaid as an empty container until client effects run; rich no-JavaScript rendering remains deferred in [the roadmap](../../../docs/ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
+Math starts as `...` and Mermaid as an empty container until client effects run. Rich no-JavaScript rendering remains deferred in [the roadmap](../../../docs/ROADMAP.md#standard-rendering-and-deferred-rich-ssr).
 
 ## Verification
 

@@ -1,10 +1,13 @@
-Server Functions need two kinds of error handling: return expected business outcomes as data, and handle invalid input or operational failures at the client boundary.
-This applies to mutation, query, and stream calls.
+Server Functions have two kinds of error handling.
+Expected business outcomes are data.
+Invalid input and operational failures reach the client boundary.
+This distinction is applicable to mutation, query, and stream calls.
 
 ## Return expected outcomes as data {#expected}
 
 For an expected outcome such as a reserved name, return a tagged success value from the handler.
-Mutation callers can render that value with `useActionState`; query and stream callers can render it like any other result.
+Mutation callers can render that value with `useActionState`.
+Query and stream callers can render it like any other result.
 
 ```typescript
 // src/greet.ts
@@ -36,8 +39,9 @@ This keeps expected outcomes separate from input validation and unexpected failu
 | `ServerFnDefect`         | The handler failed unexpectedly.             | A generic retry message.                   |
 | `ServerFnTransportError` | The browser could not complete the request.  | A connection and retry message.            |
 
-Handle known tags and do not expose a defect's `detail` or stack.
-The following example uses [`lookupTicket` from the Query guide](../guide/query-server-functions.md#call).
+Handle known tags.
+Do not expose a defect's `detail` or stack.
+The example that follows uses [`lookupTicket` from the Query guide](../guide/query-server-functions.md#call).
 
 ```tsx
 // src/ticket-message.ts
@@ -58,4 +62,5 @@ const lookupMessage = (ticketCode: string) =>
   );
 ```
 
-For mutations, schema decoding and unexpected handler failures are action failures rather than updates to `useActionState` state. Use React's [useActionState reference](https://react.dev/reference/react/useActionState) to choose the surrounding error UI.
+For mutations, schema decoding and unexpected handler failures are action failures, not updates to `useActionState` state.
+Use React's [useActionState reference](https://react.dev/reference/react/useActionState) to select the surrounding error UI.

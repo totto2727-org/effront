@@ -2,15 +2,20 @@
 
 ## Repository structure
 
-- `src/node.ts` and `src/bun.ts` compose the matching native HTTP Layer; keep their import graphs isolated.
-- `src/assets.ts` owns minimal Effront routing around Effect `HttpStaticServer.make`; Effect owns path resolution and generic static HTTP policy.
+- `src/node.ts` and `src/bun.ts` compose the matching native HTTP Layer. Keep their import graphs isolated.
+- `src/assets.ts` owns minimal Effront routing around Effect `HttpStaticServer.make`. Effect owns path resolution and generic static HTTP policy.
 - `src/vite.ts` owns Node-compatible dev/preview middleware and production RSC entry configuration.
 
 ## Development commands
 
-From the repository root, install dependencies and bootstrap packages with `vp exec --filter "./packages/*" -- vp pack`.
+From the repository root, install dependencies.
+Then bootstrap packages with `vp exec --filter "./packages/*" -- vp pack`.
 Run `vp test run packages/server/src` for native transport/assets and Vite regression tests.
-Run `vp run test` inside `tests/e2e-server` for the real Node/Bun production and Vite development browser workflows; Node and Playwright Chromium must be installed; the E2E package provides pinned Bun 1.4.2.
+
+Node and Playwright Chromium must be installed.
+The E2E package supplies pinned Bun 1.4.2.
+Run `vp run test` inside `tests/e2e-server` for the real Node/Bun production and Vite development browser workflows.
+
 Run `vp pack` in this package after changing public declarations.
 
 ## Architecture
@@ -26,7 +31,7 @@ Run `vp pack` in this package after changing public declarations.
 
 - There is no root export that eagerly imports both runtime adapters.
 - Runtime platform peers are optional because consumers choose one host. `/vite` always needs the Node platform, including Bun applications.
-- Use only trusted build/public roots; their contents and symlinks are the consumer's responsibility. Do not add symlink-specific support or custom path validation. Do not add directory indexes or an HTML fallback under a static asset prefix.
+- Use only trusted build/public roots. Their contents and symlinks are the consumer's responsibility. Do not add symlink-specific support or custom path validation. Do not add directory indexes or an HTML fallback under a static asset prefix.
 
 ## Task-specific documentation
 

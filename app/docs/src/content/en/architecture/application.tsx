@@ -17,8 +17,8 @@ export const page: DocPage = {
   content: () => (
     <>
       <p>
-        Application definitions describe which services a Page may use without acquiring them.
-        Layers and middleware supply those services during a request, while a shared application
+        Application definitions specify which services a Page may use. They do not acquire those
+        services. Layers and middleware supply the services during a request. A shared application
         identity connects the definitions to their rendering runtime.
       </p>
       <h2 id="service-contract">Describe services before acquiring them</h2>
@@ -30,7 +30,7 @@ export const page: DocPage = {
       </p>
       <ul>
         <li>
-          <code>ApplicationServices</code> are supplied by the application's Layer.
+          The application's Layer supplies <code>ApplicationServices</code>.
         </li>
         <li>
           <code>AvailableServices</code> are usable by definitions from these factories, including
@@ -40,17 +40,17 @@ export const page: DocPage = {
       </ul>
       <p>
         In <code>application/definition.tsx</code>, <code>ApplicationLayerOptions</code> requires a
-        Layer unless Services is <code>never</code>. Omitting an optional Layer selects{" "}
-        <code>Layer.empty</code>. <code>EFFRONT.make</code> stores that provider alongside the
-        compiled Routes. The root must share the application's identity, define a Layout, contain at
-        least one Page, and avoid reserved paths.
+        Layer unless Services is <code>never</code>. Without an optional Layer, the definition
+        selects <code>Layer.empty</code>. <code>EFFRONT.make</code> stores that provider alongside
+        the compiled Routes. The root must share the application's identity, define a Layout,
+        contain at least one Page, and avoid reserved paths.
       </p>
       <p>
         The provider's own dependencies remain <code>Requirements</code> in{" "}
         <code>ApplicationDefinition&lt;Services, ApplicationError, Requirements&gt;</code>, with
         construction failures retained as ApplicationError. Requirements are not automatically
-        available to Pages. Exposing an external Service requires the application Layer to provide
-        it, for example by forwarding its existing instance with{" "}
+        available to Pages. To expose an external Service, the application Layer must supply it. For
+        example, it can forward the existing instance with{" "}
         <code>Layer.effect(Service, Service)</code>.
       </p>
       <h2 id="middleware-context">Extend one branch with middleware</h2>
@@ -75,8 +75,8 @@ export const page: DocPage = {
       </p>
       <ul>
         <li>
-          <strong>Page GET/HEAD:</strong> native Effect HTTP middleware descriptors preserve routing
-          behavior, including HEAD fallback.
+          <strong>Page GET/HEAD:</strong> middleware descriptors for native Effect HTTP preserve
+          routing behavior, including HEAD fallback.
         </li>
         <li>
           <strong>Server Function POST:</strong> React decoding identifies the function's scope
@@ -87,8 +87,8 @@ export const page: DocPage = {
       </ul>
       <h2 id="identity">Keep related definitions in one application</h2>
       <p>
-        Every factory derived from one <code>Application.effront</code> call shares an identity, a
-        route-scope ID allocator, and the same <code>make</code> function.{" "}
+        All factories from one <code>Application.effront</code> call share an identity. They also
+        share a route-scope ID allocator and the same <code>make</code> function.{" "}
         <code>withMiddleware</code> preserves these rather than creating another application:
       </p>
       <SourceExcerpt locale="en" source={coreModelSources.applicationIdentity} />
@@ -113,10 +113,10 @@ export const page: DocPage = {
       <p>
         React invokes Page and Layout outside an Effect call stack.{" "}
         <code>application/render-runtime.ts</code> bridges that boundary: <code>bind</code> stores
-        an Effect runner and active middleware in AsyncLocalStorage, and <code>run</code> delegates
-        each render Effect to that runner. Missing runtime bindings or inactive required middleware
-        produce <code>TypeError</code>. Correct service types do not replace these runtime scope
-        checks.
+        an Effect runner and active middleware in AsyncLocalStorage. The <code>run</code> function
+        delegates each render Effect to that runner. Missing runtime bindings or inactive required
+        middleware produce <code>TypeError</code>. Correct service types do not replace these
+        runtime scope checks.
       </p>
       <p>
         <a href="/en/architecture/implementation/routing">Route assembly</a> connects these

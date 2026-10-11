@@ -28,7 +28,7 @@ Choose the other packages for hosting, Markdown, or styling.
 
 Runtime imports from `@effront/core` require the `react-server` condition.
 Keep them in the application graph configured by `effront()`, not in a host process with `react-server` enabled globally.
-For application setup, see [Getting started](/en/guide/getting-started) and [Platforms](/en/platforms).
+For application setup, refer to [Getting started](/en/guide/getting-started) and [Platforms](/en/platforms).
 
 ## Application factory index {#index}
 

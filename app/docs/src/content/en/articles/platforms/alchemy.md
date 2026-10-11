@@ -4,7 +4,7 @@ Install the current Node.js LTS and [Vite+](https://viteplus.dev/).
 
 > [!IMPORTANT]
 > The example pins Alchemy to `2.0.0-beta.81`, whose CLI requires a configured Cloudflare profile even for local development.
-> Complete the profile setup in the [Alchemy documentation](https://alchemy.run/docs) before starting the app.
+> Before you start the application, complete the profile setup in the [Alchemy documentation](https://alchemy.run/docs).
 
 ```bash
 vp create effront -- my-app --platform alchemy-cloudflare
@@ -33,7 +33,8 @@ vp run dev
 ```
 
 When ready, open the local URL printed by Alchemy. The single page displays `Hello, world`.
-Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>` and save.
+Change `<h1>Hello, world</h1>` in `src/entry.effront.tsx` to `<h1>Hello, Effront!</h1>`.
+Save the file.
 
 ## Add resources when needed {#capabilities}
 

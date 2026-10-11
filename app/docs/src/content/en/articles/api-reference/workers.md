@@ -26,12 +26,13 @@ export type FetchHandler<Env = unknown, ExecutionContext = unknown> = (
 Reader type arguments describe those values inside application Effects.
 For arbitrary external service requirements, use [native HTTP capture](./http.md#capture) or [Alchemy](./alchemy.md).
 
-The application Layer is acquired for each invocation.
-Its Scope stays open until the response body completes, fails, or is cancelled.
+Each invocation acquires the application Layer.
+Its Scope stays open until the response body completes, fails, or is canceled.
 A bodyless response releases it immediately.
-Buffered responses can release request services after response construction; a streaming body must retain them through consumption.
+Buffered responses can release request services after response construction.
+A streaming body must retain them through consumption.
 
-Invalid `Content-Length` values and values above 10 MiB produce `413`.
+Invalid `Content-Length` values and values greater than 10 MiB produce `413`.
 Server Function POST requests also enforce a 10 MiB limit on received bytes without that header.
 Custom HTTP route bodies without `Content-Length` are not universally measured.
 
@@ -58,7 +59,9 @@ export const { getWorkersEnv, getWorkersRequestContext } = createWorkersContextA
 
 The factory creates readers, not a service or Layer.
 Its readers share the same request Context as the direct accessors and preserve the identity of the host-provided objects.
-Each reader returns an Effect that reads the current request when executed, including when the Effect was created earlier.
+Each reader returns an Effect that reads the current request at execution time.
+This is also true for an Effect created earlier.
+
 It has no typed failure or service requirement.
 A missing request Context causes a `TypeError` defect.
 Type arguments do not validate host values at runtime.

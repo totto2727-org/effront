@@ -1,4 +1,5 @@
-Publish Markdown content as pages in your Effront application, with article links and local assets resolved to their public URLs.
+Publish Markdown content as pages in your Effront application.
+Article links and local assets resolve to their public URLs.
 The example renders an article with `@effront/markdown` and its configured Comark-based React renderer.
 
 ## Add an article {#setup}
@@ -17,9 +18,9 @@ Create `src/content/intro.md`:
 Welcome to the manual.
 ```
 
-> [!NOTE]
-> This collection works with Markdown files loaded at build time.
-> To display Markdown received from external sources at runtime, implement your own endpoint and rendering with [Comark](https://comark.dev/) or [TanStack Markdown](https://tanstack.com/markdown/latest).
+This collection works with Markdown files loaded at build time.
+
+For Markdown from external sources at runtime, implement your own endpoint and renderer with [Comark](https://comark.dev/) or [TanStack Markdown](https://tanstack.com/markdown/latest).
 
 Keep collection imports and parsing in server-side modules.
 
@@ -47,7 +48,8 @@ export const manual = createMarkdownCollection({
 This maps `intro.md` to `/manual/intro` for lookup, but does not register an application route.
 
 > [!NOTE]
-> The file extension (`.md`) is omitted, and `index.md` is not treated specially.
+> The collection omits the file extension (`.md`).
+> It does not give `index.md` special treatment.
 > With `content/` as the content root and `basePath: "/"`, the mappings are:
 >
 > - `content/manual.md` → `/manual`
@@ -82,7 +84,9 @@ Use the same `base` for documents and assets so relative references match.
 
 ## Render the article at its URL {#render}
 
-In `src/entry.effront.tsx` from [Getting started](./getting-started.md#application), add the imports, define `IntroPage`, and register it alongside the homepage:
+In `src/entry.effront.tsx` from [Getting started](./getting-started.md#application), add the imports.
+Define `IntroPage`.
+Then register it alongside the homepage:
 
 ```tsx
 // src/entry.effront.tsx: add to the imports.
@@ -115,16 +119,18 @@ export default EFFRONT.make({
 ```
 
 Open `/manual/intro` to see the article inside your Layout.
-Markdown body styling is not provided.
-Style it in your application or use a library such as Tailwind Typography; see [Styling](./styling.md).
+Effront does not supply Markdown body styles.
+Style the body in your application or use a library such as Tailwind Typography.
+Refer to [Styling](./styling.md).
 
 When `src/content/details.md` has a Page registered at `/manual/details`, `[Details](./details.md#example)` in `intro.md` resolves to `/manual/details#example`.
 Relative asset references resolve from the article's directory to their imported URLs.
 Missing references fail with `MarkdownError`.
 
-For a catch-all route, follow the [complete collection example](https://github.com/totto2727-org/effront/blob/main/examples/markdown/src/entry.effront.tsx).
-Look up the requested article in HTTP middleware and return 404 before rendering starts when `get()` returns `undefined`.
-The fixed-route example above instead treats a missing registered article as a configuration error.
+For a catch-all route, use the [complete collection example](https://github.com/totto2727-org/effront/blob/main/examples/markdown/src/entry.effront.tsx).
+Find the requested article in HTTP middleware.
+If `get()` returns `undefined`, return 404 before rendering starts.
+The fixed-route example instead treats a missing registered article as a configuration error.
 Collection and parsing failures also use the `MarkdownError` Effect error channel.
 
 ## Customize parsing or rendering {#authoring}
@@ -157,14 +163,19 @@ const IntroPage = EFFRONT.Page.make({
 
 Additional plugins run after Effront's defaults, not instead of them.
 The `MarkdownDocument` and stylesheet imports above are sufficient to render the parsed document.
-Math and Mermaid are registered by default, with no individual registration needed.
-To customize them, wrap the exported `Math` from `@effront/markdown/math` or `Mermaid` from `@effront/markdown/mermaid` with your desired options, or implement your own components.
+Effront registers Math and Mermaid by default.
+Individual registration is not necessary.
+
+To customize them, wrap the exported `Math` from `@effront/markdown/math` or `Mermaid` from `@effront/markdown/mermaid` with your options.
+Alternatively, implement your own components.
 Pass your replacements through `MarkdownDocument`'s `components`.
-See [Comark's React renderer](https://comark.dev/rendering/react) for component options.
+Refer to [Comark's React renderer](https://comark.dev/rendering/react) for component options.
 
 > [!WARNING]
-> Math and Mermaid currently require client-side JavaScript and do not support SSR.
+> Math and Mermaid need client-side JavaScript.
+> They do not render on the server.
 > The server skips rendering equations and diagrams and emits only placeholders.
-> If you need SSR, implement server-renderable replacements and supply them through `components`.
+> For SSR, implement replacements that can render on the server.
+> Then supply them through `components`.
 
-See the [Markdown reference](../api-reference/markdown.md) for options and reference-resolution rules.
+Refer to the [Markdown reference](../api-reference/markdown.md) for options and reference-resolution rules.

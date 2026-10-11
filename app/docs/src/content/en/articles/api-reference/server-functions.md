@@ -33,7 +33,7 @@ Inputs and outputs must satisfy [React's serialization contract](https://react.d
 > [!WARNING]
 > Do not return host bindings or secrets.
 
-For React components that call the function, see [Mutation Server Functions](/en/guide/mutation-server-functions).
+For React components that call the function, refer to [Mutation Server Functions](/en/guide/mutation-server-functions).
 
 ## Argument shapes {#arguments}
 
@@ -68,8 +68,9 @@ export const update = EFFRONT.ServerFn.make({
 });
 ```
 
-All positional arguments are decoded before the handler runs.
-Input decoding failures and uncaught handler failures reject the invocation, rather than becoming `Output` or the next action state.
+Effront decodes all positional arguments before the handler runs.
+Input decoding failures and uncaught handler failures reject the invocation.
+They do not become `Output` or the next action state.
 Return a serializable result for expected domain failures that should appear as form state.
 
 Schema decoding does not establish identity or permissions.
@@ -79,10 +80,11 @@ Record IDs, hidden fields, and `previousState` remain client-supplied values.
 
 A function created from `EFFRONT.withMiddleware(...)` retains that application's identity and middleware chain.
 The function's middleware wraps execution and the refreshed response.
-See [Authentication and authorization](/en/best-practices/authentication-and-authorization) for independent page and function access checks.
+Refer to [Authentication and authorization](/en/best-practices/authentication-and-authorization) for independent page and function access checks.
 
 Direct invocation with `await` in RSC or other server code rejects with `TypeError`.
-Extract work needed by other server code into a regular Effect and call it from both places.
+Extract work needed by other server code into a regular Effect.
+Call it from both places.
 
 ## Request protocol {#request-protocol}
 
@@ -98,7 +100,8 @@ For browser calls, Effront passes `arraySizeLimit: 10_000` to React's argument d
 | `Content-Length` fails the [HTTP entry-point check](./http.md#handler).                                                                  | `413`  |
 | A native form's Server Function execution fails, or React form-state decoding fails after execution.                                     | `500`  |
 
-The `Origin` check compares URL `host`, including any port, rather than the full origin or scheme.
+The `Origin` check compares URL `host`, with any port.
+It does not compare the full origin or scheme.
 The HTTP `Content-Length` check runs before the Server Function checks.
 A body that passes the header check can still exceed the received-byte limit and produce `400`.
 

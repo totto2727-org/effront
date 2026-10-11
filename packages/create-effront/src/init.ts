@@ -7,6 +7,9 @@ export const platforms = ["node", "bun", "cloudflare", "alchemy-cloudflare"] as 
 export type Platform = (typeof platforms)[number];
 
 const templates = fileURLToPath(new URL("../templates/", import.meta.url));
+const templateFileNames: Readonly<Record<string, string>> = {
+  _gitignore: ".gitignore",
+};
 
 export function projectName(directory: string): string {
   const name = basename(resolve(directory))
@@ -22,7 +25,7 @@ export function projectName(directory: string): string {
 async function copyTemplate(source: string, target: string, name: string): Promise<void> {
   for (const entry of await readdir(source, { withFileTypes: true })) {
     const from = join(source, entry.name);
-    const to = join(target, entry.name === "_gitignore" ? ".gitignore" : entry.name);
+    const to = join(target, templateFileNames[entry.name] ?? entry.name);
     if (entry.isDirectory()) {
       await mkdir(to, { recursive: true });
       await copyTemplate(from, to, name);

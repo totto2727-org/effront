@@ -12,7 +12,8 @@
 `page` and `mount` do not mutate the original Routes.
 All definitions must share an application identity, including those derived with `withMiddleware`.
 
-For example, mounting a child that registers `/` and `/:id` at `/articles` produces `/articles` and `/articles/:id`.
+For example, a child registers `/` and `/:id`.
+Its mount at `/articles` produces `/articles` and `/articles/:id`.
 The child's `/` does not produce a registered `/articles/` pattern.
 The root passed to `EFFRONT.make({ routes })` must have its own Layout and at least one Page in the tree.
 
@@ -30,7 +31,7 @@ Mount prefixes cannot contain parameters.
 
 For `/manual/*path`, `/manual/a/b` supplies `"a/b"` and `/manual` supplies `""`.
 An empty-string-compatible Schema such as `Schema.String` permits both.
-The capture is URL-decoded once.
+Effront URL-decodes the capture once.
 Do not decode it again.
 Malformed percent encoding in catch-all request paths produces 404.
 
@@ -43,11 +44,11 @@ Malformed percent encoding in catch-all request paths produces 404.
 
 **Registration constraints**
 
-- Paths must be absolute literals beginning with `/`.
+- Paths must be absolute literals that start with `/`.
 - Except for `/`, they cannot end with `/` or contain empty, `.`, or `..` segments.
 - `?`, `#`, `%`, `;`, and `\` are forbidden.
 - `:name` must occupy a whole segment. `*name` must occupy the final whole segment.
-- Names must be nonempty and unique within the path. They cannot contain `:`, `*`, `.`, `-`, or parentheses.
+- Names must be nonempty and unique in the path. They cannot contain `:`, `*`, `.`, `-`, or parentheses.
 - `/_effront` is reserved. `EFFRONT.make` rejects patterns that could match it, including root `/:name` and `/*path`.
 
 ## Middleware {#middleware}
@@ -90,4 +91,4 @@ A different identity or duplicate middleware in one chain throws `TypeError`.
 `withMiddleware(first).withMiddleware(second)` enters `first`, then `second`, then downstream processing, and returns in reverse order.
 
 Scoped middleware covers its Routes and Server Functions, not custom HTTP, static assets, or unknown routes.
-See [Middleware](/en/guide/middleware) for complete examples and [global HTTP middleware](/en/guide/http) for broader request coverage.
+Refer to [Middleware](/en/guide/middleware) for complete examples and [global HTTP middleware](/en/guide/http) for broader request coverage.

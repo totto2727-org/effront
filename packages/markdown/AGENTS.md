@@ -18,7 +18,7 @@
 - Keep the collection/parser entry point independent from the public document renderer and preserve Comark's document format and user component mappings.
 - Keep ordinary prose server-renderable and restrict client boundaries to rich leaves. Do not evaluate Mermaid's rendering dependency during SSR or claim completed no-JavaScript math/diagrams.
 - Reuse Comark's default Math/Mermaid components through minimal client wrappers. Do not add custom rendering, SVG/font rewriting, theme filtering, or parser AST rewrites for presentation.
-- Keep shared CSS minimal. Applications own prose, typography, layout, alerts, and colors; preserve upstream rendering defaults rather than imposing a shared theme.
+- Keep shared CSS minimal. Applications own prose, typography, layout, alerts, and colors. Preserve upstream rendering defaults. Do not impose a shared theme.
 - Preserve local CSS/font resolution and the KaTeX license in the published archive. Verify the actual built browser host and public asset paths after changing renderer or pack settings.
 - Retain KaTeX while Comark's math parser imports it, independently of whether a consumer renders math components.
 

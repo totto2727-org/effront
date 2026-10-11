@@ -1,4 +1,4 @@
-Test Route, Page, Layout, and Server Function behavior through a running application with Playwright.
+Do tests of Route, Page, Layout, and Server Function behavior through an application with Playwright.
 Effront does not provide a public Vitest harness for Page/Layout rendering or Server Function requests.
 
 <span id="production"></span>
@@ -9,15 +9,15 @@ The tests below target the [Basic example application](https://github.com/totto2
 Its [maintained Playwright setup](https://github.com/totto2727-org/effront/tree/main/tests/e2e-alchemy) builds the example and starts a local workerd host without Cloudflare authentication.
 The setup is a repository reference, not a test helper distributed with Effront.
 
-Follow the [setup and execution instructions](https://github.com/totto2727-org/effront/blob/main/docs/TESTING.md#native-alchemy-integration) to run the reference application.
-Save each code block below as the named file beside `alchemy.e2e.ts` in that test package, then rerun its browser suite.
-The existing [Playwright configuration](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts) supplies `baseURL` and manages the server lifecycle.
-For your own application, replace the URLs, selectors, and expected values with your application's outputs.
+For the repository example, use the [setup and execution instructions](https://github.com/totto2727-org/effront/blob/main/docs/TESTING.md#native-alchemy-integration).
+Save each code block below as the named file beside `alchemy.e2e.ts` in that test package.
+Then rerun its browser suite.
+The existing [Playwright configuration](https://github.com/totto2727-org/effront/blob/main/tests/e2e-alchemy/playwright.config.ts) supplies `baseURL` and manages the server lifecycle for the reference application.
 
 ## Test Route responses {#routes}
 
 The example registers `/` and `/about` with `EFFRONT.Routes.make().page(...)`.
-Check route availability and missing-route status through HTTP requests.
+Do a check of route availability and missing-route status through HTTP requests.
 Save as `routes.e2e.ts`:
 
 ```ts
@@ -64,7 +64,7 @@ The fixed example's [maintained test](https://github.com/totto2727-org/effront/b
 ## Test Layout retention across navigation {#layouts}
 
 `RootLayout` wraps both Pages in a shared [`Shell`](https://github.com/totto2727-org/effront/blob/main/examples/basic/src/components/shell.tsx).
-Verify that the Page changes while the original navigation element remains connected.
+Make sure that the Page changes while the original navigation element remains connected.
 Save as `layout.e2e.ts`:
 
 ```ts

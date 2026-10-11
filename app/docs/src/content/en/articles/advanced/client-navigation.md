@@ -14,7 +14,7 @@ The Page fades by default in supported browsers, while shared Layouts stay outsi
 > [!NOTE]
 > Browsers without client navigation support load a new document, which resets Layout state.
 > Links also work without JavaScript.
-> See [browser support](/en/architecture/implementation/navigation#browser-start).
+> [Browser support](/en/architecture/implementation/navigation#browser-start) gives the applicable conditions.
 
 ## Turn off a Page's animation {#transition-scope}
 
@@ -73,7 +73,7 @@ See the [PageViewTransition reference](/en/api-reference/components#view-transit
 The destination can appear before its content finishes loading.
 Use [Loading or Suspense](/en/guide/routes#mount) until the content arrives.
 For content that can fail during streaming, add a [React Error Boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary).
-See [display and stream completion](/en/architecture/implementation/navigation#transition-commit) for URL timing and cancellation behavior.
+Refer to [display and stream completion](/en/architecture/implementation/navigation#transition-commit) for URL timing and cancellation behavior.
 
 ## Back, Forward, and reload {#history-cache}
 
@@ -82,4 +82,5 @@ Reloads and [document fallbacks](/en/architecture/implementation/navigation#flig
 
 > [!NOTE]
 > A full document load discards Layout state.
-> Save important user input independently of the Layout.
+
+Save important user input independently of the Layout.
