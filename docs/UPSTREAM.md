@@ -237,6 +237,17 @@ The record dates from 2026-09-12 and uses the historical package manifest and th
 
 Local-only commits in the same range (`19eb7087`, `4e0c982c`, `3e2e5ecc`, `f9942315`, `f8587bb4`, and the merge commits `cdefb834` and `54dcd2b8`) record provenance, lock the check-in sample's CI dependency, resolve merges with `main`, and port the Effect CLI. They have no upstream counterpart.
 
+## Documentation domain and PR Previews
+
+Against upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront configures its own documentation domain `effront.totto2727.dev` through an Alchemy-managed Workers custom domain.
+The docs Worker, stack, deployment workflow, and public documentation links are affected.
+Trusted repository PRs use Alchemy Worker Previews under stable `pr-<number>` stages, with GitHub deployment URLs and cleanup when the PR closes.
+Production keeps its existing `effront-docs/production` identity and Cloudflare state backend.
+Preview cleanup cannot target production, and fork PRs do not receive deployment credentials.
+Existing branch-based Preview stages require separate review before deletion.
+This is deployment customization for Effront's site, not a change to upstream framework runtime source.
+See [site deployment requirements](../app/docs/docs/AUTHORING.md#production-and-preview-deployment) for DNS, credentials, and state boundaries.
+
 ## Re-evaluated compatibility boundaries
 
 Compatibility code that only existed for an older dependency pin is removed once the pinned release provides the behavior, rather than kept as an unverified fallback.

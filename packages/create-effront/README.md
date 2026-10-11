@@ -4,8 +4,8 @@ Create a minimal Effront React Server Components application for Node.js, Bun, s
 
 ## Usage
 
-Use [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started)) to generate a Node.js project.
-Select another host in the [platform guides](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms)).
+Use [Getting started](https://effront.totto2727.dev/en/guide/getting-started) ([日本語](https://effront.totto2727.dev/ja/guide/getting-started)) to generate a Node.js project.
+Select another host in the [platform guides](https://effront.totto2727.dev/en/platforms) ([日本語](https://effront.totto2727.dev/ja/platforms)).
 
 ## Prerequisites
 
@@ -15,11 +15,11 @@ Alchemy local development requires a configured Cloudflare profile.
 
 ## Setup
 
-Run `vp create effront -- my-app --platform node` to create an independent project. The [initializer guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started#setup)) explains installation, other platforms, and safeguards.
+Run `vp create effront -- my-app --platform node` to create an independent project. The [initializer guide](https://effront.totto2727.dev/en/guide/getting-started#setup) ([日本語](https://effront.totto2727.dev/ja/guide/getting-started#setup)) explains installation, other platforms, and safeguards.
 
 ## API
 
-Run `vp create effront -- [directory] --platform node|bun|cloudflare|alchemy-cloudflare`. The [initializer instructions](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started#setup)) cover interactive prompts, non-interactive arguments, `--help`, and empty-directory safeguards.
+Run `vp create effront -- [directory] --platform node|bun|cloudflare|alchemy-cloudflare`. The [initializer instructions](https://effront.totto2727.dev/en/guide/getting-started#setup) ([日本語](https://effront.totto2727.dev/ja/guide/getting-started#setup)) cover interactive prompts, non-interactive arguments, `--help`, and empty-directory safeguards.
 
 ## Development
 

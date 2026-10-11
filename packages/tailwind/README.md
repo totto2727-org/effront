@@ -4,7 +4,7 @@ Style Effront pages with Tailwind CSS, including the initial HTML, without manua
 
 ## Usage
 
-Use the [Styling guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/styling) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/styling)) for installation, utilities, theme options, and optional Tailwind plugins.
+Use the [Styling guide](https://effront.totto2727.dev/en/guide/styling) ([日本語](https://effront.totto2727.dev/ja/guide/styling)) for installation, utilities, theme options, and optional Tailwind plugins.
 
 ## Key features
 
@@ -19,11 +19,11 @@ If your application imports `tailwindcss` from its own stylesheet, declare it di
 
 ## Setup
 
-Install and configure the integration using the [Styling setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/styling#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/styling#setup)).
+Install and configure the integration using the [Styling setup](https://effront.totto2727.dev/en/guide/styling#setup) ([日本語](https://effront.totto2727.dev/ja/guide/styling#setup)).
 
 ## API
 
-The [Tailwind API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/tailwind) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/tailwind)) covers `effrontTailwind()`, dependency detection, stylesheet selection, and Vite root resolution.
+The [Tailwind API reference](https://effront.totto2727.dev/en/api-reference/tailwind) ([日本語](https://effront.totto2727.dev/ja/api-reference/tailwind)) covers `effrontTailwind()`, dependency detection, stylesheet selection, and Vite root resolution.
 
 ## Development
 

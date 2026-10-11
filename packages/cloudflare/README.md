@@ -4,7 +4,7 @@ Serve Effront applications on Cloudflare Workers and read typed bindings in requ
 
 ## Usage
 
-Use the [Cloudflare Workers guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare)) to create and run a standalone Worker with `effront()` and `effrontCloudflare()`.
+Use the [Cloudflare Workers guide](https://effront.totto2727.dev/en/platforms/cloudflare) ([日本語](https://effront.totto2727.dev/ja/platforms/cloudflare)) to create and run a standalone Worker with `effront()` and `effrontCloudflare()`.
 
 ## Key features
 
@@ -19,11 +19,11 @@ Local workerd development does not require Cloudflare credentials.
 
 ## Setup
 
-Use the [Cloudflare setup](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare#setup) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare#setup)) for package installation, Worker entry, and Wrangler configuration.
+Use the [Cloudflare setup](https://effront.totto2727.dev/en/platforms/cloudflare#setup) ([日本語](https://effront.totto2727.dev/ja/platforms/cloudflare#setup)) for package installation, Worker entry, and Wrangler configuration.
 
 ## API
 
-The [Vite API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/vite#cloudflare) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/vite#cloudflare)) covers plugin options and output paths. The [Workers context reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/workers#cloudflare) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/workers#cloudflare)) covers typed bindings and request accessors.
+The [Vite API reference](https://effront.totto2727.dev/en/api-reference/vite#cloudflare) ([日本語](https://effront.totto2727.dev/ja/api-reference/vite#cloudflare)) covers plugin options and output paths. The [Workers context reference](https://effront.totto2727.dev/en/api-reference/workers#cloudflare) ([日本語](https://effront.totto2727.dev/ja/api-reference/workers#cloudflare)) covers typed bindings and request accessors.
 
 ## Development
 

@@ -4,7 +4,7 @@ Serve Effront pages and Server Functions on Alchemy Cloudflare Workers with requ
 
 ## Usage
 
-Use the [Alchemy Cloudflare guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/alchemy) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/alchemy)) to create and run a native Worker that displays `Hello, world`.
+Use the [Alchemy Cloudflare guide](https://effront.totto2727.dev/en/platforms/alchemy) ([日本語](https://effront.totto2727.dev/ja/platforms/alchemy)) to create and run a native Worker that displays `Hello, world`.
 For a KV-backed application with a Server Function, see the [Alchemy Basic example](../../examples/basic/) and its [Worker entry](../../examples/basic/src/entry.workers.ts).
 
 ## Key features
@@ -30,7 +30,7 @@ The adapter imports are `@effront/alchemy/cloudflare` and `@effront/alchemy/clou
 
 ## API
 
-The [Alchemy API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/alchemy) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/alchemy)) covers deferred HTTP handlers, capability capture, and the Vite adapter.
+The [Alchemy API reference](https://effront.totto2727.dev/en/api-reference/alchemy) ([日本語](https://effront.totto2727.dev/ja/api-reference/alchemy)) covers deferred HTTP handlers, capability capture, and the Vite adapter.
 For Effront developers, [package API links](docs/API.md) and [integration architecture](docs/INTEGRATION.md) give implementation details.
 
 ## Development
