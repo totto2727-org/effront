@@ -9,8 +9,7 @@ Select another host in the [platform guides](https://effront-docs-docs-productio
 
 ## Prerequisites
 
-Use the current Node.js LTS, pnpm, and VitePlus on every platform.
-All generated projects use pnpm through `vp install`, independently of the production runtime.
+Use the current Node.js LTS and VitePlus on every platform.
 Install the current Bun release only for Bun applications.
 Alchemy local development requires a configured Cloudflare profile.
 

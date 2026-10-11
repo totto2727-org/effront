@@ -3,7 +3,7 @@ Then examine the files that define the page.
 
 ## Run the sample {#setup}
 
-The current Node.js LTS, [pnpm](https://pnpm.io/installation), and [Vite+](https://viteplus.dev/) are required.
+The current Node.js LTS and [Vite+](https://viteplus.dev/) are required.
 Bun is needed only when selecting the Bun production runtime.
 
 ```bash
