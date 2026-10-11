@@ -21,6 +21,25 @@ env:
   ALCHEMY_STAGE: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'production' }}
 
 jobs:
+  eligibility:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Report preview eligibility
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from "node:fs";
+          const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
+          const pr = event.pull_request;
+          const sameRepository = pr.head.repo?.full_name === process.env.GITHUB_REPOSITORY;
+          const trustedAuthor = ["OWNER", "MEMBER", "COLLABORATOR"].includes(pr.author_association);
+          const dependabot = pr.user.login === "dependabot[bot]";
+          const report = { action: event.action, sameRepository, trustedAuthor, dependabot, association: pr.author_association };
+          console.log(JSON.stringify(report));
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Preview eligibility: ${JSON.stringify(report)}\n`);
+          NODE
   deploy:
     # Never execute fork or Dependabot revisions with deployment credentials.
     if: >-
