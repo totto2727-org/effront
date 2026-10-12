@@ -241,9 +241,9 @@ Local-only commits in the same range (`19eb7087`, `4e0c982c`, `3e2e5ecc`, `f9942
 
 Against upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront configures its own documentation domain `effront.totto2727.dev` through an Alchemy-managed Workers custom domain.
 The docs Worker, stack, deployment workflow, and public documentation links are affected.
-Trusted repository PRs use Alchemy Worker Previews under stable `pr-<number>` stages, with GitHub deployment URLs and cleanup when the PR closes.
+PR events select Alchemy Worker Previews under stable `pr-<number>` stages, with GitHub deployment URLs and cleanup when the PR closes.
 Production keeps its existing `effront-docs/production` identity and Cloudflare state backend.
-Preview cleanup cannot target production, and fork PRs do not receive deployment credentials.
+Preview cleanup cannot target production, and GitHub's standard fork-secret restrictions remain unchanged.
 Existing branch-based Preview stages require separate review before deletion.
 This is deployment customization for Effront's site, not a change to upstream framework runtime source.
 See [site deployment requirements](../app/docs/docs/AUTHORING.md#production-and-preview-deployment) for DNS, credentials, and state boundaries.

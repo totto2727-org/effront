@@ -238,7 +238,7 @@ Pushes to `main` deploy stage `production` at `https://effront.totto2727.dev`.
 The `totto2727.dev` zone must be active in the deployment account.
 Alchemy declares the custom domain, and Cloudflare manages its DNS record and certificate.
 The existing `workers.dev` endpoint remains enabled.
-PRs from this repository whose author association is `OWNER`, `MEMBER`, or `COLLABORATOR` deploy a stable `pr-<number>` stage on opened, reopened, and synchronize events.
+PRs deploy a stable `pr-<number>` stage on opened, reopened, and synchronize events, without an author-association or repository allowlist.
 The Worker uses `preview.of` to reference `Docs` in `effront-docs/production` without replacing production traffic or attaching its custom domain.
 Deploy production at least once before creating a Preview.
 
@@ -248,14 +248,14 @@ Do not assume credential-free startup or the absence of remote state-store opera
 Do not set `ALCHEMY_STAGE=production` or a PR stage when running `alchemy dev`.
 Local development does not attach a custom domain or reference the production Worker.
 
-The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to `main`, trusted PR events, or manual dispatch from `main`.
+The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to `main` and PR events.
 It builds the required workspace packages before invoking `vp exec alchemy deploy --stage <stage> --yes` from `app/docs` directly in the workflow.
 After deployment it reads the URL from Alchemy state and links it in the GitHub deployment record and Actions summary.
 PR Previews use stable `workers.dev` URLs.
 Confirm the custom domain and two simultaneous PR Previews after credentials are configured.
 Local checks cannot establish deployed URLs or cloud resource isolation.
 
-Fork and Dependabot PRs do not receive deployment credentials or an automatic remote Preview.
+GitHub normally withholds secrets from fork PR workflows, so selecting every PR does not grant fork deployments credentials.
 Do not use `pull_request_target` to execute untrusted PR code with deployment credentials.
 There is no package-level `deploy` script, to avoid accidental production deployment through a local task shortcut.
 Repository checks and tests belong to the separate CI workflow and are not repeated or awaited by the deployment workflow.
@@ -266,12 +266,12 @@ Production and different PRs may deploy concurrently.
 Alchemy builds the application as part of deployment. There is no separate Wrangler deployment or local-state artifact to restore.
 
 Keep the GitHub Environment `docs-production` restricted to `main`, with its existing approval rules.
-Use `docs-preview` for trusted PR deployment and cleanup, with approval rules and branch rules that permit the PR merge refs and `main` for cleanup.
+Use `docs-preview` for PR deployment and cleanup, with branch rules that permit the PR merge refs and `main` for cleanup.
 Both jobs use the same credential names: the `CLOUDFLARE_ACCOUNT_ID` variable and `CLOUDFLARE_API_TOKEN` secret. Configure them in both Environments, or at an accessible repository or organization scope. No preview-specific credential names are required.
 
 If they grant access to the same Cloudflare account, preview branches have the same account-level permissions as production even though Alchemy uses separate deployment stages. Do not treat stage separation as a credential security boundary.
 PR deployment executes the revision's workflow and build scripts.
-Only trusted writers should be allowed to use the preview Environment.
+Credential availability remains subject to repository and Environment settings.
 
 Environment-level credentials do not prevent branch workflows from accessing any repository- or organization-level credentials that are already available to the repository.
 Credentials are passed only to the deployment step. Alchemy reads them directly in CI without a saved local profile.
@@ -283,7 +283,7 @@ A token limited to uploading the docs Worker is not sufficient.
 Review the pinned Alchemy provider's required permissions with the account administrator before the first run.
 An Alchemy upgrade can also update this shared state-store Worker, so coordinate upgrades with other stacks in the same account.
 
-Closing a trusted PR runs `alchemy destroy --stage pr-<number> --yes` with the default branch's code.
+Closing a PR runs `alchemy destroy --stage pr-<number> --yes` with the default branch's code.
 The cleanup step rejects non-PR stages and removes only that PR's Preview, not the referenced production Worker.
 If cleanup fails or is not approved, review the stage before manually destroying it.
 Existing `preview-<hash>` stages are not deleted or migrated by this workflow.
