@@ -244,6 +244,18 @@ Stages prefixed with `preview-` use Alchemy's `preview.of` with the existing pro
 This starter configuration does not change framework runtime source or add deployment workflows and cleanup automation.
 See [example commands](../examples/README.md) for deployment order.
 
+## Documentation domain and Worker Previews
+
+Against upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront configures its own documentation domain `effront.totto2727.dev` through an Alchemy-managed Workers custom domain.
+The docs Worker, stack, deployment workflow, and public documentation links are affected.
+Pushes outside `main` deploy Alchemy Worker Previews under stable `preview-<hash>` stages, with GitHub deployment URLs.
+Production keeps its existing `effront-docs/production` identity and Cloudflare state backend.
+Deployment Layers are selected and provided in `app/docs/alchemy.run.ts`, not the Worker entry.
+There is no custom cleanup or PR lifecycle logic; Cloudflare's per-Worker Preview limit evicts the least recently deployed Preview.
+Alchemy stage state and legacy standalone preview Workers are not removed by that eviction.
+This is deployment customization for Effront's site, not a change to upstream framework runtime source.
+See [site deployment requirements](../app/docs/docs/AUTHORING.md#production-and-preview-deployment) for DNS, credentials, and state boundaries.
+
 ## Re-evaluated compatibility boundaries
 
 Compatibility code that only existed for an older dependency pin is removed once the pinned release provides the behavior, rather than kept as an unverified fallback.

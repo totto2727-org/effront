@@ -4,12 +4,12 @@ Parse Markdown for React rendering and resolve relative links and images to Vite
 
 ## Usage
 
-Use the [Markdown guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/markdown) for package installation, articles and assets, page rendering, and component options.
+Use the [Markdown guide](https://effront.totto2727.dev/en/guide/markdown) for package installation, articles and assets, page rendering, and component options.
 The guide includes styling requirements, trusted-content constraints, and the current Math/Mermaid SSR limitations.
 
 ## API
 
-The [Markdown API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/markdown) covers collections, parsing, rendering exports, reference resolution, and typed errors.
+The [Markdown API reference](https://effront.totto2727.dev/en/api-reference/markdown) covers collections, parsing, rendering exports, reference resolution, and typed errors.
 
 ## Development
 

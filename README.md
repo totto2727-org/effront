@@ -26,15 +26,15 @@ For other configurations, refer to [Platforms](app/docs/src/content/en/articles/
 
 ## Usage
 
-| To…                                                              | Use…                                                                                                      |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Render routes with typed services and server-driven interactions | [Core](packages/core/README.md#usage)                                                                     |
-| Build the application's server and browser entries               | [Vite](packages/vite/README.md#usage)                                                                     |
-| Serve streamed pages and static assets on Node.js or Bun         | [Node/Bun server](packages/server/README.md#usage)                                                        |
-| Serve a Fetch application with Worker bindings, without Alchemy  | [Cloudflare](packages/cloudflare/README.md#usage)                                                         |
-| Use Alchemy resource capabilities in pages and Server Functions  | [Alchemy](packages/alchemy/README.md#usage)                                                               |
-| Render Markdown with file-relative links and images              | [Markdown](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/markdown) |
-| Apply utility styles to server-rendered and hydrated components  | [Tailwind](packages/tailwind/README.md#usage)                                                             |
+| To…                                                              | Use…                                                        |
+| ---------------------------------------------------------------- | ----------------------------------------------------------- |
+| Render routes with typed services and server-driven interactions | [Core](packages/core/README.md#usage)                       |
+| Build the application's server and browser entries               | [Vite](packages/vite/README.md#usage)                       |
+| Serve streamed pages and static assets on Node.js or Bun         | [Node/Bun server](packages/server/README.md#usage)          |
+| Serve a Fetch application with Worker bindings, without Alchemy  | [Cloudflare](packages/cloudflare/README.md#usage)           |
+| Use Alchemy resource capabilities in pages and Server Functions  | [Alchemy](packages/alchemy/README.md#usage)                 |
+| Render Markdown with file-relative links and images              | [Markdown](https://effront.totto2727.dev/en/guide/markdown) |
+| Apply utility styles to server-rendered and hydrated components  | [Tailwind](packages/tailwind/README.md#usage)               |
 
 ## Key features
 
@@ -59,7 +59,7 @@ Install the packages for your application through their consumer setup instructi
 - [Vite integration](packages/vite/README.md#setup) and [standalone Cloudflare hosting](packages/cloudflare/README.md#setup).
 - [Native Node/Bun hosting](packages/server/README.md#setup).
 - [Native Alchemy adapter](packages/alchemy/README.md#setup).
-- [Markdown content](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/markdown#setup) and [Tailwind styling](packages/tailwind/README.md#setup).
+- [Markdown content](https://effront.totto2727.dev/en/guide/markdown#setup) and [Tailwind styling](packages/tailwind/README.md#setup).
 
 ## API
 
@@ -68,7 +68,7 @@ Install the packages for your application through their consumer setup instructi
 - [Node/Bun server](packages/server/README.md#api): scoped native listeners, static assets, and Vite development hosting.
 - [Cloudflare](packages/cloudflare/README.md#api): standalone Vite hosting and typed Worker context accessors.
 - [Alchemy](packages/alchemy/README.md#api): native Worker construction and deferred application loading.
-- [Markdown](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/markdown): collections, parsing, and typed content errors.
+- [Markdown](https://effront.totto2727.dev/en/api-reference/markdown): collections, parsing, and typed content errors.
 - [Tailwind](packages/tailwind/README.md#api): generated or explicit automatically loaded stylesheets.
 
 ## Development

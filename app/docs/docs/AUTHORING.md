@@ -232,52 +232,26 @@ A successful build, source inspection, or mocked parser does not replace real si
 
 ## Production and preview deployment
 
-This application uses `Cloudflare.state()` for shared remote state. The examples keep `localState()`.
-The stack remains `effront-docs`.
-Pushes to `main` deploy stage `production`. Pushes to another ref in this repository, including tags, deploy a separate `preview-<hash>` stage, stable across pushes to that ref and isolated from production.
-The hash is derived from the complete Git ref, so branch names containing `/` do not become invalid stages or collide after slash replacement.
+The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on `push`.
+Pushes to `main` deploy `effront-docs/production` at `https://effront.totto2727.dev`.
+Other refs use a stable `preview-<hash>` stage derived from the Git ref.
+The Worker uses Alchemy's `preview.of` to reference production and serves its standard `workers.dev` Preview URL.
+Deploy production once before deploying Previews.
+Local development keeps its `dev_<user>` stage without a production domain or Preview parent.
 
-Local development keeps Alchemy's separate `dev_<user>` stage.
-The docs state backend is Cloudflare.
-Do not assume credential-free startup or the absence of remote state-store operations.
-Do not set `ALCHEMY_STAGE=production` when running `alchemy dev`.
+Alchemy owns deployment and the Cloudflare state backend.
+The workflow builds the workspace packages, runs `alchemy deploy`, and displays the output URL in the GitHub deployment and Actions summary.
+Configure `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` for `docs-production` and `docs-preview`.
+The `totto2727.dev` zone must be active in the account, with permissions for custom domains, Worker Previews, and Alchemy's shared state store.
+For state-store requirements, see [Alchemy integration](../../../packages/alchemy/docs/INTEGRATION.md).
+Changing an existing local state backend requires an explicit migration or adoption review.
 
-The [Deploy documentation workflow](../../../.github/workflows/deploy-docs.yml) runs on pushes to all branches and tags of this repository and can also be dispatched manually from the chosen ref.
-It builds the required workspace packages before invoking `vp exec alchemy deploy --stage <stage> --yes` from `app/docs` directly in the workflow.
-After deployment it reads the URL from the Alchemy state output and links it in the job's Actions summary. The `docs-preview` job does not create a GitHub deployment record, so a PR deployment link is not guaranteed. Reviewers can open the workflow run to reach the branch's preview URL. Confirm that two simultaneous branches retain their separate preview URLs after credentials are configured. This cannot be established without a real deployment.
+There is no PR-close or branch-delete cleanup.
+Cloudflare evicts the least recently deployed Preview when the account's per-Worker Preview limit is reached.
+This does not remove Alchemy's stored stage state.
+Local checks do not verify cloud permissions, DNS, or deployed URLs.
 
-Fork PRs do not trigger a push in this repository and do not receive credentials or an automatic remote preview.
-There is no package-level `deploy` script, to avoid accidental production deployment through a local task shortcut.
-Repository checks and tests belong to the separate CI workflow and are not repeated or awaited by the deployment workflow.
-Deployments of the same branch are serialized without cancelling an in-progress reconciliation. Production and separate preview branches may deploy concurrently.
-Alchemy builds the application as part of deployment. There is no separate Wrangler deployment or local-state artifact to restore.
-
-Keep the GitHub Environment `docs-production` restricted to `main`, with its existing approval rules.
-Create a separate `docs-preview` Environment for trusted in-repository branches and configure its approval/branch rules as appropriate for who can push to those branches.
-Both jobs use the same credential names: the `CLOUDFLARE_ACCOUNT_ID` variable and `CLOUDFLARE_API_TOKEN` secret. Configure them in both Environments, or at an accessible repository or organization scope. No preview-specific credential names are required.
-
-If they grant access to the same Cloudflare account, preview branches have the same account-level permissions as production even though Alchemy uses separate deployment stages. Do not treat stage separation as a credential security boundary.
-Push workflows check out and execute the pushed revision, including its workflow and build scripts. Only trusted writers should be allowed to use the preview Environment.
-
-Environment-level credentials do not prevent branch workflows from accessing any repository- or organization-level credentials that are already available to the repository.
-Credentials are passed only to the deployment step. Alchemy reads them directly in CI without a saved local profile.
-
-The deploy command can create or upgrade Alchemy's account-wide `alchemy-state-store` Worker when needed.
-The API token must permit the docs Worker and assets deployment as well as state-store bootstrap/access, including its Durable Objects and Cloudflare Secrets Store resources. A token limited to uploading the docs Worker is not sufficient.
-Review the pinned Alchemy provider's required permissions with the account administrator before the first run.
-An Alchemy upgrade can also update this shared state-store Worker, so coordinate upgrades with other stacks in the same account.
-
-Preview stages persist after a branch is deleted. Review the stage's resources before manually destroying unused previews with `alchemy destroy --stage <preview-stage> --yes`.
-
-Changing the backend does not migrate an existing local deployment's state.
-If `effront-docs` already has a deployment with local state, preserve that state.
-Complete an explicit migration or adoption review before you execute this workflow against the same resources.
-Do not delete local state or assume that remote state will discover previously managed resources automatically.
-For a new, never-deployed production stage, the first approved workflow run initializes remote state.
-No cloud deployment or credential/permission validation is implied by local checks.
-
-References: [GitHub deployment URLs](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments), [environments without deployments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments#using-environments-without-deployments), [GitHub deployment status lifecycle](https://docs.github.com/en/rest/deployments/statuses#create-a-deployment-status), [Alchemy state stores](https://alchemy.run/state-store), [Cloudflare state implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/StateStore/State.ts), and [Cloudflare authentication implementation](https://github.com/alchemy-run/alchemy/blob/main/packages/alchemy/src/Cloudflare/Auth/AuthProvider.ts).
-The earlier API and CI behavior review used `alchemy@2.0.0-beta.79`. The source URLs track upstream main.
+References: [Alchemy Worker Previews](https://alchemy.run/cloudflare/compute/previews/), [Cloudflare Preview limits](https://developers.cloudflare.com/workers/previews/#limits), and [Workers custom domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/).
 
 ## Sources and licenses
 
