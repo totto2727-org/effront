@@ -2,16 +2,14 @@ name: Deploy documentation
 
 on:
   push:
-  workflow_dispatch:
 
 permissions:
   contents: read
   deployments: write
 
 concurrency:
-  # Do not let an unrelated preview replace a pending production deployment.
   group: docs-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -20,8 +18,6 @@ jobs:
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'docs-production' || 'docs-preview' }}
       url: ${{ steps.deploy.outputs.url }}
-      # Protect the preview environment for trusted branches; Alchemy isolates their stages.
-      deployment: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
@@ -31,14 +27,11 @@ jobs:
       - name: Select deployment stage
         id: stage
         shell: bash
-        env:
-          PUSH_REF: ${{ github.ref }}
         run: |
-          if [[ "$PUSH_REF" == refs/heads/main ]]; then
+          if [[ "$GITHUB_REF" == refs/heads/main ]]; then
             stage=production
           else
-            # Stable for repeated pushes, bounded and safe for arbitrary branch names.
-            stage="preview-$(node -p 'require("node:crypto").createHash("sha256").update(process.env.PUSH_REF).digest("hex").slice(0, 12)')"
+            stage="preview-$(node -p 'require("node:crypto").createHash("sha256").update(process.env.GITHUB_REF).digest("hex").slice(0, 12)')"
           fi
           echo "name=$stage" >> "$GITHUB_OUTPUT"
       - name: Deploy documentation
@@ -57,14 +50,9 @@ jobs:
                 let input = "";
                 process.stdin.on("data", (chunk) => { input += chunk; });
                 process.stdin.on("end", () => {
-                  // Cloudflare credential refresh prints a progress task before the JSON.
-                  const jsonStart = input.lastIndexOf("\n{");
-                  const value = JSON.parse(input.slice(jsonStart < 0 ? 0 : jsonStart + 1));
-                  const url = new URL(value.url);
-                  if (url.protocol !== "https:" || !url.hostname.endsWith(".workers.dev")) {
-                    throw new Error("Alchemy did not return a public Workers URL");
-                  }
-                  process.stdout.write(url.origin);
+                  // Credential refresh can precede the JSON with a progress message.
+                  const value = JSON.parse(input.slice(input.lastIndexOf("\n{") + 1));
+                  process.stdout.write(new URL(value.url).origin);
                 });
               ')"
           echo "url=$url" >> "$GITHUB_OUTPUT"

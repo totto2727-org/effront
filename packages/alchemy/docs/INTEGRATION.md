@@ -2,7 +2,7 @@
 
 Alchemy constructs infrastructure capabilities before Effront handles requests.
 The adapter connects those two lifetimes without importing the RSC application during construction or serializing host capabilities into rendered output.
-For consumer setup and public contracts, use the [Alchemy guide](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/alchemy) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/alchemy)) and [API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/alchemy) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/alchemy)).
+For consumer setup and public contracts, use the [Alchemy guide](https://effront.totto2727.dev/en/platforms/alchemy) ([日本語](https://effront.totto2727.dev/ja/platforms/alchemy)) and [API reference](https://effront.totto2727.dev/en/api-reference/alchemy) ([日本語](https://effront.totto2727.dev/ja/api-reference/alchemy)).
 
 ## Boundaries
 

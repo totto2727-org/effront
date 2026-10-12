@@ -794,11 +794,9 @@ describe("documentation catalog", () => {
     }
     const links = [...source.matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]!);
     for (const href of links) {
-      if (href.includes("effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev")) {
+      if (href.includes("effront.totto2727.dev")) {
         const target = new URL(href);
-        expect(target.origin).toBe(
-          "https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev",
-        );
+        expect(target.origin).toBe("https://effront.totto2727.dev");
         expect(localizedPages.map((page) => page.slug)).toContain(target.pathname);
       } else if (href.includes("markdown") && !/^[a-z]+:|^#/.test(href)) {
         expect(existsSync(new URL(href.split("#")[0]!, file)), href).toBe(true);
@@ -810,9 +808,7 @@ describe("documentation catalog", () => {
     const repository = new URL("../../../../", import.meta.url);
     const source = readFileSync(new URL("packages/markdown/README.md", repository), "utf8");
     for (const section of ["guide", "api-reference"]) {
-      expect(source).toContain(
-        `https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/${section}/markdown`,
-      );
+      expect(source).toContain(`https://effront.totto2727.dev/en/${section}/markdown`);
     }
     expect(existsSync(new URL("packages/markdown/docs/GUIDE.md", repository))).toBe(false);
   });

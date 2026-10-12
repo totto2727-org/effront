@@ -4,9 +4,9 @@ Build React pages and Server Functions with typed routes and request-local Effec
 
 ## Usage
 
-Use [Getting started](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/getting-started) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/guide/getting-started)) to run a page that displays `Hello, world`.
-Then use [Pages, layouts, and routes](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/guide/routes) to define your own pages.
-Use [Platforms](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) to select a host.
+Use [Getting started](https://effront.totto2727.dev/en/guide/getting-started) ([日本語](https://effront.totto2727.dev/ja/guide/getting-started)) to run a page that displays `Hello, world`.
+Then use [Pages, layouts, and routes](https://effront.totto2727.dev/en/guide/routes) to define your own pages.
+Use [Platforms](https://effront.totto2727.dev/en/platforms) to select a host.
 
 ## Key features
 
@@ -16,7 +16,7 @@ Use [Platforms](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.
 ## Prerequisites
 
 - **React and Effect**: use versions matching this package's peer dependencies, including `@effect/platform-browser`.
-- **Compilation and host**: use matching `@effront/vite` and a supported [platform](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms).
+- **Compilation and host**: use matching `@effront/vite` and a supported [platform](https://effront.totto2727.dev/en/platforms).
 
 ## Setup
 
@@ -33,7 +33,7 @@ npm install effect @effect/platform-browser react react-dom
 
 ## API
 
-The [API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference)) covers application factories, transitions, HTTP handlers, and request context.
+The [API reference](https://effront.totto2727.dev/en/api-reference) ([日本語](https://effront.totto2727.dev/ja/api-reference)) covers application factories, transitions, HTTP handlers, and request context.
 Refer to [package integration notes](docs/API.md) for reserved entry points and tested host boundaries.
 
 ## Development

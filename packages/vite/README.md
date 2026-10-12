@@ -7,9 +7,9 @@ Compile Effront pages for server rendering, browser hydration, and client naviga
 Register `effront()` alongside a host adapter.
 Use a platform guide for a runnable configuration:
 
-- [Cloudflare Workers](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/cloudflare) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/cloudflare))
-- [Node.js](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/node) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/node))
-- [Bun](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms/bun) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms/bun))
+- [Cloudflare Workers](https://effront.totto2727.dev/en/platforms/cloudflare) ([日本語](https://effront.totto2727.dev/ja/platforms/cloudflare))
+- [Node.js](https://effront.totto2727.dev/en/platforms/node) ([日本語](https://effront.totto2727.dev/ja/platforms/node))
+- [Bun](https://effront.totto2727.dev/en/platforms/bun) ([日本語](https://effront.totto2727.dev/ja/platforms/bun))
 
 ## Key features
 
@@ -22,11 +22,11 @@ Use matching `@effront/core` and an explicit RSC/SSR host adapter with a support
 
 ## Setup
 
-See the [platform guides](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/platforms) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/platforms)) for matching package dependencies and host setup.
+See the [platform guides](https://effront.totto2727.dev/en/platforms) ([日本語](https://effront.totto2727.dev/ja/platforms)) for matching package dependencies and host setup.
 
 ## API
 
-The [Vite API reference](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/en/api-reference/vite) ([日本語](https://effront-docs-docs-production-6rpcuj2cm2urgl4w.totto2727.workers.dev/ja/api-reference/vite)) covers plugin registration and application and RSC entry options.
+The [Vite API reference](https://effront.totto2727.dev/en/api-reference/vite) ([日本語](https://effront.totto2727.dev/ja/api-reference/vite)) covers plugin registration and application and RSC entry options.
 For custom entries, use the package-specific [Schema JIT registration note](docs/SCHEMA-JIT.md).
 It gives advanced users and Effront developers the requirements for separate execution graphs and native RSC entry alignment.
 
