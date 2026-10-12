@@ -63,8 +63,9 @@ App-local dev/build and independently owned E2E tasks remain package-local.
 ## Native Alchemy integration
 
 `tests/e2e-alchemy` exercises the committed `examples/basic` and `examples/loading` consumers without authenticated infrastructure reconciliation or deployment.
-Its two Vite configurations reuse the respective application configs and add test-only workerd hosts: Basic has local KV bindings, while Loading has no KV dependency.
-Playwright builds both examples and starts separate workerd previews on ports 4393 and 4394 without generating or copying application source.
+It also builds `examples/alchemy-cloudflare` on port 4395 to verify the starter's default Worker Layer, HTML response, and HEAD handling.
+Its Vite configurations reuse the respective application configs and add test-only workerd hosts: Basic has local KV bindings, while Loading and the starter have no KV dependency.
+Playwright builds the examples and starts separate workerd previews on ports 4393, 4394, and 4395 without generating or copying application source.
 
 The browser suite covers:
 

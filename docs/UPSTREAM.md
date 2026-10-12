@@ -237,6 +237,13 @@ The record dates from 2026-09-12 and uses the historical package manifest and th
 
 Local-only commits in the same range (`19eb7087`, `4e0c982c`, `3e2e5ecc`, `f9942315`, `f8587bb4`, and the merge commits `cdefb834` and `54dcd2b8`) record provenance, lock the check-in sample's CI dependency, resolve merges with `main`, and port the Effect CLI. They have no upstream counterpart.
 
+## Alchemy starter Worker Previews
+
+Against upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront's `examples/alchemy-cloudflare` selects and provides native Worker Layers in its stack entry.
+Stages prefixed with `preview-` use Alchemy's `preview.of` with the existing production Worker identity; local development retains its standalone Layer and local state backend.
+This starter configuration does not change framework runtime source or add deployment workflows and cleanup automation.
+See [example commands](../examples/README.md) for deployment order.
+
 ## Documentation domain and Worker Previews
 
 Against upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront configures its own documentation domain `effront.totto2727.dev` through an Alchemy-managed Workers custom domain.

@@ -21,6 +21,10 @@ The Alchemy starter manages its Worker through Alchemy's local state during deve
 It does not provision remote resources locally.
 Vite selects an available development port for each starter.
 
+The Alchemy starter selects deployment Layers in `alchemy.run.ts`, outside the Worker entry.
+Run `vp exec alchemy deploy --stage production` before `vp exec alchemy deploy --stage preview-my-branch` to deploy a [Worker Preview](https://alchemy.run/cloudflare/compute/previews/) of the production Worker.
+Stages prefixed with `preview-` use that parent; local development and other stages use the standalone Worker Layer.
+
 For framework features and host-specific integrations, use the larger examples instead:
 
 - [`basic/`](basic/) demonstrates an Alchemy-managed Worker with request-local KV-backed services.
