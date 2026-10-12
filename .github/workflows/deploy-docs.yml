@@ -36,7 +36,7 @@ jobs:
           echo "name=$stage" >> "$GITHUB_OUTPUT"
       - name: Deploy documentation
         id: deploy
-        uses: totto2727-org/monorepo/.github/actions/deploy-alchemy@e1368b414943ed20a2f17a9c32de1b1ef0aaf8cc
+        uses: totto2727-org/monorepo/.github/actions/deploy-alchemy@main
         with:
           working-directory: app/docs
           stack-name: effront-docs
