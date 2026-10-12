@@ -7,6 +7,14 @@ export default defineConfig({
   use: { baseURL: "http://127.0.0.1:4393" },
   webServer: [
     {
+      command:
+        "vp build --config starter.vite.config.ts && vp preview --config starter.vite.config.ts --host 127.0.0.1 --port 4395 --strictPort",
+      cwd: fileURLToPath(new URL(".", import.meta.url)),
+      url: "http://127.0.0.1:4395",
+      timeout: 120_000,
+      reuseExistingServer: false,
+    },
+    {
       // Exercise Basic without copying or generating its application source.
       command:
         "vp build --config vite.config.ts && vp preview --config vite.config.ts --host 127.0.0.1 --port 4393 --strictPort",
