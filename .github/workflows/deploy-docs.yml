@@ -36,24 +36,11 @@ jobs:
           echo "name=$stage" >> "$GITHUB_OUTPUT"
       - name: Deploy documentation
         id: deploy
-        shell: bash
-        working-directory: app/docs
+        uses: totto2727-org/monorepo/.github/actions/deploy-alchemy@e1368b414943ed20a2f17a9c32de1b1ef0aaf8cc
+        with:
+          working-directory: app/docs
+          stack-name: effront-docs
+          stage: ${{ steps.stage.outputs.name }}
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          ALCHEMY_STAGE: ${{ steps.stage.outputs.name }}
-        run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          vp exec alchemy deploy --stage "$ALCHEMY_STAGE" --yes
-          url="$(vp exec alchemy state read "effront-docs/$ALCHEMY_STAGE/output" --backend cloudflare --no-input --log-level none \
-            | node -e '
-                let input = "";
-                process.stdin.on("data", (chunk) => { input += chunk; });
-                process.stdin.on("end", () => {
-                  // Credential refresh can precede the JSON with a progress message.
-                  const value = JSON.parse(input.slice(input.lastIndexOf("\n{") + 1));
-                  process.stdout.write(new URL(value.url).origin);
-                });
-              ')"
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "[Documentation ($ALCHEMY_STAGE)]($url)" >> "$GITHUB_STEP_SUMMARY"
