@@ -243,6 +243,7 @@ Against upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Effront co
 The docs Worker, stack, deployment workflow, and public documentation links are affected.
 Pushes outside `main` deploy Alchemy Worker Previews under stable `preview-<hash>` stages, with GitHub deployment URLs.
 Production keeps its existing `effront-docs/production` identity and Cloudflare state backend.
+Deployment Layers are selected and provided in `app/docs/alchemy.run.ts`, not the Worker entry.
 There is no custom cleanup or PR lifecycle logic; Cloudflare's per-Worker Preview limit evicts the least recently deployed Preview.
 Alchemy stage state and legacy standalone preview Workers are not removed by that eviction.
 This is deployment customization for Effront's site, not a change to upstream framework runtime source.
