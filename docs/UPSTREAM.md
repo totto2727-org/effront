@@ -244,6 +244,7 @@ The docs Worker, stack, deployment workflow, and public documentation links are 
 Pushes outside `main` deploy Alchemy Worker Previews under stable `preview-<hash>` stages, with GitHub deployment URLs.
 Production keeps its existing `effront-docs/production` identity and Cloudflare state backend.
 Deployment Layers are selected and provided in `app/docs/alchemy.run.ts`, not the Worker entry.
+The workflow delegates deployment and URL output to monorepo's shared `deploy-alchemy` action; event, stage, credentials, and concurrency remain caller-owned.
 There is no custom cleanup or PR lifecycle logic; Cloudflare's per-Worker Preview limit evicts the least recently deployed Preview.
 Alchemy stage state and legacy standalone preview Workers are not removed by that eviction.
 This is deployment customization for Effront's site, not a change to upstream framework runtime source.
