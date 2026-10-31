@@ -20,8 +20,10 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
+        with:
+          dev-shell: ci
+      - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
       - name: Build workspace packages
         uses: ./.github/actions/build-workspace
       - name: Select deployment stage
@@ -38,6 +40,7 @@ jobs:
         id: deploy
         uses: totto2727-org/monorepo/.github/actions/deploy-alchemy@main
         with:
+          dev-shell: ci
           working-directory: app/docs
           stack-name: effront-docs
           stage: ${{ steps.stage.outputs.name }}
