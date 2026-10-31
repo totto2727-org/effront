@@ -18,8 +18,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
+      - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - name: Build public packages
         uses: ./.github/actions/build-workspace
       - name: Publish public packages
