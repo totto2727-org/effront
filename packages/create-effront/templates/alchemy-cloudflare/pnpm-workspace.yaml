@@ -6,4 +6,3 @@ overrides:
 allowBuilds:
   esbuild: true
   workerd: true
-  msgpackr-extract: false

@@ -113,7 +113,7 @@ Workspace globs, all 45 shared caret catalog entries, and the two required ViteP
 `bun.lock` replaces the pnpm lockfile.
 The workspace and generated starters do not configure a minimum release age or exclusions.
 Frozen installs reproduce the committed resolution.
-The explicit lifecycle allowlist contains only `bun`, `esbuild`, and `workerd`, preserving the denial of `msgpackr-extract` scripts without inheriting Bun's default trusted list.
+The explicit lifecycle allowlist contains only `bun`, `esbuild`, and `workerd`, without inheriting Bun's default trusted list.
 At that stage, the Gitignore dependency used the JSR compatibility distribution under its public import name.
 The current official npm replacement and removal of the scoped registry configuration are documented below.
 
@@ -141,8 +141,10 @@ The obsolete JSR registry configuration is removed, with no vendoring, import-na
 The root VitePlus configuration loads that installed npm package directly.
 The official `vite@*` alias and `vitest@*` overrides stay exactly aligned with VitePlus 1.1.0 and its bundled Vitest 5.0.3.
 The root and generated projects intentionally configure no minimum release age or exclusions, preserving the latest explicit Effront exception rather than restoring the earlier waiting-period policy.
-The root lifecycle policy allows only `bun`, `esbuild`, and `workerd`, explicitly denies `msgpackr-extract`, and does not broadly enable dependency scripts.
-Generated Node/Bun applications allow only `esbuild`, while Workers applications additionally allow `workerd`, with `msgpackr-extract` denied on every platform.
+The root lifecycle policy allows only `bun`, `esbuild`, and `workerd` and does not broadly enable dependency scripts.
+Generated Node/Bun applications allow only `esbuild`, while Workers applications additionally allow `workerd`.
+The obsolete `msgpackr-extract` denial was removed from the root and starter metadata, with matching test and instruction updates, after confirming its absence from the root lockfile and each independently resolved standalone starter graph.
+This policy cleanup does not change install lifecycle behavior for those graphs or runtime source, and future caret resolutions can introduce different dependencies.
 
 Bun remains a catalog-managed dependency of the native server browser suite because that suite executes the actual Bun production listener.
 Bun platform packages, host entries, runtime scripts, types, and examples remain intact, but Bun is not used for installation or tarball packaging.
