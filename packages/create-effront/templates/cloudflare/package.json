@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@effront/vite": "^0.3.2",
+    "@totto2727/gitignore-patterns": "^0.1.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-rsc": "^0.5.36",

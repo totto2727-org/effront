@@ -29,6 +29,7 @@
     "@effront/vite": "workspace:*",
     "@playwright/test": "catalog:",
     "@tailwindcss/typography": "catalog:",
+    "@totto2727/gitignore-patterns": "catalog:",
     "@tsconfig/strictest": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
