@@ -387,6 +387,9 @@ importers:
       '@tailwindcss/typography':
         specifier: 'catalog:'
         version: 0.5.20(tailwindcss@4.3.3)
+      '@totto2727/gitignore-patterns':
+        specifier: 'catalog:'
+        version: 0.1.0
       '@tsconfig/strictest':
         specifier: 'catalog:'
         version: 2.0.8
@@ -488,6 +491,9 @@ importers:
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
+      '@totto2727/gitignore-patterns':
+        specifier: 'catalog:'
+        version: 0.1.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -663,6 +669,9 @@ importers:
       '@effront/vite':
         specifier: workspace:*
         version: link:../../packages/vite
+      '@totto2727/gitignore-patterns':
+        specifier: 'catalog:'
+        version: 0.1.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -715,6 +724,9 @@ importers:
       '@tailwindcss/typography':
         specifier: 'catalog:'
         version: 0.5.20(tailwindcss@4.3.3)
+      '@totto2727/gitignore-patterns':
+        specifier: 'catalog:'
+        version: 0.1.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0

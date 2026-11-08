@@ -17,6 +17,7 @@
   "devDependencies": {
     "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
+    "@totto2727/gitignore-patterns": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",
