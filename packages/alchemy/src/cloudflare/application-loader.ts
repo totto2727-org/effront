@@ -1,6 +1,6 @@
 import type { ApplicationDefinition } from "@effront/core";
 
-/** Replaced by effrontAlchemy() only in the server runtime compilation graphs. */
+/** Replaced by effrontAlchemy() only in the RSC compilation graph. */
 export const loadConfiguredApplication = <Services, ApplicationError, Requirements>(): Promise<
   ApplicationDefinition<Services, ApplicationError, Requirements>
 > => {

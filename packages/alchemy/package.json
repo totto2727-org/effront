@@ -17,7 +17,13 @@
   "exports": {
     "./cloudflare": {
       "types": "./dist/cloudflare/index.d.ts",
+      "react-server": "./dist/cloudflare/runtime.js",
       "default": "./dist/cloudflare/index.js"
+    },
+    "./cloudflare/application": {
+      "types": "./dist/cloudflare/application.d.ts",
+      "react-server": "./dist/cloudflare/application-runtime.js",
+      "default": "./dist/cloudflare/application.js"
     },
     "./cloudflare/vite": {
       "types": "./dist/cloudflare/vite.d.ts",

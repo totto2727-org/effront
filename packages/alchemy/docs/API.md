@@ -2,6 +2,7 @@
 
 Use the maintained [English Alchemy API reference](https://effront.totto2727.dev/en/api-reference/alchemy) ([日本語](https://effront.totto2727.dev/ja/api-reference/alchemy)) for `ApplicationLoader`, `applicationHttpEffect`, `makeApplicationHttpEffect`, `effrontAlchemy`, their options, and capability-capture and lifetime rules.
 Import HTTP helpers from `@effront/alchemy/cloudflare` and the Vite plugin from `@effront/alchemy/cloudflare/vite`.
+Import the no-argument `makeApplicationHttpEffect<Definition>()` from `@effront/alchemy/cloudflare/application` instead of the explicit-loader entry.
 There is no package-root export.
 
 The [Alchemy Cloudflare guide](https://effront.totto2727.dev/en/platforms/alchemy) ([日本語](https://effront.totto2727.dev/ja/platforms/alchemy)) shows the minimal host.

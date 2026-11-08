@@ -2,11 +2,15 @@
 
 ## HTTP ハンドラー {#http}
 
+明示ローダーのヘルパーは `@effront/alchemy/cloudflare` からインポートします。
+設定済みアプリケーションを使う引数なしのヘルパーは `@effront/alchemy/cloudflare/application` からインポートします。
+エントリーを分けることで、独自のローダーを使うホストには設定済みアプリケーションのモジュールを読み込ませません。
+
 | API                                          | 入力                                                              | 戻り値                                                        |
 | -------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------- |
 | `applicationHttpEffect(load, { context? }?)` | 遅延アプリケーションローダーと、省略可能な捕捉済み Effect Context | ネイティブ HTTP ハンドラー Effect                             |
 | `makeApplicationHttpEffect(load)`            | 遅延アプリケーションローダー                                      | 利用可能な外部サービスを捕捉し、ハンドラーを返す構築用 Effect |
-| `makeApplicationHttpEffect<Definition>()`    | `effront()` で指定したアプリケーションの型                        | Plugin が遅延ローダーを提供する、同じ構築用 Effect            |
+| `makeApplicationHttpEffect<Definition>()`    | `effront()` で指定したアプリケーションの型                        | Plugin がアプリケーション参照を提供する、同じ構築用 Effect    |
 
 ローダーを明示する形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements>` を受け付けます。
 
@@ -24,7 +28,7 @@ export type ApplicationLoader<Services, ApplicationError, Requirements> = () => 
 構築時の追加サービスが不要なら、次の構築用 Effect を `Cloudflare.Worker` の第 3 引数に渡せます。
 
 ```typescript
-import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import { Effect } from "effect";
 import type application from "./entry.effront";
 
@@ -35,8 +39,11 @@ const construct = Effect.gen(function* () {
 ```
 
 型のみのインポートは Worker の実行コードから除去されます。
-Plugin は `effront({ application })` で指定したアプリケーションを、実際のリクエスト中にだけ読み込みます。
+Plugin は `effront({ application })` で指定したアプリケーションを、RSC グラフでだけ静的にインポートします。
 既定のエントリーは `./src/entry.effront.tsx` です。
+パッケージの `react-server` エントリーも HTTP レンダラーを静的にインポートし、既定のデプロイ用エントリーはどちらの実行時モジュールも読み込みません。
+アプリケーションのモジュールは isolate 初期化時に評価される可能性があるため、モジュール直下では宣言的な定義に留めてください。
+アプリケーション Layer の取得は引き続きリクエストごとに行います。
 型インポートは、そのエントリーと同じアプリケーションを参照してください。
 TypeScript は型インポートと Vite 設定の一致までは検証しません。
 アプリケーションの型は必要な capability とエラーを保持しますが、capability の実装は提供しません。
@@ -52,15 +59,19 @@ const fetch =
 独自にローダーを選択するホストでは、従来の明示形式も使用できます。
 
 ```typescript
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+
 const fetch =
   yield *
   makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
 ```
 
 明示ローダーでは、動的インポートをローダーの中に置いてください。
-値として静的にインポートすると、インフラ構築時に RSC アプリケーションを評価してしまいます。
-設定済みエントリーを使う形式は、Vite 統合なしでリクエストを実行すると `TypeError` になります。
-Worker の構築時にはアプリケーションを読み込みません。
+共有 Worker エントリーで値として静的にインポートすると、インフラ構築時に RSC アプリケーションを評価してしまいます。
+設定済みエントリーを使う形式は、RSC 統合なしでリクエストを実行すると `TypeError` になります。
+デプロイ用の構築時にはアプリケーションを読み込みません。
+設定済みアダプターの経路では、アプリケーションとレンダラーに動的インポートを使いません。
+ただし、Vite や基盤の RSC フレームワークがコード分割のために生成する動的インポートまで除去するものではありません。
 この API は、アプリ固有の runtime Layer の導出や、デプロイ構成と実行時構成の統合は行いません。
 
 ハンドラーは成功時にネイティブの `HttpServerResponse` を返し、[ネイティブ HTTP](./http.md) のエラーチャネルを保持します。

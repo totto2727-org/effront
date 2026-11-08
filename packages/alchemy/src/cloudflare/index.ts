@@ -1,129 +1,17 @@
-import type { ApplicationDefinition, ApplicationServices } from "@effront/core";
-import type { HttpApplicationEffect } from "@effront/core/http";
-import {
-  Request,
-  Worker,
-  WorkerEnvironment,
-  WorkerExecutionContext,
-} from "alchemy/Cloudflare/Workers";
-import { CloudflareEnvironment } from "alchemy/Cloudflare";
-import { RuntimeContext } from "alchemy/RuntimeContext";
-import { Self } from "alchemy/Self";
-import { Context, Effect, Layer, Scope } from "effect";
-import { HttpRouter, HttpServerRequest } from "effect/http";
+import type { toHttpEffect } from "@effront/core/http";
+import { Effect } from "effect";
 
-import { loadConfiguredApplication } from "./application-loader";
+import { makeApplicationAdapter } from "./adapter";
 
-type HostServices =
-  | Request
-  | Worker
-  | WorkerEnvironment
-  | WorkerExecutionContext
-  | CloudflareEnvironment
-  | Self
-  | RuntimeContext
-  | HttpRouter.Provided
-  | HttpRouter.HttpRouter
-  | Layer.CurrentMemoMap
-  | Scope.Scope;
+export type { ApplicationLoader } from "./adapter";
 
-const omitHostServices = Context.omit(
-  RuntimeContext,
-  Worker.Self,
-  CloudflareEnvironment,
-  Self,
-  Layer.CurrentMemoMap,
-  Request,
-  WorkerEnvironment,
-  WorkerExecutionContext,
-  Scope.Scope,
-  HttpServerRequest.HttpServerRequest,
-  HttpServerRequest.ParsedSearchParams,
-  HttpRouter.RouteContext,
-  HttpRouter.HttpRouter,
-);
-
-/** A deferred RSC application import, evaluated only inside a Worker request. */
-export type ApplicationLoader<Services, ApplicationError, Requirements> = () => Promise<
-  ApplicationDefinition<Services, ApplicationError, Requirements>
->;
-
-type ApplicationHttpEffect<ApplicationError, Requirements, Captured> = Effect.Effect<
-  Effect.Success<HttpApplicationEffect<ApplicationError, Requirements>>,
-  Effect.Error<HttpApplicationEffect<ApplicationError, Requirements>>,
-  Exclude<
-    Effect.Services<HttpApplicationEffect<ApplicationError, Requirements>>,
-    Exclude<Captured, HostServices>
-  >
->;
-
-type ApplicationCapabilities<Requirements> = Exclude<
-  Effect.Services<HttpApplicationEffect<never, Requirements>>,
-  HostServices
->;
-
-type ApplicationConstruction<ApplicationError, Requirements> = Effect.Effect<
-  ApplicationHttpEffect<ApplicationError, Requirements, ApplicationCapabilities<Requirements>>,
-  never,
-  ApplicationCapabilities<Requirements>
->;
-
-/**
- * Builds a native HTTP effect without loading React or the application during construction.
- *
- * The supplied context holds constructed capabilities, such as Alchemy KV clients.
- * Live request services take precedence, and a construction-time scope or execution
- * context is never restored. Application layers are acquired in the host's request
- * scope, which Alchemy retains through streaming response completion or cancellation.
- */
-export const applicationHttpEffect = <Services, ApplicationError, Requirements, Captured = never>(
-  load: ApplicationLoader<Services, ApplicationError, Requirements>,
-  options: { readonly context?: Context.Context<Captured> } = {},
-): ApplicationHttpEffect<ApplicationError, Requirements, Captured> => {
-  const captured = omitHostServices(options.context ?? Context.empty());
-  const handler = Effect.gen(function* () {
-    const { toHttpEffect } = yield* Effect.promise(() => import("@effront/core/http"));
-    const application = yield* Effect.promise(load);
-    return yield* toHttpEffect(application);
-  });
-  type HandlerRequirements = Effect.Services<typeof handler>;
-  type LiveRequirements = Exclude<HandlerRequirements, Exclude<Captured, HostServices>>;
-
-  return Effect.contextWith((live: Context.Context<LiveRequirements>) =>
-    Effect.provideContext(
-      handler,
-      Context.merge(captured, live) as Context.Context<HandlerRequirements>,
+const unavailable: typeof toHttpEffect = () =>
+  Effect.die(
+    new TypeError(
+      "Effront Alchemy request handling requires the react-server runtime. Use effront() followed by effrontAlchemy().",
     ),
   );
-};
 
-/**
- * Captures application capabilities during Alchemy Worker construction.
- *
- * With a type-only application argument, the Vite integration owns deferred loading
- * of the application configured in effront(). An explicit loader remains available
- * for hosts that select their own application entry.
- *
- * Supply only application services here. RuntimeContext, the HTTP request, and the
- * request scope are supplied by Alchemy when the returned fetch effect executes.
- * Capturing references does not acquire services or extend their lifetime.
- */
-export function makeApplicationHttpEffect<
-  Definition extends ApplicationDefinition<ApplicationServices<Definition>, unknown, unknown>,
->(): Definition extends ApplicationDefinition<
-  infer _Services,
-  infer ApplicationError,
-  infer Requirements
->
-  ? ApplicationConstruction<ApplicationError, Requirements>
-  : never;
-export function makeApplicationHttpEffect<Services, ApplicationError, Requirements>(
-  load: ApplicationLoader<Services, ApplicationError, Requirements>,
-): ApplicationConstruction<ApplicationError, Requirements>;
-export function makeApplicationHttpEffect<Services, ApplicationError, Requirements>(
-  load: ApplicationLoader<Services, ApplicationError, Requirements> = loadConfiguredApplication,
-): ApplicationConstruction<ApplicationError, Requirements> {
-  return Effect.map(Effect.context<ApplicationCapabilities<Requirements>>(), (context) =>
-    applicationHttpEffect(load, { context }),
-  );
-}
+/** Deployment construction never imports the RSC renderer or application. */
+export const { applicationHttpEffect, makeApplicationHttpEffect } =
+  makeApplicationAdapter(unavailable);

@@ -5,7 +5,10 @@ import { Context, Effect, Layer, Option, Scope } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { describe, expect, expectTypeOf, it, vi } from "vite-plus/test";
 
-import { applicationHttpEffect, makeApplicationHttpEffect } from "./index";
+import * as deployment from "./index";
+import { applicationHttpEffect, makeApplicationHttpEffect } from "./runtime";
+import * as configuredDeployment from "./application";
+import { makeApplicationHttpEffect as makeConfiguredApplicationHttpEffect } from "./application-runtime";
 
 class Capability extends Context.Service<Capability, string>()("effront/test/alchemy/Capability") {}
 
@@ -42,6 +45,20 @@ const request = (path: string) =>
   HttpServerRequest.fromWeb(new Request(`https://example.test${path}`));
 
 describe("Alchemy native application effects", () => {
+  it("keeps the deployment and RSC APIs type-identical and construction-safe", async () => {
+    expectTypeOf(deployment.makeApplicationHttpEffect).toEqualTypeOf(makeApplicationHttpEffect);
+    expectTypeOf(deployment.applicationHttpEffect).toEqualTypeOf(applicationHttpEffect);
+    expectTypeOf(configuredDeployment.makeApplicationHttpEffect).toEqualTypeOf(
+      makeConfiguredApplicationHttpEffect,
+    );
+    const handler = await Effect.runPromise(
+      deployment
+        .makeApplicationHttpEffect(async () => application)
+        .pipe(Effect.provideService(Capability, "constructed")),
+    );
+    expect(Effect.isEffect(handler)).toBe(true);
+  });
+
   it("captures configured application capabilities without loading the application during construction", async () => {
     type ApplicationFailure = { readonly _tag: "ApplicationFailure" };
     type RouteFailure = { readonly _tag: "RouteFailure" };
@@ -52,7 +69,7 @@ describe("Alchemy native application effects", () => {
       | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
       | HttpRouter.Request.From<"Error", RouteFailure>
     >;
-    const construction = makeApplicationHttpEffect<Definition>();
+    const construction = makeConfiguredApplicationHttpEffect<Definition>();
     expectTypeOf<Effect.Services<typeof construction>>().toEqualTypeOf<Capability>();
     const handler = await Effect.runPromise(
       construction.pipe(Effect.provideService(Capability, "constructed")),
@@ -68,7 +85,7 @@ describe("Alchemy native application effects", () => {
 
   it("reports a missing Vite integration only when the configured handler executes", async () => {
     const handler = await Effect.runPromise(
-      makeApplicationHttpEffect<typeof application>().pipe(
+      makeConfiguredApplicationHttpEffect<typeof application>().pipe(
         Effect.provideService(Capability, "constructed"),
       ),
     );
@@ -89,11 +106,13 @@ describe("Alchemy native application effects", () => {
   it("does not erase missing capabilities or accept non-application types", () => {
     const check = () => {
       // @ts-expect-error The configured application still requires Capability.
-      void Effect.runPromise(makeApplicationHttpEffect<typeof application>());
+      void Effect.runPromise(makeConfiguredApplicationHttpEffect<typeof application>());
       // @ts-expect-error A configured entry must be an Effront application definition.
-      void makeApplicationHttpEffect<string>();
+      void makeConfiguredApplicationHttpEffect<string>();
       // @ts-expect-error Omitting the application type cannot erase unknown requirements.
-      void Effect.runPromise(makeApplicationHttpEffect());
+      void Effect.runPromise(makeConfiguredApplicationHttpEffect());
+      // @ts-expect-error The existing entry requires an explicit loader.
+      void makeApplicationHttpEffect();
     };
     expect(check).toBeTypeOf("function");
   });

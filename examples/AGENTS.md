@@ -34,7 +34,7 @@ Example development commands do not build workspace packages.
 ### Application entry and host ownership
 
 - Export the application definition directly from `src/entry.effront.tsx`. Do not restore a re-export-only `entry.client.ts`.
-- Native Alchemy construction uses `makeApplicationHttpEffect<typeof application>()` with a type-only import of the configured application, or an explicit deferred loader. Static value imports would evaluate RSC application code during infrastructure planning. Keep the type import aligned with `effront({ application })`.
+- Native Alchemy construction uses `makeApplicationHttpEffect<typeof application>()` from `@effront/alchemy/cloudflare/application` with a type-only import of the configured application, or an explicit deferred loader from `@effront/alchemy/cloudflare`. Static application value imports in the shared Worker entry would evaluate RSC code during infrastructure planning. The adapter instead generates static application imports only in the configured helper's RSC graph. Keep the type import aligned with `effront({ application })` and module-level application definitions declarative.
 - Alchemy CLI owns its Vite host. Do not add a manual runtime plugin, injection-environment guard, application stage fallback, or explicit stage flag to ordinary scripts.
 - Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront`. Configure the native `worker` only on `effrontAlchemy`. Keep the existing Tailwind integration separate.
 - Node/Bun use `entry.rsc.ts` for the native handler and `entry.server.ts` for production listening. Never start the production server during Vite development.

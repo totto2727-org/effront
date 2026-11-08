@@ -42,10 +42,13 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
   };
   const application: Plugin = {
     name: "effront:alchemy-application-loader",
-    applyToEnvironment: (environment) => environment.name === "rsc" || environment.name === "ssr",
+    applyToEnvironment: (environment) => environment.name === "rsc",
     load(id) {
       if (id !== `${applicationLoader}.js` && id !== `${applicationLoader}.ts`) return;
-      return 'export const loadConfiguredApplication = () => import("@effront/core/application-entry").then((module) => module.default);';
+      return [
+        'import application from "@effront/core/application-entry";',
+        "export const loadConfiguredApplication = () => Promise.resolve(application);",
+      ].join("\n");
     },
   };
   const bridge: Plugin = {

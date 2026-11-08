@@ -2,11 +2,15 @@
 
 ## HTTP handlers {#http}
 
+Import the explicit-loader helpers from `@effront/alchemy/cloudflare`.
+Import the configured, no-argument helper from `@effront/alchemy/cloudflare/application`.
+The separate entry keeps configured application modules out of hosts that select their own loader.
+
 | API                                          | Input                                                            | Result                                                                                |
 | -------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `applicationHttpEffect(load, { context? }?)` | Deferred application loader and optional captured Effect Context | Native HTTP handler Effect                                                            |
 | `makeApplicationHttpEffect(load)`            | Deferred application loader                                      | Construction Effect that captures available external services and returns the handler |
-| `makeApplicationHttpEffect<Definition>()`    | Type of the application configured in `effront()`                | The same construction Effect, with a plugin-owned deferred loader                     |
+| `makeApplicationHttpEffect<Definition>()`    | Type of the application configured in `effront()`                | The same construction Effect, with a plugin-owned application reference               |
 
 The explicit-loader forms accept the exported `ApplicationLoader<Services, ApplicationError, Requirements>` type:
 
@@ -24,7 +28,7 @@ With `effront()` and `effrontAlchemy()`, use a type-only application import inst
 This construction Effect is suitable for the third argument of `Cloudflare.Worker` when no additional construction services are needed:
 
 ```typescript
-import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import { Effect } from "effect";
 import type application from "./entry.effront";
 
@@ -35,7 +39,10 @@ const construct = Effect.gen(function* () {
 ```
 
 The type-only import is erased from the Worker module.
-The plugin loads the application selected by `effront({ application })`, whose default is `./src/entry.effront.tsx`, only during a live request.
+The plugin statically imports the application selected by `effront({ application })`, whose default is `./src/entry.effront.tsx`, only in the RSC graph.
+The package's `react-server` entry also statically imports the HTTP renderer; its default deployment entry imports neither runtime module.
+Application modules can evaluate during isolate initialization, so keep their module-level definitions declarative.
+Application Layers are still acquired per request.
 The type import must refer to that same application.
 TypeScript does not compare the type import with the Vite configuration.
 The application type preserves required capabilities and application failures; it does not provide those capabilities.
@@ -51,14 +58,17 @@ const fetch =
 Hosts that select their own loader can retain the explicit form:
 
 ```typescript
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+
 const fetch =
   yield *
   makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
 ```
 
 Keep the dynamic import inside an explicit loader.
-A static value import would evaluate the RSC application during infrastructure construction.
-The configured form throws `TypeError` when a request runs without the Vite integration; Worker construction itself does not load the application.
+A static value import in the shared Worker entry would evaluate the RSC application during infrastructure construction.
+The configured form throws `TypeError` when a request runs without the RSC integration; deployment construction itself does not load the application.
+The configured adapter path uses no dynamic import for its application or renderer, but Vite and the underlying RSC framework can still generate dynamic imports for code splitting.
 This API does not derive an application-specific runtime Layer or remove deployment/runtime composition boundaries.
 
 The handler succeeds with a native `HttpServerResponse` and retains the [native HTTP](./http.md) error channel.
