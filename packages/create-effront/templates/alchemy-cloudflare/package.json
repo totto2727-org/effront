@@ -7,15 +7,15 @@
   },
   "dependencies": {
     "@effect/platform-browser": "^4.0.2",
-    "@effront/alchemy": "^0.3.2",
-    "@effront/core": "^0.3.2",
+    "@effront/alchemy": "^0.3.3",
+    "@effront/core": "^0.3.3",
     "alchemy": "^2.0.0-beta.81",
     "effect": "^4.0.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@effront/vite": "^0.3.2",
+    "@effront/vite": "^0.3.3",
     "@totto2727/gitignore-patterns": "^0.1.0",
     "@types/node": "^24.19.1",
     "@types/react": "^19.3.0",
