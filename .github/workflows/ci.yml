@@ -18,11 +18,13 @@ jobs:
           # Documentation tests compare embedded excerpts with historical commits.
           fetch-depth: 0
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
+        with:
+          dev-shell: ci
       - uses: totto2727-org/monorepo/.github/actions/setup-typescript@main
       - name: Build workspace packages
         uses: ./.github/actions/build-workspace
       - name: Check and test
         run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
+          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#ci")"
           vp run check
           vp run test

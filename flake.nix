@@ -1,16 +1,12 @@
 {
-  description = "Effront Node.js and pnpm development and npm publication environment";
+  description = "Effront development environment";
 
   inputs = {
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
-    vite-plus-overlay = {
-      url = "github:ryoppippi/nix-vite-plus";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
-    { nixpkgs, vite-plus-overlay, ... }:
+    { nixpkgs, ... }:
     let
       supportedSystems = [
         "aarch64-darwin"
@@ -25,21 +21,21 @@
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ vite-plus-overlay.overlays.default ];
           };
-          manifest = builtins.fromJSON (builtins.readFile ./package.json);
         in
-        {
-          default =
-            assert manifest.packageManager == "pnpm@${pkgs.pnpm.version}";
-            pkgs.mkShell {
-              packages = [
-                pkgs.nodejs_24
-                pkgs.pnpm
-                pkgs.vite-plus
-                pkgs.nixfmt
-              ];
-            };
+        rec {
+          ci = default.overrideAttrs (_: {
+            shellHook = "";
+          });
+          default = pkgs.mkShell {
+            packages = [
+              pkgs.nixfmt
+            ];
+            shellHook = ''
+              # Enable Git Hook
+              vp config
+            '';
+          };
         }
       );
     };
