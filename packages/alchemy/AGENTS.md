@@ -3,6 +3,7 @@
 ## Repository structure
 
 - `src/cloudflare/index.ts` owns deferred application loading and capability capture.
+- `src/cloudflare/application-loader.ts` is the construction-safe configured-loader boundary. The Vite adapter replaces it only in RSC/SSR graphs, using the portable application's existing alias.
 - `src/cloudflare/vite.ts` owns the native Worker bridge, runtime-phase compilation settings, and default SSR colocation, not the portable compilation graphs or application hosting.
 - Future providers belong in sibling directories under `src/` with explicit package subpaths, not in core or the Cloudflare entry.
 

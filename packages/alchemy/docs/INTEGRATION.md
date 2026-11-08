@@ -12,6 +12,14 @@ Core imports neither Alchemy nor Cloudflare and preserves external application r
 `@effront/alchemy/cloudflare/vite` owns the native Worker bridge, development runtime compilation, and default SSR colocation.
 Neither native HTTP API runs an independent Effect runtime.
 
+`makeApplicationHttpEffect<typeof application>()` uses a type-only application import and a framework-owned loader.
+The adapter replaces its private loader module only in the RSC and SSR compilation graphs.
+The replacement imports the existing `@effront/core/application-entry` alias inside the request-time loader, never at module initialization.
+Outside Vite, construction still succeeds; invoking that loader reports the missing integration.
+The type-only import must describe the application configured in `effront()`, because TypeScript does not validate the Vite configuration against it.
+The explicit-loader overload retains inference from its loader and does not require this configured-entry contract.
+This convenience removes repeated loader callbacks, not application-specific capability selection or deployment/runtime Layer separation.
+
 Native Node/Bun HTTP hosting is provided separately by [`@effront/server`](../../server/README.md), without Alchemy or the Workers Fetch boundary.
 The standalone `@effront/cloudflare` adapter uses the Fetch boundary and has independent regression fixtures.
 

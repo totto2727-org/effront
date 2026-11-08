@@ -1,6 +1,7 @@
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
+import type application from "./entry.effront";
 
 export default Cloudflare.Worker(
   "Loading",
@@ -11,9 +12,7 @@ export default Cloudflare.Worker(
   },
   Effect.gen(function* () {
     // Load the application only when the Worker handles a request.
-    const fetch = yield* makeApplicationHttpEffect(() =>
-      import("./entry.effront").then((module) => module.default),
-    );
+    const fetch = yield* makeApplicationHttpEffect<typeof application>();
     return { fetch: fetch.pipe(Effect.orDie) };
   }),
 );

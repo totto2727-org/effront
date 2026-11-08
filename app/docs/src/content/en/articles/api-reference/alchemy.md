@@ -6,8 +6,9 @@
 | -------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `applicationHttpEffect(load, { context? }?)` | Deferred application loader and optional captured Effect Context | Native HTTP handler Effect                                                            |
 | `makeApplicationHttpEffect(load)`            | Deferred application loader                                      | Construction Effect that captures available external services and returns the handler |
+| `makeApplicationHttpEffect<Definition>()`    | Type of the application configured in `effront()`                | The same construction Effect, with a plugin-owned deferred loader                     |
 
-Both accept the exported `ApplicationLoader<Services, ApplicationError, Requirements>` type:
+The explicit-loader forms accept the exported `ApplicationLoader<Services, ApplicationError, Requirements>` type:
 
 ```typescript
 import type { ApplicationDefinition } from "@effront/core";
@@ -18,22 +19,47 @@ export type ApplicationLoader<Services, ApplicationError, Requirements> = () => 
 ```
 
 The loader runs during request handling.
-Keep the dynamic import inside it.
-A static application import in the Worker module would evaluate the application during infrastructure construction.
+With `effront()` and `effrontAlchemy()`, use a type-only application import instead of writing a loader:
 
 This construction Effect is suitable for the third argument of `Cloudflare.Worker` when no additional construction services are needed:
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import { Effect } from "effect";
+import type application from "./entry.effront";
 
 const construct = Effect.gen(function* () {
-  const fetch = yield* makeApplicationHttpEffect(() =>
-    import("./entry.effront").then((module) => module.default),
-  );
+  const fetch = yield* makeApplicationHttpEffect<typeof application>();
   return { fetch: fetch.pipe(Effect.orDie) };
 });
 ```
+
+The type-only import is erased from the Worker module.
+The plugin loads the application selected by `effront({ application })`, whose default is `./src/entry.effront.tsx`, only during a live request.
+The type import must refer to that same application.
+TypeScript does not compare the type import with the Vite configuration.
+The application type preserves required capabilities and application failures; it does not provide those capabilities.
+
+For example, the Basic Worker's KV capability remains explicit:
+
+```typescript
+const fetch =
+  yield *
+  makeApplicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache));
+```
+
+Hosts that select their own loader can retain the explicit form:
+
+```typescript
+const fetch =
+  yield *
+  makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
+```
+
+Keep the dynamic import inside an explicit loader.
+A static value import would evaluate the RSC application during infrastructure construction.
+The configured form throws `TypeError` when a request runs without the Vite integration; Worker construction itself does not load the application.
+This API does not derive an application-specific runtime Layer or remove deployment/runtime composition boundaries.
 
 The handler succeeds with a native `HttpServerResponse` and retains the [native HTTP](./http.md) error channel.
 Alchemy's accepted error union is narrower, so handle or map remaining application failures before returning `fetch`.
@@ -75,7 +101,7 @@ export default defineConfig({
 | `worker` | `string` | `./src/entry.workers.ts` | Module default-exporting the Alchemy Worker, relative to the Vite root. Empty string throws `TypeError`. |
 
 The adapter has no `application` option and does not register `effront()`.
-Application entry changes belong in `effront({ application })` and the Worker's loader import.
+Application entry changes belong in `effront({ application })` and the Worker's type-only application import, or its explicit loader import.
 Select the Worker entry with `effrontAlchemy({ worker })`, not `effront({ rsc })`.
 
 The bridge requires Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` bindings.

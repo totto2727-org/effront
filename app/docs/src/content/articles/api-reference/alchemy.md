@@ -6,8 +6,9 @@
 | -------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------- |
 | `applicationHttpEffect(load, { context? }?)` | 遅延アプリケーションローダーと、省略可能な捕捉済み Effect Context | ネイティブ HTTP ハンドラー Effect                             |
 | `makeApplicationHttpEffect(load)`            | 遅延アプリケーションローダー                                      | 利用可能な外部サービスを捕捉し、ハンドラーを返す構築用 Effect |
+| `makeApplicationHttpEffect<Definition>()`    | `effront()` で指定したアプリケーションの型                        | Plugin が遅延ローダーを提供する、同じ構築用 Effect            |
 
-どちらも、公開型 `ApplicationLoader<Services, ApplicationError, Requirements>` を受け付けます。
+ローダーを明示する形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements>` を受け付けます。
 
 ```typescript
 import type { ApplicationDefinition } from "@effront/core";
@@ -18,22 +19,49 @@ export type ApplicationLoader<Services, ApplicationError, Requirements> = () => 
 ```
 
 ローダーはリクエスト処理中に実行されます。
-動的インポートはローダーの中に置いてください。
-Worker モジュールから静的にインポートすると、インフラ構築時にアプリケーションを評価してしまいます。
+`effront()` と `effrontAlchemy()` を使う場合は、ローダーを書く代わりにアプリケーションを型として参照できます。
 
 構築時の追加サービスが不要なら、次の構築用 Effect を `Cloudflare.Worker` の第 3 引数に渡せます。
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import { Effect } from "effect";
+import type application from "./entry.effront";
 
 const construct = Effect.gen(function* () {
-  const fetch = yield* makeApplicationHttpEffect(() =>
-    import("./entry.effront").then((module) => module.default),
-  );
+  const fetch = yield* makeApplicationHttpEffect<typeof application>();
   return { fetch: fetch.pipe(Effect.orDie) };
 });
 ```
+
+型のみのインポートは Worker の実行コードから除去されます。
+Plugin は `effront({ application })` で指定したアプリケーションを、実際のリクエスト中にだけ読み込みます。
+既定のエントリーは `./src/entry.effront.tsx` です。
+型インポートは、そのエントリーと同じアプリケーションを参照してください。
+TypeScript は型インポートと Vite 設定の一致までは検証しません。
+アプリケーションの型は必要な capability とエラーを保持しますが、capability の実装は提供しません。
+
+たとえば Basic Worker の KV capability は引き続き明示的に渡します。
+
+```typescript
+const fetch =
+  yield *
+  makeApplicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache));
+```
+
+独自にローダーを選択するホストでは、従来の明示形式も使用できます。
+
+```typescript
+const fetch =
+  yield *
+  makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
+```
+
+明示ローダーでは、動的インポートをローダーの中に置いてください。
+値として静的にインポートすると、インフラ構築時に RSC アプリケーションを評価してしまいます。
+設定済みエントリーを使う形式は、Vite 統合なしでリクエストを実行すると `TypeError` になります。
+Worker の構築時にはアプリケーションを読み込みません。
+この API は、アプリ固有の runtime Layer の導出や、デプロイ構成と実行時構成の統合は行いません。
 
 ハンドラーは成功時にネイティブの `HttpServerResponse` を返し、[ネイティブ HTTP](./http.md) のエラーチャネルを保持します。
 Alchemy が受け付けるエラーの union はより狭いため、`fetch` を返す前に残りのアプリケーションエラーを処理または変換してください。
@@ -75,7 +103,7 @@ export default defineConfig({
 | `worker`   | `string` | `./src/entry.workers.ts` | Alchemy Worker を default export するモジュール。Vite root を基準に指定する。空文字列は `TypeError`。 |
 
 このアダプターに `application` オプションはなく、`effront()` の登録も行いません。
-アプリケーションエントリーの変更は `effront({ application })` と Worker のローダー内インポートに反映します。
+アプリケーションエントリーの変更は `effront({ application })` と Worker の型インポート、または明示ローダー内のインポートに反映します。
 Worker エントリーは `effront({ rsc })` ではなく `effrontAlchemy({ worker })` で選びます。
 ブリッジには Alchemy が注入する `ALCHEMY_STACK_NAME` と `ALCHEMY_STAGE` のバインディングが必要です。欠損または空の値は `TypeError` になり、`alchemy dev` から起動する必要があります。
 SSR 出力は既定で RSC Worker 成果物の子ディレクトリに配置されます。明示した出力先は保持されますが、Worker 成果物と一緒にパッケージ化してください。

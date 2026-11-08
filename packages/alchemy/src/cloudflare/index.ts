@@ -1,4 +1,4 @@
-import type { ApplicationDefinition } from "@effront/core";
+import type { ApplicationDefinition, ApplicationServices } from "@effront/core";
 import type { HttpApplicationEffect } from "@effront/core/http";
 import {
   Request,
@@ -11,6 +11,8 @@ import { RuntimeContext } from "alchemy/RuntimeContext";
 import { Self } from "alchemy/Self";
 import { Context, Effect, Layer, Scope } from "effect";
 import { HttpRouter, HttpServerRequest } from "effect/http";
+
+import { loadConfiguredApplication } from "./application-loader";
 
 type HostServices =
   | Request
@@ -55,6 +57,17 @@ type ApplicationHttpEffect<ApplicationError, Requirements, Captured> = Effect.Ef
   >
 >;
 
+type ApplicationCapabilities<Requirements> = Exclude<
+  Effect.Services<HttpApplicationEffect<never, Requirements>>,
+  HostServices
+>;
+
+type ApplicationConstruction<ApplicationError, Requirements> = Effect.Effect<
+  ApplicationHttpEffect<ApplicationError, Requirements, ApplicationCapabilities<Requirements>>,
+  never,
+  ApplicationCapabilities<Requirements>
+>;
+
 /**
  * Builds a native HTTP effect without loading React or the application during construction.
  *
@@ -87,16 +100,30 @@ export const applicationHttpEffect = <Services, ApplicationError, Requirements, 
 /**
  * Captures application capabilities during Alchemy Worker construction.
  *
+ * With a type-only application argument, the Vite integration owns deferred loading
+ * of the application configured in effront(). An explicit loader remains available
+ * for hosts that select their own application entry.
+ *
  * Supply only application services here. RuntimeContext, the HTTP request, and the
  * request scope are supplied by Alchemy when the returned fetch effect executes.
  * Capturing references does not acquire services or extend their lifetime.
  */
-export const makeApplicationHttpEffect = <Services, ApplicationError, Requirements>(
+export function makeApplicationHttpEffect<
+  Definition extends ApplicationDefinition<ApplicationServices<Definition>, unknown, unknown>,
+>(): Definition extends ApplicationDefinition<
+  infer _Services,
+  infer ApplicationError,
+  infer Requirements
+>
+  ? ApplicationConstruction<ApplicationError, Requirements>
+  : never;
+export function makeApplicationHttpEffect<Services, ApplicationError, Requirements>(
   load: ApplicationLoader<Services, ApplicationError, Requirements>,
-) =>
-  Effect.map(
-    Effect.context<
-      Exclude<Effect.Services<HttpApplicationEffect<ApplicationError, Requirements>>, HostServices>
-    >(),
-    (context) => applicationHttpEffect(load, { context }),
+): ApplicationConstruction<ApplicationError, Requirements>;
+export function makeApplicationHttpEffect<Services, ApplicationError, Requirements>(
+  load: ApplicationLoader<Services, ApplicationError, Requirements> = loadConfiguredApplication,
+): ApplicationConstruction<ApplicationError, Requirements> {
+  return Effect.map(Effect.context<ApplicationCapabilities<Requirements>>(), (context) =>
+    applicationHttpEffect(load, { context }),
   );
+}

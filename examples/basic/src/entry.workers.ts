@@ -1,6 +1,7 @@
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
+import type application from "./entry.effront";
 import { CacheClient } from "./features/greeting/services";
 export const Cache = Cloudflare.KV.Namespace("Cache");
 
@@ -13,10 +14,9 @@ export default class App extends Cloudflare.Worker<App>()(
   },
   Effect.gen(function* () {
     const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
-    // Fixed application loading. Keep this dynamic import unchanged.
-    const fetch = yield* makeApplicationHttpEffect(() =>
-      import("./entry.effront").then((module) => module.default),
-    ).pipe(Effect.provideService(CacheClient, cache));
+    const fetch = yield* makeApplicationHttpEffect<typeof application>().pipe(
+      Effect.provideService(CacheClient, cache),
+    );
     return { fetch: fetch.pipe(Effect.orDie) };
   }).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding)),
 ) {}

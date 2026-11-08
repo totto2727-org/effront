@@ -1,4 +1,5 @@
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { normalizePath, type Plugin, type PluginOption } from "vite";
 
@@ -6,6 +7,7 @@ import { alchemyRuntimeProjection } from "./runtime-projection";
 
 const entryId = "virtual:effront/alchemy/cloudflare/entry";
 const resolvedEntryId = `\0${entryId}`;
+const applicationLoader = fileURLToPath(new URL("./application-loader", import.meta.url));
 
 export type EffrontAlchemyOptions = {
   /** Module default-exporting the native Alchemy Worker construct. Relative to the Vite root. Defaults to `./src/entry.workers.ts`. */
@@ -36,6 +38,14 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
           join(config.build?.outDir ?? "dist", "rsc");
         return { environments: { ssr: { build: { outDir: join(rscOutput, "ssr") } } } };
       },
+    },
+  };
+  const application: Plugin = {
+    name: "effront:alchemy-application-loader",
+    applyToEnvironment: (environment) => environment.name === "rsc" || environment.name === "ssr",
+    load(id) {
+      if (id !== `${applicationLoader}.js` && id !== `${applicationLoader}.ts`) return;
+      return 'export const loadConfiguredApplication = () => import("@effront/core/application-entry").then((module) => module.default);';
     },
   };
   const bridge: Plugin = {
@@ -72,5 +82,5 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
     },
   };
 
-  return [ssrOutput, bridge, alchemyRuntimeProjection()];
+  return [ssrOutput, application, bridge, alchemyRuntimeProjection()];
 };

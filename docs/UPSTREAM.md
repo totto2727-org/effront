@@ -25,6 +25,15 @@ The pinned baseline and comparison material predate the Effront rename. They int
 For current local code, use `packages/core`, package imports `@effront/core/*`, and `Application.effront()`.
 The historical combined Cloudflare factory was superseded after the pinned comparison: register `effront()` from `@effront/vite` and `effrontCloudflare()` from `@effront/cloudflare` separately. Cloudflare options are direct adapter options, not nested `cloudflare` options.
 
+## Alchemy configured application loader
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the Alchemy adapter supports `makeApplicationHttpEffect<typeof application>()` without a consumer-written dynamic import.
+The type-only application import retains capability and error types while the Vite adapter supplies the request-time loader through the existing application-entry alias.
+The affected areas are the Alchemy adapter, three maintained Alchemy examples, and their API documentation and regression tests.
+Operationally, deployment construction does not load the RSC application, and an unconfigured request reports the missing Vite integration.
+Explicit loaders remain supported, and application-specific runtime Layers and resource selection remain consumer-owned.
+No upstream runtime source is incorporated by this change.
+
 ## Stable Effect v4 dependency policy
 
 The upstream comparison baseline remains `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`.
