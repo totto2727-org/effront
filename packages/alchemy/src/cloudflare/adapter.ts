@@ -68,7 +68,30 @@ type ApplicationConstruction<ApplicationError, Requirements> = Effect.Effect<
   ApplicationCapabilities<Requirements>
 >;
 
-export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect) => {
+/** Keeps declaration emission on named contracts and canonical public provider imports. */
+export interface ApplicationAdapter {
+  readonly applicationHttpEffect: <Services, ApplicationError, Requirements, Captured = never>(
+    load: ApplicationLoader<Services, ApplicationError, Requirements>,
+    options?: { readonly context?: Context.Context<Captured> },
+  ) => ApplicationHttpEffect<ApplicationError, Requirements, Captured>;
+  readonly makeApplicationHttpEffect: <Services, ApplicationError, Requirements>(
+    load: ApplicationLoader<Services, ApplicationError, Requirements>,
+  ) => ApplicationConstruction<ApplicationError, Requirements>;
+}
+
+export interface ConfiguredApplicationHttpEffect {
+  <
+    Definition extends ApplicationDefinition<ApplicationServices<Definition>, unknown, unknown>,
+  >(): Definition extends ApplicationDefinition<
+    infer _Services,
+    infer ApplicationError,
+    infer Requirements
+  >
+    ? ApplicationConstruction<ApplicationError, Requirements>
+    : never;
+}
+
+export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect): ApplicationAdapter => {
   /**
    * Builds a native HTTP effect without running the loader during construction.
    *
@@ -117,9 +140,9 @@ export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect) => {
 
 /** Binds the configured entry without importing it into explicit-loader hosts. */
 export const configureApplication = (
-  make: ReturnType<typeof makeApplicationAdapter>["makeApplicationHttpEffect"],
+  make: ApplicationAdapter["makeApplicationHttpEffect"],
   load: typeof loadConfiguredApplication,
-) => {
+): ConfiguredApplicationHttpEffect => {
   function makeApplicationHttpEffect<
     Definition extends ApplicationDefinition<ApplicationServices<Definition>, unknown, unknown>,
   >(): Definition extends ApplicationDefinition<
