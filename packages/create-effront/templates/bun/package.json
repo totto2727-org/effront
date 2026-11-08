@@ -8,15 +8,15 @@
   "dependencies": {
     "@effect/platform-browser": "^4.0.2",
     "@effect/platform-bun": "^4.0.2",
-    "@effront/core": "^0.3.3",
-    "@effront/server": "^0.3.3",
+    "@effront/core": "^0.4.0",
+    "@effront/server": "^0.4.0",
     "effect": "^4.0.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@effect/platform-node": "^4.0.2",
-    "@effront/vite": "^0.3.3",
+    "@effront/vite": "^0.4.0",
     "@totto2727/gitignore-patterns": "^0.1.0",
     "@types/bun": "^1.4.2",
     "@types/react": "^19.3.0",
