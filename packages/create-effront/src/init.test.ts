@@ -101,6 +101,14 @@ for (const platform of platforms) {
     }
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
     expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.1.0");
+    expect(manifest.devDependencies).toHaveProperty("@totto2727/gitignore-patterns", "^0.1.0");
+    const config = await readFile(join(directory, "vite.config.ts"), "utf8");
+    expect(config).toContain(
+      'import { generateIgnorePatterns } from "@totto2727/gitignore-patterns"',
+    );
+    expect(config).toContain('await generateIgnorePatterns(new URL(".", import.meta.url))');
+    expect(config).toContain("fmt: { ignorePatterns }");
+    expect(config).toContain("lint: { ignorePatterns }");
     if (platform === "node" || platform === "bun") {
       expect(manifest.scripts.start).toBe(`${platform} dist/rsc/server.js`);
     }
@@ -140,7 +148,18 @@ for (const platform of platforms) {
           : []),
     ];
     for (const file of hostFiles) {
-      expect(await readFile(join(directory, file), "utf8")).toBe(
+      let generated = await readFile(join(directory, file), "utf8");
+      if (file === "vite.config.ts") {
+        // Only standalone check wiring differs from the runnable workspace host configuration.
+        generated = generated
+          .replace('import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";\n', "")
+          .replace(
+            '\nconst ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));\n',
+            "",
+          )
+          .replace("  fmt: { ignorePatterns },\n  lint: { ignorePatterns },\n", "");
+      }
+      expect(generated).toBe(
         await readFile(new URL(`../../../examples/${platform}/${file}`, import.meta.url), "utf8"),
       );
     }
