@@ -25,6 +25,19 @@ The pinned baseline and comparison material predate the Effront rename. They int
 For current local code, use `packages/core`, package imports `@effront/core/*`, and `Application.effront()`.
 The historical combined Cloudflare factory was superseded after the pinned comparison: register `effront()` from `@effront/vite` and `effrontCloudflare()` from `@effront/cloudflare` separately. Cloudflare options are direct adapter options, not nested `cloudflare` options.
 
+## Alchemy configured application loader
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the Alchemy adapter supports `makeApplicationHttpEffect<typeof application>()` without a consumer-written dynamic import.
+This configured helper uses the dedicated `@effront/alchemy/cloudflare/application` subpath, while the existing `cloudflare` entry remains explicit-loader only and independent of the configured application.
+The type-only application import retains capability and error types while the Vite adapter supplies the application through the existing application-entry alias.
+The package separates its deployment-safe default entry from its `react-server` entry, which statically imports the renderer.
+The plugin statically imports the configured application only in the RSC graph, without an adapter-owned dynamic import.
+The affected areas are the Alchemy adapter's conditional exports and shared request factory, three maintained Alchemy examples, the streaming-feed regression host, and their API documentation and tests.
+Operationally, deployment construction does not load the RSC application, while the RSC isolate can evaluate declarative application modules during initialization.
+Application Layers remain request-scoped, and an unconfigured request reports the missing integration.
+Explicit loaders remain supported, and application-specific runtime Layers and resource selection remain consumer-owned.
+No upstream runtime source is incorporated by this change.
+
 ## Stable Effect v4 dependency policy
 
 The upstream comparison baseline remains `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`.

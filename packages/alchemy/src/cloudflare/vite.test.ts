@@ -10,6 +10,29 @@ import { effrontAlchemy } from "./vite";
 const root = fileURLToPath(new URL("../../../../examples/basic/", import.meta.url));
 
 describe("Alchemy Vite graph composition", () => {
+  it("statically imports the configured application only in the RSC runtime environment", async () => {
+    const config = await resolveConfig(
+      { configFile: false, root, plugins: [effront(), effrontAlchemy()] },
+      "build",
+    );
+    const plugin = config.plugins.find(
+      (plugin) => plugin.name === "effront:alchemy-application-loader",
+    )!;
+    const apply = plugin.applyToEnvironment!;
+    expect(Reflect.apply(apply, {}, [{ name: "rsc" }])).toBe(true);
+    expect(Reflect.apply(apply, {}, [{ name: "ssr" }])).toBe(false);
+    expect(Reflect.apply(apply, {}, [{ name: "client" }])).toBe(false);
+    const hook = plugin.load!;
+    const load = typeof hook === "function" ? hook : hook.handler;
+    const loader = fileURLToPath(new URL("./application-loader.ts", import.meta.url));
+    const source = Reflect.apply(load, {}, [loader]) as string;
+    expect(source).toContain('import application from "@effront/core/application-entry"');
+    expect(source).toContain("() => Promise.resolve(application)");
+    expect(source).not.toContain("import(");
+    expect(Reflect.apply(load, {}, [loader.replace(/\.ts$/, ".js")])).toBe(source);
+    expect(Reflect.apply(load, {}, [resolve(root, "src/application-loader.ts")])).toBeUndefined();
+  });
+
   it("owns a native RSC bridge and runtime flag without installing a second host", async () => {
     const config = await resolveConfig(
       {
