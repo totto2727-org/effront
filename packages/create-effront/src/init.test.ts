@@ -37,7 +37,7 @@ async function expectPnpmConfiguration(directory: string, platform?: string): Pr
   expect(configuration.replaceAll("'", '"')).toContain(toolchainOverrides);
   expect(configuration).not.toMatch(/^minimumReleaseAge/m);
   expect(configuration.split("allowBuilds:\n")[1]).toBe(
-    `${platform ? "" : "  bun: true\n"}  esbuild: true\n${!platform || platform.includes("cloudflare") ? "  workerd: true\n" : ""}  msgpackr-extract: false\n`,
+    `${platform ? "" : "  bun: true\n"}  esbuild: true\n${!platform || platform.includes("cloudflare") ? "  workerd: true\n" : ""}`,
   );
 }
 
