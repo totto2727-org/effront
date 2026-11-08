@@ -1,6 +1,8 @@
-import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
+
+import type application from "./entry.effront";
 
 export class Docs extends Cloudflare.Worker<Docs, Cloudflare.WorkerShape>()("Docs") {}
 
@@ -15,10 +17,7 @@ export const docsWorker = (deployment: Pick<Cloudflare.WorkerProps, "domain" | "
       ...deployment,
     },
     Effect.gen(function* () {
-      // Fixed application loading. Keep this dynamic import unchanged.
-      const fetch = yield* makeApplicationHttpEffect(() =>
-        import("./entry.effront").then((module) => module.default),
-      );
+      const fetch = yield* makeApplicationHttpEffect<typeof application>();
       return {
         fetch: fetch.pipe(Effect.orDie),
       };

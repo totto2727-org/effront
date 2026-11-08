@@ -24,11 +24,13 @@ test("loading next page streams notes without navigation or discarding expanded 
   page.on("request", (request) => {
     if (request.method() === "POST" && request.url().endsWith("/_effront/query"))
       requests.push(request.url());
-    if (request.isNavigationRequest()) documents.push(request.url());
   });
 
   await page.goto("/");
   await expect(page.locator("[data-hydrated=true]")).toBeVisible();
+  page.on("request", (request) => {
+    if (request.isNavigationRequest()) documents.push(request.url());
+  });
   await page.locator('[data-story-id="1"]').getByRole("button", { name: "Read note" }).click();
   await expect(page.locator('[data-story-id="1"]')).toContainText("The full story for note 1");
   await page.getByRole("button", { name: "Load 6 more notes" }).click();
@@ -39,7 +41,7 @@ test("loading next page streams notes without navigation or discarding expanded 
     "aria-expanded",
     "true",
   );
-  expect(documents).toEqual([page.url()]);
+  expect(documents).toEqual([]);
   expect(requests).toHaveLength(2);
   expect(requests.every((url) => url.endsWith("/_effront/query"))).toBe(true);
 });
