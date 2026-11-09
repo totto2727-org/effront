@@ -1,6 +1,8 @@
-import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
+
+import type application from "./entry.effront";
 
 export default Cloudflare.Worker(
   "StreamingFeed",
@@ -10,10 +12,7 @@ export default Cloudflare.Worker(
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
   },
   Effect.gen(function* () {
-    // Defer application loading until a Worker request enters the RSC environment.
-    const fetch = yield* makeApplicationHttpEffect(() =>
-      import("./entry.effront").then((module) => module.default),
-    );
+    const fetch = yield* makeApplicationHttpEffect<typeof application>();
     return { fetch: fetch.pipe(Effect.orDie) };
   }),
 );

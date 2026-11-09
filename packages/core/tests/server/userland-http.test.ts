@@ -3,7 +3,7 @@ import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { createFetchHandler, createWorkersContextAccessors } from "@effront/core/workers";
 import { describe, expect, it } from "vite-plus/test";
 
-import { Application } from "../../dist/index.js";
+import { Application } from "../../dist/core.js";
 
 // This spans application registration, native Effect HTTP routing and the public Fetch adapter.
 // Import the built Application entry directly because ordinary Vitest does not select react-server.

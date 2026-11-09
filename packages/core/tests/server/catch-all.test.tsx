@@ -2,7 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Layer, Schema } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/http";
 
-import { Application } from "../../src/index";
+import { Application } from "../../src/core";
 import { createFetchHandler } from "../../src/workers";
 
 // These exercise the real public Fetch router and request middleware, without replacing

@@ -5,7 +5,7 @@ import { Context, Effect, Layer, Option, Scope } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { describe, expect, expectTypeOf, it, vi } from "vite-plus/test";
 
-import * as deployment from "./index";
+import * as deployment from "./deployment";
 import { applicationHttpEffect, makeApplicationHttpEffect } from "./runtime";
 import * as configuredDeployment from "./application";
 import { makeApplicationHttpEffect as makeConfiguredApplicationHttpEffect } from "./application-runtime";

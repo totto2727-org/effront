@@ -76,6 +76,13 @@ it("ships pnpm toolchain metadata through the published CLI for every platform",
     expect(manifest).not.toHaveProperty("overrides");
     expect(manifest).not.toHaveProperty("trustedDependencies");
     await expectPnpmConfiguration(project, platform);
+    if (platform === "alchemy-cloudflare") {
+      const worker = await readFile(join(project, "src/entry.workers.ts"), "utf8");
+      expect(worker).toContain('from "@effront/alchemy/cloudflare/application"');
+      expect(worker).toContain('import type application from "./entry.effront"');
+      expect(worker).toContain("makeApplicationHttpEffect<typeof application>()");
+      expect(worker).not.toContain("import(");
+    }
   }
 });
 

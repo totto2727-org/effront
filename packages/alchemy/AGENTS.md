@@ -2,7 +2,7 @@
 
 ## Repository structure
 
-- `src/cloudflare/index.ts` is the deployment-safe default entry. It must not import the RSC renderer or application at runtime.
+- `src/cloudflare/deployment.ts` is the deployment-safe default entry. It must not import the RSC renderer or application at runtime.
 - `src/cloudflare/runtime.ts` is the `react-server` entry and statically imports the native HTTP renderer.
 - `src/cloudflare/application.ts` and `application-runtime.ts` expose the configured, no-argument helper through `cloudflare/application`. Only these entries import the configured loader, so explicit-loader consumers never depend on the configured application.
 - `src/cloudflare/adapter.ts` owns shared request handling and capability capture.
@@ -40,7 +40,7 @@ This does not prove remote permissions or deployment.
 
 - Keep application and core HTTP value imports out of the deployment graph. The `react-server` entry and configured application use static imports only in the RSC graph.
 - Application modules can evaluate during isolate initialization. Keep their module-level definitions declarative and acquire request-scoped resources only when the handler runs.
-- Keep explicit-loader and configured-application public entries separate. The streaming-feed browser host deliberately configures a nonexistent application entry to verify that an explicit loader stays independent in production and development.
+- Keep explicit-loader and configured-application public entries separate. The streaming-feed browser host checks the configured example and an explicit-loader fixture with a nonexistent configured application entry in production and development.
 - Capture capability references rather than their lifetimes. Acquire application Layers per request and let the official Alchemy bridge retain streaming scopes.
 - Omit host-owned services from captured context and merge live request services over captured application capabilities. Preserve explicitly required non-host services, including named container application capabilities.
 - Preserve typed application failures until the Worker's HTTP boundary maps them to the host's narrower error contract.

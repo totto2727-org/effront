@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test && EFFRONT_TEST_EXPLICIT_LOADER=1 playwright test"
   },
   "devDependencies": {
     "@alchemy.run/cloudflare-runtime": "catalog:",
@@ -11,6 +11,8 @@
     "@effront/vite": "workspace:*",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
+    "alchemy": "catalog:",
+    "effect": "catalog:",
     "vite-plus": "catalog:"
   }
 }

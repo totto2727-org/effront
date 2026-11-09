@@ -119,7 +119,7 @@ export const page: DocPage = {
         </li>
       </ul>
       <p>
-        Execution environments belong to the integrations. <code>packages/vite/src/index.ts</code>{" "}
+        Execution environments belong to the integrations. <code>packages/vite/src/plugin.ts</code>{" "}
         configures React/RSC plugins, the application alias, and browser, RSC, and SSR entries. The
         Cloudflare adapter runs RSC and its child SSR environment in workerd.{" "}
         <code>@effront/server</code> hosts separate RSC and SSR graphs in Node.js or Bun.

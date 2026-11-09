@@ -7,7 +7,7 @@ const cwd = fileURLToPath(new URL("../../", import.meta.url));
 const entries = [
   {
     specifier: "@effront/alchemy/cloudflare",
-    deployment: "index.js",
+    deployment: "deployment.js",
     runtime: "runtime.js",
     construct:
       "makeApplicationHttpEffect(() => { throw new Error('Loader ran during construction'); })",

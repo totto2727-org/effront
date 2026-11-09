@@ -2,7 +2,7 @@
 
 ## Repository structure
 
-- `src/index.ts` owns Vite integration and SSR output nesting.
+- `src/plugin.ts` owns Vite integration and SSR output nesting.
 - `src/workers.ts` is the runtime-only request-reader entry and must not import the Vite plugin.
 - `tests/cloudflare.test.ts` resolves real Vite configuration against `tests/fixtures/` to verify plugin composition and output paths.
 

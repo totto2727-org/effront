@@ -1,7 +1,7 @@
 import type { toHttpEffect } from "@effront/core/http";
 import { Effect } from "effect";
 
-import { makeApplicationAdapter } from "./adapter";
+import { type ApplicationAdapter, makeApplicationAdapter } from "./adapter";
 
 export type { ApplicationLoader } from "./adapter";
 
@@ -13,5 +13,8 @@ const unavailable: typeof toHttpEffect = () =>
   );
 
 /** Deployment construction never imports the RSC renderer or application. */
-export const { applicationHttpEffect, makeApplicationHttpEffect } =
-  makeApplicationAdapter(unavailable);
+const adapter = makeApplicationAdapter(unavailable);
+export const applicationHttpEffect: ApplicationAdapter["applicationHttpEffect"] =
+  adapter.applicationHttpEffect;
+export const makeApplicationHttpEffect: ApplicationAdapter["makeApplicationHttpEffect"] =
+  adapter.makeApplicationHttpEffect;

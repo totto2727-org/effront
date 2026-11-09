@@ -2,8 +2,8 @@
 
 ## Repository structure
 
-- `src/index.ts` owns both the optional stylesheet selection and the generated virtual CSS module.
-- `src/index.test.ts` covers directives, query filtering, virtual IDs, and stylesheet paths.
+- `src/plugin.ts` owns both the optional stylesheet selection and the generated virtual CSS module.
+- `src/plugin.test.ts` covers directives, query filtering, virtual IDs, and stylesheet paths.
 
 ## Development commands
 

@@ -215,7 +215,7 @@ export const coreModelPages: readonly DocPage[] = [
         </ul>
         <p>
           実行環境は統合パッケージが担当します。
-          <code>packages/vite/src/index.ts</code>{" "}
+          <code>packages/vite/src/plugin.ts</code>{" "}
           はReact/RSCプラグイン、アプリケーションのalias、ブラウザー・RSC・SSRのエントリを設定します。
           CloudflareアダプターはRSCとその子SSR環境をworkerdで実行します。
           <code>@effront/server</code>{" "}
