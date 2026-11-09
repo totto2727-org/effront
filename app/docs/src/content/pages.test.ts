@@ -2,7 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { Effect } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { getPage, localizedNavigation, localizedPages, navigation, pages } from "./index";
+import { getPage, localizedNavigation, localizedPages, navigation, pages } from "./pages";
 import { articleCatalog } from "./catalog";
 import { englishArticleCatalog } from "./en/catalog";
 import { documentLocale, documentPath, localizedPath } from "./locale";

@@ -1,6 +1,6 @@
 {
   "name": "@effront/alchemy",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Native Alchemy Cloudflare integration for Effront applications.",
   "license": "MIT",
   "repository": {
@@ -16,9 +16,9 @@
   "type": "module",
   "exports": {
     "./cloudflare": {
-      "types": "./dist/cloudflare/index.d.ts",
+      "types": "./dist/cloudflare/deployment.d.ts",
       "react-server": "./dist/cloudflare/runtime.js",
-      "default": "./dist/cloudflare/index.js"
+      "default": "./dist/cloudflare/deployment.js"
     },
     "./cloudflare/application": {
       "types": "./dist/cloudflare/application.d.ts",

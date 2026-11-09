@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveConfig } from "vite";
 import { describe, expect, it } from "vitest";
-import { effront } from "./index";
+import { effront } from "./plugin";
 
 const root = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 

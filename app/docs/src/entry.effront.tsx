@@ -2,7 +2,7 @@ import { Context, Effect, Layer } from "effect";
 import { Application } from "@effront/core";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { DocsShell } from "./components/docs-shell";
-import { getPage, navigation, localizedNavigation } from "./content";
+import { getPage, navigation, localizedNavigation } from "./content/pages";
 import { documentLocale, documentPath, localizedPath } from "./content/locale";
 import { architectureBaseline } from "./content/architecture-baseline";
 import { responseCache } from "./response-cache";

@@ -1,6 +1,6 @@
 {
   "name": "@effront/core",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Effect-native React Server Components with a portable Web Fetch runtime.",
   "keywords": [
     "cloudflare-workers",
@@ -22,8 +22,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "react-server": "./dist/index.js",
+      "types": "./dist/core.d.ts",
+      "react-server": "./dist/core.js",
       "default": "./dist/unsupported.js"
     },
     "./workers": {

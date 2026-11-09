@@ -6,7 +6,7 @@ import { corePages, coreSources } from "../src/content/core";
 import { englishArticleCatalog } from "../src/content/en/catalog";
 import { englishCorePages } from "../src/content/en/core";
 
-// Import metadata directly: content/index also loads the Vite-only Markdown glob.
+// Import metadata directly: content/pages also loads the Vite-only Markdown glob.
 // Expectations deliberately construct public URLs without the production locale helpers.
 const locales = [
   {

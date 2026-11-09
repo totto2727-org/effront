@@ -2,7 +2,7 @@
 
 ## Repository structure
 
-- `src/cloudflare/index.ts` is the deployment-safe default entry. It must not import the RSC renderer or application at runtime.
+- `src/cloudflare/deployment.ts` is the deployment-safe default entry. It must not import the RSC renderer or application at runtime.
 - `src/cloudflare/runtime.ts` is the `react-server` entry and statically imports the native HTTP renderer.
 - `src/cloudflare/application.ts` and `application-runtime.ts` expose the configured, no-argument helper through `cloudflare/application`. Only these entries import the configured loader, so explicit-loader consumers never depend on the configured application.
 - `src/cloudflare/adapter.ts` owns shared request handling and capability capture.
