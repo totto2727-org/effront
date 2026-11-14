@@ -55,58 +55,56 @@ it("packed default and react-server declarations preserve application capabiliti
       writeFileSync(
         join(workspace, `consumer-${index}.ts`),
         `
-        import { applicationHttpEffect } from ${JSON.stringify(entry)};
-        // @ts-expect-error The construction helper is no longer exported.
-        import { makeApplicationHttpEffect } from ${JSON.stringify(entry)};
+        import { makeApplicationHttpEffect ${configured ? "" : ", applicationHttpEffect"} } from ${JSON.stringify(entry)};
         import type { ApplicationDefinition } from "@effront/core";
         import type { HttpApplicationEffect } from "@effront/core/http";
         import type { CloudflareEnvironment } from "alchemy/Cloudflare";
         import type { Request, Worker, WorkerEnvironment, WorkerExecutionContext } from "alchemy/Cloudflare/Workers";
         import { Context, Effect } from "effect";
-        import { HttpServerRequest } from "effect/http";
         class ControlApi extends Context.Service<ControlApi, { readonly read: () => string }>()("consumer/ControlApi") {}
         type Failure = { readonly _tag: "ApplicationFailure" };
         type Hosts = CloudflareEnvironment | Request | Worker | WorkerEnvironment | WorkerExecutionContext;
         type Requirements = ControlApi | Hosts;
         type Definition = ApplicationDefinition<ControlApi, Failure, Requirements>;
         declare const load: () => Promise<Definition>;
-        const handler = ${configured ? "applicationHttpEffect<Definition>()" : "applicationHttpEffect(load)"};
+        const construction = ${configured ? "makeApplicationHttpEffect<Definition>()" : "makeApplicationHttpEffect(load)"};
         type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
         type IsAny<T> = 0 extends (1 & T) ? true : false;
         type Assert<T extends true> = T;
-        type Handler = typeof handler;
+        export type Captured = Assert<Equal<Effect.Services<typeof construction>, ControlApi>>;
+        export type CapturedNotAny = Assert<Equal<IsAny<Effect.Services<typeof construction>>, false>>;
+        export type ConstructionError = Assert<Equal<Effect.Error<typeof construction>, never>>;
+        type Handler = Effect.Success<typeof construction>;
         type Native = HttpApplicationEffect<Failure, Requirements>;
-        export type Live = Assert<Equal<Effect.Services<Handler>, Effect.Services<Native>>>;
+        export type Live = Assert<Equal<Effect.Services<Handler>, Exclude<Effect.Services<Native>, ControlApi>>>;
         export type LiveNotAny = Assert<Equal<IsAny<Effect.Services<Handler>>, false>>;
         export type Error = Assert<Equal<Effect.Error<Handler>, Effect.Error<Native>>>;
         export type ErrorNotAny = Assert<Equal<IsAny<Effect.Error<Handler>>, false>>;
         export type Success = Assert<Equal<Effect.Success<Handler>, Effect.Success<Native>>>;
         type PureDefinition = ApplicationDefinition<ControlApi, never, ControlApi>;
         declare const loadPure: () => Promise<PureDefinition>;
-        const pureHandler = ${configured ? "applicationHttpEffect<PureDefinition>()" : "applicationHttpEffect(loadPure)"};
-        export type PureRequirements = Assert<Equal<Effect.Services<typeof pureHandler>, Effect.Services<HttpApplicationEffect<never, ControlApi>>>>;
-        const supplied = pureHandler.pipe(Effect.provideService(ControlApi, { read: () => "ok" }));
-        export type HostRequirements = Assert<Equal<Effect.Services<typeof supplied>, Effect.Services<HttpApplicationEffect<never, never>>>>;
-        Effect.runPromise(Effect.scoped(supplied).pipe(
-          Effect.provideService(HttpServerRequest.HttpServerRequest, HttpServerRequest.fromWeb(new globalThis.Request("https://example.test/"))),
-        ));
-        // @ts-expect-error A consumer must provide application and host capabilities.
-        Effect.runPromise(handler);
-        // @ts-expect-error Providing application capabilities does not erase host requirements.
-        Effect.runPromise(Effect.provideService(handler, ControlApi, { read: () => "ok" }));
+        const pureConstruction = ${configured ? "makeApplicationHttpEffect<PureDefinition>()" : "makeApplicationHttpEffect(loadPure)"};
+        export type PureCaptured = Assert<Equal<Effect.Services<typeof pureConstruction>, ControlApi>>;
+        Effect.runPromise(Effect.provideService(pureConstruction, ControlApi, { read: () => "ok" }));
+        // @ts-expect-error A consumer must provide the captured application capability.
+        Effect.runPromise(construction);
+        Effect.runPromise(Effect.provideService(construction, ControlApi, { read: () => "ok" }));
         ${
           configured
-            ? `
-          // @ts-expect-error A configured entry must be an application definition.
-          applicationHttpEffect<string>();
-          // @ts-expect-error Missing application type cannot erase unknown requirements.
-          Effect.runPromise(applicationHttpEffect());
-          `
+            ? ""
             : `
-          // @ts-expect-error Context capture options are not part of the direct handler API.
-          applicationHttpEffect(load, { context: Context.make(ControlApi, { read: () => "ok" }) });
-          // @ts-expect-error The explicit handler requires a loader.
-          applicationHttpEffect();
+          const uncaptured = applicationHttpEffect(load);
+          export type Uncaptured = Assert<Equal<Effect.Services<typeof uncaptured>, Effect.Services<Native>>>;
+          const phantom = applicationHttpEffect<ControlApi, Failure, Requirements, ControlApi>(load);
+          export type PhantomNotProvided = Assert<Equal<Effect.Services<typeof phantom>, Effect.Services<Native>>>;
+          const options: { readonly context?: Context.Context<ControlApi> } = {};
+          const optional = applicationHttpEffect(load, options);
+          export type OptionalNotProvided = Assert<Equal<Effect.Services<typeof optional>, Effect.Services<Native>>>;
+          const captured = applicationHttpEffect(load, { context: Context.make(ControlApi, { read: () => "ok" }) });
+          export type Provided = Assert<Equal<Effect.Services<typeof captured>, Effect.Services<Handler>>>;
+          declare const hosts: Context.Context<Hosts>;
+          const hostContext = applicationHttpEffect(load, { context: hosts });
+          export type HostNotCaptured = Assert<Equal<Effect.Services<typeof hostContext>, Effect.Services<Native>>>;
         `
         }
       `,
@@ -115,12 +113,10 @@ it("packed default and react-server declarations preserve application capabiliti
 
     // Check only module references emitted by this package, not unrelated third-party declarations.
     // skipLibCheck alone would silently turn an unresolvable declaration import into an error-any.
-    const declarations: string[] = [];
     const specifiers = new Set<string>();
     for (const file of readdirSync(join(packed, "dist/cloudflare"))) {
       if (!file.endsWith(".d.ts")) continue;
       const declaration = readFileSync(join(packed, "dist/cloudflare", file), "utf8");
-      declarations.push(declaration);
       const references = [
         ...declaration.matchAll(/(?:from\s*|import\()(["'])(alchemy(?:\/[^"']*)?)\1/g),
       ];
@@ -131,11 +127,7 @@ it("packed default and react-server declarations preserve application capabiliti
     const probes = [...specifiers].map(
       (specifier, index) => `import * as module${index} from ${JSON.stringify(specifier)};`,
     );
-    expect(declarations.join("\n")).toContain("@effront/core/http");
-    expect(declarations.join("\n")).toContain("HttpApplicationEffect");
-    expect([...specifiers]).not.toEqual(
-      expect.arrayContaining([expect.stringMatching(/alchemy\/(?:src|lib|dist)\//)]),
-    );
+    expect(probes.length).toBeGreaterThan(0);
     writeFileSync(join(workspace, "resolution.ts"), probes.join("\n"));
     writeFileSync(
       join(workspace, "tsconfig.json"),

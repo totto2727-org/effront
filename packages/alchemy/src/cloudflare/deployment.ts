@@ -16,3 +16,5 @@ const unavailable: typeof toHttpEffect = () =>
 const adapter = makeApplicationAdapter(unavailable);
 export const applicationHttpEffect: ApplicationAdapter["applicationHttpEffect"] =
   adapter.applicationHttpEffect;
+export const makeApplicationHttpEffect: ApplicationAdapter["makeApplicationHttpEffect"] =
+  adapter.makeApplicationHttpEffect;

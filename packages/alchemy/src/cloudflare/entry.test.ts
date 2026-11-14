@@ -10,13 +10,13 @@ const entries = [
     deployment: "deployment.js",
     runtime: "runtime.js",
     construct:
-      "applicationHttpEffect(() => { throw new Error('Loader ran during construction'); })",
+      "makeApplicationHttpEffect(() => { throw new Error('Loader ran during construction'); })",
   },
   {
     specifier: "@effront/alchemy/cloudflare/application",
     deployment: "application.js",
     runtime: "application-runtime.js",
-    construct: "applicationHttpEffect()",
+    construct: "makeApplicationHttpEffect()",
   },
 ];
 
@@ -40,9 +40,9 @@ describe("published Alchemy execution graph entries", () => {
               return next(specifier, context);
             }
           });
-          const { applicationHttpEffect } = await import(${JSON.stringify(entry.specifier)});
+          const { makeApplicationHttpEffect } = await import(${JSON.stringify(entry.specifier)});
           const { Effect } = await import("effect");
-          const handler = ${entry.construct};
+          const handler = await Effect.runPromise(${entry.construct});
           if (!Effect.isEffect(handler)) throw new Error("Expected a native handler Effect");
           console.log(import.meta.resolve(${JSON.stringify(entry.specifier)}));
         `,

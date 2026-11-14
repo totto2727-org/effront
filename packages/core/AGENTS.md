@@ -34,9 +34,9 @@ The retained suites under `tests/` have these package-owned responsibilities:
 
 ### Runtime and lifetime contracts
 
-- Preserve `ApplicationDefinition<Services, Error, Requirements>` external requirements. Compose host capabilities into `toHttpEffect` with native Effect service or Layer provision, and acquire application services per request.
+- Preserve `ApplicationDefinition<Services, Error, Requirements>` external requirements and the distinction between request acquisition and construction-capability capture.
 - Preserve the distinction between buffered responses, which may release after construction, and native streaming scope transfer through body consumption.
-- Let the host supply the current HTTP services and request Scope. Never reuse a construction memo map for application request layers.
+- Live request services override captured references. Never restore construction-time HTTP services, Scope, or Layer memo maps, and never reuse a construction memo map for application request layers.
 - Preserve the pinned Effect HEAD normalization and response-URL compatibility regression tests when changing response handling or upgrading Effect.
 
 ### Application and browser contracts

@@ -1,4 +1,4 @@
-import { applicationHttpEffect } from "@effront/alchemy/cloudflare/application";
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 import type application from "./entry.effront";
@@ -14,7 +14,7 @@ export default class App extends Cloudflare.Worker<App>()(
   },
   Effect.gen(function* () {
     const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
-    const fetch = applicationHttpEffect<typeof application>().pipe(
+    const fetch = yield* makeApplicationHttpEffect<typeof application>().pipe(
       Effect.provideService(CacheClient, cache),
     );
     return { fetch: fetch.pipe(Effect.orDie) };

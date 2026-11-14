@@ -1,4 +1,4 @@
-import { applicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 
@@ -9,9 +9,10 @@ export default Cloudflare.Worker(
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
   },
-  Effect.succeed({
-    fetch: applicationHttpEffect(() =>
+  Effect.gen(function* () {
+    const fetch = yield* makeApplicationHttpEffect(() =>
       import("../../examples/streaming-feed/src/entry.effront").then((module) => module.default),
-    ).pipe(Effect.orDie),
+    );
+    return { fetch: fetch.pipe(Effect.orDie) };
   }),
 );
