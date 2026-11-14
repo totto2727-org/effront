@@ -48,6 +48,7 @@ Applications must still avoid rendering secrets or passing bindings into Client 
 
 ### Rendering graphs
 
+HTTP execution and rendering run in the host's configured RSC graph.
 The RSC graph imports `@vitejs/plugin-rsc/rsc/server` and loads the separate HTML renderer with `import.meta.viteRsc.loadModule("ssr", "index")`.
 Only the Flight Web stream and rendering options cross into SSR, not the environment or execution context.
 The SSR graph uses the edge-compatible React DOM renderer and the plugin's SSR Flight client.

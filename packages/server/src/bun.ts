@@ -25,7 +25,6 @@ export const serve = <E, R>(
         hostname: options.hostname ?? "127.0.0.1",
         development: false,
         idleTimeout: 0,
-        maxRequestBodySize: 10 * 1024 * 1024,
       }),
     ),
   );

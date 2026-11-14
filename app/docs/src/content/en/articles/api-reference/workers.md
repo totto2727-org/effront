@@ -3,7 +3,9 @@
 ## createFetchHandler {#fetch}
 
 `createFetchHandler(application)` accepts an application whose Layer requirements are satisfied by `HttpRouter.HttpRouter` and `HttpServerRequest.HttpServerRequest`.
-It returns a `FetchHandler`:
+It returns a `FetchHandler`.
+
+Import and execute `createFetchHandler` in a dedicated RSC entry with the host's RSC integration.
 
 ```typescript
 import { createFetchHandler } from "@effront/core/workers";
@@ -32,9 +34,7 @@ A bodyless response releases it immediately.
 Buffered responses can release request services after response construction.
 A streaming body must retain them through consumption.
 
-Invalid `Content-Length` values and values greater than 10 MiB produce `413`.
-Server Function POST requests also enforce a 10 MiB limit on received bytes without that header.
-Custom HTTP route bodies without `Content-Length` are not universally measured.
+See the [HTTP request-size policy](./http.md#handler) for transport limits.
 
 ## Core context readers {#readers}
 

@@ -29,8 +29,6 @@ export type HttpApplicationEffect<ApplicationError = never, Requirements = never
   HttpRequirements<Requirements>
 >;
 
-const maxRequestBodySize = 10 * 1024 * 1024;
-
 /**
  * Handles the current HTTP request in its host-owned scope.
  *
@@ -43,14 +41,6 @@ export const toHttpEffect = <Services, ApplicationError, Requirements>(
   application: ApplicationDefinition<Services, ApplicationError, Requirements>,
 ): HttpApplicationEffect<ApplicationError, Requirements> =>
   Effect.gen(function* () {
-    const request = yield* HttpServerRequest.HttpServerRequest;
-    const length = request.headers["content-length"];
-    if (length !== undefined) {
-      const size = Number(length);
-      if (!Number.isSafeInteger(size) || size < 0 || size > maxRequestBodySize) {
-        return HttpServerResponse.text("Request body exceeds the 10 MiB limit.", { status: 413 });
-      }
-    }
     // Request layers must not reuse instances from a host's construction memo map.
     const memoMap = yield* Layer.makeMemoMap;
     const handler = yield* HttpRouter.toHttpEffect(ServerApplication.httpLayer(application)).pipe(

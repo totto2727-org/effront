@@ -27,7 +27,8 @@ describe("Alchemy Vite graph composition", () => {
     const loader = fileURLToPath(new URL("./application-loader.ts", import.meta.url));
     const source = Reflect.apply(load, {}, [loader]) as string;
     expect(source).toContain('import application from "@effront/core/application-entry"');
-    expect(source).toContain("() => Promise.resolve(application)");
+    expect(source).toContain("loadConfiguredApplication = Effect.succeed(application)");
+    expect(source).not.toContain("Promise");
     expect(source).not.toContain("import(");
     expect(Reflect.apply(load, {}, [loader.replace(/\.ts$/, ".js")])).toBe(source);
     expect(Reflect.apply(load, {}, [resolve(root, "src/application-loader.ts")])).toBeUndefined();

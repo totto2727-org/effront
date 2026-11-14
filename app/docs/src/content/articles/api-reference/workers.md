@@ -5,6 +5,8 @@
 `createFetchHandler(application)` は、Layer の要件を `HttpRouter.HttpRouter` と `HttpServerRequest.HttpServerRequest` で満たせるアプリケーションを受け取ります。
 戻り値は `FetchHandler` です。
 
+`createFetchHandler` は、ホストの RSC 統合がある専用 RSC エントリーでインポートして実行してください。
+
 ```typescript
 import { createFetchHandler } from "@effront/core/workers";
 import application from "./entry.effront";
@@ -31,9 +33,7 @@ Scope はレスポンス本文の完了、失敗、キャンセルまで保持�
 本文のないレスポンスでは直ちに解放します。
 バッファ済みレスポンスのリクエストサービスは応答の構築後に解放できますが、ストリーミング本文では読み取りの完了まで保持します。
 
-不正な `Content-Length` や 10 MiB を超える値に対しては `413` を返します。
-Server Function の POST は、このヘッダーがなくても受信バイト数を 10 MiB に制限します。
-`Content-Length` のない独自 HTTP ルートの本文をすべて実測するわけではありません。
+転送時の制限は、[HTTP のリクエストサイズポリシー](./http.md#handler)を参照してください。
 
 ## コアの Context 読み取り関数 {#readers}
 

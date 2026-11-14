@@ -2,30 +2,42 @@
 
 ## HTTP handlers {#http}
 
-Import the explicit-loader helpers from `@effront/alchemy/cloudflare`.
+Import the explicit-source helpers from `@effront/alchemy/cloudflare`.
 Import the configured, no-argument helper from `@effront/alchemy/cloudflare/application`.
-The separate entry keeps configured application modules out of hosts that select their own loader.
 
-| API                                          | Input                                                            | Result                                                                                |
-| -------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `applicationHttpEffect(load, { context? }?)` | Deferred application loader and optional captured Effect Context | Native HTTP handler Effect                                                            |
-| `makeApplicationHttpEffect(load)`            | Deferred application loader                                      | Construction Effect that captures available external services and returns the handler |
-| `makeApplicationHttpEffect<Definition>()`    | Type of the application configured in `effront()`                | The same construction Effect, with a plugin-owned application reference               |
+| API                                       | Input                                             | Result                                                                                |
+| ----------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `applicationHttpEffect(source)`           | Native application source Effect                  | Native HTTP handler Effect                                                            |
+| `makeApplicationHttpEffect(source)`       | Native application source Effect                  | Construction Effect that captures available external services and returns the handler |
+| `makeApplicationHttpEffect<Definition>()` | Type of the application configured in `effront()` | The same construction Effect, with a plugin-owned application reference               |
 
-The explicit-loader forms accept the exported `ApplicationLoader<Services, ApplicationError, Requirements>` type:
+The explicit-source forms accept the exported `ApplicationLoader<Services, ApplicationError, Requirements, SourceError = never, SourceRequirements = never>` type:
 
 ```typescript
 import type { ApplicationDefinition } from "@effront/core";
+import type { Effect } from "effect";
 
-export type ApplicationLoader<Services, ApplicationError, Requirements> = () => Promise<
-  ApplicationDefinition<Services, ApplicationError, Requirements>
+export type ApplicationLoader<
+  Services,
+  ApplicationError,
+  Requirements,
+  SourceError = never,
+  SourceRequirements = never,
+> = Effect.Effect<
+  ApplicationDefinition<Services, ApplicationError, Requirements>,
+  SourceError,
+  SourceRequirements
 >;
 ```
 
-The loader runs during request handling.
-With `effront()` and `effrontAlchemy()`, use a type-only application import instead of writing a loader:
+The source Effect runs once per request, not during handler construction.
+Its typed failures remain in the handler's error channel, and its service requirements follow the same capture and live-request rules as application requirements.
+Use `Effect.succeed(application)` for a static definition.
 
-This construction Effect is suitable for the third argument of `Cloudflare.Worker` when no additional construction services are needed:
+**Configured application**
+
+With `effront()` and `effrontAlchemy()`, use a type-only application import.
+Pass the construction Effect to `Cloudflare.Worker` after providing any required construction services:
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
@@ -38,50 +50,52 @@ const construct = Effect.gen(function* () {
 });
 ```
 
-The type-only import is erased from the Worker module.
-The plugin statically imports the application selected by `effront({ application })`, whose default is `./src/entry.effront.tsx`, only in the RSC graph.
-The package's `react-server` entry also statically imports the HTTP renderer; its default deployment entry imports neither runtime module.
-Application modules can evaluate during isolate initialization, so keep their module-level definitions declarative.
-Application Layers are still acquired per request.
-The type import must refer to that same application.
+The type import must refer to the application selected by `effront({ application })`, whose default is `./src/entry.effront.tsx`.
 TypeScript does not compare the type import with the Vite configuration.
-The application type preserves required capabilities and application failures; it does not provide those capabilities.
+Application modules can evaluate during isolate initialization, so keep their module-level definitions declarative.
+Application Layers are acquired per request.
+Provide the application's required services when constructing the handler.
 
-For example, the Basic Worker's KV capability remains explicit:
+For example, the Basic Worker provides its KV client during construction:
 
 ```typescript
-const fetch =
-  yield *
-  makeApplicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache));
+const construct = Effect.gen(function* () {
+  const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
+  const fetch = yield* makeApplicationHttpEffect<typeof application>().pipe(
+    Effect.provideService(CacheClient, cache),
+  );
+  return { fetch: fetch.pipe(Effect.orDie) };
+}).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding));
 ```
 
-Hosts that select their own loader can retain the explicit form:
+**Explicit source**
+
+In a dedicated RSC entry, pass an application-source Effect:
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { Effect } from "effect";
+import application from "./entry.effront";
 
-const fetch =
-  yield *
-  makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
+const construct = Effect.gen(function* () {
+  const fetch = yield* makeApplicationHttpEffect(Effect.succeed(application));
+  return { fetch: fetch.pipe(Effect.orDie) };
+});
 ```
 
-Keep the dynamic import inside an explicit loader.
-A static value import in the shared Worker entry would evaluate the RSC application during infrastructure construction.
-The configured form throws `TypeError` when a request runs without the RSC integration; deployment construction itself does not load the application.
-The configured adapter path uses no dynamic import for its application or renderer, but Vite and the underlying RSC framework can still generate dynamic imports for code splitting.
-This API does not derive an application-specific runtime Layer or remove deployment/runtime composition boundaries.
+Use the configured helper in a Worker entry shared with infrastructure planning.
+Request handling requires the host's RSC integration.
+Without it, the adapter fails with a `TypeError` defect.
 
 The handler succeeds with a native `HttpServerResponse` and retains the [native HTTP](./http.md) error channel.
-Alchemy's accepted error union is narrower, so handle or map remaining application failures before returning `fetch`.
+Alchemy's accepted error union is narrower, so handle or map remaining source and application failures before returning `fetch`.
 `Effect.orDie` is one policy, not a requirement.
 
 **Captured services**
 
 `makeApplicationHttpEffect` captures service references from its construction Context.
-`applicationHttpEffect` captures services only from an explicit `context` option.
-Without that option, the handler retains all application service requirements, even if you specify a captured-service type argument.
-An options value with an optional `context` property also retains those requirements.
-Check that `context` is present and pass it as a required property to remove the captured services from the handler's requirements.
+`applicationHttpEffect(source)` composes the source with the native HTTP handler without capturing construction services.
+Provide its application and source dependencies through ordinary `Effect.provideService`, `Effect.provideContext`, or `Effect.provide` composition.
 The [Basic example](https://github.com/totto2727-org/effront/tree/main/examples/basic) shows an application service backed by a KV client and captured during construction.
 
 - Live request values override captured services with the same key.
@@ -114,7 +128,7 @@ export default defineConfig({
 | `worker` | `string` | `./src/entry.workers.ts` | Module default-exporting the Alchemy Worker, relative to the Vite root. Empty string throws `TypeError`. |
 
 The adapter has no `application` option and does not register `effront()`.
-Application entry changes belong in `effront({ application })` and the Worker's type-only application import, or its explicit loader import.
+Application entry changes belong in `effront({ application })` and the Worker's type-only application import, or its explicit source import.
 Select the Worker entry with `effrontAlchemy({ worker })`, not `effront({ rsc })`.
 
 The bridge requires Alchemy-injected `ALCHEMY_STACK_NAME` and `ALCHEMY_STAGE` bindings.
@@ -126,6 +140,7 @@ The adapter preserves explicit output directories, but you must package them wit
 
 The Worker declaration requires `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
 Do not set `vite.main` or add a second runtime plugin or Wrangler configuration.
-Node-only deployment and local-host exports, including infrastructure provider factories, are unavailable to server code during development. Deployment-time exports and production builds are unaffected.
+Node-only deployment and local-host exports, including infrastructure provider factories, are unavailable to RSC and SSR server code in both development and production builds.
+Deployment-time exports are unaffected.
 Alchemy supplies the host plugin and bindings through `alchemy dev`, not Vite alone.
 Alchemy `2.0.0-beta.81` requires a configured Cloudflare profile even for [local startup](../platforms/alchemy.md#stack).
