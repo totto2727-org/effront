@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, Scope } from "effect";
+import { Effect, Layer, Scope } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import type { HttpServerError } from "effect/http";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
@@ -59,60 +59,3 @@ export const toHttpEffect = <Services, ApplicationError, Requirements>(
     const response = yield* handler;
     return response;
   });
-
-type RequestServices = HttpRouter.Provided | HttpRouter.HttpRouter | Layer.CurrentMemoMap;
-// Effect.context<R>() includes ambient keys beyond R. Removing keys already
-// excluded from the input contract preserves every promised external service.
-function captureExternalContext<R>(
-  context: Context.Context<Exclude<R, RequestServices>>,
-): Context.Context<Exclude<R, RequestServices>>;
-function captureExternalContext(context: Context.Context<never>): Context.Context<never> {
-  return Context.omit(
-    Scope.Scope,
-    HttpServerRequest.HttpServerRequest,
-    HttpServerRequest.ParsedSearchParams,
-    HttpRouter.RouteContext,
-    HttpRouter.HttpRouter,
-    Layer.CurrentMemoMap,
-  )(context);
-}
-type CapturedRequirements<Requirements> = Exclude<HttpRequirements<Requirements>, RequestServices>;
-type RemainingRequirements<Requirements> = Exclude<
-  HttpRequirements<Requirements>,
-  CapturedRequirements<Requirements>
->;
-
-/**
- * Captures external service references while constructing a reusable HTTP effect.
- *
- * Capturing references does not acquire services or extend their lifetime. Their
- * owner must keep them alive through all response bodies. Application layers are
- * still built per request. Live request services take precedence over captured
- * services, and construction-time HTTP services and scopes are never restored.
- */
-export const makeHttpEffect = <Services, ApplicationError, Requirements>(
-  application: ApplicationDefinition<Services, ApplicationError, Requirements>,
-): Effect.Effect<
-  Effect.Effect<
-    HttpServerResponse.HttpServerResponse,
-    HttpError<ApplicationError, Requirements>,
-    RemainingRequirements<Requirements>
-  >,
-  never,
-  CapturedRequirements<Requirements>
-> => {
-  const handler = toHttpEffect(application);
-  return Effect.map(Effect.context<CapturedRequirements<Requirements>>(), (context) => {
-    const captured: Context.Context<CapturedRequirements<Requirements>> =
-      captureExternalContext<HttpRequirements<Requirements>>(context);
-    return Effect.contextWith(
-      (requestContext: Context.Context<RemainingRequirements<Requirements>>) => {
-        const provided: Context.Context<CapturedRequirements<Requirements>> = Context.merge(
-          captured,
-          requestContext,
-        );
-        return Effect.provideContext(handler, provided);
-      },
-    );
-  });
-};

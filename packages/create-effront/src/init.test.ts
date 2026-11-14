@@ -80,7 +80,9 @@ it("ships pnpm toolchain metadata through the published CLI for every platform",
       const worker = await readFile(join(project, "src/entry.workers.ts"), "utf8");
       expect(worker).toContain('from "@effront/alchemy/cloudflare/application"');
       expect(worker).toContain('import type application from "./entry.effront"');
-      expect(worker).toContain("makeApplicationHttpEffect<typeof application>()");
+      expect(worker).toContain("applicationHttpEffect<typeof application>()");
+      expect(worker).not.toContain("yield* applicationHttpEffect");
+      expect(worker).not.toContain("makeApplicationHttpEffect");
       expect(worker).not.toContain("import(");
     }
   }
@@ -206,7 +208,7 @@ it("keeps standalone Cloudflare hosting out of the Alchemy project", async () =>
   expect(manifest.dependencies).toHaveProperty("@effront/alchemy", `^${packageJson.version}`);
   expect(manifest.dependencies).not.toHaveProperty("@effront/cloudflare");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
-  expect(worker).toContain("makeApplicationHttpEffect");
+  expect(worker).toContain("applicationHttpEffect");
   expect(config).toContain("effrontAlchemy()");
   expect(config).not.toContain("server:");
   expect(runner).toContain('"alchemy-cloudflare"');

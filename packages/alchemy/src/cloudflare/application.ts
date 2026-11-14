@@ -1,9 +1,9 @@
 import { type ConfiguredApplicationHttpEffect, configureApplication } from "./adapter";
 import { loadConfiguredApplication } from "./application-loader";
-import { makeApplicationHttpEffect as make } from "./deployment";
+import { applicationHttpEffect as handle } from "./deployment";
 
-/** Deployment-safe construction of the application selected by effront(). */
-export const makeApplicationHttpEffect: ConfiguredApplicationHttpEffect = configureApplication(
-  make,
+/** Deployment-safe handler for the application selected by effront(). */
+export const applicationHttpEffect: ConfiguredApplicationHttpEffect = configureApplication(
+  handle,
   loadConfiguredApplication,
 );

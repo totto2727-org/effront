@@ -8,5 +8,3 @@ export type { ApplicationLoader } from "./adapter";
 const adapter = makeApplicationAdapter(toHttpEffect);
 export const applicationHttpEffect: ApplicationAdapter["applicationHttpEffect"] =
   adapter.applicationHttpEffect;
-export const makeApplicationHttpEffect: ApplicationAdapter["makeApplicationHttpEffect"] =
-  adapter.makeApplicationHttpEffect;
