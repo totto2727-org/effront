@@ -5,7 +5,7 @@ export default defineConfig({
     tsconfig: "./tsconfig.build.json",
     format: "esm",
     platform: "neutral",
-    deps: { neverBundle: ["node:async_hooks", "#rsc-server"] },
+    deps: { neverBundle: ["node:async_hooks"] },
     entry: {
       "*": ["src/**/*.{ts,tsx}", "!src/**/*.d.ts", "!src/**/*.test.ts", "!src/**/*.test.tsx"],
     },

@@ -1,5 +1,8 @@
 import { Context, Effect, Exit, FiberSet, Layer, Scope } from "effect";
-import { renderToReadableStream, type createTemporaryReferenceSet } from "#rsc-server";
+import {
+  renderToReadableStream,
+  type createTemporaryReferenceSet,
+} from "@vitejs/plugin-rsc/rsc/server";
 
 import type { AnyMiddleware } from "../application/middleware";
 import type { RenderRuntimeContext } from "../application/render-runtime";

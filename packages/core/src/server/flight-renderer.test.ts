@@ -7,7 +7,7 @@ import { FlightRenderer } from "./flight-renderer";
 
 const renderState = vi.hoisted((): { signal: AbortSignal | undefined } => ({ signal: undefined }));
 
-vi.mock("#rsc-server", () => ({
+vi.mock("@vitejs/plugin-rsc/rsc/server", () => ({
   renderToReadableStream: (_model: unknown, options?: { readonly signal?: AbortSignal }) => {
     renderState.signal = options?.signal;
     return new ReadableStream<Uint8Array>();

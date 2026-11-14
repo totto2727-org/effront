@@ -20,13 +20,6 @@
     "THIRD-PARTY-NOTICES.md"
   ],
   "type": "module",
-  "imports": {
-    "#rsc-server": {
-      "types": "@vitejs/plugin-rsc/rsc/server",
-      "react-server": "@vitejs/plugin-rsc/rsc/server",
-      "default": "./dist/server/unsupported-rsc.js"
-    }
-  },
   "exports": {
     ".": {
       "types": "./dist/core.d.ts",

@@ -1,3 +1,4 @@
+import "./rsc-protocol.mock";
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Layer, Schema } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/http";

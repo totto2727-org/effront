@@ -6,7 +6,7 @@ import {
   decodeFormState,
   decodeReply,
   loadServerAction,
-} from "#rsc-server";
+} from "@vitejs/plugin-rsc/rsc/server";
 
 import type { EFFRONTIdentity } from "../application/effront-identity";
 import type { AnyMiddleware } from "../application/middleware";

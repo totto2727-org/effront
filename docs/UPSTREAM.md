@@ -40,9 +40,8 @@ No upstream runtime source is incorporated by this change.
 
 ## Core RSC module loading
 
-Against the same upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Flight rendering and Server Function request decoding use the private static `#rsc-server` import instead of per-request module-loading Effects and dynamic imports.
-The native package import condition selects `@vitejs/plugin-rsc/rsc/server` inside the `react-server` graph, while other hosts retain importable HTTP and Workers APIs and report an integration error only if they invoke an RSC operation.
-Package output preserves this private import so the consuming host selects the correct execution graph.
+Against the same upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Flight rendering and Server Function request decoding statically import `@vitejs/plugin-rsc/rsc/server` instead of per-request module-loading Effects and dynamic imports.
+Renderer-dependent HTTP and Workers entry points belong to the dedicated RSC graph, with no non-RSC runtime fallback or private import indirection.
 This removes redundant module-loading Effects inside the RSC graph without changing public HTTP APIs, explicit application-loader contracts, service capture, or request-scope ownership.
 SSR graph loading and the browser bootstrap remain separate Vite execution boundaries.
 
