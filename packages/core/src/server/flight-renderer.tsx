@@ -1,5 +1,5 @@
 import { Context, Effect, Exit, FiberSet, Layer, Scope } from "effect";
-import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
+import { renderToReadableStream, type createTemporaryReferenceSet } from "#rsc-server";
 
 import type { AnyMiddleware } from "../application/middleware";
 import type { RenderRuntimeContext } from "../application/render-runtime";
@@ -48,9 +48,6 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
             Scope.provide(renderScope),
           );
           const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
-          const { renderToReadableStream } = yield* Effect.promise(
-            () => import("@vitejs/plugin-rsc/rsc/server"),
-          );
           const stream = renderRuntime.bind(runtime, middleware, () =>
             renderToReadableStream(result, {
               onError: (error: unknown) => {
@@ -89,9 +86,6 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
             Scope.provide(renderScope),
           );
           const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
-          const { renderToReadableStream } = yield* Effect.promise(
-            () => import("@vitejs/plugin-rsc/rsc/server"),
-          );
           const stream = renderRuntime.bind(runtime, middleware, () => {
             const payload = { formState, routeTree, serverFnResult } satisfies FlightPayload;
             return renderToReadableStream(payload, {

@@ -1,18 +1,18 @@
-import { expect, it, vi } from "@effect/vitest";
+import { expect, it } from "@effect/vitest";
+import { vi } from "vite-plus/test";
 import { Deferred, Effect } from "effect";
 
 import type { RenderRuntimeContext } from "../application/render-runtime";
+import { FlightRenderer } from "./flight-renderer";
 
-let renderSignal: AbortSignal | undefined;
+const renderState = vi.hoisted((): { signal: AbortSignal | undefined } => ({ signal: undefined }));
 
-vi.doMock("@vitejs/plugin-rsc/rsc/server", () => ({
+vi.mock("#rsc-server", () => ({
   renderToReadableStream: (_model: unknown, options?: { readonly signal?: AbortSignal }) => {
-    renderSignal = options?.signal;
+    renderState.signal = options?.signal;
     return new ReadableStream<Uint8Array>();
   },
 }));
-
-const { FlightRenderer } = await import("./flight-renderer");
 
 it.effect("interrupts application work when its Flight render is released", () =>
   Effect.scoped(
@@ -57,15 +57,15 @@ it.effect("interrupts application work when its Flight render is released", () =
         () => "interrupted" as const,
       );
       yield* Deferred.await(started);
-      expect(flight.signal).toBe(renderSignal);
-      expect(renderSignal?.aborted).toBe(false);
+      expect(flight.signal).toBe(renderState.signal);
+      expect(renderState.signal?.aborted).toBe(false);
 
       yield* flight.release;
 
       yield* Deferred.await(interrupted);
       const applicationOutcome = yield* Effect.promise(() => applicationWorkOutcome);
       expect(applicationOutcome).toBe("interrupted");
-      expect(renderSignal?.aborted).toBe(true);
+      expect(renderState.signal?.aborted).toBe(true);
     }).pipe(Effect.provide(FlightRenderer.layer)),
   ),
 );

@@ -22,26 +22,30 @@ const entries = [
 
 describe("published Alchemy execution graph entries", () => {
   it.each(entries)("constructs $specifier without resolving core runtime modules", (entry) => {
+    const hooks = `
+      import { registerHooks } from "node:module";
+      registerHooks({
+        resolve(specifier, context, next) {
+          if (specifier === "@effront/core" || specifier.startsWith("@effront/core/")) {
+            throw new Error("Deployment resolved an RSC runtime module: " + specifier);
+          }
+          if (${entry.specifier === "@effront/alchemy/cloudflare"} && specifier.includes("application-loader")) {
+            throw new Error("Explicit-loader entry resolved the configured application loader");
+          }
+          return next(specifier, context);
+        }
+      });
+    `;
     const output = execFileSync(
       process.execPath,
       [
+        "--import",
+        `data:text/javascript,${encodeURIComponent(hooks)}`,
         "--input-type=module",
         "--eval",
         `
-          import { registerHooks } from "node:module";
-          registerHooks({
-            resolve(specifier, context, next) {
-              if (specifier === "@effront/core" || specifier.startsWith("@effront/core/")) {
-                throw new Error("Deployment resolved an RSC runtime module: " + specifier);
-              }
-              if (${entry.specifier === "@effront/alchemy/cloudflare"} && specifier.includes("application-loader")) {
-                throw new Error("Explicit-loader entry resolved the configured application loader");
-              }
-              return next(specifier, context);
-            }
-          });
-          const { makeApplicationHttpEffect } = await import(${JSON.stringify(entry.specifier)});
-          const { Effect } = await import("effect");
+          import { makeApplicationHttpEffect } from ${JSON.stringify(entry.specifier)};
+          import { Effect } from "effect";
           const handler = await Effect.runPromise(${entry.construct});
           if (!Effect.isEffect(handler)) throw new Error("Expected a native handler Effect");
           console.log(import.meta.resolve(${JSON.stringify(entry.specifier)}));

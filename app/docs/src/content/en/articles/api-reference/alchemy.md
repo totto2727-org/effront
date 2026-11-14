@@ -55,18 +55,21 @@ const fetch =
   makeApplicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache));
 ```
 
-Hosts that select their own loader can retain the explicit form:
+Hosts that own an RSC-only entry can retain the explicit loader API without a dynamic import:
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { Effect } from "effect";
+import application from "./entry.effront";
 
-const fetch =
-  yield *
-  makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
+const construct = Effect.gen(function* () {
+  const fetch = yield* makeApplicationHttpEffect(async () => application);
+  return { fetch: fetch.pipe(Effect.orDie) };
+});
 ```
 
-Keep the dynamic import inside an explicit loader.
-A static value import in the shared Worker entry would evaluate the RSC application during infrastructure construction.
+The loader contract remains asynchronous, but it does not require dynamic module loading.
+Use the configured helper in a Worker entry shared with infrastructure planning, so application value imports remain confined to the RSC graph.
 The configured form throws `TypeError` when a request runs without the RSC integration; deployment construction itself does not load the application.
 The configured adapter path uses no dynamic import for its application or renderer, but Vite and the underlying RSC framework can still generate dynamic imports for code splitting.
 This API does not derive an application-specific runtime Layer or remove deployment/runtime composition boundaries.

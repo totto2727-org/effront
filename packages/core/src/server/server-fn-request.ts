@@ -1,5 +1,12 @@
 import { Cause, Effect, Schema, type Scope } from "effect";
 import { HttpServerRequest } from "effect/http";
+import {
+  createTemporaryReferenceSet,
+  decodeAction,
+  decodeFormState,
+  decodeReply,
+  loadServerAction,
+} from "#rsc-server";
 
 import type { EFFRONTIdentity } from "../application/effront-identity";
 import type { AnyMiddleware } from "../application/middleware";
@@ -167,9 +174,6 @@ export const decodeServerFnCall = Effect.fnUntraced(function* <ApplicationServic
   actionId: string,
   identity: EFFRONTIdentity<ApplicationServices>,
 ) {
-  const { createTemporaryReferenceSet, decodeReply, loadServerAction } = yield* Effect.promise(
-    () => import("@vitejs/plugin-rsc/rsc/server"),
-  );
   const temporaryReferences = createTemporaryReferenceSet();
   const body = yield* readBody(request);
   const decoded = yield* Effect.tryPromise({
@@ -224,9 +228,6 @@ const prepareProgressiveServerFn = Effect.fnUntraced(function* <ApplicationServi
   request: Request,
   identity: EFFRONTIdentity<ApplicationServices>,
 ) {
-  const { decodeAction, decodeFormState } = yield* Effect.promise(
-    () => import("@vitejs/plugin-rsc/rsc/server"),
-  );
   const body = yield* readBody(request);
   if (!(body instanceof FormData)) {
     return yield* bodyReadError(

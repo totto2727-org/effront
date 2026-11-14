@@ -66,9 +66,6 @@ export const coreRuntimeSources = {
             Scope.provide(renderScope),
           );
           const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
-          const { renderToReadableStream } = yield* Effect.promise(
-            () => import("@vitejs/plugin-rsc/rsc/server"),
-          );
           const stream = renderRuntime.bind(runtime, middleware, () => {
             const payload = { formState, routeTree, serverFnResult } satisfies FlightPayload;
             return renderToReadableStream(payload, {

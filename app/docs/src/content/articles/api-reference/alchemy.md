@@ -56,18 +56,21 @@ const fetch =
   makeApplicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache));
 ```
 
-独自にローダーを選択するホストでは、従来の明示形式も使用できます。
+RSC 専用エントリーを持つホストでは、動的インポートなしで従来の明示ローダー API を使用できます。
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
+import { Effect } from "effect";
+import application from "./entry.effront";
 
-const fetch =
-  yield *
-  makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
+const construct = Effect.gen(function* () {
+  const fetch = yield* makeApplicationHttpEffect(async () => application);
+  return { fetch: fetch.pipe(Effect.orDie) };
+});
 ```
 
-明示ローダーでは、動的インポートをローダーの中に置いてください。
-共有 Worker エントリーで値として静的にインポートすると、インフラ構築時に RSC アプリケーションを評価してしまいます。
+ローダーの非同期契約は維持しますが、モジュールの動的ロードは不要です。
+インフラ構築と共有する Worker エントリーでは設定済みヘルパーを使い、アプリケーションの値インポートを RSC グラフ内に限定してください。
 設定済みエントリーを使う形式は、RSC 統合なしでリクエストを実行すると `TypeError` になります。
 デプロイ用の構築時にはアプリケーションを読み込みません。
 設定済みアダプターの経路では、アプリケーションとレンダラーに動的インポートを使いません。
