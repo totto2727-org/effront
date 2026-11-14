@@ -81,7 +81,10 @@ Alchemy が受け付けるエラーの union はより狭いため、`fetch` を
 **捕捉するサービス**
 
 `makeApplicationHttpEffect` は構築時の Context からサービス参照を捕捉します。
-`applicationHttpEffect` は明示的な `context` オプションを使い、既定値は空の Context です。
+`applicationHttpEffect` は明示的な `context` オプションからのみサービスを捕捉します。
+このオプションがなければ、捕捉済みサービスの型引数を指定しても、ハンドラーはアプリケーションのすべてのサービス要件を保持します。
+`context` プロパティが省略可能なオプション値も、これらの要件を保持します。
+捕捉済みサービスをハンドラーの要件から除くには、`context` の存在を確認し、必須プロパティとして渡してください。
 [Basic サンプル](https://github.com/totto2727-org/effront/tree/main/examples/basic) では、KV クライアントを使うアプリケーションサービスを捕捉しています。
 
 - 同じキーのサービスが現在のリクエストにある場合、その値を優先します。

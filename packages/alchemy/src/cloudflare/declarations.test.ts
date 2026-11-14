@@ -95,6 +95,11 @@ it("packed default and react-server declarations preserve application capabiliti
             : `
           const uncaptured = applicationHttpEffect(load);
           export type Uncaptured = Assert<Equal<Effect.Services<typeof uncaptured>, Effect.Services<Native>>>;
+          const phantom = applicationHttpEffect<ControlApi, Failure, Requirements, ControlApi>(load);
+          export type PhantomNotProvided = Assert<Equal<Effect.Services<typeof phantom>, Effect.Services<Native>>>;
+          const options: { readonly context?: Context.Context<ControlApi> } = {};
+          const optional = applicationHttpEffect(load, options);
+          export type OptionalNotProvided = Assert<Equal<Effect.Services<typeof optional>, Effect.Services<Native>>>;
           const captured = applicationHttpEffect(load, { context: Context.make(ControlApi, { read: () => "ok" }) });
           export type Provided = Assert<Equal<Effect.Services<typeof captured>, Effect.Services<Handler>>>;
           declare const hosts: Context.Context<Hosts>;

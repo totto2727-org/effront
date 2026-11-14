@@ -70,10 +70,16 @@ type ApplicationConstruction<ApplicationError, Requirements> = Effect.Effect<
 
 /** Keeps declaration emission on named contracts and canonical public provider imports. */
 export interface ApplicationAdapter {
-  readonly applicationHttpEffect: <Services, ApplicationError, Requirements, Captured = never>(
-    load: ApplicationLoader<Services, ApplicationError, Requirements>,
-    options?: { readonly context?: Context.Context<Captured> },
-  ) => ApplicationHttpEffect<ApplicationError, Requirements, Captured>;
+  readonly applicationHttpEffect: {
+    <Services, ApplicationError, Requirements, Captured>(
+      load: ApplicationLoader<Services, ApplicationError, Requirements>,
+      options: { readonly context: Context.Context<Captured> },
+    ): ApplicationHttpEffect<ApplicationError, Requirements, Captured>;
+    <Services, ApplicationError, Requirements, Captured = never>(
+      load: ApplicationLoader<Services, ApplicationError, Requirements>,
+      options?: { readonly context?: Context.Context<Captured> },
+    ): HttpApplicationEffect<ApplicationError, Requirements>;
+  };
   readonly makeApplicationHttpEffect: <Services, ApplicationError, Requirements>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
   ) => ApplicationConstruction<ApplicationError, Requirements>;
@@ -100,25 +106,28 @@ export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect): App
    * context is never restored. Application layers are acquired in the host's request
    * scope, which Alchemy retains through streaming response completion or cancellation.
    */
-  const applicationHttpEffect = <Services, ApplicationError, Requirements, Captured = never>(
+  function applicationHttpEffect<Services, ApplicationError, Requirements, Captured>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
-    options: { readonly context?: Context.Context<Captured> } = {},
-  ): ApplicationHttpEffect<ApplicationError, Requirements, Captured> => {
-    const captured = omitHostServices(options.context ?? Context.empty());
+    options: { readonly context: Context.Context<Captured> },
+  ): ApplicationHttpEffect<ApplicationError, Requirements, Captured>;
+  function applicationHttpEffect<Services, ApplicationError, Requirements, Captured = never>(
+    load: ApplicationLoader<Services, ApplicationError, Requirements>,
+    options?: { readonly context?: Context.Context<Captured> },
+  ): HttpApplicationEffect<ApplicationError, Requirements>;
+  function applicationHttpEffect<Services, ApplicationError, Requirements, Captured>(
+    load: ApplicationLoader<Services, ApplicationError, Requirements>,
+    options?: { readonly context?: Context.Context<Captured> },
+  ) {
     const handler = Effect.gen(function* () {
       const application = yield* Effect.promise(load);
       return yield* toHttpEffect(application);
     });
-    type HandlerRequirements = Effect.Services<typeof handler>;
-    type LiveRequirements = Exclude<HandlerRequirements, Exclude<Captured, HostServices>>;
-
-    return Effect.contextWith((live: Context.Context<LiveRequirements>) =>
-      Effect.provideContext(
-        handler,
-        Context.merge(captured, live) as Context.Context<HandlerRequirements>,
-      ),
+    if (options?.context === undefined) return handler;
+    const captured = omitHostServices(options.context);
+    return Effect.contextWith((live: Context.Context<never>) =>
+      Effect.provideContext(handler, Context.merge(captured, live)),
     );
-  };
+  }
 
   /**
    * Captures application capabilities during Alchemy Worker construction.
