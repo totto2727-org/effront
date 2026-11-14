@@ -7,14 +7,14 @@ Choose the other packages for hosting, Markdown, or styling.
 | Import path                               | Main APIs                                                      | Reference                                                                                |
 | ----------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `@effront/core`                           | `Application`, `PageViewTransition`                            | [Application](/en/api-reference/application), [components](/en/api-reference/components) |
-| `@effront/core/http`                      | `toHttpEffect`                                                 | [Native HTTP](./api-reference/http.md)                                                   |
+| `@effront/core/http`                      | `toHttpEffect`, `makeHttpEffect`                               | [Native HTTP](./api-reference/http.md)                                                   |
 | `@effront/core/workers`                   | `createFetchHandler`, `WorkersRequestContext`, context readers | [Fetch and Workers context](/en/api-reference/workers)                                   |
 | `@effront/cloudflare/workers`             | `CloudflareExecutionContext`, Cloudflare context readers       | [Fetch and Workers context](/en/api-reference/workers)                                   |
 | `@effront/server/node`                    | Node.js `serve`                                                | [Node.js / Bun server](./api-reference/server.md)                                        |
 | `@effront/server/bun`                     | Bun `serve`                                                    | [Node.js / Bun server](./api-reference/server.md)                                        |
 | `@effront/server/assets`                  | `withAssets`                                                   | [Node.js / Bun server](./api-reference/server.md)                                        |
-| `@effront/alchemy/cloudflare`             | `applicationHttpEffect`                                        | [Alchemy](./api-reference/alchemy.md)                                                    |
-| `@effront/alchemy/cloudflare/application` | Configured-application `applicationHttpEffect`                 | [Alchemy](./api-reference/alchemy.md)                                                    |
+| `@effront/alchemy/cloudflare`             | `applicationHttpEffect`, `makeApplicationHttpEffect`           | [Alchemy](./api-reference/alchemy.md)                                                    |
+| `@effront/alchemy/cloudflare/application` | Configured-application `makeApplicationHttpEffect`             | [Alchemy](./api-reference/alchemy.md)                                                    |
 | `@effront/vite`                           | `effront`, `EffrontViteOptions`                                | [Vite and Cloudflare plugins](/en/api-reference/vite)                                    |
 | `@effront/cloudflare`                     | `effrontCloudflare`, `EffrontCloudflareOptions`                | [Vite and Cloudflare plugins](/en/api-reference/vite)                                    |
 | `@effront/server/vite`                    | `effrontServer`                                                | [Node.js / Bun server](./api-reference/server.md)                                        |

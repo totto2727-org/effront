@@ -101,8 +101,8 @@ export const page: DocPage = {
       <p>
         A direct HTTP host must preserve the same boundary. Applying <code>Effect.scoped</code> only
         to response production closes resources too early for deferred body work. A custom body that
-        runs Effects later must provide their required services through native Effect composition. A
-        retained service lifetime does not automatically supply services to a later Effect.
+        reads services later must also capture the necessary Context. A retained service lifetime
+        does not automatically supply services to a later Effect.
       </p>
       <p>
         Flight rendering adds a child Scope and release operation tied to stream completion.{" "}
@@ -111,15 +111,18 @@ export const page: DocPage = {
       </p>
       <h2 id="host-boundary">4. Reuse host services without reusing request state</h2>
       <p>
-        <code>toHttpEffect(application)</code> returns the HTTP Effect directly. Provide external
-        services with <code>Effect.provideService</code> or <code>Effect.provide</code> and a Layer.
-        There is no construction Effect, Context snapshot, or manual runtime merge. Service owners
-        must retain shared services until all response bodies that use them finish.
+        <code>makeHttpEffect(application)</code> captures references to external services and
+        returns a reusable HTTP Effect. It neither builds the application's request Layer during
+        construction nor takes ownership of the references. Their owner must keep them alive until
+        all response bodies that use them finish.
       </p>
+      <SourceExcerpt source={coreRuntimeSources.externalContext} />
       <p>
-        Service precedence follows native Effect provision rules. In Alchemy, the official bridge
-        supplies live host services and Scope. Each request builds the application Layer with a
-        fresh memo map, without carrying request state from Worker construction.
+        Live request values take precedence over captured values. Before merging them,{" "}
+        <code>captureExternalContext</code> removes the construction-time Scope, HTTP request,
+        parsed search parameters, route Context, router, and Layer memo map. This removal is
+        explicit because <code>Effect.context&lt;R&gt;()</code> does not filter runtime keys by its
+        type argument.
       </p>
       <p>
         <code>WorkersRequestContext</code> holds readonly <code>request</code>, <code>env</code>,

@@ -5,7 +5,7 @@
 - `src/cloudflare/deployment.ts` is the deployment-safe default entry. It must not import the RSC renderer or application at runtime.
 - `src/cloudflare/runtime.ts` is the `react-server` entry and statically imports the native HTTP renderer.
 - `src/cloudflare/application.ts` and `application-runtime.ts` expose the configured, no-argument helper through `cloudflare/application`. Only these entries import the configured loader, so explicit-loader consumers never depend on the configured application.
-- `src/cloudflare/adapter.ts` owns shared request handling through native Effect composition.
+- `src/cloudflare/adapter.ts` owns shared request handling and capability capture.
 - `src/cloudflare/application-loader.ts` is the construction-safe configured-loader boundary. The Vite adapter replaces it only in the RSC graph with a static import through the portable application's existing alias.
 - `src/cloudflare/vite.ts` owns the native Worker bridge, runtime-phase compilation settings, and default SSR colocation, not the portable compilation graphs or application hosting.
 - Future providers belong in sibling directories under `src/` with explicit package subpaths, not in core or the Cloudflare entry.
@@ -22,7 +22,7 @@
 
 ### Standard tasks
 
-- After shared package preparation, run `vp test run packages/alchemy` from the repository root. It checks lazy loading, native service provision, Vite composition, temporary runtime projection, and preservation of consumer optimizer settings.
+- After shared package preparation, run `vp test run packages/alchemy` from the repository root. It checks lazy construction, context filtering, Vite composition, temporary runtime projection, and preservation of consumer optimizer settings.
 - From `tests/e2e-alchemy/`, `vp run test` builds and serves the committed KV example and checks native HTML, HEAD, hydration, Server Functions, navigation, Tailwind styling, and narrow-screen layout. See the [test package instructions](../../docs/TESTING.md#native-alchemy-integration).
 - For official CLI consumers, use the [example commands and ports](../../examples/AGENTS.md#development-commands) or [documentation-site commands](../../app/docs/AGENTS.md#development-commands). Bare `vp dev` bypasses the Alchemy orchestration those consumers require.
 - When the user chooses to configure the required profile, `vp exec alchemy profile edit --profile default --add Cloudflare` is the interactive CLI command. Profile authentication is user-controlled and distinct from cloud deployment.
@@ -41,8 +41,8 @@ This does not prove remote permissions or deployment.
 - Keep application and core HTTP value imports out of the deployment graph. The `react-server` entry and configured application use static imports only in the RSC graph.
 - Application modules can evaluate during isolate initialization. Keep their module-level definitions declarative and acquire request-scoped resources only when the handler runs.
 - Keep explicit-loader and configured-application public entries separate. The streaming-feed browser host checks the configured example and an explicit-loader fixture with a nonexistent configured application entry in production and development.
-- Return `HttpApplicationEffect` directly from `applicationHttpEffect(load)` or configured `applicationHttpEffect<typeof application>()`. Do not add a construction Effect, Context snapshot, context option, or manual runtime merge.
-- Provide application capabilities with native `Effect.provideService` or Layers. Acquire application Layers fresh per request. The official Alchemy bridge owns live host services and retains request Scope through streaming completion, failure, or cancellation.
+- Capture capability references rather than their lifetimes. Acquire application Layers per request and let the official Alchemy bridge retain streaming scopes.
+- Omit host-owned services from captured context and merge live request services over captured application capabilities. Preserve explicitly required non-host services, including named container application capabilities.
 - Preserve typed application failures until the Worker's HTTP boundary maps them to the host's narrower error contract.
 - Use Alchemy's official `makeWorkerBridge`, the `rsc` entry with `ssr` child, and injected stack/stage bindings. Do not compete with the adapter's entry by setting `vite.main`.
 

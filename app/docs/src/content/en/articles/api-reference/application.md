@@ -79,7 +79,7 @@ The host must retain its request Scope until the response body completes, fails,
 
 [Native HTTP](./http.md) preserves external requirements for the host to supply.
 [Workers Fetch](./workers.md) accepts only requirements satisfiable by `HttpRouter` and `HttpServerRequest`.
-Provide host-owned services to `toHttpEffect` or the [Alchemy adapter](./alchemy.md) with native Effect provision, without extending their lifetimes.
+`makeHttpEffect` and the [Alchemy adapter](./alchemy.md) can capture host-owned service references without extending their lifetimes.
 
 ## EFFRONT.withMiddleware {#middleware}
 

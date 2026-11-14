@@ -404,7 +404,7 @@ export const articleCatalog = [
     headings: [
       { id: "fetch", title: "HTTP の接続 API" },
       { id: "handler", title: "toHttpEffect" },
-      { id: "provision", title: "ネイティブなサービスの提供" },
+      { id: "capture", title: "makeHttpEffect" },
     ],
     source: "/api-reference/http",
   },

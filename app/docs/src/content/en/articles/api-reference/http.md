@@ -5,6 +5,7 @@
 | API                                               | Result                                                  | Host-supplied services                                                                      |
 | ------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `toHttpEffect(application)`                       | A native HTTP Effect                                    | Live request, Scope, and external application requirements                                  |
+| `makeHttpEffect(application)`                     | An Effect that constructs a native HTTP Effect          | External services at construction. Live request and Scope at execution                      |
 | [`createFetchHandler(application)`](./workers.md) | `(request, env, executionContext) => Promise<Response>` | Fetch context. The application Layer may require only `HttpRouter` and `HttpServerRequest`. |
 
 Ready-made native hosts are available through [Node.js / Bun](./server.md) and [Alchemy](./alchemy.md).
@@ -38,26 +39,16 @@ It does this before it acquires application services.
 Server Function POST requests also enforce a 10 MiB limit on received bytes, even without that header.
 Custom HTTP route bodies without `Content-Length` are not universally measured by this handler.
 
-## Native service provision {#provision}
+## makeHttpEffect {#capture}
 
-> [!WARNING]
-> Breaking migration: replace `makeHttpEffect(application)` with `toHttpEffect(application)` and remove the construction `yield*` or execution step.
-> Replace Alchemy's `makeApplicationHttpEffect` with `applicationHttpEffect`, also without yielding or executing it to obtain a handler.
-> Replace `{ context }` options with `Effect.provideService` or `Effect.provide` and a Layer.
-> These APIs are removed, with no deprecation wrappers. Service precedence follows native Effect provision, not a special ambient-request override rule.
+`makeHttpEffect(application)` returns a construction Effect with no typed failure.
+It requires the application's external services and returns a reusable HTTP Effect with those service references captured.
+The returned Effect retains the HTTP error channel and still requires the live request and request Scope.
+The application Layer remains request-scoped.
 
-Provide external application services directly to `toHttpEffect(application)` with native `Effect.provideService` or `Effect.provide` and a Layer.
-The handler is already an HTTP Effect, not a construction Effect that returns one.
-It does not take a Context snapshot or merge a stored runtime into requests.
+- Live request services take precedence over captured services with the same key.
+- Construction-time Scope, HTTP request services, router services, and Layer memoization state are excluded from capture.
+- Capture does not acquire services or extend their lifetime. Their owner must retain them through every response body that uses them.
+- Request completion does not dispose of host-owned captured services.
 
-```typescript
-const handler = toHttpEffect(application).pipe(Effect.provideService(CacheClient, cache));
-```
-
-The host supplies the live request and Scope.
-Effront builds the application Layer fresh for each request, with a fresh Layer memo map.
-Providing a shared service does not transfer its ownership or extend its lifetime.
-Its owner must keep it alive through every response body that uses it.
-A scoped external Layer provided around the handler can finalize when headers are produced, before the body finishes.
-Put request-owned disposable resources in the application Layer passed to `EFFRONT.make`, whose lifetime follows the response stream.
-The [Alchemy adapter](./alchemy.md) supports the same native provision with deferred application loading.
+The [Alchemy adapter](./alchemy.md) provides a deferred application loader with the same capture and lifetime rules.

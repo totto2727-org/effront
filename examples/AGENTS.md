@@ -3,7 +3,7 @@
 ## Repository structure
 
 - `node/`, `bun/`, `cloudflare/`, and `alchemy-cloudflare/`: minimal Node, Bun, standalone Cloudflare Workers, and Alchemy-managed Cloudflare Workers starters. Their `src/entry.effront.tsx` files must remain byte-identical. Only hosting and infrastructure management differ.
-- `basic/`: feature-rich native Alchemy Worker with explicitly provided KV capability and request-local services.
+- `basic/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
 - `loading/`: native Alchemy Worker demonstrating Loading, Suspense, and browser-side Query without KV.
 - `markdown/`: feature-rich native Alchemy consumer of file-relative Markdown routing and assets.
 - `check-in/` and `streaming-feed/`: Alchemy-managed Worker showcases of query atoms and incremental Server Function streams. Their auth-free local Worker Playwright harnesses are under `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/`.
@@ -34,7 +34,7 @@ Example development commands do not build workspace packages.
 ### Application entry and host ownership
 
 - Export the application definition directly from `src/entry.effront.tsx`. Do not restore a re-export-only `entry.client.ts`.
-- Native Alchemy handlers use `applicationHttpEffect<typeof application>()` from `@effront/alchemy/cloudflare/application` with a type-only import of the configured application, or an explicit deferred loader from `@effront/alchemy/cloudflare`. Static application value imports in the shared Worker entry would evaluate RSC code during infrastructure planning. The adapter instead generates static application imports only in the configured helper's RSC graph. The helper returns the HTTP Effect directly, without a construction Effect or runtime snapshot. Yield the deploy-time KV client in Worker construction, then provide it to the handler with `Effect.provideService(CacheClient, cache)` and map failures with `Effect.orDie` when appropriate. The native Alchemy bridge supplies live host services and Scope. Keep the type import aligned with `effront({ application })` and module-level application definitions declarative.
+- Native Alchemy construction uses `makeApplicationHttpEffect<typeof application>()` from `@effront/alchemy/cloudflare/application` with a type-only import of the configured application, or an explicit deferred loader from `@effront/alchemy/cloudflare`. Static application value imports in the shared Worker entry would evaluate RSC code during infrastructure planning. The adapter instead generates static application imports only in the configured helper's RSC graph. Keep the type import aligned with `effront({ application })` and module-level application definitions declarative.
 - Alchemy CLI owns its Vite host. Do not add a manual runtime plugin, injection-environment guard, application stage fallback, or explicit stage flag to ordinary scripts.
 - Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront`. Configure the native `worker` only on `effrontAlchemy`. Keep the existing Tailwind integration separate.
 - Node/Bun use `entry.rsc.ts` for the native handler and `entry.server.ts` for production listening. Never start the production server during Vite development.

@@ -188,7 +188,8 @@ export const coreModelPages: readonly DocPage[] = [
           描画が終わる前に応答ヘッダーが届くことがあります。 Effect
           HTTPのWebハンドラーは、ストリーム本文の完了・失敗・キャンセルまでリクエストのScopeを維持します。
           HEADでは本文を消費しないため、ハンドラーとネイティブホストがヘッダーを維持したままストリームを破棄し、Scopeを解放します。
-          ネイティブEffectのAPIで提供したサービスはホストの所有物のままであり、ホストはそれを使うすべての応答本文が終わるまで維持する必要があります。
+          <code>makeHttpEffect</code>{" "}
+          で借りたサービスはホストの所有物のままであり、ホストはそれを使うすべての応答本文が終わるまで維持する必要があります。
           この所有権の境界は <a href="/ja/architecture/implementation/request">リクエスト処理</a>{" "}
           で説明します。
         </p>

@@ -407,7 +407,7 @@ export const englishArticleCatalog = [
     headings: [
       { id: "fetch", title: "HTTP boundaries" },
       { id: "handler", title: "toHttpEffect" },
-      { id: "provision", title: "Native service provision" },
+      { id: "capture", title: "makeHttpEffect" },
     ],
     source: "/api-reference/http",
   },

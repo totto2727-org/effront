@@ -8,12 +8,12 @@ For consumer setup and public contracts, use the [Alchemy guide](https://effront
 
 Core imports neither Alchemy nor Cloudflare and preserves external application requirements at its host-neutral native HTTP boundary.
 `@effront/vite` owns portable React client/RSC/SSR compilation.
-`@effront/alchemy/cloudflare` owns execution-graph separation and native HTTP Effect composition.
+`@effront/alchemy/cloudflare` owns execution-graph separation and construction-capability capture.
 `@effront/alchemy/cloudflare/application` provides the configured, no-argument helper without adding application dependencies to explicit-loader consumers.
 `@effront/alchemy/cloudflare/vite` owns the native Worker bridge, development runtime compilation, and default SSR colocation.
 Neither native HTTP API runs an independent Effect runtime.
 
-`applicationHttpEffect<typeof application>()` from the `cloudflare/application` subpath uses a type-only application import and a framework-owned loader.
+`makeApplicationHttpEffect<typeof application>()` from the `cloudflare/application` subpath uses a type-only application import and a framework-owned loader.
 The package's default entry remains deployment-safe, while its `react-server` export statically imports the core HTTP renderer.
 The adapter replaces its private loader module only in the RSC compilation graph.
 The replacement statically imports the existing `@effront/core/application-entry` alias and returns that definition through `Promise.resolve` when the handler requests it.
@@ -32,9 +32,8 @@ The standalone `@effront/cloudflare` adapter uses the Fetch boundary and has ind
 ## Construction versus requests
 
 Alchemy Worker construction resolves capabilities and records infrastructure bindings in the deployment tool and during isolate initialization, separately from the RSC request graph.
-`applicationHttpEffect` returns `HttpApplicationEffect` directly, with no construction Effect, Context snapshot, context option, or manual runtime merge.
-Consumers provide application capabilities with native `Effect.provideService` or Layers.
-The official Alchemy bridge supplies live host services and Scope, and the handler acquires the application Layer fresh per request.
+Capture stores references rather than owning their lifetimes.
+The request handler overlays the live context and acquires the application Layer per request.
 The native host owns the request scope through streamed-body completion, failure, and cancellation.
 Buffered responses may release resources after response construction.
 Alchemy's isolate scope has no normal teardown hook, so request-scoped connections belong in the application Layer, not Worker construction.
@@ -44,7 +43,7 @@ The richer [Alchemy Basic Worker](../../../examples/basic/src/entry.workers.ts) 
 1. Declare `Cloudflare.KV.Namespace("Cache")` as infrastructure.
 2. Resolve `Cloudflare.KV.ReadWriteNamespace(Cache)` inside the native Worker's construction Effect.
 3. Provide `Cloudflare.KV.ReadWriteNamespaceBinding` explicitly around that construction Effect.
-4. Provide the resulting client as the application's `CacheClient` capability to `applicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache), Effect.orDie)`.
+4. Provide the resulting client as the application's `CacheClient` capability to `makeApplicationHttpEffect`.
 5. Build `HostLive` inside each live request and perform KV operations there.
 6. Render only the resulting application data, never the capability object or host environment.
 
