@@ -2,9 +2,8 @@
 
 ## HTTP ハンドラー {#http}
 
-明示ローダーのヘルパーは `@effront/alchemy/cloudflare` からインポートします。
+明示的なソースを渡すヘルパーは `@effront/alchemy/cloudflare` からインポートします。
 設定済みアプリケーションを使う引数なしのヘルパーは `@effront/alchemy/cloudflare/application` からインポートします。
-エントリーを分けることで、独自のローダーを使うホストには設定済みアプリケーションのモジュールを読み込ませません。
 
 | API                                       | 入力                                       | 戻り値                                                        |
 | ----------------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
@@ -12,7 +11,7 @@
 | `makeApplicationHttpEffect(source)`       | ネイティブなアプリケーションソース Effect  | 利用可能な外部サービスを捕捉し、ハンドラーを返す構築用 Effect |
 | `makeApplicationHttpEffect<Definition>()` | `effront()` で指定したアプリケーションの型 | Plugin がアプリケーション参照を提供する、同じ構築用 Effect    |
 
-ローダーを明示する形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements, SourceError = never, SourceRequirements = never>` を受け付けます。
+ソースを明示する形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements, SourceError = never, SourceRequirements = never>` を受け付けます。
 
 ```typescript
 import type { ApplicationDefinition } from "@effront/core";
@@ -34,10 +33,11 @@ export type ApplicationLoader<
 ソース Effect はハンドラー構築時ではなく、リクエストごとに一度実行されます。
 ソースの型付きエラーはハンドラーのエラーチャネルに保持され、サービス要件にはアプリケーションと同じ捕捉とリクエスト優先の規則が適用されます。
 静的な定義には `Effect.succeed(application)` を使います。
-ローダーコールバックや Promise は受け付けません。
-`effront()` と `effrontAlchemy()` を使う場合は、ローダーを書く代わりにアプリケーションを型として参照できます。
 
-構築時の追加サービスが不要なら、次の構築用 Effect を `Cloudflare.Worker` の第 3 引数に渡せます。
+**設定済みアプリケーション**
+
+`effront()` と `effrontAlchemy()` を使う場合は、アプリケーションを型としてインポートします。
+構築時に必要なサービスを提供してから、構築用 Effect を `Cloudflare.Worker` に渡してください。
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
@@ -50,26 +50,28 @@ const construct = Effect.gen(function* () {
 });
 ```
 
-型のみのインポートは Worker の実行コードから除去されます。
-Plugin は `effront({ application })` で指定したアプリケーションを、RSC グラフでだけ静的にインポートします。
+型インポートは、`effront({ application })` で指定したアプリケーションを参照してください。
 既定のエントリーは `./src/entry.effront.tsx` です。
-パッケージの `react-server` エントリーも HTTP レンダラーを静的にインポートし、既定のデプロイ用エントリーはどちらの実行時モジュールも読み込みません。
-アプリケーションのモジュールは isolate 初期化時に評価される可能性があるため、モジュール直下では宣言的な定義に留めてください。
-Plugin は静的にインポートしたアプリケーションを Effect 値として提供します。
-アプリケーション Layer の取得は引き続きリクエストごとに行います。
-型インポートは、そのエントリーと同じアプリケーションを参照してください。
 TypeScript は型インポートと Vite 設定の一致までは検証しません。
-アプリケーションの型は必要な capability とエラーを保持しますが、capability の実装は提供しません。
+アプリケーションのモジュールは isolate 初期化時に評価される可能性があるため、モジュール直下では宣言的な定義に留めてください。
+アプリケーション Layer はリクエストごとに取得します。
+ハンドラーの構築時に、アプリケーションが必要とするサービスを提供してください。
 
-たとえば Basic Worker の KV capability は引き続き明示的に渡します。
+たとえば、Basic Worker は構築時に KV クライアントを提供します。
 
 ```typescript
-const fetch =
-  yield *
-  makeApplicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache));
+const construct = Effect.gen(function* () {
+  const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
+  const fetch = yield* makeApplicationHttpEffect<typeof application>().pipe(
+    Effect.provideService(CacheClient, cache),
+  );
+  return { fetch: fetch.pipe(Effect.orDie) };
+}).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding));
 ```
 
-RSC 専用エントリーを持つホストでは、動的インポートなしで従来の明示ローダー API を使用できます。
+**明示的なソース**
+
+専用の RSC エントリーでは、アプリケーションソース Effect を渡します。
 
 ```typescript
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
@@ -82,18 +84,12 @@ const construct = Effect.gen(function* () {
 });
 ```
 
-ソースは非同期コールバックではなく、ネイティブな Effect です。
-レンダリングと HTTP 実行には専用の RSC グラフが必要です。
-通常の Node インポートや `#rsc-server` のフォールバックでは代替できません。
-インフラ構築と共有する Worker エントリーでは設定済みヘルパーを使い、アプリケーションの値インポートを RSC グラフ内に限定してください。
-設定済みエントリーを使う形式は、RSC 統合なしでリクエストを実行すると `TypeError` になります。
-デプロイ用の構築時にはアプリケーションを読み込みません。
-設定済みアダプターの経路では、アプリケーションとレンダラーに動的インポートを使いません。
-ただし、Vite や基盤の RSC フレームワークがコード分割のために生成する動的インポートまで除去するものではありません。
-この API は、アプリ固有の runtime Layer の導出や、デプロイ構成と実行時構成の統合は行いません。
+インフラ構築と共有する Worker エントリーでは設定済みヘルパーを使ってください。
+リクエスト処理にはホストの RSC 統合が必要です。
+統合がない場合、アダプターは `TypeError` の defect で失敗します。
 
 ハンドラーは成功時にネイティブの `HttpServerResponse` を返し、[ネイティブ HTTP](./http.md) のエラーチャネルを保持します。
-Alchemy が受け付けるエラーの union はより狭いため、`fetch` を返す前に残りのアプリケーションエラーを処理または変換してください。
+Alchemy が受け付けるエラーの union はより狭いため、`fetch` を返す前に残りのソースとアプリケーションのエラーを処理または変換してください。
 `Effect.orDie` はその方針の一つであり、必須ではありません。
 
 **捕捉するサービス**
@@ -133,13 +129,14 @@ export default defineConfig({
 | `worker`   | `string` | `./src/entry.workers.ts` | Alchemy Worker を default export するモジュール。Vite root を基準に指定する。空文字列は `TypeError`。 |
 
 このアダプターに `application` オプションはなく、`effront()` の登録も行いません。
-アプリケーションエントリーの変更は `effront({ application })` と Worker の型インポート、または明示ローダー内のインポートに反映します。
+アプリケーションエントリーの変更は `effront({ application })` と Worker の型インポート、または明示的なソースのインポートに反映します。
 Worker エントリーは `effront({ rsc })` ではなく `effrontAlchemy({ worker })` で選びます。
 ブリッジには Alchemy が注入する `ALCHEMY_STACK_NAME` と `ALCHEMY_STAGE` のバインディングが必要です。欠損または空の値は `TypeError` になり、`alchemy dev` から起動する必要があります。
 SSR 出力は既定で RSC Worker 成果物の子ディレクトリに配置されます。明示した出力先は保持されますが、Worker 成果物と一緒にパッケージ化してください。
 
 Worker 宣言には `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }` が必要です。
 `vite.main`、別のランタイムプラグイン、Wrangler 設定は追加しないでください。
-開発中のサーバーコードからは、インフラの provider factory を含む Node 専用のデプロイ・ローカルホスト用 export を使用できません。デプロイ時の export と本番ビルドには影響しません。
+開発と本番ビルドのどちらでも、RSC と SSR のサーバーコードからは、インフラの provider factory を含む Node 専用のデプロイ・ローカルホスト用 export を使用できません。
+デプロイ時の export には影響しません。
 Alchemy は、Vite 単体ではなく `alchemy dev` を通じてホストプラグインとバインディングを提供します。
 Alchemy `2.0.0-beta.81` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。

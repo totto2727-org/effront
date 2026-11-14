@@ -43,8 +43,8 @@ This does not prove remote permissions or deployment.
 - Keep explicit-loader and configured-application public entries separate. The streaming-feed browser host checks the configured example and an explicit-loader fixture with a nonexistent configured application entry in production and development.
 - Capture capability references rather than their lifetimes. Acquire application Layers per request and let the official Alchemy bridge retain streaming scopes.
 - Omit host-owned services from captured context and merge live request services over captured application capabilities. Preserve explicitly required non-host services, including named container application capabilities.
-- Accept native application-source Effects, never loader callbacks.
-  Run the source per request, preserve typed source and application failures, and include source requirements in capability capture and live context.
+- Run application-source Effects per request and preserve typed source and application failures.
+  Include source requirements in capability capture and live context.
   The Worker's HTTP boundary maps remaining failures to the host's narrower error contract.
 - Use Alchemy's official `makeWorkerBridge`, the `rsc` entry with `ssr` child, and injected stack/stage bindings. Do not compete with the adapter's entry by setting `vite.main`.
 

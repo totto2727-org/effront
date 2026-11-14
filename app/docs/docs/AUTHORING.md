@@ -180,12 +180,12 @@ Vercel and AWS adapters remain deferred.
 ## Architecture source baseline
 
 Keep implementation excerpts in JSX with their exact-string and historical-baseline contract.
-The source of truth is `src/content/architecture-baseline.ts`: core version `0.1.1`, commit `8744ecb236cb4c815c3a0c208e02200f4eeeb3f8`, reviewed `2026-11-14`.
+`src/content/architecture-baseline.ts` owns the baseline version, commit, and review date.
 This identifies the source selections, not the latest documentation commit or current npm release.
 
 `core.test.tsx` compares every selection with the current source and checks the baseline package version against the historical Git object.
 Selections unchanged since the baseline also retain the historical exact-string check.
-The test lists current-only selections explicitly, including the request and Server Function decoding excerpts after removal of framework transport limits.
+The test lists current-only selections explicitly.
 Browser tests check the rendered excerpt text and displayed baseline metadata.
 After deliberately reviewing an implementation change, update the explanations, source selections, and baseline metadata together.
 A Markdown migration does not change this historical contract.

@@ -16,13 +16,13 @@ vp install
 
 The one-page example already contains the host configuration:
 
-| File                    | Role                                                                    |
-| ----------------------- | ----------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | Defines the document layout, one page, and its `/` route.               |
-| `src/entry.workers.ts`  | Declares the Worker and defers loading the application until a request. |
-| `alchemy.run.ts`        | Defines the Stack and outputs the Worker's URL.                         |
-| `vite.config.ts`        | Registers `effront()` and `effrontAlchemy()`.                           |
-| `package.json`          | Defines `dev` as `alchemy dev`.                                         |
+| File                    | Role                                                            |
+| ----------------------- | --------------------------------------------------------------- |
+| `src/entry.effront.tsx` | Defines the document layout, one page, and its `/` route.       |
+| `src/entry.workers.ts`  | Declares the Worker and constructs its configured HTTP handler. |
+| `alchemy.run.ts`        | Defines the Stack and outputs the Worker's URL.                 |
+| `vite.config.ts`        | Registers `effront()` and `effrontAlchemy()`.                   |
+| `package.json`          | Defines `dev` as `alchemy dev`.                                 |
 
 ## Start development {#stack}
 

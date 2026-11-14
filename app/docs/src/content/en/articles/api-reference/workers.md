@@ -3,7 +3,9 @@
 ## createFetchHandler {#fetch}
 
 `createFetchHandler(application)` accepts an application whose Layer requirements are satisfied by `HttpRouter.HttpRouter` and `HttpServerRequest.HttpServerRequest`.
-It returns a `FetchHandler`:
+It returns a `FetchHandler`.
+
+Import and execute `createFetchHandler` in a dedicated RSC entry with the host's RSC integration.
 
 ```typescript
 import { createFetchHandler } from "@effront/core/workers";
@@ -22,9 +24,6 @@ export type FetchHandler<Env = unknown, ExecutionContext = unknown> = (
 ) => Promise<Response>;
 ```
 
-Import and execute `createFetchHandler` in a dedicated RSC entry with the host's RSC integration.
-Plain Node imports and default-compatible renderer fallbacks are not supported.
-
 `createFetchHandler` returns the default type with `unknown` host values.
 Reader type arguments describe those values inside application Effects.
 For arbitrary external service requirements, use [native HTTP capture](./http.md#capture) or [Alchemy](./alchemy.md).
@@ -35,8 +34,7 @@ A bodyless response releases it immediately.
 Buffered responses can release request services after response construction.
 A streaming body must retain them through consumption.
 
-Effront does not impose transport body-size limits.
-Configure optional request limits in application middleware or the host.
+See the [HTTP request-size policy](./http.md#handler) for transport limits.
 
 ## Core context readers {#readers}
 

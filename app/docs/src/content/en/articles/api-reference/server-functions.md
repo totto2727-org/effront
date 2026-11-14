@@ -88,8 +88,8 @@ Call it from both places.
 
 ## Request protocol {#request-protocol}
 
-Effront does not impose body-size or argument-array size limits on Server Function transport.
-Configure optional limits in application middleware or the host.
+See the [HTTP request-size policy](/en/api-reference/http#handler) for transport limits.
+React's default argument-decoder limits apply.
 
 | Condition                                                                                                                                | Status |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ |

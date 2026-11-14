@@ -78,8 +78,8 @@ Run `vp exec --filter "./packages/*" -- vp pack` at the repository root, then `v
 Application configs leave host injection and infrastructure planning to the official Alchemy CLI.
 
 Core's colocated native HTTP tests cover context precedence, memo-map isolation, and stream finalization independently.
-Alchemy's colocated tests cover request-time native application-source Effects, typed source failures and requirements, host-service exclusion, Vite graph composition, temporary runtime projection, and preservation of consumer optimizer settings without registering another host.
-The documentation page tests check that both language editions show `Effect.succeed(application)` and the native `ApplicationLoader` source type instead of callback examples.
+Alchemy's colocated tests cover request-time application-source Effects, typed source failures and requirements, and host-service exclusion.
+They also cover Vite graph composition, runtime projection, and preservation of consumer optimizer settings.
 
 ## Observed migration results (2026-09-12)
 

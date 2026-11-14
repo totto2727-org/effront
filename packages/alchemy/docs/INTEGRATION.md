@@ -17,8 +17,6 @@ Neither native HTTP API runs an independent Effect runtime.
 The package's default entry remains deployment-safe, while its `react-server` export statically imports the core HTTP renderer.
 The adapter replaces its private loader module only in the RSC compilation graph.
 The replacement statically imports the existing `@effront/core/application-entry` alias and exposes that definition as `Effect.succeed(application)`.
-The exported `ApplicationLoader` type is a native Effect, not a callback.
-Explicit sources run per request and preserve their typed errors and service requirements through capability capture and live request context.
 The application module can therefore evaluate during isolate initialization, but its request-scoped Layers are still acquired per request.
 Keep module-level application definitions declarative rather than performing request I/O during module evaluation.
 Outside the RSC integration, construction still succeeds; request handling reports the missing integration.

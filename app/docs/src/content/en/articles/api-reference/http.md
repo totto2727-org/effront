@@ -37,7 +37,9 @@ An `Effect.scoped` block around response production alone can release services b
 HEAD responses have an empty body but retain response metadata.
 
 Effront does not impose transport body-size limits.
-Configure optional request limits in application middleware or the host.
+Host limits still apply.
+To reject oversized Server Function bodies before decoding, enforce limits at the host or in [global HTTP middleware](../guide/http.md#global).
+Scoped Server Function middleware runs after body decoding.
 
 ## makeHttpEffect {#capture}
 
@@ -52,4 +54,3 @@ The application Layer remains request-scoped.
 - Request completion does not dispose of host-owned captured services.
 
 The [Alchemy adapter](./alchemy.md) accepts a native application-source Effect with the same capture and lifetime rules.
-Its source runs per request and retains typed failures and service requirements.

@@ -5,6 +5,8 @@
 `createFetchHandler(application)` は、Layer の要件を `HttpRouter.HttpRouter` と `HttpServerRequest.HttpServerRequest` で満たせるアプリケーションを受け取ります。
 戻り値は `FetchHandler` です。
 
+`createFetchHandler` は、ホストの RSC 統合がある専用 RSC エントリーでインポートして実行してください。
+
 ```typescript
 import { createFetchHandler } from "@effront/core/workers";
 import application from "./entry.effront";
@@ -31,10 +33,7 @@ Scope はレスポンス本文の完了、失敗、キャンセルまで保持�
 本文のないレスポンスでは直ちに解放します。
 バッファ済みレスポンスのリクエストサービスは応答の構築後に解放できますが、ストリーミング本文では読み取りの完了まで保持します。
 
-Effront は転送する本文のサイズ制限を設けません。
-必要なリクエスト制限は、アプリケーションのミドルウェアまたはホストで設定してください。
-`createFetchHandler` は、ホストの RSC 統合がある専用 RSC エントリーでインポートして実行してください。
-通常の Node インポートや、既定環境で動作させるレンダラーのフォールバックはサポートしません。
+転送時の制限は、[HTTP のリクエストサイズポリシー](./http.md#handler)を参照してください。
 
 ## コアの Context 読み取り関数 {#readers}
 

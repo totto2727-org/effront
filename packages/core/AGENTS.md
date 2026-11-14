@@ -49,8 +49,6 @@ The retained suites under `tests/` have these package-owned responsibilities:
 ## Package-specific rules
 
 - Preserve RSC directives, the `react-server` conditional root export, client transition CSS, and the explicit runtime subpaths in package output.
-- Rendering and HTTP execution require the dedicated RSC graph.
-  Do not add a `#rsc-server` fallback or promise plain Node imports can execute the rendering runtime.
 
 ## Task-specific documentation
 

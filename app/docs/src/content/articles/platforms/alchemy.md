@@ -19,7 +19,7 @@ vp install
 | ファイル                | 役割                                                                      |
 | ----------------------- | ------------------------------------------------------------------------- |
 | `src/entry.effront.tsx` | HTML レイアウト、一つのページ、`/` ルートを定義します。                   |
-| `src/entry.workers.ts`  | Worker を宣言し、リクエストまでアプリケーションの読み込みを遅延させます。 |
+| `src/entry.workers.ts`  | Worker を宣言し、設定済みアプリケーションの HTTP ハンドラーを構築します。 |
 | `alchemy.run.ts`        | Stack を定義し、Worker の URL を出力します。                              |
 | `vite.config.ts`        | `effront()` と `effrontAlchemy()` を登録します。                          |
 | `package.json`          | `dev` を `alchemy dev` として定義します。                                 |

@@ -223,10 +223,6 @@ export const coreRuntimePages: readonly DocPage[] = [
           Effectを再利用しても、Layerは評価ごとに取得します。
         </p>
         <p>
-          Effrontは転送する本文のサイズ制限を設けません。
-          必要なリクエスト制限は、アプリケーションのミドルウェアまたはホストが管理します。
-        </p>
-        <p>
           <code>workers.ts</code> の <code>createFetchHandler</code> は、このEffectを{" "}
           <code>HttpEffect.toWebHandler</code> に渡します。 呼び出しごとに新しい{" "}
           <code>WorkersRequestContext</code> を追加しますが、リクエスト単位の取得は変えません。
@@ -652,13 +648,14 @@ export const coreRuntimePages: readonly DocPage[] = [
         </p>
         <p>
           multipart本文はFormData、それ以外はtextになります。
-          読み取りとmultipart解析の失敗は400です。
-          必要な本文サイズ制限は、アプリケーションのミドルウェアまたはホストが管理します。
+          読み取りとmultipart解析の失敗は400です。 転送時の制限は、
+          <a href="/ja/api-reference/http#handler">HTTPのリクエストサイズポリシー</a>
+          を参照してください。
         </p>
         <SourceExcerpt source={coreRuntimeSources.serverFnDecode} />
         <p>
-          <code>decodeReply</code> は一時参照を使って引数を復元します。
-          Effrontは引数配列のサイズ制限を設けません。 Effrontは結果が配列であることを確認し、
+          <code>decodeReply</code> は一時参照とReactの既定のデコーダー制限を使って引数を復元します。
+          Effrontは結果が配列であることを確認し、
           <code>loadServerAction</code> が関数を解決します。
           デコード、配列形式、参照解決の失敗は、アプリケーション入力の検証前に400になります。
           サーバーは一時参照をFlightへ引き継ぎ、ブラウザーは <code>encodeReply</code>{" "}
