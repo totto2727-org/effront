@@ -1,37 +1,22 @@
 import { Effect } from "effect";
 import { HttpMiddleware, HttpServerRequest, HttpServerResponse } from "effect/http";
+import Negotiator from "negotiator";
 
 const privateCacheControl = "private, no-store";
 
 const acceptsRepresentation = (accept: string | undefined, contentType: string | undefined) => {
-  const mediaType = contentType?.split(";")[0]?.trim().toLowerCase();
+  if (!accept || !contentType) return false;
+  const mediaType = contentType.split(";")[0]?.trim().toLowerCase();
   if (mediaType !== "text/html" && mediaType !== "text/x-component") return false;
 
-  let specificity = -1;
-  let quality = 0;
-  for (const range of (accept ?? "").toLowerCase().split(",")) {
-    const [type, ...parameters] = range.split(";").map((value) => value.trim());
-    const rank = type === mediaType ? 2 : type === "text/*" ? 1 : type === "*/*" ? 0 : -1;
-    if (rank < 0) continue;
-    const weights = parameters
-      .map((parameter) => parameter.split("=").map((value) => value.trim()))
-      .filter(([name]) => name === "q");
-    const weight =
-      weights.length === 0 ? "1" : weights[0]?.length === 2 ? (weights[0][1] ?? "") : "";
-    const value =
-      weights.length <= 1 && /^(?:0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/.test(weight)
-        ? Number(weight)
-        : 0;
-    if (rank > specificity) {
-      specificity = rank;
-      quality = value;
-    } else if (rank === specificity) {
-      quality = Math.min(quality, value);
-    }
-  }
+  const negotiator = new Negotiator({ headers: { accept } });
+  const ranges = negotiator.mediaTypes().map((type) => type.toLowerCase());
 
   // Flight needs an explicit opt-in. Only HTML gains the global wildcard fallback.
-  return quality > 0 && (specificity === 2 || (mediaType === "text/html" && specificity === 0));
+  return (
+    (ranges.includes(mediaType) || (mediaType === "text/html" && ranges.includes("*/*"))) &&
+    negotiator.mediaType([contentType]) !== undefined
+  );
 };
 
 const varyFor = (vary: string | undefined) => {

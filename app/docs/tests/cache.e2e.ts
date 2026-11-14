@@ -45,7 +45,17 @@ test("origin accepts a browser document Accept header", async ({ request }) => {
   expect(await response.text()).toContain('lang="en"');
 });
 
-for (const accept of ["application/json", "*/*;q=0", "text/html;q=0, */*"]) {
+for (const accept of ["text/html;q=2", "text/html;q=0, text/html", "text/*;q=0.5, */*"]) {
+  test(`origin uses negotiator semantics for Accept ${accept}`, async ({ request }) => {
+    const response = await request.get("/en/guide/markdown", { headers: { Accept: accept } });
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("text/html");
+    expectPolicy(response.headers(), true);
+    expect(await response.text()).toContain('lang="en"');
+  });
+}
+
+for (const accept of ["application/json", "*/*;q=0", "text/html;q=0, */*", "text/*;q=0, */*"]) {
   test(`origin leaves excluded Accept ${accept} private`, async ({ request }) => {
     const response = await request.get("/en/guide/markdown", { headers: { Accept: accept } });
     expect(response.status()).toBe(200);

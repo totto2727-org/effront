@@ -132,7 +132,11 @@ HTML accepts explicit `text/html` and global `*/*` media ranges with a positive 
 A `text/*` range does not opt responses into caching, but its exclusions take precedence over `*/*`.
 Flight requires an explicit `text/x-component` media range with a positive quality value.
 More specific media ranges take precedence, so `text/html;q=0, */*` does not opt HTML into caching.
-Missing Accept, unsupported media types, malformed quality values, and explicit exclusions remain private.
+Missing or empty Accept, unsupported media types, and negotiated exclusions remain private.
+[Negotiator](https://github.com/jshttp/negotiator) owns media-range, parameter, quality, and duplicate handling against the actual response Content-Type.
+The middleware does not impose an additional quality-value grammar or a duplicate-range veto.
+For example, Negotiator accepts positive numeric quality prefixes and chooses the highest quality among duplicate ranges with the same specificity, so `text/html;q=2` and `text/html, text/html;q=0` are eligible.
+An Accept media parameter must match the actual response parameter unless another eligible range accepts that response.
 The middleware does not change content negotiation or turn wildcard requests into Flight requests.
 
 Cookie and Authorization request headers do not affect this public site's cache policy.

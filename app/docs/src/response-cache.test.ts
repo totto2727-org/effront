@@ -42,6 +42,7 @@ describe("docs cache middleware", () => {
     "text/html",
     "*/*",
     "*/*;q=0.8",
+    "text/*;q=0.5, */*",
     "TEXT/HTML",
     "text/html;q=0.5, */*;q=0",
     "text/html, text/*;q=0",
@@ -64,11 +65,7 @@ describe("docs cache middleware", () => {
     "text/html-extra",
     "application/example;note=text/html",
     "text/html;q=invalid, */*",
-    "text/html;q=1.1, */*",
-    "text/html;q=1;q=0, */*",
     "text/html;q = 0, */*",
-    "text/html;q, */*",
-    "text/html;q=1=0, */*",
     "*/*;q=invalid",
     "*/*;q=0",
     "text/html;q=0, */*",
@@ -76,12 +73,7 @@ describe("docs cache middleware", () => {
     "text/*;q=0, */*",
     "text/html;q=0.0",
     "text/html;q=bogus",
-    "text/html;q=2",
     "text/html;q=-1",
-    "text/html;q=0.0001",
-    "text/html;q=1;q=0",
-    "text/html, text/html;q=0",
-    "text/html;q",
     "text/html;q = 0",
     "text/html;q=0=1",
   ])("does not opt unsupported Accept %s into caching", async (accept) =>
@@ -90,6 +82,27 @@ describe("docs cache middleware", () => {
 
   it("does not opt requests without Accept into caching", async () => {
     expectPolicy(await run(new Request("https://docs.example/guide")), false);
+  });
+
+  it.each([
+    "text/html;q=1.1, */*",
+    "text/html;q=2",
+    "text/html;q=0.0001",
+    "text/html;q=1;q=0",
+    "text/html;q=1;q=0, */*",
+    "text/html;q",
+    "text/html;q, */*",
+    "text/html;q=1=0, */*",
+    "text/html, text/html;q=0",
+    "text/html;q=0, text/html",
+  ])("uses negotiator's positive quality and duplicate semantics for %s", async (accept) => {
+    expectPolicy(await run(pageRequest({ accept })), true);
+  });
+
+  it("uses negotiator for combined duplicate Accept header values", async () => {
+    const request = pageRequest({ accept: "text/html;q=0" });
+    request.headers.append("accept", "text/html");
+    expectPolicy(await run(request), true);
   });
 
   it.each(["POST", "PUT", "PATCH", "DELETE", "HEAD"])("does not cache %s", async (method) => {
@@ -147,13 +160,16 @@ describe("docs cache middleware", () => {
 
   it.each([
     ["text/x-component", true],
-    ["text/x-component; charset=utf-8", true],
+    ["text/x-component; charset=utf-8", false],
     ["text/x-component;q=0", false],
     ["*/*", false],
     ["text/*", false],
     ["text/html, text/x-component", true],
     ["text/x-component;q=0, */*", false],
     ["text/x-component;q=0.5, */*;q=0", true],
+    ["TEXT/X-COMPONENT;q=0.5", true],
+    ["text/x-component;q=0, text/*", false],
+    ["text/html, */*", false],
     ["text/html", false],
   ])("checks Flight's actual media type for Accept %s", async (accept, eligible) => {
     const original = HttpServerResponse.text("flight", { contentType: "text/x-component" });
@@ -167,6 +183,28 @@ describe("docs cache middleware", () => {
     async (contentType) => {
       const original = HttpServerResponse.text("not HTML", { contentType });
       expectPolicy(await run(pageRequest({ accept: "*/*" }), Effect.succeed(original)), false);
+    },
+  );
+
+  it.each(["text/html", "text/x-component"])(
+    "matches Accept parameters against the actual %s response",
+    async (mediaType) => {
+      const original = HttpServerResponse.setHeader(
+        HttpServerResponse.text("rendered"),
+        "content-type",
+        `${mediaType}; charset=utf-8`,
+      );
+      expectPolicy(
+        await run(pageRequest({ accept: `${mediaType}; charset=utf-8` }), Effect.succeed(original)),
+        true,
+      );
+      expectPolicy(
+        await run(
+          pageRequest({ accept: `${mediaType}; charset=shift_jis` }),
+          Effect.succeed(original),
+        ),
+        false,
+      );
     },
   );
 
