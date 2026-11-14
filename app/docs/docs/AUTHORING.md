@@ -127,12 +127,24 @@ Thus `/en`, `/ja`, query variants and deployments are isolated without synthetic
 Do not enable cross-version caching.
 The request hostname is not part of the native key. This site must continue to render the same public content across its hostnames.
 
-The middleware opts in only GET requests whose `Accept` contains `text/html` or `text/x-component`, with a 200 response.
+The middleware opts in only GET requests with a 200 response and an actual `text/html` or `text/x-component` response Content-Type.
+Both HTML and Flight accept explicit matching media types, `text/*`, and `*/*` media ranges with a positive negotiated quality value.
+More specific media ranges take precedence, so `text/html;q=0, */*` excludes HTML and `text/x-component;q=0, */*` excludes Flight.
+Likewise, `text/*;q=0, */*` excludes both representations.
+Missing or empty Accept, unsupported media types, and negotiated exclusions remain private.
+[Negotiator](https://github.com/jshttp/negotiator) owns media-range, parameter, quality, and duplicate handling against the actual response Content-Type.
+The middleware does not impose an additional quality-value grammar or a duplicate-range veto.
+For example, Negotiator accepts positive numeric quality prefixes and chooses the highest quality among duplicate ranges with the same specificity, so `text/html;q=2` and `text/html, text/html;q=0` are eligible.
+An Accept media parameter must match the actual response parameter unless another eligible range accepts that response.
+The middleware does not change content negotiation or turn wildcard requests into Flight requests.
+
 Cookie and Authorization request headers do not affect this public site's cache policy.
 The middleware does not inspect response cookies or Set-Cookie headers.
-Other responses returned through the middleware receive `private, no-store` in both cache-control headers. Failures propagate without adding cache headers.
+Other responses returned through the middleware receive `private, no-store` in both cache-control headers.
+Failures propagate without adding cache headers.
 
-This docs-specific policy does not additionally inspect Range, Content-Range, response Content-Type, or wildcard Vary. It is not a general-purpose caching middleware.
+This docs-specific policy does not additionally inspect Range, Content-Range, or wildcard Vary.
+It is not a general-purpose caching middleware.
 Cloudflare can satisfy HEAD and Range from a cached GET itself.
 
 HTTP caching does not inspect React's serialized payload: a render error encoded inside a normally completed HTTP 200 can be cached.
@@ -156,6 +168,7 @@ After an authorized deployment, repeat HTML and Flight GETs.
 Inspect Cloudflare's `Cf-Cache-Status: MISS` then `HIT`.
 Make sure that the content types and bodies are correct.
 Make sure that the consumed `Cloudflare-CDN-Cache-Control` header is absent.
+Repeat with `Accept: */*` and verify HTML, not Flight.
 Repeat with credentials, then deploy changed content and verify a fresh request receives the new article rather than the previous version's cache.
 
 These production cache observations are not established by local tests.
