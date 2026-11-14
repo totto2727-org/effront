@@ -5,6 +5,9 @@ import { defineConfig } from "vite-plus";
 const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));
 
 export default defineConfig({
+  test: {
+    setupFiles: ["./tests/rsc-protocol.setup.ts"],
+  },
   run: {
     tasks: {
       check: { command: "", dependsOn: ["js:check"] },

@@ -1,4 +1,3 @@
-import "../../core/tests/server/rsc-protocol.mock";
 import { Effect, Layer } from "effect";
 import { WorkersRequestContext } from "@effront/core/workers";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";

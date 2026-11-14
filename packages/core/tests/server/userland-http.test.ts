@@ -1,4 +1,3 @@
-import "./rsc-protocol.mock";
 import { Context, Effect, Layer } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { createFetchHandler, createWorkersContextAccessors } from "@effront/core/workers";
