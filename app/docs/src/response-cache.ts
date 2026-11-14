@@ -9,14 +9,7 @@ const acceptsRepresentation = (accept: string | undefined, contentType: string |
   const mediaType = contentType.split(";")[0]?.trim().toLowerCase();
   if (mediaType !== "text/html" && mediaType !== "text/x-component") return false;
 
-  const negotiator = new Negotiator({ headers: { accept } });
-  const ranges = negotiator.mediaTypes().map((type) => type.toLowerCase());
-
-  // Flight needs an explicit opt-in. Only HTML gains the global wildcard fallback.
-  return (
-    (ranges.includes(mediaType) || (mediaType === "text/html" && ranges.includes("*/*"))) &&
-    negotiator.mediaType([contentType]) !== undefined
-  );
+  return new Negotiator({ headers: { accept } }).mediaType([contentType]) !== undefined;
 };
 
 const varyFor = (vary: string | undefined) => {

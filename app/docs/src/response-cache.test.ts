@@ -40,6 +40,7 @@ const expectPolicy = (response: HttpServerResponse.HttpServerResponse, isPublic:
 describe("docs cache middleware", () => {
   it.each([
     "text/html",
+    "text/*",
     "*/*",
     "*/*;q=0.8",
     "text/*;q=0.5, */*",
@@ -61,7 +62,6 @@ describe("docs cache middleware", () => {
     "application/json",
     "",
     "text/x-component",
-    "text/*",
     "text/html-extra",
     "application/example;note=text/html",
     "text/html;q=invalid, */*",
@@ -162,14 +162,14 @@ describe("docs cache middleware", () => {
     ["text/x-component", true],
     ["text/x-component; charset=utf-8", false],
     ["text/x-component;q=0", false],
-    ["*/*", false],
-    ["text/*", false],
+    ["*/*", true],
+    ["text/*", true],
     ["text/html, text/x-component", true],
     ["text/x-component;q=0, */*", false],
     ["text/x-component;q=0.5, */*;q=0", true],
     ["TEXT/X-COMPONENT;q=0.5", true],
     ["text/x-component;q=0, text/*", false],
-    ["text/html, */*", false],
+    ["text/html, */*", true],
     ["text/html", false],
   ])("checks Flight's actual media type for Accept %s", async (accept, eligible) => {
     const original = HttpServerResponse.text("flight", { contentType: "text/x-component" });
@@ -205,6 +205,35 @@ describe("docs cache middleware", () => {
         ),
         false,
       );
+    },
+  );
+
+  it.each(
+    ["text/html", "text/x-component"].flatMap((contentType) => [
+      { contentType, accept: "*/*", eligible: true },
+      { contentType, accept: "text/*", eligible: true },
+      { contentType, accept: `${contentType};q=0, */*`, eligible: false },
+      { contentType, accept: "text/*;q=0, */*", eligible: false },
+      { contentType, accept: "*/*;q=0", eligible: false },
+      {
+        contentType,
+        accept: contentType === "text/html" ? "text/x-component" : "text/html",
+        eligible: false,
+      },
+    ]),
+  )(
+    "applies symmetric policy to $contentType with Accept $accept",
+    async ({ contentType, accept, eligible }) => {
+      const original = HttpServerResponse.text("rendered", {
+        contentType,
+        headers: { vary: "Accept-Language, ACCEPT" },
+      });
+      const response = await run(pageRequest({ accept }), Effect.succeed(original));
+      expectPolicy(response, eligible);
+      expect(response.body).toBe(original.body);
+      expect(response.headers["content-type"]).toBe(original.headers["content-type"]);
+      expect(response.headers["vary"]).toBe("accept-language, accept");
+      expect(await HttpServerResponse.toWeb(response).text()).toBe("rendered");
     },
   );
 

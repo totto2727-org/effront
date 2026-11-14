@@ -128,10 +128,9 @@ Do not enable cross-version caching.
 The request hostname is not part of the native key. This site must continue to render the same public content across its hostnames.
 
 The middleware opts in only GET requests with a 200 response and an actual `text/html` or `text/x-component` response Content-Type.
-HTML accepts explicit `text/html` and global `*/*` media ranges with a positive quality value.
-A `text/*` range does not opt responses into caching, but its exclusions take precedence over `*/*`.
-Flight requires an explicit `text/x-component` media range with a positive quality value.
-More specific media ranges take precedence, so `text/html;q=0, */*` does not opt HTML into caching.
+Both HTML and Flight accept explicit matching media types, `text/*`, and `*/*` media ranges with a positive negotiated quality value.
+More specific media ranges take precedence, so `text/html;q=0, */*` excludes HTML and `text/x-component;q=0, */*` excludes Flight.
+Likewise, `text/*;q=0, */*` excludes both representations.
 Missing or empty Accept, unsupported media types, and negotiated exclusions remain private.
 [Negotiator](https://github.com/jshttp/negotiator) owns media-range, parameter, quality, and duplicate handling against the actual response Content-Type.
 The middleware does not impose an additional quality-value grammar or a duplicate-range veto.

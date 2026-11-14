@@ -15,7 +15,7 @@ const expectPolicy = (headers: Record<string, string>, publicResponse: boolean) 
 };
 
 for (const locale of ["en", "ja"]) {
-  for (const accept of ["text/html", "text/x-component", "*/*"]) {
+  for (const accept of ["text/html", "text/x-component", "*/*", "text/*"]) {
     for (const query of ["one", "two"]) {
       test(`origin serves ${locale} ${accept} with public policy for query ${query}`, async ({
         request,
@@ -24,7 +24,7 @@ for (const locale of ["en", "ja"]) {
           headers: { Accept: accept },
         });
         expect(response.status()).toBe(200);
-        const contentType = accept === "*/*" ? "text/html" : accept;
+        const contentType = accept === "*/*" || accept === "text/*" ? "text/html" : accept;
         expect(response.headers()["content-type"]).toContain(contentType);
         expectPolicy(response.headers(), true);
         const body = await response.text();

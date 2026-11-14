@@ -21,7 +21,8 @@ The parent of this fork's first local implementation commit, `d391de2`, is the r
 
 ## Documentation response caching
 
-Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the private documentation application opts public HTML GET responses with `Accept: */*` into its existing native Workers Cache policy.
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the private documentation application opts public HTML and Flight GET responses into its existing native Workers Cache policy symmetrically.
+Both response types accept matching explicit media types, `text/*`, and `*/*` through Negotiator, while more-specific `q=0` exclusions, incompatible media types or parameters, and missing Accept remain private.
 The affected areas are `app/docs/src/response-cache.ts`, its unit and local-host acceptance tests, and the site's authoring guide.
 Eligibility uses [Negotiator](https://github.com/jshttp/negotiator) to check the actual HTML or Flight Content-Type, including media parameters, quality, specificity, and duplicate-range semantics, while preserving streamed bodies and the site's existing public-only credential and cookie behavior.
 The docs application owns the runtime dependency and catalog-managed development types.
