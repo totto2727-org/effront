@@ -36,24 +36,6 @@ export const coreRuntimeSources = {
  * response production alone in Effect.scoped: producing headers does not consume a body.
  */`,
   },
-  externalContext: {
-    path: "packages/core/src/http.ts",
-    language: "typescript",
-    code: `  const handler = toHttpEffect(application);
-  return Effect.map(Effect.context<CapturedRequirements<Requirements>>(), (context) => {
-    const captured: Context.Context<CapturedRequirements<Requirements>> =
-      captureExternalContext<HttpRequirements<Requirements>>(context);
-    return Effect.contextWith(
-      (requestContext: Context.Context<RemainingRequirements<Requirements>>) => {
-        const provided: Context.Context<CapturedRequirements<Requirements>> = Context.merge(
-          captured,
-          requestContext,
-        );
-        return Effect.provideContext(handler, provided);
-      },
-    );
-  });`,
-  },
   flightRuntime: {
     path: "packages/core/src/server/flight-renderer.tsx",
     language: "tsx",
@@ -211,7 +193,7 @@ export const coreRuntimePages: readonly DocPage[] = [
         <p>
           本文のストリーミングが続く場合、リクエストのサービスはレスポンス生成後も生存する必要があります。
           EffrontはアプリケーションのLayerをリクエストごとに取得し、応答本文の寿命の管理をホストのHTTP境界に委ねます。
-          ホスト所有のサービスの参照を捕捉する処理は別であり、所有権を引き取ることも寿命を延ばすこともありません。
+          ホスト所有のサービスはネイティブEffectのAPIで提供し、所有権を引き取ることも寿命を延ばすこともありません。
         </p>
         <p>
           <a href="/ja/architecture/implementation/application">アプリケーション定義</a> がLayerと{" "}
@@ -283,7 +265,7 @@ export const coreRuntimePages: readonly DocPage[] = [
           HTTPに直接接続するホストも、同じ境界を保つ必要があります。 応答生成だけに{" "}
           <code>Effect.scoped</code>{" "}
           を適用すると、遅延した本文処理に必要なリソースを早く閉じすぎます。
-          後からサービスを読む独自の本文は、必要なContextも捕捉しなければなりません。サービスを生かしておくだけでは、後のEffectに自動で提供されません。
+          独自の本文が遅れて実行するEffectにも、ネイティブEffectのAPIで必要なサービスを提供してください。サービスを生かしておくだけでは、後のEffectに自動で提供されません。
         </p>
         <p>
           Flightの描画は、ストリーム完了に結び付いた子Scopeと解放処理を追加します。
@@ -292,19 +274,17 @@ export const coreRuntimePages: readonly DocPage[] = [
         </p>
         <h2 id="host-boundary">4. リクエストの状態を持ち越さずにホストのサービスを再利用する</h2>
         <p>
-          <code>makeHttpEffect(application)</code> は外部サービスの参照を捕捉し、再利用可能なHTTP
-          Effectを返します。
-          構築時にアプリケーションのリクエストLayerを作ることも、参照の所有権を引き取ることもありません。
+          <code>toHttpEffect(application)</code> はHTTP Effectを直接返します。 外部サービスは{" "}
+          <code>Effect.provideService</code>、またはLayerと <code>Effect.provide</code>{" "}
+          で提供します。
+          構築用Effect、Contextのスナップショット、ランタイムの手動マージはありません。
           所有者は、そのサービスを使うすべての応答本文が終わるまで維持する必要があります。
         </p>
-        <SourceExcerpt source={coreRuntimeSources.externalContext} />
         <p>
-          実行中のリクエストの値は、捕捉した値より優先されます。 合流前に{" "}
-          <code>captureExternalContext</code>{" "}
-          が構築時のScope、HTTPリクエスト、解析済み検索パラメーター、ルートContext、ルーター、Layerのmemo
-          mapを除きます。
-          <code>Effect.context&lt;R&gt;()</code>{" "}
-          は型引数で実行時のキーを絞り込まないため、明示的に除く必要があります。
+          サービスの優先順位はネイティブEffectの提供規則に従います。
+          Alchemyでは公式ブリッジが現在のホストサービスとScopeを提供します。
+          アプリケーションLayerはリクエストごとに新しいmemo
+          mapで構築し、構築時のリクエスト状態を持ち越しません。
         </p>
         <p>
           <code>WorkersRequestContext</code> はreadonlyの <code>request</code>、<code>env</code>、

@@ -76,7 +76,7 @@ Layer の取得は `make` の呼び出し時ではなく、リクエストごと
 
 [ネイティブ HTTP](./http.md) は、ホストが提供する外部サービスの要件を保持します。
 [Workers Fetch](./workers.md) は、`HttpRouter` と `HttpServerRequest` で満たせる要件だけを受け付けます。
-`makeHttpEffect` と [Alchemy アダプター](./alchemy.md) は、ホスト所有のサービス参照を捕捉できますが、サービスの寿命は延長しません。
+`toHttpEffect` と [Alchemy アダプター](./alchemy.md) には、ネイティブ Effect の API でホスト所有のサービスを提供しますが、サービスの寿命は延長しません。
 
 ## EFFRONT.withMiddleware {#middleware}
 

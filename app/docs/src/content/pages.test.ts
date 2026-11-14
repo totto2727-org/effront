@@ -519,6 +519,40 @@ describe("documentation catalog", () => {
     },
   );
 
+  it.each(["en", "ja"] as const)(
+    "documents direct HTTP Effects and native provision in %s",
+    async (locale) => {
+      const http = await text(`/${locale}/api-reference/http`);
+      const alchemy = await text(`/${locale}/api-reference/alchemy`);
+      const api = await text(`/${locale}/api-reference`);
+      expect(await render(`/${locale}/api-reference/http`)).toContain('id="provision"');
+      for (const contract of [
+        "toHttpEffect(application)",
+        "Effect.provideService",
+        "Effect.provide",
+      ]) {
+        expect(http).toContain(contract);
+      }
+      for (const contract of [
+        "applicationHttpEffect(load)",
+        "applicationHttpEffect&lt;Definition&gt;()",
+        "fetch: applicationHttpEffect&lt;typeof application&gt;().pipe(",
+        "const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache)",
+        "Effect.provideService(CacheClient, cache)",
+        "HttpApplicationEffect",
+      ]) {
+        expect(alchemy).toContain(contract);
+      }
+      expect(alchemy).not.toMatch(
+        /makeApplicationHttpEffect|yield\s*\*\s*applicationHttpEffect|context\?\s*:/,
+      );
+      expect(api).not.toMatch(/makeHttpEffect|makeApplicationHttpEffect/);
+      const request = await render(`/${locale}/architecture/implementation/request`);
+      expect(request).toContain("Effect.provideService");
+      expect(request).not.toMatch(/makeHttpEffect|captureExternalContext/);
+    },
+  );
+
   it("describes implemented hosts and separates Bun production from Vite middleware", async () => {
     const platforms = await render("/platforms");
     for (const host of ["cloudflare", "alchemy", "node", "bun"]) {
@@ -560,7 +594,7 @@ describe("documentation catalog", () => {
       expect(lifetime).toContain(contract);
     }
     const lifetimeHtml = await render("/ja/advanced/request-runtime-and-lifetimes");
-    expect(lifetimeHtml).toContain('href="/ja/api-reference/http#capture"');
+    expect(lifetimeHtml).toContain('href="/ja/api-reference/http#provision"');
     expect(lifetimeHtml).toContain('href="/ja/api-reference/http#handler"');
   });
 
@@ -631,7 +665,7 @@ describe("documentation catalog", () => {
           new URL("examples/alchemy-cloudflare/src/entry.workers.ts", repository),
           "utf8",
         ),
-      ).toContain("makeApplicationHttpEffect");
+      ).toContain("applicationHttpEffect");
       const chooser = await render(`/${locale}/platforms`);
       for (const id of ["setup", "entries", "assets", "node", "bun"]) {
         expect(chooser).toContain(`id="${id}"`);

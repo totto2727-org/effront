@@ -24,7 +24,7 @@ export type FetchHandler<Env = unknown, ExecutionContext = unknown> = (
 
 `createFetchHandler` returns the default type with `unknown` host values.
 Reader type arguments describe those values inside application Effects.
-For arbitrary external service requirements, use [native HTTP capture](./http.md#capture) or [Alchemy](./alchemy.md).
+For arbitrary external service requirements, use [native HTTP service provision](./http.md#provision) or [Alchemy](./alchemy.md).
 
 Each invocation acquires the application Layer.
 Its Scope stays open until the response body completes, fails, or is canceled.

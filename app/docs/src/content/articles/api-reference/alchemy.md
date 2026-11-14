@@ -6,13 +6,21 @@
 設定済みアプリケーションを使う引数なしのヘルパーは `@effront/alchemy/cloudflare/application` からインポートします。
 エントリーを分けることで、独自のローダーを使うホストには設定済みアプリケーションのモジュールを読み込ませません。
 
-| API                                          | 入力                                                              | 戻り値                                                        |
-| -------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------- |
-| `applicationHttpEffect(load, { context? }?)` | 遅延アプリケーションローダーと、省略可能な捕捉済み Effect Context | ネイティブ HTTP ハンドラー Effect                             |
-| `makeApplicationHttpEffect(load)`            | 遅延アプリケーションローダー                                      | 利用可能な外部サービスを捕捉し、ハンドラーを返す構築用 Effect |
-| `makeApplicationHttpEffect<Definition>()`    | `effront()` で指定したアプリケーションの型                        | Plugin がアプリケーション参照を提供する、同じ構築用 Effect    |
+| API                                   | 入力                                       | 戻り値                                                  |
+| ------------------------------------- | ------------------------------------------ | ------------------------------------------------------- |
+| `applicationHttpEffect(load)`         | 遅延アプリケーションローダー               | `HttpApplicationEffect<ApplicationError, Requirements>` |
+| `applicationHttpEffect<Definition>()` | `effront()` で指定したアプリケーションの型 | 定義のエラーと要件を保持する `HttpApplicationEffect`    |
 
-ローダーを明示する形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements>` を受け付けます。
+どちらも構築用 Effect ではなく、HTTP Effect を直接返します。
+`context` オプション、Context のスナップショット、保存したランタイムとリクエストの手動マージはありません。
+サービスはネイティブの `Effect.provideService`、または Layer と `Effect.provide` で提供します。
+ネイティブ Alchemy ブリッジが現在のホストサービスとリクエスト Scope を管理します。
+Effront はリクエストごとにアプリケーション Layer を新しく構築します。
+サービスの優先順位はネイティブ Effect の規則に従い、現在のリクエストを特別に優先する独自の規則はありません。
+ハンドラーを囲む外部のスコープ付き Layer は、ストリーミング本文の終了前に、ヘッダーの生成後に解放される可能性があります。
+リクエスト所有の破棄可能なリソースは、そのような外部 Layer ではなく `EFFRONT.make` のアプリケーション Layer に置いてください。
+
+明示形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements>` を受け付けます。
 
 ```typescript
 import type { ApplicationDefinition } from "@effront/core";
@@ -22,54 +30,62 @@ export type ApplicationLoader<Services, ApplicationError, Requirements> = () => 
 >;
 ```
 
-ローダーはリクエスト処理中に実行されます。
+ローダーはリクエスト処理中に実行され、ランタイム引数を受け取りません。
 `effront()` と `effrontAlchemy()` を使う場合は、ローダーを書く代わりにアプリケーションを型として参照できます。
 
-構築時の追加サービスが不要なら、次の構築用 Effect を `Cloudflare.Worker` の第 3 引数に渡せます。
-
 ```typescript
-import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
+import { applicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import { Effect } from "effect";
 import type application from "./entry.effront";
 
-const construct = Effect.gen(function* () {
-  const fetch = yield* makeApplicationHttpEffect<typeof application>();
-  return { fetch: fetch.pipe(Effect.orDie) };
+const construct = Effect.succeed({
+  fetch: applicationHttpEffect<typeof application>().pipe(Effect.orDie),
 });
 ```
+
+必要なデプロイ用 capability の取得は、引き続き Worker の構築時に行います。
+たとえばネイティブ KV クライアントを yield し、ハンドラー自体は yield せずにサービスを提供します。
+
+```typescript
+const construct = Effect.gen(function* () {
+  const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
+  return {
+    fetch: applicationHttpEffect<typeof application>().pipe(
+      Effect.provideService(CacheClient, cache),
+      Effect.orDie,
+    ),
+  };
+});
+```
+
+[Basic サンプル](https://github.com/totto2727-org/effront/tree/main/examples/basic) は `Cache`、`CacheClient`、必要なネイティブ KV バインディングを定義します。
+クライアントの提供は、所有権の移転や寿命の延長を行いません。
+所有者は、それを使うすべてのレスポンスの処理が終わるまで保持する必要があります。
+Alchemy はストリーミングの完了、失敗、キャンセルまでリクエスト Scope を保持します。
 
 型のみのインポートは Worker の実行コードから除去されます。
 Plugin は `effront({ application })` で指定したアプリケーションを、RSC グラフでだけ静的にインポートします。
 既定のエントリーは `./src/entry.effront.tsx` です。
 パッケージの `react-server` エントリーも HTTP レンダラーを静的にインポートし、既定のデプロイ用エントリーはどちらの実行時モジュールも読み込みません。
 アプリケーションのモジュールは isolate 初期化時に評価される可能性があるため、モジュール直下では宣言的な定義に留めてください。
-アプリケーション Layer の取得は引き続きリクエストごとに行います。
 型インポートは、そのエントリーと同じアプリケーションを参照してください。
 TypeScript は型インポートと Vite 設定の一致までは検証しません。
 アプリケーションの型は必要な capability とエラーを保持しますが、capability の実装は提供しません。
 
-たとえば Basic Worker の KV capability は引き続き明示的に渡します。
+互換性とグラフ分離のために、独自のローダーを選ぶ明示的な遅延形式も使用できます。
 
 ```typescript
-const fetch =
-  yield *
-  makeApplicationHttpEffect<typeof application>().pipe(Effect.provideService(CacheClient, cache));
+import { applicationHttpEffect } from "@effront/alchemy/cloudflare";
+
+const fetch = applicationHttpEffect(() =>
+  import("./entry.effront").then((module) => module.default),
+);
 ```
 
-独自にローダーを選択するホストでは、従来の明示形式も使用できます。
-
-```typescript
-import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare";
-
-const fetch =
-  yield *
-  makeApplicationHttpEffect(() => import("./entry.effront").then((module) => module.default));
-```
-
-明示ローダーでは、動的インポートをローダーの中に置いてください。
+動的インポートはローダーの中に置いてください。
 共有 Worker エントリーで値として静的にインポートすると、インフラ構築時に RSC アプリケーションを評価してしまいます。
-設定済みエントリーを使う形式は、RSC 統合なしでリクエストを実行すると `TypeError` になります。
-デプロイ用の構築時にはアプリケーションを読み込みません。
+設定済み形式は、RSC 統合なしでリクエストを実行すると `TypeError` になります。
+ハンドラーの作成時にはアプリケーションを読み込みません。
 設定済みアダプターの経路では、アプリケーションとレンダラーに動的インポートを使いません。
 ただし、Vite や基盤の RSC フレームワークがコード分割のために生成する動的インポートまで除去するものではありません。
 この API は、アプリ固有の runtime Layer の導出や、デプロイ構成と実行時構成の統合は行いません。
@@ -77,27 +93,11 @@ const fetch =
 ハンドラーは成功時にネイティブの `HttpServerResponse` を返し、[ネイティブ HTTP](./http.md) のエラーチャネルを保持します。
 Alchemy が受け付けるエラーの union はより狭いため、`fetch` を返す前に残りのアプリケーションエラーを処理または変換してください。
 `Effect.orDie` はその方針の一つであり、必須ではありません。
-
-**捕捉するサービス**
-
-`makeApplicationHttpEffect` は構築時の Context からサービス参照を捕捉します。
-`applicationHttpEffect` は明示的な `context` オプションからのみサービスを捕捉します。
-このオプションがなければ、捕捉済みサービスの型引数を指定しても、ハンドラーはアプリケーションのすべてのサービス要件を保持します。
-`context` プロパティが省略可能なオプション値も、これらの要件を保持します。
-捕捉済みサービスをハンドラーの要件から除くには、`context` の存在を確認し、必須プロパティとして渡してください。
-[Basic サンプル](https://github.com/totto2727-org/effront/tree/main/examples/basic) では、KV クライアントを使うアプリケーションサービスを捕捉しています。
-
-- 同じキーのサービスが現在のリクエストにある場合、その値を優先します。
-- HTTP サービス、Scope、Layer のメモ化状態、Alchemy の `RuntimeContext`、Worker self、汎用の `Self`、Cloudflare 環境、元の Request、Worker 環境、実行コンテキストは捕捉しません。
-- 参照の捕捉はサービスの取得や寿命の延長を行いません。所有者は、それを使うすべてのレスポンスの処理が終わるまで保持する必要があります。
-- アプリケーション Layer はリクエストごとに取得します。Alchemy はストリーミングの完了、失敗、キャンセルまでリクエスト Scope を保持します。
-
 Worker と Stack の宣言は [Alchemy のセットアップ](../platforms/alchemy.md) を参照してください。
 
 ## effrontAlchemy {#vite}
 
 `@effront/alchemy/cloudflare/vite` の `effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` は、`effront()` より後に登録する必要があります。
-正しい順序は次のとおりです。
 
 ```typescript
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";

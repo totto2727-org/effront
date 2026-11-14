@@ -11,7 +11,7 @@ Give shared resources and background work separate owners.
 
 For a shared database pool, register each borrowed connection's return with the request Scope.
 Leave pool disposal to the host owner.
-See the [external-service ownership contract](/en/api-reference/http#capture) for host-provided services.
+See the [external-service ownership contract](/en/api-reference/http#provision) for host-provided services.
 
 > [!NOTE]
 > A detached Promise does not extend a request service's lifetime.

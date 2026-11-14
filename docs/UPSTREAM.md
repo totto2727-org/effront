@@ -27,15 +27,19 @@ The historical combined Cloudflare factory was superseded after the pinned compa
 
 ## Alchemy configured application loader
 
-Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the Alchemy adapter supports `makeApplicationHttpEffect<typeof application>()` without a consumer-written dynamic import.
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the Alchemy adapter supports `applicationHttpEffect<typeof application>()` without a consumer-written dynamic import.
 This configured helper uses the dedicated `@effront/alchemy/cloudflare/application` subpath, while the existing `cloudflare` entry remains explicit-loader only and independent of the configured application.
 The type-only application import retains capability and error types while the Vite adapter supplies the application through the existing application-entry alias.
 The package separates its deployment-safe default entry from its `react-server` entry, which statically imports the renderer.
 The plugin statically imports the configured application only in the RSC graph, without an adapter-owned dynamic import.
-The affected areas are the Alchemy adapter's conditional exports and shared request factory, three maintained Alchemy examples, the streaming-feed regression host, and their API documentation and tests.
+The affected areas are the Alchemy adapter's conditional exports and shared request factory, maintained Alchemy consumers and generated starters, the streaming-feed regression host, and their API documentation and tests.
 Operationally, deployment construction does not load the RSC application, while the RSC isolate can evaluate declarative application modules during initialization.
 Application Layers remain request-scoped, and an unconfigured request reports the missing integration.
-Explicit loaders remain supported, and application-specific runtime Layers and resource selection remain consumer-owned.
+Explicit lazy loaders remain supported for compatibility and graph isolation, without passing a runtime.
+Both helpers return `HttpApplicationEffect` directly. Core exposes `toHttpEffect(application)` without a construction helper.
+Consumers provide services through native `Effect.provideService` or Layers, not manual Context snapshots or runtime merges.
+The native Alchemy bridge owns live host services and Scope. Application Layers are built fresh per request, while application-specific resource selection remains consumer-owned.
+These runtime API differences affect core HTTP, Alchemy integration, maintained consumers, and their documentation and regression tests.
 No upstream runtime source is incorporated by this change.
 
 ## Stable Effect v4 dependency policy

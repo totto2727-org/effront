@@ -93,8 +93,8 @@ export const page: DocPage = {
         Response headers can arrive before rendering finishes. Effect HTTP's Web handler keeps the
         request Scope alive until a streaming body ends, fails, or is canceled. Core removes HEAD
         bodies before that transfer so unread streams cannot retain the Scope. Services borrowed
-        through <code>makeHttpEffect</code> remain owned by the host, which must keep them alive
-        through all response bodies that use them. Refer to{" "}
+        through native Effect provision remain owned by the host, which must keep them alive through
+        all response bodies that use them. Refer to{" "}
         <a href="/en/architecture/implementation/request">request processing</a> for these ownership
         boundaries.
       </p>

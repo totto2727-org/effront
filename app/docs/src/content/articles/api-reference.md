@@ -6,14 +6,14 @@ Effront の API は、アプリケーションの定義、実行環境への接�
 | インポート先                              | 主な API                                                              | リファレンス                                                                                 |
 | ----------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `@effront/core`                           | `Application`、`PageViewTransition`                                   | [Application](/ja/api-reference/application)、[コンポーネント](/ja/api-reference/components) |
-| `@effront/core/http`                      | `toHttpEffect`、`makeHttpEffect`                                      | [ネイティブ HTTP](./api-reference/http.md)                                                   |
+| `@effront/core/http`                      | `toHttpEffect`                                                        | [ネイティブ HTTP](./api-reference/http.md)                                                   |
 | `@effront/core/workers`                   | `createFetchHandler`、`WorkersRequestContext`、Context の読み取り関数 | [Fetch と Workers Context](/ja/api-reference/workers)                                        |
 | `@effront/cloudflare/workers`             | `CloudflareExecutionContext`、Cloudflare Context の読み取り関数       | [Fetch と Workers Context](/ja/api-reference/workers)                                        |
 | `@effront/server/node`                    | Node.js の `serve`                                                    | [Node.js / Bun サーバー](./api-reference/server.md)                                          |
 | `@effront/server/bun`                     | Bun の `serve`                                                        | [Node.js / Bun サーバー](./api-reference/server.md)                                          |
 | `@effront/server/assets`                  | `withAssets`                                                          | [Node.js / Bun サーバー](./api-reference/server.md)                                          |
-| `@effront/alchemy/cloudflare`             | `applicationHttpEffect`、`makeApplicationHttpEffect`                  | [Alchemy](./api-reference/alchemy.md)                                                        |
-| `@effront/alchemy/cloudflare/application` | 設定済みアプリケーションの `makeApplicationHttpEffect`                | [Alchemy](./api-reference/alchemy.md)                                                        |
+| `@effront/alchemy/cloudflare`             | `applicationHttpEffect`                                               | [Alchemy](./api-reference/alchemy.md)                                                        |
+| `@effront/alchemy/cloudflare/application` | 設定済みアプリケーションの `applicationHttpEffect`                    | [Alchemy](./api-reference/alchemy.md)                                                        |
 | `@effront/vite`                           | `effront`、`EffrontViteOptions`                                       | [Vite と Cloudflare プラグイン](/ja/api-reference/vite)                                      |
 | `@effront/cloudflare`                     | `effrontCloudflare`、`EffrontCloudflareOptions`                       | [Vite と Cloudflare プラグイン](/ja/api-reference/vite)                                      |
 | `@effront/server/vite`                    | `effrontServer`                                                       | [Node.js / Bun サーバー](./api-reference/server.md)                                          |

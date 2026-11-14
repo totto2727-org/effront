@@ -5,7 +5,6 @@
 | API                                               | 戻り値                                                  | ホストが提供するサービス                                                                  |
 | ------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `toHttpEffect(application)`                       | ネイティブ HTTP Effect                                  | 現在のリクエスト、Scope、アプリケーションの外部要件                                       |
-| `makeHttpEffect(application)`                     | ネイティブ HTTP Effect を構築する Effect                | 構築時の外部サービスと、実行時のリクエスト、Scope                                         |
 | [`createFetchHandler(application)`](./workers.md) | `(request, env, executionContext) => Promise<Response>` | Fetch Context。アプリケーション Layer の要件は `HttpRouter` と `HttpServerRequest` のみ。 |
 
 既存のネイティブホスト連携には [Node.js / Bun](./server.md) と [Alchemy](./alchemy.md) があります。
@@ -39,16 +38,26 @@ HEAD レスポンスは本文が空でも、レスポンスのメタデータを
 Server Function の POST は、このヘッダーがなくても受信バイト数を 10 MiB に制限します。
 このハンドラーが `Content-Length` のない独自 HTTP ルートの本文をすべて実測するわけではありません。
 
-## makeHttpEffect {#capture}
+## ネイティブなサービスの提供 {#provision}
 
-`makeHttpEffect(application)` は、型付きの失敗を持たない構築用 Effect を返します。
-アプリケーションの外部サービスを要求し、その参照を捕捉した再利用可能な HTTP Effect を返します。
-返された Effect は HTTP のエラーチャネルを保持し、引き続き現在のリクエストとリクエスト Scope を必要とします。
-アプリケーション Layer はリクエストスコープのままです。
+> [!WARNING]
+> 破壊的変更: `makeHttpEffect(application)` を `toHttpEffect(application)` に置き換え、構築用の `yield*` や実行手順を削除してください。
+> Alchemy の `makeApplicationHttpEffect` は `applicationHttpEffect` に置き換え、ハンドラーを得るための yield や実行も削除します。
+> `{ context }` オプションは `Effect.provideService`、または Layer と `Effect.provide` に置き換えます。
+> 旧 API は削除され、非推奨のラッパーはありません。サービスの優先順位はネイティブ Effect の規則に従い、現在のリクエストを特別に優先する独自の規則はありません。
 
-- 同じキーのサービスが現在のリクエストにある場合、その値を優先します。
-- 構築時の Scope、HTTP リクエストサービス、ルーターサービス、Layer のメモ化状態は捕捉しません。
-- 捕捉はサービスの取得や寿命の延長を行いません。所有者は、そのサービスを使うすべてのレスポンス本文の処理が終わるまで保持する必要があります。
-- リクエストの完了によって、ホスト所有の捕捉済みサービスが破棄されることはありません。
+外部サービスは、ネイティブの `Effect.provideService`、または Layer と `Effect.provide` で `toHttpEffect(application)` に直接提供します。
+ハンドラー自体が HTTP Effect であり、それを返す構築用 Effect ではありません。
+Context のスナップショットや、保存したランタイムとリクエストの手動マージは行いません。
 
-[Alchemy アダプター](./alchemy.md) は、同じ捕捉と寿命の契約を持つ遅延アプリケーションローダーを提供します。
+```typescript
+const handler = toHttpEffect(application).pipe(Effect.provideService(CacheClient, cache));
+```
+
+ホストは現在のリクエストと Scope を提供します。
+Effront はリクエストごとに新しい Layer の memo map を使い、アプリケーション Layer を構築します。
+共有サービスの提供は、所有権の移転や寿命の延長を行いません。
+所有者は、そのサービスを使うすべてのレスポンス本文の処理が終わるまで保持する必要があります。
+ハンドラーを囲む外部のスコープ付き Layer は、本文が終了する前に、ヘッダーの生成時点で解放される可能性があります。
+リクエスト所有の破棄可能なリソースは、応答ストリームの寿命に従う `EFFRONT.make` のアプリケーション Layer に置いてください。
+[Alchemy アダプター](./alchemy.md) も、アプリケーションの遅延読み込みと同じネイティブなサービス提供に対応します。

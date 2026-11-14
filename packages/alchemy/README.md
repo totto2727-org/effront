@@ -30,7 +30,7 @@ The adapter imports are `@effront/alchemy/cloudflare` and `@effront/alchemy/clou
 
 ## API
 
-The [Alchemy API reference](https://effront.totto2727.dev/en/api-reference/alchemy) ([日本語](https://effront.totto2727.dev/ja/api-reference/alchemy)) covers deferred HTTP handlers, capability capture, and the Vite adapter.
+The [Alchemy API reference](https://effront.totto2727.dev/en/api-reference/alchemy) ([日本語](https://effront.totto2727.dev/ja/api-reference/alchemy)) covers deferred HTTP handlers, native service provision, and the Vite adapter.
 For Effront developers, [package API links](docs/API.md) and [integration architecture](docs/INTEGRATION.md) give implementation details.
 
 ## Development

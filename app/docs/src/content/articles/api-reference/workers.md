@@ -24,7 +24,7 @@ export type FetchHandler<Env = unknown, ExecutionContext = unknown> = (
 
 `createFetchHandler` はホスト値が `unknown` の既定型を返します。
 読み取り関数の型引数で、アプリケーションの Effect 内で使う値の型を指定します。
-任意の外部サービスが必要な場合は、[ネイティブ HTTP の捕捉](./http.md#capture) または [Alchemy](./alchemy.md) を使います。
+任意の外部サービスが必要な場合は、[ネイティブ HTTP のサービス提供](./http.md#provision) または [Alchemy](./alchemy.md) を使います。
 
 アプリケーション Layer は呼び出しごとに取得します。
 Scope はレスポンス本文の完了、失敗、キャンセルまで保持されます。
