@@ -19,6 +19,15 @@ Sources: [upstream commit](https://github.com/nikhilsnayak/effective-rsc/commit/
 The version above is read from the manifest, not an assertion that the commit is a release tag or an exact npm publication.
 The parent of this fork's first local implementation commit, `d391de2`, is the recorded baseline, and the upstream history remains in this repository.
 
+## Documentation response caching
+
+Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the private documentation application opts public HTML GET responses with `Accept: */*` into its existing native Workers Cache policy.
+The affected areas are `app/docs/src/response-cache.ts`, its unit and local-host acceptance tests, and the site's authoring guide.
+Eligibility checks the actual HTML or Flight media type and media-range exclusions while preserving streamed bodies and the site's existing public-only credential and cookie behavior.
+`Vary: Accept` continues to separate HTML and Flight in the native cache key.
+This is documentation deployment customization, not a change to framework runtime source or public package APIs.
+Managed cache HITs and deployment-version isolation require an authorized deployment to verify.
+
 ## Current Effront mapping
 
 The pinned baseline and comparison material predate the Effront rename. They intentionally retain the original upstream names, source URLs, licenses, paths, commands, and commit hashes.

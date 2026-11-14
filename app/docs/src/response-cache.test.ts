@@ -40,8 +40,12 @@ const expectPolicy = (response: HttpServerResponse.HttpServerResponse, isPublic:
 describe("docs cache middleware", () => {
   it.each([
     "text/html",
-    "text/x-component",
-    "text/x-component; charset=utf-8",
+    "*/*",
+    "*/*;q=0.8",
+    "TEXT/HTML",
+    "text/html;q=0.5, */*;q=0",
+    "text/html, text/*;q=0",
+    "text/html ; q = 0.5",
     "text/html,application/xhtml+xml,*/*;q=0.8",
   ])("caches public GET with Accept %s without changing its body", async (accept) => {
     const original = html();
@@ -52,9 +56,36 @@ describe("docs cache middleware", () => {
     expect(await HttpServerResponse.toWeb(response).text()).toBe("rendered");
   });
 
-  it.each(["*/*", "application/json", ""])(
-    "does not opt unsupported Accept %s into caching",
-    async (accept) => expectPolicy(await run(pageRequest({ accept })), false),
+  it.each([
+    "application/json",
+    "",
+    "text/x-component",
+    "text/*",
+    "text/html-extra",
+    "application/example;note=text/html",
+    "text/html;q=invalid, */*",
+    "text/html;q=1.1, */*",
+    "text/html;q=1;q=0, */*",
+    "text/html;q = 0, */*",
+    "text/html;q, */*",
+    "text/html;q=1=0, */*",
+    "*/*;q=invalid",
+    "*/*;q=0",
+    "text/html;q=0, */*",
+    "*/*, text/html;q=0",
+    "text/*;q=0, */*",
+    "text/html;q=0.0",
+    "text/html;q=bogus",
+    "text/html;q=2",
+    "text/html;q=-1",
+    "text/html;q=0.0001",
+    "text/html;q=1;q=0",
+    "text/html, text/html;q=0",
+    "text/html;q",
+    "text/html;q = 0",
+    "text/html;q=0=1",
+  ])("does not opt unsupported Accept %s into caching", async (accept) =>
+    expectPolicy(await run(pageRequest({ accept })), false),
   );
 
   it("does not opt requests without Accept into caching", async () => {
@@ -62,11 +93,18 @@ describe("docs cache middleware", () => {
   });
 
   it.each(["POST", "PUT", "PATCH", "DELETE", "HEAD"])("does not cache %s", async (method) => {
-    expectPolicy(await run(pageRequest({}, method)), false);
+    for (const accept of ["text/html", "*/*"]) {
+      expectPolicy(await run(pageRequest({ accept }, method)), false);
+    }
   });
 
   it.each([204, 206, 301, 302, 304, 404, 500])("does not cache status %s", async (status) => {
-    const response = await run(pageRequest(), Effect.succeed(HttpServerResponse.empty({ status })));
+    const original = HttpServerResponse.setHeader(
+      HttpServerResponse.empty({ status }),
+      "content-type",
+      "text/html",
+    );
+    const response = await run(pageRequest({ accept: "*/*" }), Effect.succeed(original));
     expect(response.status).toBe(status);
     expectPolicy(response, false);
   });
@@ -105,6 +143,50 @@ describe("docs cache middleware", () => {
     );
     expectPolicy(response, true);
     expect(response.headers["vary"]).toBe("accept-language, accept");
+  });
+
+  it.each([
+    ["text/x-component", true],
+    ["text/x-component; charset=utf-8", true],
+    ["text/x-component;q=0", false],
+    ["*/*", false],
+    ["text/*", false],
+    ["text/html, text/x-component", true],
+    ["text/x-component;q=0, */*", false],
+    ["text/x-component;q=0.5, */*;q=0", true],
+    ["text/html", false],
+  ])("checks Flight's actual media type for Accept %s", async (accept, eligible) => {
+    const original = HttpServerResponse.text("flight", { contentType: "text/x-component" });
+    const response = await run(pageRequest({ accept }), Effect.succeed(original));
+    expectPolicy(response, eligible);
+    expect(response.body).toBe(original.body);
+  });
+
+  it.each(["application/json", "text/html-extra", "application/xhtml+xml"])(
+    "does not cache actual response type %s for a wildcard request",
+    async (contentType) => {
+      const original = HttpServerResponse.text("not HTML", { contentType });
+      expectPolicy(await run(pageRequest({ accept: "*/*" }), Effect.succeed(original)), false);
+    },
+  );
+
+  it("does not cache a response without a media type", async () => {
+    expectPolicy(
+      await run(pageRequest({ accept: "*/*" }), Effect.succeed(HttpServerResponse.empty())),
+      false,
+    );
+  });
+
+  it("recognizes HTML response media types with parameters and mixed case", async () => {
+    const original = HttpServerResponse.setHeader(
+      html(),
+      "content-type",
+      "Text/HTML; charset=utf-8",
+    );
+    const response = await run(pageRequest({ accept: "*/*" }), Effect.succeed(original));
+    expectPolicy(response, true);
+    expect(response.headers["content-type"]).toBe(original.headers["content-type"]);
+    expect(response.body).toBe(original.body);
   });
 
   it("leaves a pending response stream untouched", async () => {
