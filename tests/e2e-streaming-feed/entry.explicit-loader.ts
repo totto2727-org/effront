@@ -11,7 +11,7 @@ export default Cloudflare.Worker(
     vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
   },
   Effect.gen(function* () {
-    const fetch = yield* makeApplicationHttpEffect(async () => application);
+    const fetch = yield* makeApplicationHttpEffect(Effect.succeed(application));
     return { fetch: fetch.pipe(Effect.orDie) };
   }),
 );

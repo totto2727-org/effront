@@ -6,23 +6,35 @@
 設定済みアプリケーションを使う引数なしのヘルパーは `@effront/alchemy/cloudflare/application` からインポートします。
 エントリーを分けることで、独自のローダーを使うホストには設定済みアプリケーションのモジュールを読み込ませません。
 
-| API                                          | 入力                                                              | 戻り値                                                        |
-| -------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------- |
-| `applicationHttpEffect(load, { context? }?)` | 遅延アプリケーションローダーと、省略可能な捕捉済み Effect Context | ネイティブ HTTP ハンドラー Effect                             |
-| `makeApplicationHttpEffect(load)`            | 遅延アプリケーションローダー                                      | 利用可能な外部サービスを捕捉し、ハンドラーを返す構築用 Effect |
-| `makeApplicationHttpEffect<Definition>()`    | `effront()` で指定したアプリケーションの型                        | Plugin がアプリケーション参照を提供する、同じ構築用 Effect    |
+| API                                       | 入力                                       | 戻り値                                                        |
+| ----------------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
+| `applicationHttpEffect(source)`           | ネイティブなアプリケーションソース Effect  | ネイティブ HTTP ハンドラー Effect                             |
+| `makeApplicationHttpEffect(source)`       | ネイティブなアプリケーションソース Effect  | 利用可能な外部サービスを捕捉し、ハンドラーを返す構築用 Effect |
+| `makeApplicationHttpEffect<Definition>()` | `effront()` で指定したアプリケーションの型 | Plugin がアプリケーション参照を提供する、同じ構築用 Effect    |
 
-ローダーを明示する形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements>` を受け付けます。
+ローダーを明示する形式は、公開型 `ApplicationLoader<Services, ApplicationError, Requirements, SourceError = never, SourceRequirements = never>` を受け付けます。
 
 ```typescript
 import type { ApplicationDefinition } from "@effront/core";
+import type { Effect } from "effect";
 
-export type ApplicationLoader<Services, ApplicationError, Requirements> = () => Promise<
-  ApplicationDefinition<Services, ApplicationError, Requirements>
+export type ApplicationLoader<
+  Services,
+  ApplicationError,
+  Requirements,
+  SourceError = never,
+  SourceRequirements = never,
+> = Effect.Effect<
+  ApplicationDefinition<Services, ApplicationError, Requirements>,
+  SourceError,
+  SourceRequirements
 >;
 ```
 
-ローダーはリクエスト処理中に実行されます。
+ソース Effect はハンドラー構築時ではなく、リクエストごとに一度実行されます。
+ソースの型付きエラーはハンドラーのエラーチャネルに保持され、サービス要件にはアプリケーションと同じ捕捉とリクエスト優先の規則が適用されます。
+静的な定義には `Effect.succeed(application)` を使います。
+ローダーコールバックや Promise は受け付けません。
 `effront()` と `effrontAlchemy()` を使う場合は、ローダーを書く代わりにアプリケーションを型として参照できます。
 
 構築時の追加サービスが不要なら、次の構築用 Effect を `Cloudflare.Worker` の第 3 引数に渡せます。
@@ -43,6 +55,7 @@ Plugin は `effront({ application })` で指定したアプリケーションを
 既定のエントリーは `./src/entry.effront.tsx` です。
 パッケージの `react-server` エントリーも HTTP レンダラーを静的にインポートし、既定のデプロイ用エントリーはどちらの実行時モジュールも読み込みません。
 アプリケーションのモジュールは isolate 初期化時に評価される可能性があるため、モジュール直下では宣言的な定義に留めてください。
+Plugin は静的にインポートしたアプリケーションを Effect 値として提供します。
 アプリケーション Layer の取得は引き続きリクエストごとに行います。
 型インポートは、そのエントリーと同じアプリケーションを参照してください。
 TypeScript は型インポートと Vite 設定の一致までは検証しません。
@@ -64,12 +77,14 @@ import { Effect } from "effect";
 import application from "./entry.effront";
 
 const construct = Effect.gen(function* () {
-  const fetch = yield* makeApplicationHttpEffect(async () => application);
+  const fetch = yield* makeApplicationHttpEffect(Effect.succeed(application));
   return { fetch: fetch.pipe(Effect.orDie) };
 });
 ```
 
-ローダーの非同期契約は維持しますが、モジュールの動的ロードは不要です。
+ソースは非同期コールバックではなく、ネイティブな Effect です。
+レンダリングと HTTP 実行には専用の RSC グラフが必要です。
+通常の Node インポートや `#rsc-server` のフォールバックでは代替できません。
 インフラ構築と共有する Worker エントリーでは設定済みヘルパーを使い、アプリケーションの値インポートを RSC グラフ内に限定してください。
 設定済みエントリーを使う形式は、RSC 統合なしでリクエストを実行すると `TypeError` になります。
 デプロイ用の構築時にはアプリケーションを読み込みません。
@@ -84,10 +99,8 @@ Alchemy が受け付けるエラーの union はより狭いため、`fetch` を
 **捕捉するサービス**
 
 `makeApplicationHttpEffect` は構築時の Context からサービス参照を捕捉します。
-`applicationHttpEffect` は明示的な `context` オプションからのみサービスを捕捉します。
-このオプションがなければ、捕捉済みサービスの型引数を指定しても、ハンドラーはアプリケーションのすべてのサービス要件を保持します。
-`context` プロパティが省略可能なオプション値も、これらの要件を保持します。
-捕捉済みサービスをハンドラーの要件から除くには、`context` の存在を確認し、必須プロパティとして渡してください。
+`applicationHttpEffect(source)` は構築時のサービスを捕捉せず、ソースとネイティブ HTTP ハンドラーを合成します。
+アプリケーションとソースの依存は、通常の `Effect.provideService`、`Effect.provideContext`、または `Effect.provide` で提供してください。
 [Basic サンプル](https://github.com/totto2727-org/effront/tree/main/examples/basic) では、KV クライアントを使うアプリケーションサービスを捕捉しています。
 
 - 同じキーのサービスが現在のリクエストにある場合、その値を優先します。

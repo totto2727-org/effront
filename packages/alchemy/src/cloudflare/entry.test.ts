@@ -10,7 +10,7 @@ const entries = [
     deployment: "deployment.js",
     runtime: "runtime.js",
     construct:
-      "makeApplicationHttpEffect(() => { throw new Error('Loader ran during construction'); })",
+      "makeApplicationHttpEffect(Effect.die(new Error('Application source ran during construction')))",
   },
   {
     specifier: "@effront/alchemy/cloudflare/application",
