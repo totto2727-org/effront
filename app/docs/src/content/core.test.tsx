@@ -33,11 +33,13 @@ describe("current core learning material", () => {
     expect(implementation).toContain(source.code);
   });
 
-  // Historical excerpts remain in the recorded baseline. Flight error digests and Stream wire
-  // values describe post-baseline code instead.
+  // Historical excerpts remain in the recorded baseline. Updated runtime, wire-value, and
+  // request-decoding excerpts describe current code instead and retain the exact-source check.
   it.each(
     coreSources.filter(
       (source) =>
+        source !== coreRuntimeSources.requestHandler &&
+        source !== coreRuntimeSources.serverFnDecode &&
         source !== coreRuntimeSources.flightRuntime &&
         source !== coreRuntimeSources.serverFnBrand &&
         source !== coreRuntimeSources.responseLifetime,

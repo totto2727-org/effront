@@ -88,22 +88,19 @@ Call it from both places.
 
 ## Request protocol {#request-protocol}
 
-Server Function POST requests use the shared [HTTP body-size and `Content-Length` limits](./http.md#handler), also documented for the [Fetch handler](./workers.md#fetch).
-For browser calls, Effront passes `arraySizeLimit: 10_000` to React's argument decoder.
+Effront does not impose body-size or argument-array size limits on Server Function transport.
+Configure optional limits in application middleware or the host.
 
 | Condition                                                                                                                                | Status |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | `Origin` is absent or cannot be parsed as a URL, `Host` is absent, or the origin URL's `host` differs from the lowercased `Host` header. | `403`  |
-| The body cannot be read, exceeds the body-size limit during reading, or cannot be parsed as multipart data.                              | `400`  |
+| The body cannot be read or cannot be parsed as multipart data.                                                                           | `400`  |
 | React cannot decode browser-call arguments, the decoded value is not an argument array, or the requested function cannot be loaded.      | `400`  |
 | A native form body is not multipart, its action cannot be decoded, or it contains no Server Function action.                             | `400`  |
-| `Content-Length` fails the [HTTP entry-point check](./http.md#handler).                                                                  | `413`  |
 | A native form's Server Function execution fails, or React form-state decoding fails after execution.                                     | `500`  |
 
 The `Origin` check compares URL `host`, with any port.
 It does not compare the full origin or scheme.
-The HTTP `Content-Length` check runs before the Server Function checks.
-A body that passes the header check can still exceed the received-byte limit and produce `400`.
 
 Application input Schema failures are distinct from React protocol decoding failures.
 For browser calls, Effront includes input Schema and handler failures in the function result.

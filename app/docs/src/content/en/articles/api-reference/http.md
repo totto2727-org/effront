@@ -9,6 +9,8 @@
 | [`createFetchHandler(application)`](./workers.md) | `(request, env, executionContext) => Promise<Response>` | Fetch context. The application Layer may require only `HttpRouter` and `HttpServerRequest`. |
 
 Ready-made native hosts are available through [Node.js / Bun](./server.md) and [Alchemy](./alchemy.md).
+Run rendering and HTTP handlers in the host's dedicated RSC entry.
+Importing the handler in plain Node does not supply the RSC runtime.
 
 ## toHttpEffect {#handler}
 
@@ -34,10 +36,8 @@ Each execution acquires the [application Layer](./application.md#make) for the c
 An `Effect.scoped` block around response production alone can release services before a streaming body finishes.
 HEAD responses have an empty body but retain response metadata.
 
-The handler returns `413` for negative `Content-Length` values, values that are not safe integers, or values greater than 10 MiB.
-It does this before it acquires application services.
-Server Function POST requests also enforce a 10 MiB limit on received bytes, even without that header.
-Custom HTTP route bodies without `Content-Length` are not universally measured by this handler.
+Effront does not impose transport body-size limits.
+Configure optional request limits in application middleware or the host.
 
 ## makeHttpEffect {#capture}
 
@@ -51,4 +51,5 @@ The application Layer remains request-scoped.
 - Capture does not acquire services or extend their lifetime. Their owner must retain them through every response body that uses them.
 - Request completion does not dispose of host-owned captured services.
 
-The [Alchemy adapter](./alchemy.md) provides a deferred application loader with the same capture and lifetime rules.
+The [Alchemy adapter](./alchemy.md) accepts a native application-source Effect with the same capture and lifetime rules.
+Its source runs per request and retains typed failures and service requirements.

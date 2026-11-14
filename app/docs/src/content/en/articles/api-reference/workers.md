@@ -22,6 +22,9 @@ export type FetchHandler<Env = unknown, ExecutionContext = unknown> = (
 ) => Promise<Response>;
 ```
 
+Import and execute `createFetchHandler` in a dedicated RSC entry with the host's RSC integration.
+Plain Node imports and default-compatible renderer fallbacks are not supported.
+
 `createFetchHandler` returns the default type with `unknown` host values.
 Reader type arguments describe those values inside application Effects.
 For arbitrary external service requirements, use [native HTTP capture](./http.md#capture) or [Alchemy](./alchemy.md).
@@ -32,9 +35,8 @@ A bodyless response releases it immediately.
 Buffered responses can release request services after response construction.
 A streaming body must retain them through consumption.
 
-Invalid `Content-Length` values and values greater than 10 MiB produce `413`.
-Server Function POST requests also enforce a 10 MiB limit on received bytes without that header.
-Custom HTTP route bodies without `Content-Length` are not universally measured.
+Effront does not impose transport body-size limits.
+Configure optional request limits in application middleware or the host.
 
 ## Core context readers {#readers}
 

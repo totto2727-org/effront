@@ -463,6 +463,22 @@ describe("documentation catalog", () => {
       expect(alchemy).toContain('data-alert="warning"');
       const alchemyText = await text(`/${locale}/api-reference/alchemy`);
       expect(alchemyText).toContain("plugins: [effront(), effrontAlchemy()]");
+      expect(alchemyText).toContain("makeApplicationHttpEffect(Effect.succeed(application))");
+      expect(alchemyText).toContain("SourceError = never");
+      expect(alchemyText).toContain("SourceRequirements = never");
+      expect(alchemyText).toContain("&gt; = Effect.Effect&lt;");
+      expect(alchemyText).not.toContain("async () =&gt; application");
+      expect(alchemyText).not.toContain("Promise.resolve");
+      expect(alchemyText).toContain("applicationHttpEffect(source)");
+      expect(alchemyText).toContain("Effect.provideService");
+      expect(alchemyText).not.toContain("{ context? }");
+      for (const article of ["http", "workers", "server-functions", "server"]) {
+        const protocol = await text(`/${locale}/api-reference/${article}`);
+        expect(protocol).not.toMatch(/10 MiB|10_000|10,000|413/);
+        expect(protocol).toContain(
+          locale === "en" ? "middleware or the host" : "ミドルウェアまたはホスト",
+        );
+      }
       expect(alchemyText).toContain(
         locale === "en" ? "The reverse plugin order" : "プラグインの順序を逆にすると",
       );

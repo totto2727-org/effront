@@ -227,14 +227,21 @@ describe("native HTTP effects", () => {
     await expect.poll(() => acquisitions[1]!.released).toBe(1);
   });
 
-  it("rejects oversized requests before acquiring application services", async () => {
+  it("leaves request size policy to the application", async () => {
     const acquisitions: Array<Acquisition> = [];
-    const handler = HttpEffect.toWebHandler(await capture(makeProbeApplication(acquisitions)));
-    const response = await handler(
-      request("oversize", { headers: { "content-length": String(10 * 1024 * 1024 + 1) } }),
+    const app = makeProbeApplication(acquisitions, () =>
+      Effect.succeed(HttpServerResponse.text("accepted")),
     );
-    expect(response.status).toBe(413);
-    expect(acquisitions).toEqual([]);
+    const handler = HttpEffect.toWebHandler(await capture(app));
+    const response = await handler(
+      new Request("https://example.test/probe", {
+        method: "GET",
+        headers: { "content-length": String(10 * 1024 * 1024 + 1), "x-request-id": "oversize" },
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("accepted");
+    expect(acquisitions).toHaveLength(1);
   });
 
   it("does not dispose host-owned external services when a request finishes", async () => {

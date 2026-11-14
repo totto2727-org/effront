@@ -28,22 +28,34 @@ The historical combined Cloudflare factory was superseded after the pinned compa
 ## Alchemy configured application loader
 
 Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, the Alchemy adapter supports `makeApplicationHttpEffect<typeof application>()` without a consumer-written dynamic import.
-This configured helper uses the dedicated `@effront/alchemy/cloudflare/application` subpath, while the existing `cloudflare` entry remains explicit-loader only and independent of the configured application.
+This configured helper uses the dedicated `@effront/alchemy/cloudflare/application` subpath, while the existing `cloudflare` entry accepts explicit application Effects independently of the configured application.
 The type-only application import retains capability and error types while the Vite adapter supplies the application through the existing application-entry alias.
 The package separates its deployment-safe default entry from its `react-server` entry, which statically imports the renderer.
 The plugin statically imports the configured application only in the RSC graph, without an adapter-owned dynamic import.
 The affected areas are the Alchemy adapter's conditional exports and shared request factory, three maintained Alchemy examples, the streaming-feed regression host, and their API documentation and tests.
 Operationally, deployment construction does not load the RSC application, while the RSC isolate can evaluate declarative application modules during initialization.
 Application Layers remain request-scoped, and an unconfigured request reports the missing integration.
-Explicit loaders remain supported, and application-specific runtime Layers and resource selection remain consumer-owned.
+Explicit application Effects remain supported, and application-specific runtime Layers and resource selection remain consumer-owned.
 No upstream runtime source is incorporated by this change.
 
 ## Core RSC module loading
 
 Against the same upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Flight rendering and Server Function request decoding statically import `@vitejs/plugin-rsc/rsc/server` instead of per-request module-loading Effects and dynamic imports.
 Renderer-dependent HTTP and Workers entry points belong to the dedicated RSC graph, with no non-RSC runtime fallback or private import indirection.
-This removes redundant module-loading Effects inside the RSC graph without changing public HTTP APIs, explicit application-loader contracts, service capture, or request-scope ownership.
+This removes redundant module-loading Effects inside the RSC graph while retaining helper functions, service capture, and request-scope ownership.
 SSR graph loading and the browser bootstrap remain separate Vite execution boundaries.
+
+## Native application sources and request policy
+
+Against the same upstream baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, Alchemy application sources are native Effects rather than Promise-producing callbacks.
+The public `applicationHttpEffect` and `makeApplicationHttpEffect` functions remain, but their explicit source argument is an Effect, and the configured RSC entry exports an `Effect.succeed(application)` value.
+The direct handler composes the source with HTTP execution through `Effect.flatMap`, preserving source failures, dependencies, and request cancellation without a Promise adapter or a manual context argument.
+Consumers use native Effect provisioning for direct handlers, while the construction helper alone retains non-host service references with live request precedence.
+The affected areas are the Alchemy adapter, generated RSC source, explicit-source consumer, API documentation, and declaration and request-lifetime contracts.
+
+Core does not impose its own request-body byte or Server Function argument-array size cap, and the Bun adapter no longer sets an Effront-specific body-size override.
+Applications can implement communication-size policy in middleware, and host or dependency limits remain independently owned by their providers.
+The affected areas are native HTTP admission and Server Function body decoding, which uses the platform's request-body APIs rather than a custom bounded buffer.
 
 ## Stable Effect v4 dependency policy
 

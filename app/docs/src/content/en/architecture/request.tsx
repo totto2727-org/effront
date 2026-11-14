@@ -55,11 +55,8 @@ export const page: DocPage = {
         Effect still acquires the Layer.
       </p>
       <p>
-        Before acquisition, a supplied Content-Length must convert to a safe nonnegative integer no
-        greater than 10 MiB. Otherwise, the entry returns 413. This checks the header, not the
-        measured body size when the header is absent.{" "}
-        <a href="/en/architecture/implementation/server-functions">Server Function decoding</a>{" "}
-        separately limits bytes read.
+        Effront does not impose transport body-size limits. Application middleware or the host owns
+        optional request limits.
       </p>
       <p>
         <code>createFetchHandler</code> in <code>workers.ts</code> uses{" "}

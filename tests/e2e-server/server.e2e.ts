@@ -95,6 +95,13 @@ test("public files and generated CSS are available in initial HTML without JavaS
   }
 });
 
+test("native hosts do not impose Effront's former request-body size cap", async ({ request }) => {
+  const response = await request.post("/__effront_body_policy_probe__", {
+    data: "x".repeat(10 * 1024 * 1024 + 1),
+  });
+  expect(response.status()).toBe(404);
+});
+
 test("production static policy never exposes server source or replaces missing assets with HTML", async ({
   request,
 }, testInfo) => {

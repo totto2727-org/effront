@@ -47,10 +47,8 @@ export const page: DocPage = {
         JavaScript.
       </p>
       <p>
-        Both paths count actual bytes read and reject bodies over 10 MiB with 400. The{" "}
-        <a href="/en/architecture/implementation/request">HTTP entry's Content-Length check</a> is
-        separate and can return 413 before the read. Buffered multipart bodies become FormData.
-        Other bodies become text. Read and multipart-parsing failures return 400.
+        Multipart bodies become FormData and other bodies become text. Read and multipart-parsing
+        failures return 400. Optional body-size limits belong to application middleware or the host.
       </p>
       <figure data-core-source={coreRuntimeSources.serverFnDecode.path}>
         <figcaption>
@@ -62,11 +60,12 @@ export const page: DocPage = {
         />
       </figure>
       <p>
-        <code>decodeReply</code> reconstructs arguments with an array-size limit of 10,000 and
-        temporary references. Effront verifies an array result, then <code>loadServerAction</code>{" "}
-        resolves the function. Decode, array-shape, and lookup failures return 400 before
-        application input validation. The server carries temporary references into Flight, and the
-        browser decodes with the set passed to <code>encodeReply</code>.
+        <code>decodeReply</code> reconstructs arguments with temporary references. Effront does not
+        impose an argument-array size limit. Effront verifies an array result, then{" "}
+        <code>loadServerAction</code> resolves the function. Decode, array-shape, and lookup
+        failures return 400 before application input validation. The server carries temporary
+        references into Flight, and the browser decodes with the set passed to{" "}
+        <code>encodeReply</code>.
       </p>
       <h2 id="function-definition">2. Recover the typed operation behind the React reference</h2>
       <p>

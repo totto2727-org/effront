@@ -9,14 +9,6 @@ export const coreRuntimeSources = {
   application: ApplicationDefinition<Services, ApplicationError, Requirements>,
 ): HttpApplicationEffect<ApplicationError, Requirements> =>
   Effect.gen(function* () {
-    const request = yield* HttpServerRequest.HttpServerRequest;
-    const length = request.headers["content-length"];
-    if (length !== undefined) {
-      const size = Number(length);
-      if (!Number.isSafeInteger(size) || size < 0 || size > maxRequestBodySize) {
-        return HttpServerResponse.text("Request body exceeds the 10 MiB limit.", { status: 413 });
-      }
-    }
     // Request layers must not reuse instances from a host's construction memo map.
     const memoMap = yield* Layer.makeMemoMap;
     const handler = yield* HttpRouter.toHttpEffect(ServerApplication.httpLayer(application)).pipe(
@@ -169,7 +161,6 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   const decoded = yield* Effect.tryPromise({
     try: () =>
       decodeReply(body, {
-        arraySizeLimit: ServerFnArraySizeLimit,
         temporaryReferences,
       }),
     catch: (cause) => requestError("Failed to decode Server Function arguments.", 400, cause),
@@ -232,13 +223,8 @@ export const coreRuntimePages: readonly DocPage[] = [
           Effectを再利用しても、Layerは評価ごとに取得します。
         </p>
         <p>
-          取得前に、指定されたContent-Lengthが10
-          MiB以下の安全な非負整数に変換できなければ413を返します。
-          これはヘッダーの検査であり、ヘッダーがない場合の本文サイズの実測ではありません。
-          <a href="/ja/architecture/implementation/server-functions">
-            Server Functionのデコード
-          </a>{" "}
-          は、読み取るバイト数を別途制限します。
+          Effrontは転送する本文のサイズ制限を設けません。
+          必要なリクエスト制限は、アプリケーションのミドルウェアまたはホストが管理します。
         </p>
         <p>
           <code>workers.ts</code> の <code>createFetchHandler</code> は、このEffectを{" "}
@@ -665,16 +651,15 @@ export const coreRuntimePages: readonly DocPage[] = [
           formの経路を選びます。
         </p>
         <p>
-          どちらの経路も実際に読んだバイト数を数え、10 MiBを超える本文を400で拒否します。
-          <a href="/ja/architecture/implementation/request">HTTP入口のContent-Length検査</a>{" "}
-          は別であり、読み取り前に413を返すことがあります。
-          バッファーに読み込んだmultipart本文はFormData、それ以外はtextになります。
+          multipart本文はFormData、それ以外はtextになります。
           読み取りとmultipart解析の失敗は400です。
+          必要な本文サイズ制限は、アプリケーションのミドルウェアまたはホストが管理します。
         </p>
         <SourceExcerpt source={coreRuntimeSources.serverFnDecode} />
         <p>
-          <code>decodeReply</code> は配列サイズ上限10,000と一時参照を使って引数を復元します。
-          Effrontは結果が配列であることを確認し、<code>loadServerAction</code> が関数を解決します。
+          <code>decodeReply</code> は一時参照を使って引数を復元します。
+          Effrontは引数配列のサイズ制限を設けません。 Effrontは結果が配列であることを確認し、
+          <code>loadServerAction</code> が関数を解決します。
           デコード、配列形式、参照解決の失敗は、アプリケーション入力の検証前に400になります。
           サーバーは一時参照をFlightへ引き継ぎ、ブラウザーは <code>encodeReply</code>{" "}
           に渡した集合でデコードします。

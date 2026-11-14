@@ -14,6 +14,8 @@ For a runnable first page, use [Getting started](https://effront.totto2727.dev/e
 ## Integration-only entry points and support
 
 The main `@effront/core` runtime export requires the `react-server` condition in the RSC graph.
+Rendering and native HTTP execution require a dedicated RSC entry with the framework's RSC integration.
+A plain Node import does not provide this runtime, and there is no `#rsc-server` fallback.
 SSR and browser code use their separate entry points.
 `@effront/core/internal/client-entry` and `@effront/core/internal/ssr-entry` are reserved for matching integration packages, not application authoring.
 Alternative bundlers need integration with the Vite RSC runtime protocol used by the current implementation.

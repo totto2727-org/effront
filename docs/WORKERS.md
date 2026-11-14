@@ -30,6 +30,8 @@ flowchart TD
 `createFetchHandler` acquires the application Layer for each request rather than sharing it globally.
 Layer acquisition and request handling receive the same Workers context, so services can read the current bindings without sharing request-owned resources.
 The response body's EOF, error, or cancellation closes the request scope.
+Effront imposes no transport body-size or argument-array size limits.
+Applications can configure optional limits in middleware or the host.
 
 | Reader                                                   | Result                                                            |
 | -------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -48,6 +50,7 @@ Applications must still avoid rendering secrets or passing bindings into Client 
 
 ### Rendering graphs
 
+Rendering and HTTP execution require a dedicated RSC entry, not a plain Node import or a `#rsc-server` fallback.
 The RSC graph imports `@vitejs/plugin-rsc/rsc/server` and loads the separate HTML renderer with `import.meta.viteRsc.loadModule("ssr", "index")`.
 Only the Flight Web stream and rendering options cross into SSR, not the environment or execution context.
 The SSR graph uses the edge-compatible React DOM renderer and the plugin's SSR Flight client.
