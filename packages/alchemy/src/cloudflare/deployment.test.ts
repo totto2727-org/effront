@@ -1,4 +1,5 @@
 import type { ApplicationDefinition } from "@effront/core";
+import type { HttpApplicationEffect } from "@effront/core/http";
 import { CloudflareEnvironment } from "alchemy/Cloudflare";
 import { RuntimeContext } from "alchemy/RuntimeContext";
 import { Context, Effect, Layer, Option, Scope } from "effect";
@@ -211,6 +212,37 @@ describe("Alchemy native application effects", () => {
       ),
     );
     expect(await HttpServerResponse.toWeb(response).text()).toBe("live:current:/override");
+  });
+
+  it("retains live capability requirements when a capture type has no supplied context", async () => {
+    const load = async () => application;
+    const omitted = applicationHttpEffect<never, never, Capability | RuntimeContext, Capability>(
+      load,
+    );
+    const options: { readonly context?: Context.Context<Capability> } = {};
+    const optional = applicationHttpEffect(load, options);
+    type Requirements = Effect.Services<HttpApplicationEffect<never, Capability | RuntimeContext>>;
+    expectTypeOf<Effect.Services<typeof omitted>>().toEqualTypeOf<Requirements>();
+    expectTypeOf<Effect.Services<typeof optional>>().toEqualTypeOf<Requirements>();
+    const check = () => {
+      const missingCapability = Effect.scoped(omitted).pipe(
+        Effect.provideService(RuntimeContext, runtime("current")),
+        Effect.provideService(HttpServerRequest.HttpServerRequest, request("/missing")),
+      );
+      // @ts-expect-error A capture type alone does not supply Capability.
+      void Effect.runPromise(missingCapability);
+    };
+    expect(check).toBeTypeOf("function");
+    for (const handler of [omitted, optional]) {
+      const response = await Effect.runPromise(
+        Effect.scoped(handler).pipe(
+          Effect.provideService(Capability, "live"),
+          Effect.provideService(RuntimeContext, runtime("current")),
+          Effect.provideService(HttpServerRequest.HttpServerRequest, request("/uncaptured")),
+        ),
+      );
+      expect(await HttpServerResponse.toWeb(response).text()).toBe("live:current:/uncaptured");
+    }
   });
 
   it("retains application capabilities in construction requirements", () => {

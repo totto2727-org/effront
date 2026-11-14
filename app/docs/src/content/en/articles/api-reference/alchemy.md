@@ -78,7 +78,10 @@ Alchemy's accepted error union is narrower, so handle or map remaining applicati
 **Captured services**
 
 `makeApplicationHttpEffect` captures service references from its construction Context.
-`applicationHttpEffect` uses the explicit `context` option, which defaults to an empty Context.
+`applicationHttpEffect` captures services only from an explicit `context` option.
+Without that option, the handler retains all application service requirements, even if you specify a captured-service type argument.
+An options value with an optional `context` property also retains those requirements.
+Check that `context` is present and pass it as a required property to remove the captured services from the handler's requirements.
 The [Basic example](https://github.com/totto2727-org/effront/tree/main/examples/basic) shows an application service backed by a KV client and captured during construction.
 
 - Live request values override captured services with the same key.
