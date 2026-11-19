@@ -126,7 +126,7 @@ Markdown 本文のスタイリングは提供しません。
 catch-all ルートを使う場合は、[コレクションの完全な例](https://github.com/totto2727-org/effront/blob/main/examples/markdown/src/entry.effront.tsx)を参照してください。
 HTTP middleware で要求された記事を検索し、`get()` が `undefined` を返したら描画前に 404 を返します。
 上の固定ルートの例では、登録済みの記事が見つからない場合を設定ミスとして扱います。
-コレクションや解析の失敗も、Effect のエラーチャネルで `MarkdownError` として返されます。
+Effect のエラーチャネルでは、コレクションや参照の失敗は `MarkdownError`、パーサーの例外は `MarkdownParseError` として返されます。
 
 ## 解析や表示を変更する {#authoring}
 

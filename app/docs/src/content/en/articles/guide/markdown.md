@@ -131,7 +131,7 @@ For a catch-all route, use the [complete collection example](https://github.com/
 Find the requested article in HTTP middleware.
 If `get()` returns `undefined`, return 404 before rendering starts.
 The fixed-route example instead treats a missing registered article as a configuration error.
-Collection and parsing failures also use the `MarkdownError` Effect error channel.
+The Effect error channel uses `MarkdownError` for collection and reference failures, and `MarkdownParseError` for parser exceptions.
 
 ## Customize parsing or rendering {#authoring}
 

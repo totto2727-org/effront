@@ -38,7 +38,7 @@ With `basePath: "/manual"`, `./start.md` becomes `/manual/start` and `./index.md
 
 ## parseMarkdown {#parse}
 
-`parseMarkdown(entry, options?)` returns `Effect.Effect<MarkdownDocument, MarkdownError>`, using Comark's document type and `ParserOptions`.
+`parseMarkdown(entry, options?)` returns `Effect.Effect<MarkdownDocument, MarkdownError | MarkdownParseError>`, using Comark's document type and `ParserOptions`.
 It preserves Comark defaults and adds these plugins:
 
 | Plugin                                                        | Behavior                                           |
@@ -57,7 +57,7 @@ Other options, such as `linkify`, follow [Comark](https://comark.dev).
 > Only trusted authored Markdown and trusted plugins are supported.
 > This parser is not a sanitizer.
 
-Parser exceptions become `MarkdownError` with the original exception in `cause`.
+Parser exceptions become `MarkdownParseError` with the original exception in its required `cause` field.
 
 ## Markdown rendering {#rendering}
 
@@ -107,5 +107,5 @@ The collection exposes equivalent methods that take `entry` first.
 
 Relative paths resolve from each Markdown file.
 
-`MarkdownError` has `_tag: "MarkdownError"`, a diagnostic `message`, and optional `cause`.
-It covers collection configuration, unresolved references, and parser failures.
+`MarkdownError` has a diagnostic `message` and no `cause` field.
+It covers collection configuration and unresolved references.

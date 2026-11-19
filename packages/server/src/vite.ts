@@ -2,7 +2,7 @@ import { STATUS_CODES } from "node:http";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
+import { NodeHttpServer } from "@effect/platform-node";
 import { Effect, Exit, Layer, Scope } from "effect";
 import { HttpEffect, type HttpServerRequest, HttpServerResponse } from "effect/http";
 import { isRunnableDevEnvironment, type Connect, type Plugin } from "vite";
