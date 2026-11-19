@@ -66,7 +66,7 @@ it("packed default and react-server declarations preserve application capabiliti
         type Hosts = CloudflareEnvironment | Request | Worker | WorkerEnvironment | WorkerExecutionContext;
         type Requirements = ControlApi | Hosts;
         type Definition = ApplicationDefinition<ControlApi, Failure, Requirements>;
-        declare const load: () => Promise<Definition>;
+        declare const load: Effect.Effect<Definition>;
         const construction = ${configured ? "makeApplicationHttpEffect<Definition>()" : "makeApplicationHttpEffect(load)"};
         type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
         type IsAny<T> = 0 extends (1 & T) ? true : false;
@@ -82,7 +82,7 @@ it("packed default and react-server declarations preserve application capabiliti
         export type ErrorNotAny = Assert<Equal<IsAny<Effect.Error<Handler>>, false>>;
         export type Success = Assert<Equal<Effect.Success<Handler>, Effect.Success<Native>>>;
         type PureDefinition = ApplicationDefinition<ControlApi, never, ControlApi>;
-        declare const loadPure: () => Promise<PureDefinition>;
+        declare const loadPure: Effect.Effect<PureDefinition>;
         const pureConstruction = ${configured ? "makeApplicationHttpEffect<PureDefinition>()" : "makeApplicationHttpEffect(loadPure)"};
         export type PureCaptured = Assert<Equal<Effect.Services<typeof pureConstruction>, ControlApi>>;
         Effect.runPromise(Effect.provideService(pureConstruction, ControlApi, { read: () => "ok" }));
@@ -93,18 +93,33 @@ it("packed default and react-server declarations preserve application capabiliti
           configured
             ? ""
             : `
+          const onlyFailure = { _tag: "SourceFailure" } as const;
+          const failedHandler = applicationHttpEffect(Effect.fail(onlyFailure));
+          const failedConstruction = makeApplicationHttpEffect(Effect.fail(onlyFailure));
+          export type FailedCapture = Assert<Equal<Effect.Services<typeof failedConstruction>, never>>;
+          export type FailedConstructionError = Assert<Equal<Effect.Error<typeof failedConstruction>, never>>;
+          export type FailedHandlerError = Assert<Equal<Effect.Error<typeof failedHandler>, Effect.Error<HttpApplicationEffect<never, never>> | typeof onlyFailure>>;
+          export type FailedHandlerRequirements = Assert<Equal<Effect.Services<typeof failedHandler>, Effect.Services<HttpApplicationEffect<never, never>>>>;
           const uncaptured = applicationHttpEffect(load);
           export type Uncaptured = Assert<Equal<Effect.Services<typeof uncaptured>, Effect.Services<Native>>>;
-          const phantom = applicationHttpEffect<ControlApi, Failure, Requirements, ControlApi>(load);
-          export type PhantomNotProvided = Assert<Equal<Effect.Services<typeof phantom>, Effect.Services<Native>>>;
-          const options: { readonly context?: Context.Context<ControlApi> } = {};
-          const optional = applicationHttpEffect(load, options);
-          export type OptionalNotProvided = Assert<Equal<Effect.Services<typeof optional>, Effect.Services<Native>>>;
-          const captured = applicationHttpEffect(load, { context: Context.make(ControlApi, { read: () => "ok" }) });
-          export type Provided = Assert<Equal<Effect.Services<typeof captured>, Effect.Services<Handler>>>;
-          declare const hosts: Context.Context<Hosts>;
-          const hostContext = applicationHttpEffect(load, { context: hosts });
-          export type HostNotCaptured = Assert<Equal<Effect.Services<typeof hostContext>, Effect.Services<Native>>>;
+          const provided = Effect.provideService(uncaptured, ControlApi, { read: () => "ok" });
+          export type Provided = Assert<Equal<Effect.Services<typeof provided>, Effect.Services<Handler>>>;
+          class Selection extends Context.Service<Selection, string>()("consumer/Selection") {}
+          type SourceFailure = { readonly _tag: "SourceFailure" };
+          declare const source: Effect.Effect<Definition, SourceFailure, Selection | Request>;
+          const nativeSource = applicationHttpEffect(source);
+          export type SourceRequirements = Assert<Equal<Effect.Services<typeof nativeSource>, Effect.Services<Native> | Selection | Request>>;
+          export type SourceError = Assert<Equal<Effect.Error<typeof nativeSource>, Effect.Error<Native> | SourceFailure>>;
+          const sourceConstruction = makeApplicationHttpEffect(source);
+          export type SourceCaptured = Assert<Equal<Effect.Services<typeof sourceConstruction>, ControlApi | Selection>>;
+          export type SourceConstructionError = Assert<Equal<Effect.Error<typeof sourceConstruction>, never>>;
+          type SourceHandler = Effect.Success<typeof sourceConstruction>;
+          export type SourceLive = Assert<Equal<Effect.Services<SourceHandler>, Exclude<Effect.Services<Native> | Selection | Request, ControlApi | Selection>>>;
+          export type SourceHandlerError = Assert<Equal<Effect.Error<SourceHandler>, Effect.Error<Native> | SourceFailure>>;
+          // @ts-expect-error Source dependencies remain required during construction.
+          Effect.runPromise(Effect.provideService(sourceConstruction, ControlApi, { read: () => "ok" }));
+          // @ts-expect-error Context handoff is replaced by native Effect provisioning.
+          applicationHttpEffect(load, { context: Context.empty() });
         `
         }
       `,

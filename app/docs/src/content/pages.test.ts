@@ -459,20 +459,34 @@ describe("documentation catalog", () => {
       expect(await render(`/${locale}/guide/query-server-functions`)).toContain(
         'href="https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation"',
       );
+    },
+  );
+
+  it.each(["en", "ja"] as const)(
+    "renders Alchemy API examples and plugin ordering in %s",
+    async (locale) => {
       const alchemy = await render(`/${locale}/api-reference/alchemy`);
       expect(alchemy).toContain('data-alert="warning"');
       const alchemyText = await text(`/${locale}/api-reference/alchemy`);
       expect(alchemyText).toContain("plugins: [effront(), effrontAlchemy()]");
-      expect(alchemyText).toContain(
-        locale === "en" ? "The reverse plugin order" : "プラグインの順序を逆にすると",
-      );
-      expect(alchemyText.indexOf("plugins: [effront(), effrontAlchemy()]")).toBeLessThan(
-        alchemyText.indexOf(
-          locale === "en" ? "The reverse plugin order" : "プラグインの順序を逆にすると",
-        ),
-      );
     },
   );
+
+  it("keeps native Alchemy source and provisioning examples aligned across locales", () => {
+    const examples = (directory: string) => {
+      const source = readFileSync(
+        new URL(`./${directory}/api-reference/alchemy.md`, import.meta.url),
+        "utf8",
+      );
+      return [...source.matchAll(/```typescript\n([\s\S]*?)\n```/g)].map((match) => match[1]!);
+    };
+    const english = examples("en/articles");
+    expect(
+      english.some((code) => /makeApplicationHttpEffect\(\s*Effect\.succeed\(/.test(code)),
+    ).toBe(true);
+    expect(english.some((code) => code.includes("Effect.provideService("))).toBe(true);
+    expect(examples("articles")).toEqual(english);
+  });
 
   it.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",

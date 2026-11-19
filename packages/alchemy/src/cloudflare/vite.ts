@@ -46,8 +46,9 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
     load(id) {
       if (id !== `${applicationLoader}.js` && id !== `${applicationLoader}.ts`) return;
       return [
+        'import { Effect } from "effect";',
         'import application from "@effront/core/application-entry";',
-        "export const loadConfiguredApplication = () => Promise.resolve(application);",
+        "export const loadConfiguredApplication = Effect.succeed(application);",
       ].join("\n");
     },
   };

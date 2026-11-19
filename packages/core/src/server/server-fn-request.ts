@@ -1,5 +1,12 @@
 import { Cause, Effect, Schema, type Scope } from "effect";
 import { HttpServerRequest } from "effect/http";
+import {
+  createTemporaryReferenceSet,
+  decodeAction,
+  decodeFormState,
+  decodeReply,
+  loadServerAction,
+} from "@vitejs/plugin-rsc/rsc/server";
 
 import type { EFFRONTIdentity } from "../application/effront-identity";
 import type { AnyMiddleware } from "../application/middleware";
@@ -9,8 +16,6 @@ import { ServerFnInputError } from "../rsc/server-fn-error";
 import type { RequestOutcome } from "./request-outcome";
 import { serverFnOutcome } from "./server-fn-outcome";
 
-const ServerFnArraySizeLimit = 10_000;
-const ServerFnBodySizeLimit = 10 * 1024 * 1024;
 const decodeArguments = Schema.decodeUnknownEffect(Schema.Array(Schema.Unknown));
 const NoMiddleware = Object.freeze([]);
 
@@ -78,60 +83,14 @@ export const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
     catch: (cause) => requestError("Rejected a cross-origin Server Function request.", 403, cause),
   });
 
-const readBodyBytes = Effect.fnUntraced(function* (request: Request) {
-  if (request.body === null) {
-    return new Uint8Array();
-  }
-
-  const reader = request.body.getReader();
-  const chunks: Array<Uint8Array> = [];
-  let length = 0;
-  try {
-    while (true) {
-      const result = yield* Effect.tryPromise({
-        try: () => reader.read(),
-        catch: (cause) => bodyReadError("Failed to read the Server Function request body.", cause),
-      });
-      if (result.done) {
-        break;
-      }
-      length += result.value.byteLength;
-      if (length > ServerFnBodySizeLimit) {
-        return yield* bodyReadError(
-          "The Server Function request body exceeds the 10 MiB limit.",
-          new Error("Server Function request body limit exceeded."),
-        );
-      }
-      chunks.push(result.value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
-});
-
-const readBody = Effect.fnUntraced(function* (request: Request) {
-  const bytes = yield* readBodyBytes(request);
-  const replay = new Request(request, { body: bytes, method: request.method });
-  if (request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data")) {
-    return yield* Effect.tryPromise({
-      try: () => replay.formData(),
-      catch: (cause) => bodyReadError("Failed to read the Server Function request body.", cause),
-    });
-  }
-
-  return yield* Effect.tryPromise({
-    try: () => replay.text(),
+const readBody = (request: Request) =>
+  Effect.tryPromise({
+    try: (): Promise<string | FormData> =>
+      request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data")
+        ? request.formData()
+        : request.text(),
     catch: (cause) => bodyReadError("Failed to read the Server Function request body.", cause),
   });
-});
 
 const prepareServerFnOperation = <ApplicationServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
@@ -167,15 +126,11 @@ export const decodeServerFnCall = Effect.fnUntraced(function* <ApplicationServic
   actionId: string,
   identity: EFFRONTIdentity<ApplicationServices>,
 ) {
-  const { createTemporaryReferenceSet, decodeReply, loadServerAction } = yield* Effect.promise(
-    () => import("@vitejs/plugin-rsc/rsc/server"),
-  );
   const temporaryReferences = createTemporaryReferenceSet();
   const body = yield* readBody(request);
   const decoded = yield* Effect.tryPromise({
     try: () =>
       decodeReply(body, {
-        arraySizeLimit: ServerFnArraySizeLimit,
         temporaryReferences,
       }),
     catch: (cause) => requestError("Failed to decode Server Function arguments.", 400, cause),
@@ -224,9 +179,6 @@ const prepareProgressiveServerFn = Effect.fnUntraced(function* <ApplicationServi
   request: Request,
   identity: EFFRONTIdentity<ApplicationServices>,
 ) {
-  const { decodeAction, decodeFormState } = yield* Effect.promise(
-    () => import("@vitejs/plugin-rsc/rsc/server"),
-  );
   const body = yield* readBody(request);
   if (!(body instanceof FormData)) {
     return yield* bodyReadError(

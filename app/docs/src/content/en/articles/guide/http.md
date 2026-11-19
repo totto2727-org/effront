@@ -111,6 +111,6 @@ Use [scoped Middleware](/en/guide/middleware) for a policy limited to one Routes
 > [!NOTE]
 > This example maps only successful downstream responses.
 > An unmatched request fails with `RouteNotFound`, so its final 404 does not receive the header unless you handle that error and return a response.
-> Host-served static assets and the runtime's early oversized-request 413 response bypass the router entirely.
+> Host-served static assets and requests rejected by host-level limits bypass the router entirely.
 
 Configure asset headers on the host.
