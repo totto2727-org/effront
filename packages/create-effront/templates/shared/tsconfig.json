@@ -10,5 +10,5 @@
     "types": ["node", "vite-plus/client"],
     "lib": ["ESNext", "DOM", "DOM.Iterable"]
   },
-  "include": ["src", "vite.config.ts", "alchemy.run.ts"]
+  "include": ["*.ts", "*.tsx", "src/**/*.ts", "src/**/*.tsx"]
 }

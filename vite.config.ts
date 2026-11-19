@@ -16,6 +16,7 @@ export default defineConfig({
     },
   },
   fmt: { ignorePatterns },
+  test: { include: ["{app,examples,packages,tests}/**/*.test.{ts,tsx}"] },
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
     // Raw template sources are not a workspace project; their imports resolve in generated projects.
