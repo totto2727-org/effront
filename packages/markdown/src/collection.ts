@@ -1,4 +1,4 @@
-import * as NodePath from "@effect/platform-node-shared/NodePath";
+import { NodePath } from "@effect/platform-node-shared";
 import { Effect, Path, Schema } from "effect";
 
 import { MarkdownError } from "./error.ts";

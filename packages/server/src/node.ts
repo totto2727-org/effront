@@ -2,8 +2,7 @@ import "effect/schema/SchemaJITCompiler/enable";
 import { NodeHttpServer } from "@effect/platform-node";
 import { createServer } from "node:http";
 import { Effect, Layer } from "effect";
-import { HttpServer } from "effect/http";
-import type { HttpServerResponse } from "effect/http/HttpServerResponse";
+import { HttpServer, type HttpServerResponse } from "effect/http";
 import { withAssets, type AssetOptions } from "./assets";
 
 export interface ServeOptions {
@@ -14,7 +13,7 @@ export interface ServeOptions {
 
 /** A scoped native Node HTTP server. Launch with Layer.launch and NodeRuntime.runMain. */
 export const serve = <E, R>(
-  handler: Effect.Effect<HttpServerResponse, E, R>,
+  handler: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>,
   options: ServeOptions,
 ) =>
   Layer.unwrap(
