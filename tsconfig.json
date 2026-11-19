@@ -23,5 +23,18 @@
     "types": ["node", "vite-plus/client"],
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "allowImportingTsExtensions": true
-  }
+  },
+  "include": [
+    "*.ts",
+    "*.tsx",
+    "app/*/*.ts",
+    "app/*/src",
+    "app/*/tests",
+    "examples/*/*.ts",
+    "examples/*/src",
+    "packages/*/*.ts",
+    "packages/*/src",
+    "packages/*/tests",
+    "tests"
+  ]
 }

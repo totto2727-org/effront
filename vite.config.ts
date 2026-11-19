@@ -7,15 +7,13 @@ const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url
 export default defineConfig({
   run: {
     tasks: {
-      check: { command: "", dependsOn: ["js:check"] },
-      fix: { command: "", dependsOn: ["js:fix"] },
-      test: { command: "", dependsOn: ["js:test"] },
-      "js:check": { command: "vp check", cache: false },
-      "js:fix": { command: "vp check --fix", cache: false },
-      "js:test": { command: "vp test run", cache: false },
+      check: { command: "vp check", cache: false },
+      fix: { command: "vp check --fix", cache: false },
+      test: { command: "vp test run", cache: false },
     },
   },
   fmt: { ignorePatterns },
+  test: { include: ["{app,examples,packages,tests}/**/*.test.{ts,tsx}"] },
   lint: {
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
     // Raw template sources are not a workspace project; their imports resolve in generated projects.

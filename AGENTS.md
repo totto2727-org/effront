@@ -26,9 +26,9 @@ Run from the repository root:
 
 - `vp install` installs workspace dependencies. `vp install --frozen-lockfile` checks reproducible installation.
 - `vp exec --filter "./packages/*" -- vp pack` builds package JavaScript and declarations in workspace dependency order. Run it before checks, tests, or consumers that resolve `dist/` exports.
-- `vp run fix` applies formatting and safe lint fixes through `js:fix`.
-- `vp run check` runs formatting, lint, and types through `js:check`.
-- `vp run test` runs unit/integration tests through `js:test`. Browser suites remain package-local.
+- `vp run fix` applies formatting and safe lint fixes.
+- `vp run check` runs formatting, lint, and type checks.
+- `vp run test` runs unit and integration tests. Browser suites remain package-local.
 - Public packages own their `vite.config.ts` pack settings and `vp pack`/`vp run pack` tasks. These generate `dist/`, not npm tarballs.
 
 The initial package build must use `vp exec` directly, not `vp run` or a root task wrapping it.
