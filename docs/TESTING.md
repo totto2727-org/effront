@@ -55,8 +55,7 @@ Same-package concurrent execution requires isolation in the execution environmen
 ## Task entry points
 
 Root task definitions live in `vite.config.ts` under `run.tasks`.
-`vp run fix`, `vp run check`, and `vp run test` delegate to `js:fix`, `js:check`, and `js:test`.
-Their implementation commands are `vp check --fix`, `vp check`, and `vp test run`.
+`vp run fix`, `vp run check`, and `vp run test` run `vp check --fix`, `vp check`, and `vp test run` directly.
 The tasks disable caching so each run checks the current filesystem, including new files.
 App-local dev/build and independently owned E2E tasks remain package-local.
 

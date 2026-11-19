@@ -23,6 +23,7 @@ The parent of this fork's first local implementation commit, `d391de2`, is the r
 
 Against the unchanged upstream comparison baseline `d76104aaf3c18cf25191a64bff860a3f6cc08aa0`, directory globs scope TypeScript and Vitest discovery to maintained source and test trees, including examples.
 The generated project uses root and `src` globs rather than naming configuration files individually.
+Root Vite+ tasks run the standard check, fix, and test commands directly.
 Package entry rules still keep tests out of published bundles.
 These changes affect development tooling, not framework runtime source or public package APIs.
 

@@ -28,17 +28,13 @@
     "*.ts",
     "*.tsx",
     "app/*/*.ts",
-    "app/*/src/**/*.ts",
-    "app/*/src/**/*.tsx",
-    "app/*/tests/**/*.ts",
+    "app/*/src",
+    "app/*/tests",
     "examples/*/*.ts",
-    "examples/*/src/**/*.ts",
-    "examples/*/src/**/*.tsx",
+    "examples/*/src",
     "packages/*/*.ts",
-    "packages/*/src/**/*.ts",
-    "packages/*/src/**/*.tsx",
-    "packages/*/tests/**/*.ts",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "packages/*/src",
+    "packages/*/tests",
+    "tests"
   ]
 }
