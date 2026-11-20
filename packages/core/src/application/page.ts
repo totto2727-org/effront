@@ -79,6 +79,9 @@ export type PageRuntimeProps = {
   readonly params: PageParams;
 };
 export type PageComponent = (props: PageRuntimeProps) => Promise<Awaited<ReactNode>>;
+type DecodePageParams<Services> = (
+  input: EncodedPageParams,
+) => Effect.Effect<Readonly<Record<string, unknown>>, Schema.SchemaError, Services>;
 
 export type StaticPageDefinition<Services> = EFFRONTStatefulMember<
   Services,
@@ -98,14 +101,14 @@ export type AnyPageDefinition<Services> =
 export type PageImplementationState<Services = unknown> = {
   readonly component: PageComponent;
   readonly boundary: (props: { readonly children: ReactNode }) => Promise<ReactNode>;
-  readonly paramsSchema: PageParamsSchema<Services> | null;
+  readonly decodeParams: DecodePageParams<Services> | null;
 };
 
 class PageDefinitionImpl<
   Services,
   ParamNames extends string,
   Mode extends "Parameterized" | "Static",
-  ParamsSchema extends PageParamsSchema<unknown> | null,
+  ParamsServices,
 >
   implements
     EFFRONTStatefulMember<Services, "Page", PageImplementationState>,
@@ -122,18 +125,18 @@ class PageDefinitionImpl<
   }
   readonly component: PageComponent;
   readonly boundary: (props: { readonly children: ReactNode }) => Promise<ReactNode>;
-  readonly paramsSchema: ParamsSchema;
+  readonly decodeParams: DecodePageParams<ParamsServices> | null;
 
   constructor(
     identity: EFFRONTIdentity<Services>,
     component: PageComponent,
-    paramsSchema: ParamsSchema,
+    decodeParams: DecodePageParams<ParamsServices> | null,
     middleware: ReadonlyArray<AnyMiddleware<Services>>,
     viewTransition: false | PageViewTransitionConfig | undefined,
   ) {
     this[EFFRONTIdentityTypeId] = identity;
     this.component = component;
-    this.paramsSchema = paramsSchema;
+    this.decodeParams = decodeParams;
     this.boundary = ({ children }) =>
       identity.renderRuntime.run(
         "Page",
@@ -207,7 +210,8 @@ export const makePageFactory = <ApplicationServices, AvailableServices>(
   ): AnyPageDefinition<ApplicationServices> {
     if ("params" in options) {
       const { params: paramsSchema, render } = options;
-      const decodeParams = Schema.decodeUnknownEffect(paramsSchema);
+      // oxlint-disable-next-line rules/require-top-level-decoder -- Compile the author-supplied schema once per Page definition.
+      const decodeParams = Schema.decodeEffect(paramsSchema);
       const component: PageComponent = ({ params }) =>
         identity.renderRuntime.run(
           "Page",
@@ -225,14 +229,14 @@ export const makePageFactory = <ApplicationServices, AvailableServices>(
         ApplicationServices,
         PageParamKeys<typeof paramsSchema>,
         "Parameterized",
-        typeof paramsSchema
-      >(identity, component, paramsSchema, middleware, options.viewTransition);
+        AvailableServices
+      >(identity, component, decodeParams, middleware, options.viewTransition);
     }
 
     const { render } = options;
     const component: PageComponent = () =>
       identity.renderRuntime.run("Page", Effect.suspend(render), middleware);
-    return new PageDefinitionImpl<ApplicationServices, never, "Static", null>(
+    return new PageDefinitionImpl<ApplicationServices, never, "Static", never>(
       identity,
       component,
       null,

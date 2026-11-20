@@ -54,7 +54,7 @@ describe("EFFRONT.Page.make", () => {
       );
 
       expect(rendered).toBe("hello sunday");
-      expect(getPageState(PageComponent).paramsSchema).not.toBeNull();
+      expect(getPageState(PageComponent).decodeParams).not.toBeNull();
       expect(Object.isFrozen(PageComponent)).toBe(true);
     }).pipe(Effect.provideService(Greeting, { value: "hello" })),
   );
@@ -80,7 +80,7 @@ describe("EFFRONT.Page.make", () => {
       );
 
       expect(rendered).toBe("hello from the request");
-      expect(getPageState(PageComponent).paramsSchema).toBeNull();
+      expect(getPageState(PageComponent).decodeParams).toBeNull();
     }).pipe(Effect.provideService(Greeting, { value: "hello from the request" })),
   );
 

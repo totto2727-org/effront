@@ -1,5 +1,4 @@
 import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";
-import preset from "@totto2727/oxlint/preset";
 import { defineConfig } from "vite-plus";
 
 // Regenerate effective exclusions from reachable .gitignore files on every config load.
@@ -16,7 +15,7 @@ export default defineConfig({
   fmt: { ignorePatterns },
   test: { include: ["{app,examples,packages,tests}/**/*.test.{ts,tsx}"] },
   lint: {
-    jsPlugins: preset.jsPlugins ?? [],
+    jsPlugins: ["@totto2727/oxlint"],
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
     rules: {
       "rules/consistent-import-extension": "error",
@@ -30,9 +29,16 @@ export default defineConfig({
       "rules/no-option-tag-comparison": "error",
       "rules/no-redundant-alias": "error",
       "rules/no-string-style": "error",
+      "rules/no-sync-decode": "error",
       "rules/require-disable-reason": "error",
+      "rules/require-top-level-decoder": "error",
     },
     overrides: [
+      {
+        // Test-local schemas describe their individual fixtures.
+        files: ["**/*.test.{ts,tsx}"],
+        rules: { "rules/require-top-level-decoder": "off" },
+      },
       {
         // The Tailwind integration does not depend on Effect.
         files: ["packages/tailwind/**"],

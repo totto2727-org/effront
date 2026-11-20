@@ -1,4 +1,4 @@
-import { Array, Context, Effect, Layer, Option, Schema, Stream, String, type Types } from "effect";
+import { Array, Context, Effect, Layer, Option, Stream, String, type Types } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
@@ -104,7 +104,8 @@ const httpLayer = <Services, ApplicationError, Requirements>(
     }
 
     const pathname = requestUrl.value.pathname;
-    const encodedParams = yield* destination.page.paramsSchema === null
+    const decodeParams = destination.page.decodeParams;
+    const encodedParams = yield* decodeParams === null
       ? Effect.succeed(EmptyEncodedPageParams)
       : HttpRouter.params;
     const renderResponse = Effect.fnUntraced(function* (params: PageParams) {
@@ -153,8 +154,8 @@ const httpLayer = <Services, ApplicationError, Requirements>(
       );
     });
 
-    if (request.method !== "POST" && destination.page.paramsSchema !== null) {
-      return yield* Schema.decodeEffect(destination.page.paramsSchema)(encodedParams).pipe(
+    if (request.method !== "POST" && decodeParams !== null) {
+      return yield* decodeParams(encodedParams).pipe(
         Effect.matchEffect({
           onFailure: () =>
             Effect.succeed(

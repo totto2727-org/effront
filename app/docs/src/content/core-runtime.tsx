@@ -150,8 +150,7 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   serverFnSchema: {
     path: "packages/core/src/application/server-fn.ts",
     language: "typescript",
-    code: `    const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
-    const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));`,
+    code: `    const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));`,
   },
   serverFnBrand: {
     path: "packages/core/src/application/server-fn.ts",
