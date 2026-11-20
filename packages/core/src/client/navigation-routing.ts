@@ -1,3 +1,5 @@
+import { String } from "effect";
+
 const ReactTransitionNavigationInfo = "react-transition";
 
 export const NativeDocumentNavigationInfo = "effront-native-document";
@@ -12,7 +14,7 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   event.navigationType !== "reload";
 
 export const preserveRequestedHash = (requested: URL, resolved: URL) =>
-  resolved.hash === "" &&
+  String.isEmpty(resolved.hash) &&
   resolved.origin === requested.origin &&
   resolved.pathname === requested.pathname &&
   resolved.search === requested.search

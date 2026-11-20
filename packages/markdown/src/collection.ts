@@ -1,5 +1,5 @@
 import * as NodePath from "@effect/platform-node-shared/NodePath";
-import { Effect, Path } from "effect";
+import { Array, Effect, Path, String } from "effect";
 
 import { MarkdownError } from "./error.ts";
 
@@ -41,7 +41,7 @@ const splitReference = (reference: string): readonly [string, string] => {
   return index < 0 ? [reference, ""] : [reference.slice(0, index), reference.slice(index)];
 };
 const segments = (path: string): string[] =>
-  path.split("/").filter((part) => part !== "" && part !== ".");
+  path.split("/").filter((part) => String.isNonEmpty(part) && part !== ".");
 const encodedPathname = (parts: readonly string[]): string =>
   `/${parts.map(encodeURIComponent).join("/")}`;
 const markdownExtension = /\.md$/iu;
@@ -68,7 +68,7 @@ export const createMarkdownCollection = (
 
     for (const [key, url] of Object.entries(options.assets ?? {})) {
       const parts = segments(key);
-      if (!key.startsWith("./") || parts.length === 0 || parts.includes("..")) {
+      if (!key.startsWith("./") || Array.isArrayEmpty(parts) || parts.includes("..")) {
         return yield* new MarkdownError({
           message: `asset glob key must be relative to the collection base: ${key}`,
         });
@@ -91,7 +91,7 @@ export const createMarkdownCollection = (
           return reference;
         }
         const [path, suffix] = splitReference(reference);
-        if (path === "") return `${entry.url}${suffix}`;
+        if (String.isEmpty(path)) return `${entry.url}${suffix}`;
         // Encode each decoded URL segment before POSIX normalization so %2F stays
         // a filename character rather than becoming another path separator.
         const encodedReference = path
@@ -119,7 +119,7 @@ export const createMarkdownCollection = (
 
     for (const [key, content] of Object.entries(options.documents)) {
       const parts = segments(key);
-      if (!key.startsWith("./") || parts.length === 0 || parts.includes("..")) {
+      if (!key.startsWith("./") || Array.isArrayEmpty(parts) || parts.includes("..")) {
         return yield* new MarkdownError({
           message: `document glob key must be relative to the collection base: ${key}`,
         });

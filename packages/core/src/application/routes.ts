@@ -1,4 +1,4 @@
-import { type Types } from "effect";
+import { Array, type Types } from "effect";
 
 import {
   type EFFRONTIdentity,
@@ -214,10 +214,10 @@ class RoutesDefinitionImpl<
       throw new TypeError(`Page for "${path}" was created by a different EFFRONT module.`);
     }
 
-    if (route._tag === "ParameterFree" && pageState.paramsSchema !== null) {
+    if (route._tag === "ParameterFree" && pageState.decodeParams !== null) {
       throw new TypeError(`Parameterized Page for "${path}" requires route parameters.`);
     }
-    if (route._tag === "Parameterized" && pageState.paramsSchema === null) {
+    if (route._tag === "Parameterized" && pageState.decodeParams === null) {
       throw new TypeError(`Page for "${path}" must declare a parameter Schema.`);
     }
 
@@ -254,7 +254,7 @@ class RoutesDefinitionImpl<
       throw new TypeError(`Routes cannot be mounted beneath parameterized path "${path}".`);
     }
     const routesState = getRoutesState(routes);
-    if (routesState.paths.length === 0) {
+    if (Array.isReadonlyArrayEmpty(routesState.paths)) {
       throw new TypeError(`Cannot mount empty Routes at "${path}".`);
     }
     if (getEFFRONTIdentity(routes) !== this[EFFRONTIdentityTypeId]) {

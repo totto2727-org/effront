@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, Option, Schema, Stream, type Types } from "effect";
+import { Array, Context, Effect, Layer, Option, Stream, String, type Types } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
@@ -32,7 +32,7 @@ const DynamicResponseHeaders = {
 } as const;
 
 const appendAcceptVary = (vary: string | undefined) => {
-  if (vary === undefined || vary.trim() === "") {
+  if (vary === undefined || String.isEmpty(vary.trim())) {
     return "Accept";
   }
 
@@ -104,7 +104,8 @@ const httpLayer = <Services, ApplicationError, Requirements>(
     }
 
     const pathname = requestUrl.value.pathname;
-    const encodedParams = yield* destination.page.paramsSchema === null
+    const decodeParams = destination.page.decodeParams;
+    const encodedParams = yield* decodeParams === null
       ? Effect.succeed(EmptyEncodedPageParams)
       : HttpRouter.params;
     const renderResponse = Effect.fnUntraced(function* (params: PageParams) {
@@ -153,8 +154,8 @@ const httpLayer = <Services, ApplicationError, Requirements>(
       );
     });
 
-    if (request.method !== "POST" && destination.page.paramsSchema !== null) {
-      return yield* Schema.decodeEffect(destination.page.paramsSchema)(encodedParams).pipe(
+    if (request.method !== "POST" && decodeParams !== null) {
+      return yield* decodeParams(encodedParams).pipe(
         Effect.matchEffect({
           onFailure: () =>
             Effect.succeed(
@@ -175,10 +176,9 @@ const httpLayer = <Services, ApplicationError, Requirements>(
     const refreshMiddleware = destination.middleware.filter(
       (middleware) => !prepared.middleware.includes(middleware),
     );
-    const renderMiddleware =
-      refreshMiddleware.length === 0
-        ? prepared.middleware
-        : Object.freeze([...prepared.middleware, ...refreshMiddleware]);
+    const renderMiddleware = Array.isReadonlyArrayEmpty(refreshMiddleware)
+      ? prepared.middleware
+      : Object.freeze([...prepared.middleware, ...refreshMiddleware]);
     const response = prepared.execute.pipe(
       Effect.flatMap((outcome) => {
         const refresh = render({

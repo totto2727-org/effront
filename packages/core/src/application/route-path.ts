@@ -1,3 +1,5 @@
+import { String } from "effect";
+
 export type AbsolutePath = `/${string}`;
 
 // Compile-time and runtime route grammars are deliberately paired. Any grammar change must update
@@ -156,7 +158,7 @@ export const analyzeRoutePath = (path: string): RouteAnalysis => {
   }
 
   const segments = path === "/" ? [] : path.slice(1).split("/");
-  if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
+  if (segments.some((segment) => String.isEmpty(segment) || segment === "." || segment === "..")) {
     throw new TypeError(
       `Invalid route path "${path}". Route paths cannot contain empty, ".", or ".." segments or end with "/".`,
     );

@@ -1,5 +1,5 @@
 // Vite replaces `import.meta.env.DEV` at compile time.
-import { Context, Deferred, Effect, Exit, Layer, Schema, Scope, Stream } from "effect";
+import { Context, Deferred, Effect, Exit, Layer, Schema, Scope, Stream, String } from "effect";
 import { HttpBody, HttpClient, HttpClientRequest } from "effect/http";
 import { createFromReadableStream, createTemporaryReferenceSet } from "@vitejs/plugin-rsc/browser";
 
@@ -144,7 +144,7 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
 
         // Effect exposes the resolved URL, including a followed redirect and excluding the hash.
         const responseUrl = response.url;
-        if (responseUrl === "") {
+        if (String.isEmpty(responseUrl)) {
           return yield* new FlightLoadError({
             cause: new Error("Expected the Flight response to include a resolved URL."),
             reason: "UnexpectedResponse",

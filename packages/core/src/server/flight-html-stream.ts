@@ -1,6 +1,8 @@
 // Adapted from rsc-html-stream by Devon Govett.
 // Copyright (c) 2024-present Devon Govett. Licensed under the MIT License; see THIRD-PARTY-NOTICES.md.
 
+import { String as EffectString } from "effect";
+
 const encoder = new TextEncoder();
 const htmlTrailer = encoder.encode("</body></html>");
 const emptyBytes = new Uint8Array();
@@ -63,7 +65,7 @@ const writeFlightChunk = (
     // bytes from the previous chunk when the next chunk contains binary Flight data.
     // Incomplete UTF-8 is therefore encoded as bytes, just like other binary data.
     const text = decoder.decode(chunk);
-    if (text.length > 0) {
+    if (EffectString.isNonEmpty(text)) {
       writeFlightValue(JSON.stringify(text), controller, nonce);
     }
   } catch {

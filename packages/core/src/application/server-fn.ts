@@ -132,6 +132,7 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
 ): ServerFnFactory<ApplicationServices, AvailableServices> => ({
   make: ({ input = [], handler }) => {
     const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
+    // oxlint-disable-next-line rules/require-top-level-decoder -- Compile the author-supplied schema once per Server Function.
     const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));
     const serverFunction = (...untrustedArgs: ServerFnArguments<typeof input, "Encoded">) => {
       // Unary functions still ignore extra native arguments and decode undefined when omitted.

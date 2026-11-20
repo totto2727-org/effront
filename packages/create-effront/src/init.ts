@@ -2,6 +2,7 @@ import { constants } from "node:fs";
 import { access, copyFile, lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Array } from "effect";
 
 export const platforms = ["node", "bun", "cloudflare", "alchemy-cloudflare"] as const;
 export type Platform = (typeof platforms)[number];
@@ -55,7 +56,7 @@ export async function createProject(directory: string, platform: Platform): Prom
     if (!stat.isDirectory()) {
       throw new Error(`Target is not a directory: ${target}`);
     }
-    if ((await readdir(target)).length > 0) {
+    if (Array.isArrayNonEmpty(await readdir(target))) {
       throw new Error(`Target directory is not empty: ${target}`);
     }
   } catch (error) {

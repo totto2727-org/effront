@@ -3,6 +3,7 @@ import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { createFetchHandler, createWorkersContextAccessors } from "@effront/core/workers";
 import { describe, expect, it } from "vite-plus/test";
 
+// oxlint-disable-next-line rules/consistent-import-extension -- Exercise the built JavaScript entry.
 import { Application } from "../../dist/core.js";
 
 // This spans application registration, native Effect HTTP routing and the public Fetch adapter.

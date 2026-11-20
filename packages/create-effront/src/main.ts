@@ -3,7 +3,7 @@ import { NodeRuntime, NodeServices } from "@effect/platform-node";
 import { Effect } from "effect";
 import { Command } from "effect/cli";
 import packageJson from "../package.json" with { type: "json" };
-import { command } from "./cli.js";
+import { command } from "./cli.ts";
 
 command.pipe(
   Command.run({ version: packageJson.version }),

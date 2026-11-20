@@ -3,7 +3,7 @@
 import { createContext, runInContext } from "node:vm";
 
 import { describe, expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Array as EffectArray, Effect } from "effect";
 
 import {
   type EmbeddedFlightChunk,
@@ -20,7 +20,7 @@ const streamFrom = (source: ReadonlyArray<SourceChunk>) => {
   return new ReadableStream<Uint8Array>({
     pull(controller) {
       const drain = (): void | Promise<void> => {
-        while (chunks.length > 0) {
+        while (EffectArray.isArrayNonEmpty(chunks)) {
           const chunk = chunks.shift();
           if (typeof chunk === "function") {
             return Promise.resolve(chunk()).then(drain);

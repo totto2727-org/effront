@@ -81,19 +81,13 @@ export type CompiledRouteGraph<Services> = readonly [
   },
   parameterValidation: {
     path: "packages/core/src/server/application.ts",
-    code: `    if (request.method !== "POST" && destination.page.paramsSchema !== null) {
-      return yield* Schema.decodeEffect(destination.page.paramsSchema)(encodedParams).pipe(
-        Effect.matchEffect({
+    code: `        Effect.matchEffect({
           onFailure: () =>
             Effect.succeed(
               HttpServerResponse.empty({ status: 404, headers: DynamicResponseHeaders }),
             ),
           onSuccess: (value) => renderResponse({ _tag: "Decoded", value }),
-        }),
-      );
-    }
-    return yield* renderResponse({ _tag: "Encoded", value: encodedParams });
-  });`,
+        }),`,
     language: "ts",
   },
 } satisfies Record<string, CoreSource>;
