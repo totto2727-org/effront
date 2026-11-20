@@ -1,5 +1,6 @@
 "use client";
 
+import { Array } from "effect";
 import * as React from "react";
 import { localizedPath, type DocLocale } from "../content/locale";
 import { ArrowLeftIcon, ArrowRightIcon, ExternalLinkIcon, SearchIcon } from "lucide-react";
@@ -121,7 +122,7 @@ function DocsNavigation({
             </SidebarMenu>
           </SidebarGroup>
         ))}
-        {filtered.length === 0 && (
+        {Array.isArrayEmpty(filtered) && (
           <p className="px-5 py-4 text-sm text-sidebar-foreground/60">
             {locale === "en" ? "No guides match your search." : "一致するガイドはありません。"}
           </p>
@@ -291,7 +292,7 @@ export function DocsShell({
             aria-label={locale === "en" ? "On this page" : "このページ内"}
             className="hidden border-l border-border/70 px-6 py-14 lg:block"
           >
-            {headings.length > 0 && (
+            {Array.isReadonlyArrayNonEmpty(headings) && (
               <nav className="sticky top-23">
                 <p className="mb-3 text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                   {locale === "en" ? "On this page" : "このページ内"}

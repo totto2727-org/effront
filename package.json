@@ -8,6 +8,7 @@
   "devDependencies": {
     "@effect/vitest": "catalog:",
     "@totto2727/gitignore-patterns": "catalog:",
+    "@totto2727/oxlint": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, Option, Schema, Stream, type Types } from "effect";
+import { Array, Context, Effect, Layer, Option, Schema, Stream, String, type Types } from "effect";
 import type { PlatformError } from "effect/PlatformError";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
@@ -32,7 +32,7 @@ const DynamicResponseHeaders = {
 } as const;
 
 const appendAcceptVary = (vary: string | undefined) => {
-  if (vary === undefined || vary.trim() === "") {
+  if (vary === undefined || String.isEmpty(vary.trim())) {
     return "Accept";
   }
 
@@ -175,10 +175,9 @@ const httpLayer = <Services, ApplicationError, Requirements>(
     const refreshMiddleware = destination.middleware.filter(
       (middleware) => !prepared.middleware.includes(middleware),
     );
-    const renderMiddleware =
-      refreshMiddleware.length === 0
-        ? prepared.middleware
-        : Object.freeze([...prepared.middleware, ...refreshMiddleware]);
+    const renderMiddleware = Array.isReadonlyArrayEmpty(refreshMiddleware)
+      ? prepared.middleware
+      : Object.freeze([...prepared.middleware, ...refreshMiddleware]);
     const response = prepared.execute.pipe(
       Effect.flatMap((outcome) => {
         const refresh = render({

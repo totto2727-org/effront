@@ -1,4 +1,4 @@
-import { type Types } from "effect";
+import { Array, type Types } from "effect";
 
 import {
   type EFFRONTIdentity,
@@ -254,7 +254,7 @@ class RoutesDefinitionImpl<
       throw new TypeError(`Routes cannot be mounted beneath parameterized path "${path}".`);
     }
     const routesState = getRoutesState(routes);
-    if (routesState.paths.length === 0) {
+    if (Array.isReadonlyArrayEmpty(routesState.paths)) {
       throw new TypeError(`Cannot mount empty Routes at "${path}".`);
     }
     if (getEFFRONTIdentity(routes) !== this[EFFRONTIdentityTypeId]) {

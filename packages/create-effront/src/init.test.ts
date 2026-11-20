@@ -11,8 +11,8 @@ import { Command } from "effect/cli";
 import packageJson from "../package.json" with { type: "json" };
 import vitePlusPackage from "vite-plus/package.json" with { type: "json" };
 import workspace from "../../../package.json" with { type: "json" };
-import { command } from "./cli.js";
-import { createProject, platforms } from "./init.js";
+import { command } from "./cli.ts";
+import { createProject, platforms } from "./init.ts";
 
 const directories: string[] = [];
 const runCommand = Command.runWith(command, { version: packageJson.version });
