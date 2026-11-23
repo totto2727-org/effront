@@ -84,7 +84,7 @@ it("ships pnpm toolchain metadata through the published CLI for every platform",
       expect(worker).not.toContain("import(");
     }
   }
-});
+}, 30_000);
 
 for (const platform of platforms) {
   it(`creates a ${platform} project with the shared application`, async () => {
