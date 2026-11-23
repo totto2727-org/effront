@@ -109,13 +109,14 @@ for (const platform of platforms) {
     expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
     expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.1.0");
     expect(manifest.devDependencies).toHaveProperty("@totto2727/gitignore-patterns", "^0.1.0");
+    expect(manifest.devDependencies).toHaveProperty("@totto2727/oxlint", "^0.2.0");
     const config = await readFile(join(directory, "vite.config.ts"), "utf8");
     expect(config).toContain(
       'import { generateIgnorePatterns } from "@totto2727/gitignore-patterns"',
     );
     expect(config).toContain('await generateIgnorePatterns(new URL(".", import.meta.url))');
     expect(config).toContain("fmt: { ignorePatterns }");
-    expect(config).toContain("lint: { ignorePatterns }");
+    expect(config).toContain("lint: createLintConfig(ignorePatterns)");
     if (platform === "node" || platform === "bun") {
       expect(manifest.scripts.start).toBe(`${platform} dist/rsc/server.js`);
     }
@@ -142,6 +143,38 @@ for (const platform of platforms) {
   });
 }
 
+it.each(platforms)(
+  "lints the generated %s project with application tracing",
+  async (platform) => {
+    const root = fileURLToPath(new URL("../../../", import.meta.url));
+    await mkdir(join(root, "tmp"), { recursive: true });
+    const directory = await mkdtemp(join(root, "tmp", "create-effront-lint-"));
+    directories.push(directory);
+    const project = await createProject(join(directory, platform), platform);
+    // Use the already-built platform dependencies. CI does not install each starter from npm.
+    await symlink(join(root, "examples", platform, "node_modules"), join(project, "node_modules"));
+    // Give the project its own ignore scope instead of inheriting the workspace's tmp exclusion.
+    await runFile("git", ["init", "--quiet"], { cwd: project });
+
+    const lint = () => runFile("vp", ["lint", "--format", "json"], { cwd: project });
+    const clean = await lint();
+    expect(JSON.parse(clean.stdout)).toMatchObject({
+      diagnostics: [],
+      number_of_files: platform === "cloudflare" ? 4 : 5,
+    });
+
+    await writeFile(
+      join(project, "src", "tracing-probe.ts"),
+      'import { Effect } from "effect";\nexport const probe = Effect.fnUntraced(() => Effect.void);\n',
+    );
+    await expect(lint()).rejects.toMatchObject({
+      code: 1,
+      stdout: expect.stringContaining("rules(effect-tracing)"),
+    });
+  },
+  30_000,
+);
+
 for (const platform of platforms) {
   it(`keeps generated ${platform} host entries aligned with the runnable example`, async () => {
     const directory = join(await temporaryDirectory(), platform);
@@ -160,11 +193,12 @@ for (const platform of platforms) {
         // Only standalone check wiring differs from the runnable workspace host configuration.
         generated = generated
           .replace('import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";\n', "")
+          .replace('import { createLintConfig } from "./lint.config";\n', "")
           .replace(
             '\nconst ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));\n',
             "",
           )
-          .replace("  fmt: { ignorePatterns },\n  lint: { ignorePatterns },\n", "");
+          .replace("  fmt: { ignorePatterns },\n  lint: createLintConfig(ignorePatterns),\n", "");
       }
       expect(generated).toBe(
         await readFile(new URL(`../../../examples/${platform}/${file}`, import.meta.url), "utf8"),
