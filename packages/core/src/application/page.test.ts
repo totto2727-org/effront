@@ -22,6 +22,15 @@ class Greeting extends Context.Service<Greeting, { readonly value: string }>()(
 
 const EFFRONT = Application.effront<Greeting>();
 const RootLayout = EFFRONT.Layout.make({ render: ({ children }) => Effect.succeed(children) });
+const transformedPathParams = Schema.Struct({ slug: Schema.String }).pipe(
+  Schema.decodeTo(
+    Schema.Struct({ id: Schema.String }),
+    SchemaTransformation.transform({
+      decode: ({ slug }) => ({ id: slug }),
+      encode: ({ id }) => ({ slug: id }),
+    }),
+  ),
+);
 
 describe("EFFRONT.Page.make", () => {
   it("rejects rendering outside its application request runtime", () => {
@@ -89,15 +98,7 @@ describe("EFFRONT.Page.make", () => {
       const runtime = yield* FiberSet.makeRuntimePromise<never>();
       const TransformEFFRONT = Application.effront();
       const PageComponent = TransformEFFRONT.Page.make({
-        params: Schema.Struct({ slug: Schema.String }).pipe(
-          Schema.decodeTo(
-            Schema.Struct({ id: Schema.String }),
-            SchemaTransformation.transform({
-              decode: ({ slug }) => ({ id: slug }),
-              encode: ({ id }) => ({ slug: id }),
-            }),
-          ),
-        ),
+        params: transformedPathParams,
         render: ({ params }) => Effect.succeed(params.id),
       });
       const rendered = yield* Effect.promise(() =>

@@ -1,4 +1,5 @@
 import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";
+import preset from "@totto2727/oxlint/preset";
 import { defineConfig } from "vite-plus";
 
 // Regenerate effective exclusions from reachable .gitignore files on every config load.
@@ -15,7 +16,8 @@ export default defineConfig({
   fmt: { ignorePatterns },
   test: { include: ["{app,examples,packages,tests}/**/*.test.{ts,tsx}"] },
   lint: {
-    jsPlugins: ["@totto2727/oxlint"],
+    // Stage shared rules that are ready for CI without suppressing full-preset violations.
+    jsPlugins: preset.jsPlugins ?? [],
     plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
     rules: {
       "rules/consistent-import-extension": "error",
@@ -24,20 +26,30 @@ export default defineConfig({
       "rules/force-string-empty": "error",
       "rules/no-bigint-literals": "error",
       "rules/no-eslint-disable-comments": "error",
+      "rules/no-index-filename": "error",
       "rules/no-jsx-script-tag": "error",
       "rules/no-opaque-instance-fields": "error",
-      "rules/no-option-tag-comparison": "error",
       "rules/no-redundant-alias": "error",
       "rules/no-string-style": "error",
       "rules/no-sync-decode": "error",
+      "rules/prefer-is-nullish": "error",
       "rules/require-disable-reason": "error",
       "rules/require-top-level-decoder": "error",
     },
     overrides: [
       {
-        // Test-local schemas describe their individual fixtures.
-        files: ["**/*.test.{ts,tsx}"],
-        rules: { "rules/require-top-level-decoder": "off" },
+        files: ["packages/**/*.{ts,tsx}"],
+        rules: { "rules/effect-tracing": ["error", "library"] },
+      },
+      {
+        // Tests and fixtures exercise the public, application-facing API.
+        files: [
+          "{app,examples,tests}/**/*.{ts,tsx}",
+          "packages/**/*.{test,types}.{ts,tsx}",
+          "packages/*/tests/**/*.{ts,tsx}",
+          "packages/create-effront/src/{cli,main}.ts",
+        ],
+        rules: { "rules/effect-tracing": ["error", "application"] },
       },
       {
         // The Tailwind integration does not depend on Effect.
