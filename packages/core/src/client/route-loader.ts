@@ -31,6 +31,8 @@ export type RouteLoadRequest = Readonly<{
 
 const routeLoads = Data.taggedEnum<RouteLoad>();
 
+export type RouteResource = ReturnType<typeof routeLoads.Route>;
+
 const isDocument = flightResources.$is("Document");
 
 const inactiveHistoryIndex = -1;
