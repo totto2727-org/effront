@@ -1,8 +1,12 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, test } from "vite-plus/test";
 
+const runFile = promisify(execFile);
+const subprocessTimeout = 15_000;
+const testTimeout = 20_000;
 const cwd = fileURLToPath(new URL("../../", import.meta.url));
 const entries = [
   {
@@ -21,13 +25,15 @@ const entries = [
 ];
 
 describe("published Alchemy execution graph entries", () => {
-  test.each(entries)("constructs $specifier without resolving core runtime modules", (entry) => {
-    const output = execFileSync(
-      process.execPath,
-      [
-        "--input-type=module",
-        "--eval",
-        `
+  test.each(entries)(
+    "constructs $specifier without resolving core runtime modules",
+    async (entry) => {
+      const { stdout } = await runFile(
+        process.execPath,
+        [
+          "--input-type=module",
+          "--eval",
+          `
           import { registerHooks } from "node:module";
           registerHooks({
             resolve(specifier, context, next) {
@@ -46,27 +52,33 @@ describe("published Alchemy execution graph entries", () => {
           if (!Effect.isEffect(handler)) throw new Error("Expected a native handler Effect");
           console.log(import.meta.resolve(${JSON.stringify(entry.specifier)}));
         `,
-      ],
-      { cwd, encoding: "utf8" },
-    );
-    expect(output.trim()).toBe(
-      new URL(`../../dist/cloudflare/${entry.deployment}`, import.meta.url).href,
-    );
-  });
+        ],
+        { cwd, encoding: "utf8", timeout: subprocessTimeout },
+      );
+      expect(stdout.trim()).toBe(
+        new URL(`../../dist/cloudflare/${entry.deployment}`, import.meta.url).href,
+      );
+    },
+    testTimeout,
+  );
 
-  test.each(entries)("selects the static RSC entry for $specifier under react-server", (entry) => {
-    const output = execFileSync(
-      process.execPath,
-      [
-        "--conditions=react-server",
-        "--input-type=module",
-        "--eval",
-        `console.log(import.meta.resolve(${JSON.stringify(entry.specifier)}));`,
-      ],
-      { cwd, encoding: "utf8" },
-    );
-    expect(output.trim()).toBe(
-      new URL(`../../dist/cloudflare/${entry.runtime}`, import.meta.url).href,
-    );
-  });
+  test.each(entries)(
+    "selects the static RSC entry for $specifier under react-server",
+    async (entry) => {
+      const { stdout } = await runFile(
+        process.execPath,
+        [
+          "--conditions=react-server",
+          "--input-type=module",
+          "--eval",
+          `console.log(import.meta.resolve(${JSON.stringify(entry.specifier)}));`,
+        ],
+        { cwd, encoding: "utf8", timeout: subprocessTimeout },
+      );
+      expect(stdout.trim()).toBe(
+        new URL(`../../dist/cloudflare/${entry.runtime}`, import.meta.url).href,
+      );
+    },
+    testTimeout,
+  );
 });
