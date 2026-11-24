@@ -8,5 +8,6 @@ export class BrowserEffectRunner extends Context.Service<BrowserEffectRunner>()(
     make: FiberSet.makeRuntimePromise<HttpClient.HttpClient | Scope.Scope>(),
   },
 ) {
-  static readonly layer = Layer.effect(this, this.make);
+  // oxlint-disable-next-line rules/no-readonly -- The browser runtime layer has a fixed service reference.
+  public static readonly layer = Layer.effect(this, this.make);
 }

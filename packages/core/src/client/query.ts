@@ -31,6 +31,7 @@ export const stream =
     serverFn: ((...args: Args) => Promise<Output>) & Streaming<Output>,
   ) =>
   (...args: Args): Stream.Stream<StreamValue<Output>, ServerFnError> =>
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Streaming<Output> fixes the chunk type at the public Server Function boundary.
     Stream.unwrap(callQueryStream(serverFn, args)) as Stream.Stream<
       StreamValue<Output>,
       ServerFnError
