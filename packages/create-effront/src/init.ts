@@ -1,13 +1,15 @@
+// oxlint-disable-next-line rules/no-node-imports -- Use the native exclusive-copy flag so a concurrent change cannot be overwritten.
 import { constants } from "node:fs";
+// oxlint-disable-next-line rules/no-node-imports -- Preserve exclusive creation, lstat symlink checks, and native file errors at the initializer boundary.
 import { access, copyFile, lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+// oxlint-disable-next-line rules/no-node-imports -- Synchronous project-name normalization uses the host's native path rules.
+import path from "node:path";
 import { Array, Data, Predicate, Schema } from "effect";
 
 export const platforms = ["node", "bun", "cloudflare", "alchemy-cloudflare"] as const;
 export type Platform = (typeof platforms)[number];
 
-const templates = fileURLToPath(new URL("../templates/", import.meta.url));
+const templates = path.resolve(import.meta.dirname, "../templates");
 const templateFileNames: Readonly<Record<string, string>> = {
   _gitignore: ".gitignore",
 };
@@ -21,8 +23,9 @@ class ProjectInitError extends Data.TaggedError("ProjectInitError")<
   }>
 > {}
 
-export function projectName(directory: string): string {
-  const name = basename(resolve(directory))
+export const projectName = (directory: string): string => {
+  const name = path
+    .basename(path.resolve(directory))
     .toLowerCase()
     .replaceAll(/[^a-z0-9._-]+/gu, "-")
     .replaceAll(/^[._-]+|[._-]+$/gu, "");
@@ -30,54 +33,81 @@ export function projectName(directory: string): string {
     throw new ProjectInitError({ message: "Project directory must contain letters or numbers." });
   }
   return name;
-}
+};
 
-async function copyTemplate(source: string, target: string, name: string): Promise<void> {
-  for (const entry of await readdir(source, { withFileTypes: true })) {
-    const from = join(source, entry.name);
-    const to = join(target, templateFileNames[entry.name] ?? entry.name);
+const textTemplateSuffixes = [".json", ".ts", ".md"];
+
+const copyTemplateFile = async (source: string, target: string, name: string): Promise<void> => {
+  if (textTemplateSuffixes.some((suffix) => source.endsWith(suffix))) {
+    const contents = await readFile(source, "utf8");
+    await writeFile(target, contents.replaceAll("__PROJECT_NAME__", name), { flag: "wx" });
+    return;
+  }
+  await copyFile(source, target, constants.COPYFILE_EXCL);
+};
+
+type TemplateCopy = Readonly<{ name: string; source: string; target: string }>;
+
+const copyTemplate = async (copy: TemplateCopy): Promise<void> => {
+  const entries = await readdir(copy.source, { withFileTypes: true });
+  await Array.reduce(entries, Promise.resolve(), async (previous, entry) => {
+    await previous;
+    const from = path.join(copy.source, entry.name);
+    const to = path.join(copy.target, templateFileNames[entry.name] ?? entry.name);
     if (entry.isDirectory()) {
       await mkdir(to, { recursive: true });
-      await copyTemplate(from, to, name);
-    } else if (entry.isFile()) {
-      if (
-        entry.name.endsWith(".json") ||
-        entry.name.endsWith(".ts") ||
-        entry.name.endsWith(".md")
-      ) {
-        const contents = await readFile(from, "utf8");
-        await writeFile(to, contents.replaceAll("__PROJECT_NAME__", name), { flag: "wx" });
-      } else {
-        await copyFile(from, to, constants.COPYFILE_EXCL);
-      }
-    } else {
+      await copyTemplate({ name: copy.name, source: from, target: to });
+      return;
+    }
+    if (!entry.isFile()) {
       throw new ProjectInitError({ message: `Unsupported template entry: ${entry.name}` });
     }
-  }
-}
+    await copyTemplateFile(from, to, copy.name);
+  });
+};
 
-/** Populate an empty project directory; existing contents are never overwritten. */
-export async function createProject(directory: string, platform: Platform): Promise<string> {
-  const target = resolve(directory);
-  const name = projectName(target);
+const validateDestination = async (target: string): Promise<void> => {
   try {
     const stat = await lstat(target);
     if (!stat.isDirectory()) {
       throw new ProjectInitError({ message: `Target is not a directory: ${target}` });
     }
-    if (Array.isArrayNonEmpty(await readdir(target))) {
+    const entries = await readdir(target);
+    if (Array.isArrayNonEmpty(entries)) {
       throw new ProjectInitError({ message: `Target directory is not empty: ${target}` });
     }
-  } catch (cause) {
-    if (!(Predicate.isError(cause) && isMissingPath(cause))) {
-      throw cause;
+  } catch (error) {
+    if (!(Predicate.isError(error) && isMissingPath(error))) {
+      throw error;
     }
   }
-  await access(join(templates, "shared"));
-  await access(join(templates, platform));
-  await mkdir(dirname(target), { recursive: true });
+};
+
+const prepareDestination = async (
+  target: string,
+  shared: string,
+  selected: string,
+): Promise<void> => {
+  await access(shared);
+  await access(selected);
+  await mkdir(path.dirname(target), { recursive: true });
   await mkdir(target, { recursive: true });
-  await copyTemplate(join(templates, "shared"), target, name);
-  await copyTemplate(join(templates, platform), target, name);
+};
+
+/**
+ * Populates an empty project directory with exclusive file creation.
+ * @param {string} directory A destination on the local filesystem.
+ * @param {Platform} platform The selected starter platform.
+ * @returns {Promise<string>} The absolute path of the generated project.
+ */
+export const createProject = async (directory: string, platform: Platform): Promise<string> => {
+  const target = path.resolve(directory);
+  const name = projectName(target);
+  await validateDestination(target);
+  const shared = path.join(templates, "shared");
+  const selected = path.join(templates, platform);
+  await prepareDestination(target, shared, selected);
+  await copyTemplate({ name, source: shared, target });
+  await copyTemplate({ name, source: selected, target });
   return target;
-}
+};
