@@ -2,11 +2,12 @@ import type { MarkdownError, MarkdownParseError } from "@effront/markdown";
 import type { Effect } from "effect";
 import type { ReactNode } from "react";
 
-export interface DocPage {
-  readonly slug: string;
-  readonly title: string;
-  readonly description: string;
-  readonly section:
+export type DocPage = Readonly<{
+  content: () => ReactNode;
+  description: string;
+  group?: string;
+  headings: Readonly<Readonly<{ id: string; title: string }>[]>;
+  section:
     | "Getting started"
     | "Platforms"
     | "Guides"
@@ -14,11 +15,9 @@ export interface DocPage {
     | "API reference"
     | "アーキテクチャ"
     | "Architecture";
-  readonly group?: string;
-  readonly headings: Readonly<Readonly<{ id: string; title: string }>[]>;
-  readonly content: () => ReactNode;
-}
+  slug: string;
+  title: string;
+}>;
 
-export interface RenderableDocPage extends Omit<DocPage, "content"> {
-  readonly content: () => Effect.Effect<ReactNode, MarkdownError | MarkdownParseError>;
-}
+export type RenderableDocPage = Omit<DocPage, "content"> &
+  Readonly<{ content: () => Effect.Effect<ReactNode, MarkdownError | MarkdownParseError> }>;

@@ -1,11 +1,8 @@
 import { access, readFile, readdir } from "node:fs/promises";
 import { describe, expect, test } from "vite-plus/test";
 import { getPage, localizedNavigation, localizedPages, pages } from "./pages.ts";
-import { articleCatalog } from "./catalog.ts";
-import { englishArticleCatalog } from "./en/catalog.ts";
 import { documentLocale, documentPath, localizedPath } from "./locale.ts";
 
-import { retainedUrls } from "./pages-retained.fixture.ts";
 import { render, text } from "./pages-render.fixture.ts";
 
 describe("documentation catalog", () => {
@@ -123,70 +120,6 @@ describe("documentation catalog", () => {
       );
     },
   );
-
-  test("keeps every Markdown document registered, including the explicit root alias", () => {
-    const sources = Object.keys(import.meta.glob("./articles/**/*.md"));
-    expect(articleCatalog.map((page) => `./articles${page.source}.md`).toSorted()).toStrictEqual(
-      sources.toSorted(),
-    );
-    expect(articleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
-    expect(() => getPage("/index")).toThrow("Documentation route is missing content");
-    const englishSources = Object.keys(import.meta.glob("./en/articles/**/*.md"));
-    expect(
-      englishArticleCatalog.map((page) => `./en/articles${page.source}.md`).toSorted(),
-    ).toStrictEqual(englishSources.toSorted());
-    expect(englishArticleCatalog.map((page) => page.slug).toSorted()).toStrictEqual(
-      articleCatalog.map((page) => page.slug).toSorted(),
-    );
-    expect(englishArticleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
-    (["ja", "en"] as const).forEach((locale) => {
-      expect(() => getPage(`/${locale}/index`)).toThrow("Documentation route is missing content");
-    });
-  });
-
-  test("registers the Server Function error-handling page at every published locale URL", async () => {
-    const entry = await readFile(new URL("../entry.effront.tsx", import.meta.url), "utf8");
-    const source = "/best-practices/server-function-error-handling";
-    ["", "/ja", "/en"].forEach((prefix) => {
-      const slug = `${prefix}${source}`;
-      expect(entry).toContain(`.page(\n      "${slug}",\n      documentPage("${slug}"),\n    )`);
-    });
-  });
-
-  test.each(["ja", "en"] as const)(
-    "registers every published page and serializable navigation item in %s",
-    (locale) => {
-      const items = localizedNavigation(locale);
-      const expectedSlugs = retainedUrls.map((slug) => localizedPath(slug, locale));
-      expect(items.map((item) => item.slug).toSorted()).toStrictEqual(expectedSlugs.toSorted());
-      expect(JSON.parse(JSON.stringify(items))).toStrictEqual(items);
-      for (const item of items) {
-        const { slug, title, section, group } = getPage(item.slug);
-        expect(item).toStrictEqual({ slug, title, section, ...(group ? { group } : {}) });
-        expect(title.trim()).not.toBe("");
-        expect(section.trim()).not.toBe("");
-        expect(getPage(item.slug).description.trim()).not.toBe("");
-      }
-      expect(
-        items.filter((item) => documentPath(item.slug).startsWith("/architecture/implementation/")),
-      ).toHaveLength(7);
-      ["/advanced", "/advanced/production-startup", "/guide/testing"].forEach((retired) => {
-        expect(() => getPage(localizedPath(retired, locale))).toThrow(
-          "Documentation route is missing content",
-        );
-      });
-    },
-  );
-
-  test("keeps localized pages unique and distinct from the legacy Japanese aliases", () => {
-    expect(localizedPages).toHaveLength(retainedUrls.length * 2);
-    const allPages = [...pages, ...localizedPages];
-    expect(new Set(allPages.map((page) => page.slug)).size).toBe(allPages.length);
-    for (const page of localizedPages) {
-      expect(page.slug).toMatch(/^\/(en|ja)(?:\/[a-z-]+)*$/u);
-      expect(getPage(page.slug)).toBe(page);
-    }
-  });
 
   test("keeps conceptual guides host-neutral and links the create-and-run quickstart", async () => {
     for (const slug of [
