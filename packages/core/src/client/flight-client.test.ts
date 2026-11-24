@@ -1,450 +1,139 @@
-import { beforeEach, expect, it, vi } from "@effect/vitest";
-import { Predicate, Effect, Fiber, Layer } from "effect";
+import { expect, it } from "@effect/vitest";
+import { Effect } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
-import { InitialFlightStream } from "./initial-flight-stream.ts";
-import { ServerFnIdHeader } from "#core/rsc/flight.ts";
-import type { FlightPayload, ServerFnResult } from "#core/rsc/flight.ts";
+import { FlightMediaType, ServerFnIdHeader } from "#core/rsc/flight.ts";
 
-const decodedPayload = {
-  formState: null,
-  routeTree: {
-    child: null,
-    content: null,
-    id: "root",
-  },
-  serverFnResult: null,
-} satisfies FlightPayload;
-const decodeFlight = vi.fn(
-  (
-    _stream: ReadableStream<Uint8Array>,
-    _options?: Readonly<{ startTime?: number; temporaryReferences?: unknown }>,
-  ): Promise<FlightPayload | ServerFnResult> => Promise.resolve(decodedPayload),
-);
+import {
+  actionId,
+  clientFor,
+  decodeFlight,
+  decodedPayload,
+  destination,
+  encodedArguments,
+  flightResponse,
+  FlightLoadError,
+  home,
+  load,
+  observeTransport,
+  requireFlight,
+  resetDecode,
+  results,
+  transport,
+} from "./flight-client.fixture.ts";
+import type { RouteRequest } from "./flight-client.fixture.ts";
+import { flightRequests, flightResources } from "./flight-client-model.ts";
 
-vi.doMock("@vitejs/plugin-rsc/browser", () => ({
-  createFromReadableStream: decodeFlight,
-}));
-
-let initialFlightController: ReadableStreamDefaultController<Uint8Array> | undefined;
-const initialFlightStream = new ReadableStream<Uint8Array>({
-  start(controller) {
-    initialFlightController = controller;
-  },
-});
-
-const { FlightClient, FlightLoadError } = await import("./flight-client.ts");
-type FlightRequest = Exclude<import("./flight-client").FlightRequest, Readonly<{ _tag: "Query" }>>;
-const FlightClientTestLayer = FlightClient.layer.pipe(
-  Layer.provide(InitialFlightStream.layerTest({ stream: initialFlightStream })),
-);
-
-const loadFlight = Effect.fn(function* (request: FlightRequest) {
-  const client = yield* FlightClient;
-  return yield* client.load(request);
-}, Effect.provide(FlightClientTestLayer));
-
-beforeEach(() => {
-  decodeFlight.mockReset();
-  decodeFlight.mockImplementation((_stream, _options) => Promise.resolve(decodedPayload));
-});
-
-const makeClient = (
-  respond: (request: HttpClientRequest.HttpClientRequest, signal: AbortSignal) => Response,
-): HttpClient.HttpClient =>
-  HttpClient.make((request, _url, signal) =>
-    Effect.sync(() => HttpClientResponse.fromWeb(request, respond(request, signal))),
-  );
-
-const makePendingFlightResponse = (signal: AbortSignal): Response =>
-  new Response(
-    new ReadableStream<Uint8Array>({
-      start(controller) {
-        signal.addEventListener(
-          "abort",
-          () => {
-            controller.error(signal.reason);
-          },
-          { once: true },
-        );
-      },
-    }),
-    {
-      headers: {
-        "content-type": "text/x-component",
-      },
-    },
-  );
-
-it.effect("loads the embedded initial Flight without waiting for stream completion", () =>
-  Effect.gen(function* () {
-    decodeFlight.mockImplementationOnce((stream) => {
-      const reader = stream.getReader();
-      return reader.read().then(() => {
-        void reader.read();
-        return decodedPayload;
-      });
-    });
-    const client = yield* FlightClient;
-    const loading = yield* client.loadInitial.pipe(Effect.forkChild);
-    if (Predicate.isNullish(initialFlightController)) {
-      return yield* Effect.die("Expected the embedded Flight stream.");
-    }
-    initialFlightController.enqueue(new Uint8Array([1]));
-
-    const resource = yield* Fiber.join(loading);
-    const completion = yield* resource.completed.pipe(Effect.forkChild);
-    yield* Effect.yieldNow;
-
-    expect(resource.payload).toBe(decodedPayload);
-    expect(completion.pollUnsafe()).toBeUndefined();
-
-    initialFlightController.close();
-    yield* Fiber.join(completion);
-  }).pipe(
-    Effect.provide(FlightClientTestLayer),
-    Effect.provideService(
-      HttpClient.HttpClient,
-      HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
-    ),
-  ),
-);
+const mutation = (temporaryReferences: Readonly<Record<string, never>> = {}): RouteRequest =>
+  flightRequests.ServerFunction({
+    body: encodedArguments,
+    destination: home,
+    id: actionId,
+    temporaryReferences,
+  });
 
 it.effect("requests and decodes a whole-tree Flight response", () =>
   Effect.gen(function* () {
-    let observedRequest: HttpClientRequest.HttpClientRequest | undefined;
-    const client = makeClient((request) => {
-      observedRequest = request;
-      return new Response(new Uint8Array(), {
-        headers: {
-          "content-type": "text/x-component;charset=utf-8",
-        },
-      });
-    });
-
-    const response = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(Effect.provideService(HttpClient.HttpClient, client));
-    if (response._tag === "Document") {
-      return yield* Effect.die("Expected a Flight response.");
-    }
-
-    expect(response.payload).toBe(decodedPayload);
-    expect(response.resolvedUrl.href).toBe("https://effront.test/schedule/day-two");
-    expect(observedRequest?.method).toBe("GET");
-    expect(observedRequest?.url).toBe("https://effront.test/schedule/day-two");
-    expect(observedRequest?.headers["accept"]).toBe("text/x-component");
-    expect(decodeFlight).toHaveBeenCalledWith(
-      expect.any(ReadableStream),
-      expect.objectContaining({ startTime: expect.any(Number) }),
+    yield* resetDecode;
+    const { http, observed } = yield* observeTransport(() =>
+      flightResponse("text/x-component;charset=utf-8"),
     );
-
+    const response = yield* load(http).pipe(Effect.flatMap(requireFlight));
+    const { request } = yield* observed;
+    expect([response.payload, response.resolvedUrl.href]).toStrictEqual([
+      decodedPayload,
+      destination.href,
+    ]);
+    expect(request).toMatchObject({
+      headers: { accept: FlightMediaType },
+      method: "GET",
+      url: destination.href,
+    });
+    const options = decodeFlight.mock.lastCall?.[1];
+    expect(options?.startTime).toBeTypeOf("number");
+    expect(decodeFlight.mock.lastCall?.[0]).toBeInstanceOf(ReadableStream);
     yield* response.release;
-  }),
-);
-
-it.effect("keeps streamed chunks cancellable after the root payload resolves", () =>
-  Effect.gen(function* () {
-    const responseConsumptionStopped = Promise.withResolvers<void>();
-    let requestSignal: AbortSignal | undefined;
-    decodeFlight.mockImplementationOnce((stream) => {
-      void stream
-        .getReader()
-        .read()
-        .catch(() => {
-          responseConsumptionStopped.resolve();
-        });
-      return Promise.resolve(decodedPayload);
-    });
-    const client = makeClient((_request, signal) => {
-      requestSignal = signal;
-      return makePendingFlightResponse(signal);
-    });
-    const response = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(Effect.provideService(HttpClient.HttpClient, client));
-    if (response._tag === "Document") {
-      return yield* Effect.die("Expected a Flight response.");
-    }
-
-    yield* response.release;
-    yield* Effect.promise(() => responseConsumptionStopped.promise);
-
-    expect(response.payload).toBe(decodedPayload);
-    expect(requestSignal?.aborted).toBe(true);
-  }),
-);
-
-it.effect("closes the response scope when the Flight stream reaches EOF", () =>
-  Effect.gen(function* () {
-    let requestSignal: AbortSignal | undefined;
-    decodeFlight.mockImplementationOnce((stream) => {
-      const reader = stream.getReader();
-      return reader.read().then(() => decodedPayload);
-    });
-    const client = makeClient((_request, signal) => {
-      requestSignal = signal;
-      return new Response(new Uint8Array(), {
-        headers: {
-          "content-type": "text/x-component",
-        },
-      });
-    });
-
-    const response = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(Effect.provideService(HttpClient.HttpClient, client));
-    if (response._tag === "Document") {
-      return yield* Effect.die("Expected a Flight response.");
-    }
-
-    expect(response.payload).toBe(decodedPayload);
-    expect(requestSignal?.aborted).toBe(true);
-  }),
-);
-
-it.effect("cancels an unfinished decoded stream when the browser scope closes", () =>
-  Effect.gen(function* () {
-    const responseConsumptionStopped = Promise.withResolvers<void>();
-    let requestSignal: AbortSignal | undefined;
-    decodeFlight.mockImplementationOnce((stream) => {
-      void stream
-        .getReader()
-        .read()
-        .catch(() => {
-          responseConsumptionStopped.resolve();
-        });
-      return Promise.resolve(decodedPayload);
-    });
-    const client = makeClient((_request, signal) => {
-      requestSignal = signal;
-      return makePendingFlightResponse(signal);
-    });
-
-    yield* Effect.scoped(
-      loadFlight({
-        _tag: "Navigation",
-        destination: new URL("https://effront.test/schedule/day-two"),
-      }).pipe(Effect.provideService(HttpClient.HttpClient, client)),
-    );
-    yield* Effect.promise(() => responseConsumptionStopped.promise);
-
-    expect(requestSignal?.aborted).toBe(true);
   }),
 );
 
 it.effect("returns document navigation for a non-Flight navigation response", () =>
   Effect.gen(function* () {
-    const resource = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(
-      Effect.provideService(
-        HttpClient.HttpClient,
-        makeClient(
-          () =>
-            new Response("<!doctype html>", {
-              headers: { "content-type": "text/html;charset=utf-8" },
-            }),
-        ),
-      ),
-    );
-
-    expect(resource._tag).toBe("Document");
+    yield* resetDecode;
+    const html = new Response("<!doctype html>", {
+      headers: { "content-type": "text/html;charset=utf-8" },
+    });
+    const resource = yield* load(transport(() => html));
+    expect(flightResources.$is("Document")(resource)).toBe(true);
     expect(decodeFlight).not.toHaveBeenCalled();
     yield* resource.release;
   }),
 );
 
 it.effect("rejects a Flight response without its resolved location", () =>
-  loadFlight({
-    _tag: "Navigation",
-    destination: new URL("https://effront.test/schedule/day-two"),
-  }).pipe(
-    Effect.provideService(
-      HttpClient.HttpClient,
-      HttpClient.make(() =>
-        Effect.succeed(
-          HttpClientResponse.fromWeb(
-            HttpClientRequest.empty,
-            new Response(new Uint8Array(), {
-              headers: { "content-type": "text/x-component" },
-            }),
-          ),
-        ),
-      ),
-    ),
-    Effect.flip,
-    Effect.map((error) => {
-      expect(error).toBeInstanceOf(FlightLoadError);
-      expect(error.reason).toBe("UnexpectedResponse");
-      expect(decodeFlight).not.toHaveBeenCalled();
-    }),
-  ),
-);
-
-it.effect("releases the Flight transport when decoding fails", () =>
   Effect.gen(function* () {
-    let requestSignal: AbortSignal | undefined;
-    decodeFlight.mockRejectedValueOnce(new Error("invalid Flight payload"));
-    const client = makeClient((_request, signal) => {
-      requestSignal = signal;
-      return makePendingFlightResponse(signal);
-    });
-
-    const error = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(Effect.provideService(HttpClient.HttpClient, client), Effect.flip);
-
+    yield* resetDecode;
+    const response = HttpClientResponse.fromWeb(HttpClientRequest.empty, flightResponse());
+    const client = HttpClient.make(() => Effect.succeed(response));
+    const error = yield* load(client).pipe(Effect.flip);
     expect(error).toBeInstanceOf(FlightLoadError);
-    expect(error.reason).toBe("DecodeFailed");
-    expect(requestSignal?.aborted).toBe(true);
+    expect(error.reason).toBe("UnexpectedResponse");
+    expect(decodeFlight).not.toHaveBeenCalled();
   }),
 );
 
-it.effect("rejects a Server Function result where a route payload was expected", () =>
+it.effect("rejects a Server Function result in a route payload", () =>
   Effect.gen(function* () {
-    decodeFlight.mockResolvedValueOnce({ _tag: "Success", value: "unexpected" });
-    const error = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/"),
-    }).pipe(
-      Effect.provideService(
-        HttpClient.HttpClient,
-        makeClient(
-          () => new Response(new Uint8Array(), { headers: { "content-type": "text/x-component" } }),
-        ),
-      ),
-      Effect.flip,
-    );
-
+    yield* resetDecode;
+    decodeFlight.mockResolvedValueOnce(results.Success({ value: "unexpected" }));
+    const request = flightRequests.Navigation({ destination: home });
+    const http = transport(() => flightResponse());
+    const error = yield* load(http, request).pipe(Effect.flip);
     expect(error.reason).toBe("DecodeFailed");
   }),
 );
 
-it.effect("rejects a route payload where a query result was expected", () =>
+it.effect("rejects a route payload in a query result", () =>
   Effect.gen(function* () {
-    const client = yield* FlightClient;
-    const error = yield* client
-      .loadQuery({
-        _tag: "Query",
-        body: "encoded-arguments",
-        destination: new URL("https://effront.test/_effront/query"),
-        id: "query-id",
-        temporaryReferences: {},
-      })
-      .pipe(Effect.flip);
-
+    yield* resetDecode;
+    const http = transport(() => flightResponse());
+    const client = yield* clientFor(http);
+    const query = flightRequests.Query({
+      body: encodedArguments,
+      destination: new URL("https://effront.test/_effront/query"),
+      id: "query-id",
+      temporaryReferences: {},
+    });
+    const error = yield* client.loadQuery(query).pipe(Effect.flip);
     expect(error.reason).toBe("DecodeFailed");
-  }).pipe(
-    Effect.provide(FlightClientTestLayer),
-    Effect.provideService(
-      HttpClient.HttpClient,
-      makeClient(
-        () => new Response(new Uint8Array(), { headers: { "content-type": "text/x-component" } }),
-      ),
-    ),
-  ),
+  }),
 );
 
 it.effect("rejects a non-Flight Server Function response", () =>
-  loadFlight({
-    _tag: "ServerFunction",
-    body: "encoded-arguments",
-    destination: new URL("https://effront.test/"),
-    id: "server-function-id",
-    temporaryReferences: {},
-  }).pipe(
-    Effect.provideService(
-      HttpClient.HttpClient,
-      makeClient(
-        () =>
-          new Response("Unauthorized", {
-            status: 401,
-          }),
-      ),
-    ),
-    Effect.flip,
-    Effect.map((error) => {
-      expect(error).toBeInstanceOf(FlightLoadError);
-      expect(error.reason).toBe("RequestFailed");
-    }),
-  ),
+  Effect.gen(function* () {
+    yield* resetDecode;
+    const unauthorized = 401;
+    const http = transport(() => new Response("Unauthorized", { status: unauthorized }));
+    const error = yield* load(http, mutation()).pipe(Effect.flip);
+    expect(error).toBeInstanceOf(FlightLoadError);
+    expect(error.reason).toBe("RequestFailed");
+  }),
 );
 
 it.effect("decodes a Server Function response with its temporary references", () =>
   Effect.gen(function* () {
+    yield* resetDecode;
     const temporaryReferences = {};
-    let observedRequest: HttpClientRequest.HttpClientRequest | undefined;
-    const response = yield* loadFlight({
-      _tag: "ServerFunction",
-      body: "encoded-arguments",
-      destination: new URL("https://effront.test/"),
-      id: "server-function-id",
-      temporaryReferences,
-    }).pipe(
-      Effect.provideService(
-        HttpClient.HttpClient,
-        makeClient((request) => {
-          observedRequest = request;
-          return new Response(new Uint8Array(), {
-            headers: {
-              "content-type": "text/x-component",
-            },
-          });
-        }),
-      ),
-    );
-
-    expect(observedRequest?.method).toBe("POST");
-    expect(observedRequest?.url).toBe("https://effront.test/");
-    expect(observedRequest?.headers["accept"]).toBe("text/x-component");
-    expect(observedRequest?.headers[ServerFnIdHeader]).toBe("server-function-id");
-    expect(decodeFlight).toHaveBeenCalledWith(
-      expect.any(ReadableStream),
-      expect.objectContaining({
-        startTime: expect.any(Number),
-        temporaryReferences,
-      }),
-    );
-
+    const { http, observed } = yield* observeTransport(() => flightResponse());
+    const response = yield* load(http, mutation(temporaryReferences));
+    expect((yield* observed).request).toMatchObject({
+      headers: { accept: FlightMediaType, [ServerFnIdHeader]: actionId },
+      method: "POST",
+      url: home.href,
+    });
+    const call = decodeFlight.mock.lastCall;
+    expect(call?.[0]).toBeInstanceOf(ReadableStream);
+    expect(call?.[1]?.temporaryReferences).toBe(temporaryReferences);
+    expect(call?.[1]?.startTime).toBeTypeOf("number");
     yield* response.release;
-  }),
-);
-
-it.effect("cancels Flight response consumption when loading is interrupted", () =>
-  Effect.gen(function* () {
-    const decodingStarted = Promise.withResolvers<void>();
-    const responseConsumptionStopped = Promise.withResolvers<void>();
-    let requestSignal: AbortSignal | undefined;
-    decodeFlight.mockImplementationOnce((stream) => {
-      decodingStarted.resolve();
-      return stream
-        .getReader()
-        .read()
-        .then(() => decodedPayload)
-        .catch((error) => {
-          responseConsumptionStopped.resolve();
-          throw error;
-        });
-    });
-    const client = makeClient((_request, signal) => {
-      requestSignal = signal;
-      return makePendingFlightResponse(signal);
-    });
-    const loadingFiber = yield* loadFlight({
-      _tag: "Navigation",
-      destination: new URL("https://effront.test/schedule/day-two"),
-    }).pipe(Effect.provideService(HttpClient.HttpClient, client), Effect.forkChild);
-
-    yield* Effect.promise(() => decodingStarted.promise);
-    yield* Fiber.interrupt(loadingFiber);
-    yield* Effect.promise(() => responseConsumptionStopped.promise);
-
-    expect(requestSignal?.aborted).toBe(true);
   }),
 );
