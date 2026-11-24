@@ -38,7 +38,7 @@ Cloudflare Workers では Wrangler 設定の `nodejs_compat` が必要です。
 
 ## parseMarkdown {#parse}
 
-`parseMarkdown(entry, options?)` は、Comark の文書型と `ParserOptions` を使い、`Effect.Effect<MarkdownDocument, MarkdownError>` を返します。
+`parseMarkdown(entry, options?)` は、Comark の文書型と `ParserOptions` を使い、`Effect.Effect<MarkdownDocument, MarkdownError | MarkdownParseError>` を返します。
 Comark の既定設定を保持し、次のプラグインを追加します。
 
 | プラグイン                                                    | 動作                                  |
@@ -57,7 +57,7 @@ Effront が追加するプラグインを削除するオプションはありま
 > 対象は信頼できる執筆済み Markdown とプラグインに限ります。
 > この parser は sanitizer ではありません。
 
-parser の例外は、元の例外を `cause` に持つ `MarkdownError` になります。
+パーサーの例外は `MarkdownParseError` になります。必須の `cause` フィールドに元の例外を保持します。
 
 ## Markdown のレンダリング {#rendering}
 
@@ -105,5 +105,5 @@ function MyMermaid(props: ComponentProps<typeof Mermaid>) {
 
 相対パスは、各 Markdown ファイルを基準に解決します。
 
-`MarkdownError` は `_tag: "MarkdownError"`、診断用の `message`、省略可能な `cause` を持ちます。
-コレクション設定、参照解決、parser の失敗を表します。
+`MarkdownError` は診断用の `message` を持ち、`cause` フィールドはありません。
+コレクション設定と参照解決の失敗を表します。

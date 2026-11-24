@@ -1,4 +1,4 @@
-import * as BrowserHttpClient from "@effect/platform-browser/BrowserHttpClient";
+import { BrowserHttpClient } from "@effect/platform-browser";
 import { Effect, Layer } from "effect";
 
 import { navigationMode } from "./browser-capabilities";

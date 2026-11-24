@@ -1,4 +1,4 @@
-import type { MarkdownError } from "@effront/markdown";
+import type { MarkdownError, MarkdownParseError } from "@effront/markdown";
 import type { Effect } from "effect";
 import type { ReactNode } from "react";
 
@@ -20,5 +20,5 @@ export interface DocPage {
 }
 
 export interface RenderableDocPage extends Omit<DocPage, "content"> {
-  readonly content: () => Effect.Effect<ReactNode, MarkdownError>;
+  readonly content: () => Effect.Effect<ReactNode, MarkdownError | MarkdownParseError>;
 }

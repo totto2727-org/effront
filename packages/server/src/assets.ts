@@ -1,5 +1,4 @@
-import { Effect, type FileSystem, type Path } from "effect";
-import { type PlatformError } from "effect/PlatformError";
+import { Effect, type FileSystem, type Path, type PlatformError } from "effect";
 import {
   HttpPlatform,
   HttpServerError,
@@ -45,7 +44,7 @@ export const withAssets = <E, R>(
     E | HttpServerError.HttpServerError,
     R | HttpServerRequest.HttpServerRequest
   >,
-  PlatformError,
+  PlatformError.PlatformError,
   FileSystem.FileSystem | Path.Path
 > =>
   Effect.gen(function* () {

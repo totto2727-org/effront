@@ -4,7 +4,7 @@
 
 - `src/collection.ts` owns glob-map indexing, URL lookup, and source-relative references.
 - `src/parse.ts` owns Comark parsing, default mdts plugins, and post-parse link/image resolution.
-- `src/error.ts` owns the shared `MarkdownError` failure type.
+- `src/error.ts` owns `MarkdownError` and `MarkdownParseError`.
 - `src/document.tsx` owns the configured renderer, `src/math.tsx` and `src/mermaid.tsx` wrap upstream client components, and `src/styles.css` supplies required KaTeX styles.
 - Consumer documentation lives in the [English guide](../../app/docs/src/content/en/articles/guide/markdown.md) and [API reference](../../app/docs/src/content/en/articles/api-reference/markdown.md), with [Japanese guide](../../app/docs/src/content/articles/guide/markdown.md) and [API reference](../../app/docs/src/content/articles/api-reference/markdown.md) translations. Update both locales rather than adding package-local consumer guides.
 - `docs/IMPLEMENTATION.md` owns collection flowcharts, rendering graph boundaries, and packaging mechanics for maintainers.
@@ -13,7 +13,7 @@
 
 - Keep Vite responsible for file discovery, raw text, and asset emission. The collection accepts already-loaded maps, not a filesystem loader or copy step.
 - Preserve segment-wise URL encoding and single decoding. Use Effect's `NodePath.layerPosix` for host-independent source-relative paths, with `node:path` and `node:url` available in the runtime.
-- Keep configuration, reference, and parsing failures typed as `MarkdownError`. Missing page lookup stays an ordinary `undefined` result so the application can choose a 404 before streaming.
+- Use `MarkdownError` for configuration and reference failures. Use `MarkdownParseError` for Comark failures and preserve the thrown value in its required `cause`. Missing page lookup stays an ordinary `undefined` result so the application can choose a 404 before streaming.
 - Resolve literal `a.href` and `img.src` attributes after standard Comark parsing and user plugins. Preserve dynamic bindings and application component mappings.
 - Keep the collection/parser entry point independent from the public document renderer and preserve Comark's document format and user component mappings.
 - Keep ordinary prose server-renderable and restrict client boundaries to rich leaves. Do not evaluate Mermaid's rendering dependency during SSR or claim completed no-JavaScript math/diagrams.

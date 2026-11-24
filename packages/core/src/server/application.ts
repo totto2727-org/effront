@@ -1,5 +1,13 @@
-import { Context, Effect, Layer, Option, Schema, Stream, type Types } from "effect";
-import type { PlatformError } from "effect/PlatformError";
+import {
+  Context,
+  Effect,
+  Layer,
+  Option,
+  type PlatformError,
+  Schema,
+  Stream,
+  type Types,
+} from "effect";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 import { type ApplicationDefinition, getApplicationState } from "../application/definition";
@@ -78,7 +86,7 @@ type HttpApplicationRequirements =
 
 export type HttpApplicationLayer<ApplicationError, Requirements = never> = Layer.Layer<
   never,
-  ApplicationError | PlatformError,
+  ApplicationError | PlatformError.PlatformError,
   HttpApplicationRequirements | Requirements
 >;
 
