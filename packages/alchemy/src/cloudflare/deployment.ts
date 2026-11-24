@@ -1,9 +1,9 @@
 import type { toHttpEffect } from "@effront/core/http";
 import { Effect } from "effect";
 
-import { type ApplicationAdapter, makeApplicationAdapter } from "./adapter";
+import { type ApplicationAdapter, makeApplicationAdapter } from "./adapter.ts";
 
-export type { ApplicationLoader } from "./adapter";
+export type { ApplicationLoader } from "./adapter.ts";
 
 const unavailable: typeof toHttpEffect = () =>
   Effect.die(

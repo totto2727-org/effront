@@ -6,15 +6,15 @@ import {
   setServerCallback,
 } from "@vitejs/plugin-rsc/browser";
 
-import { BrowserEffectRunner } from "./browser-effect-runner";
-import { BrowserRenderer } from "./browser-renderer";
-import { FlightClient } from "./flight-client";
-import { NavigationApi } from "./navigation-api";
-import { RouteLoader } from "./route-loader";
-import { RouteRefresher } from "./route-refresh";
-import { ServerFnQueryPath, type ServerFnResult } from "../rsc/flight";
-import { ServerFnDefect, ServerFnInputError } from "../rsc/server-fn-error";
-import { invocationError, matchServerFnQuery, transportError } from "./server-fn-protocol";
+import { BrowserEffectRunner } from "./browser-effect-runner.ts";
+import { BrowserRenderer } from "./browser-renderer.ts";
+import { FlightClient } from "./flight-client.ts";
+import { NavigationApi } from "./navigation-api.ts";
+import { RouteLoader } from "./route-loader.ts";
+import { RouteRefresher } from "./route-refresh.ts";
+import { ServerFnQueryPath, type ServerFnResult } from "../rsc/flight.ts";
+import { ServerFnDefect, ServerFnInputError } from "../rsc/server-fn-error.ts";
+import { invocationError, matchServerFnQuery, transportError } from "./server-fn-protocol.ts";
 
 class ServerFnCallError extends Schema.TaggedError<ServerFnCallError>()("ServerFnCallError", {
   cause: Schema.Defect(),

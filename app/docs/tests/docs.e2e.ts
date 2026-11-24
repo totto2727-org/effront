@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { articleCatalog } from "../src/content/catalog";
-import { corePages, coreSources } from "../src/content/core";
-import { architectureBaseline } from "../src/content/architecture-baseline";
+import { articleCatalog } from "../src/content/catalog.ts";
+import { corePages, coreSources } from "../src/content/core.ts";
+import { architectureBaseline } from "../src/content/architecture-baseline.ts";
 
 const pages = [...articleCatalog, ...corePages];
 

@@ -1,10 +1,10 @@
 import { Context, Effect, Exit, FiberHandle, Layer, Ref, Scope } from "effect";
 import { addTransitionType, startTransition } from "react";
 
-import { BrowserRenderer } from "./browser-renderer";
-import { NavigationApi } from "./navigation-api";
-import { isRoutedNavigation, preserveRequestedHash } from "./navigation-routing";
-import { RouteLoader } from "./route-loader";
+import { BrowserRenderer } from "./browser-renderer.ts";
+import { NavigationApi } from "./navigation-api.ts";
+import { isRoutedNavigation, preserveRequestedHash } from "./navigation-routing.ts";
+import { RouteLoader } from "./route-loader.ts";
 
 export type RouteRefreshTransitionType = "hmr-refresh" | "server-function";
 

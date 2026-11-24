@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { normalizePath, type Plugin, type PluginOption } from "vite";
 
-import { alchemyRuntimeProjection } from "./runtime-projection";
+import { alchemyRuntimeProjection } from "./runtime-projection.ts";
 
 const entryId = "virtual:effront/alchemy/cloudflare/entry";
 const resolvedEntryId = `\0${entryId}`;

@@ -1,8 +1,8 @@
 import { type Cause, type Effect, Stream } from "effect";
 import { Atom } from "effect/reactivity";
 
-import type { ServerFnError } from "../rsc/server-fn-error";
-import { callQuery, callQueryStream } from "./server-fn-protocol";
+import type { ServerFnError } from "../rsc/server-fn-error.ts";
+import { callQuery, callQueryStream } from "./server-fn-protocol.ts";
 
 type AnyReadable = ReadableStream<unknown>;
 type NotStreaming<Output> = [Extract<Output, AnyReadable>] extends [never]

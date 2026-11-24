@@ -4,16 +4,16 @@ import { Math } from "@effront/markdown/math";
 import { Mermaid } from "@effront/markdown/mermaid";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
-import { manual } from "../content";
-import { ManualShell } from "./manual-shell";
-import { pages } from "./manual-pages";
-import { EFFRONT } from "./effront";
-import { getWorkersEnv, getWorkersRequestContext } from "./host";
-import { Counter } from "./counter";
-import { GreetingAction } from "./greeting-action";
-import { HostLive } from "./greeting-host";
-import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";
-import { MarkdownHeading } from "./markdown-heading";
+import { manual } from "../content.ts";
+import { ManualShell } from "./manual-shell.tsx";
+import { pages } from "./manual-pages.ts";
+import { EFFRONT } from "./effront.ts";
+import { getWorkersEnv, getWorkersRequestContext } from "./host.ts";
+import { Counter } from "./counter.tsx";
+import { GreetingAction } from "./greeting-action.tsx";
+import { HostLive } from "./greeting-host.ts";
+import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell.tsx";
+import { MarkdownHeading } from "./markdown-heading.tsx";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>

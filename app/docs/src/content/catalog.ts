@@ -1,4 +1,4 @@
-import type { DocPage } from "./types";
+import type { DocPage } from "./types.ts";
 
 // Stable routes and heading IDs are independent of Markdown file naming.
 export const articleCatalog = [

@@ -4,7 +4,7 @@ import { queryAtom } from "@effront/core/query";
 import { RegistryProvider, useAtom } from "@effect/atom-react";
 import { AsyncResult } from "effect/reactivity";
 import { useActionState, useEffect } from "react";
-import { checkInAttendee, previewCheckIn } from "./server";
+import { checkInAttendee, previewCheckIn } from "./server.ts";
 
 const previewAtom = queryAtom(previewCheckIn);
 

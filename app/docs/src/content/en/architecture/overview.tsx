@@ -1,6 +1,6 @@
-import { CodeBlock } from "../../../components/code-block";
-import { coreModelSources } from "../../core-model";
-import type { DocPage } from "../../types";
+import { CodeBlock } from "../../../components/code-block.tsx";
+import { coreModelSources } from "../../core-model.tsx";
+import type { DocPage } from "../../types.ts";
 
 export const page: DocPage = {
   slug: "/architecture/implementation/overview",

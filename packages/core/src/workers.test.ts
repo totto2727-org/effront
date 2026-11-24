@@ -5,7 +5,7 @@ import {
   getWorkersEnv,
   getWorkersRequestContext,
   WorkersRequestContext,
-} from "./workers";
+} from "./workers.ts";
 
 type Env = { readonly label: string };
 type ExecutionContext = { readonly requestId: string };

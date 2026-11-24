@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { resolveConfig } from "vite";
 import type { UserConfig } from "vite";
 
-import { effrontCloudflare } from "../src/plugin";
+import { effrontCloudflare } from "../src/plugin.ts";
 import { effront } from "@effront/vite";
 
 const fixtureRoot = fileURLToPath(new URL("./fixtures/", import.meta.url));

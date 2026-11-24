@@ -1,9 +1,9 @@
 import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-import { GreetingAction } from "./features/greeting/client";
-import { Host, HostLive } from "./features/greeting/services";
-import { Counter } from "./components/counter";
-import { Shell } from "./components/shell";
+import { EFFRONT } from "./effront.ts";
+import { GreetingAction } from "./features/greeting/client.tsx";
+import { Host, HostLive } from "./features/greeting/services.ts";
+import { Counter } from "./components/counter.tsx";
+import { Shell } from "./components/shell.tsx";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>

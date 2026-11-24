@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { architectureBaseline } from "./architecture-baseline";
+import { architectureBaseline } from "./architecture-baseline.ts";
 import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vite-plus/test";
-import { corePages, coreSources } from "./core";
-import { coreRuntimeSources } from "./core-runtime";
+import { corePages, coreSources } from "./core.ts";
+import { coreRuntimeSources } from "./core-runtime.tsx";
 
 // Source is inspected only by tests. Production pages ship authored snippets, not filesystem reads.
 describe("current core learning material", () => {

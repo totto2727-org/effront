@@ -1,7 +1,11 @@
 import { type Effect } from "effect";
 import type { ReactNode } from "react";
 
-import { attachEFFRONTMember, type EFFRONTIdentity, type EFFRONTMember } from "./effront-identity";
+import {
+  attachEFFRONTMember,
+  type EFFRONTIdentity,
+  type EFFRONTMember,
+} from "./effront-identity.ts";
 
 export interface LoadingComponent<Services> extends EFFRONTMember<Services, "Loading"> {
   (): Awaited<ReactNode>;

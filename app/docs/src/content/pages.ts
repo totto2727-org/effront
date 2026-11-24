@@ -1,9 +1,9 @@
 import { Effect } from "effect";
-import type { RenderableDocPage } from "./types";
-import { markdownPages, localizedMarkdownPages } from "./markdown";
-import { corePages } from "./core";
-import { englishCorePages } from "./en/core";
-import { localizedPath, type DocLocale } from "./locale";
+import type { RenderableDocPage } from "./types.ts";
+import { markdownPages, localizedMarkdownPages } from "./markdown.tsx";
+import { corePages } from "./core.ts";
+import { englishCorePages } from "./en/core.ts";
+import { localizedPath, type DocLocale } from "./locale.ts";
 
 export const pages: readonly RenderableDocPage[] = [
   ...markdownPages,

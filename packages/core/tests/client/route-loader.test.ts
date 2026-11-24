@@ -3,7 +3,7 @@ import { Deferred, Effect, Fiber, Layer } from "effect";
 import { HttpClient, HttpClientResponse } from "effect/http";
 import { vi } from "vitest";
 
-import type { RouteTreeModel } from "../../src/rsc/route-tree";
+import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
 const decodedFlights = vi.hoisted<
   Array<{
@@ -17,10 +17,10 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
   createFromReadableStream: vi.fn(() => Promise.resolve(decodedFlights.shift())),
 }));
 
-import { FlightClient } from "../../src/client/flight-client";
-import { InitialFlightStream } from "../../src/client/initial-flight-stream";
-import { NavigationApi } from "../../src/client/navigation-api";
-import { RouteLoader } from "../../src/client/route-loader";
+import { FlightClient } from "../../src/client/flight-client.ts";
+import { InitialFlightStream } from "../../src/client/initial-flight-stream.ts";
+import { NavigationApi } from "../../src/client/navigation-api.ts";
+import { RouteLoader } from "../../src/client/route-loader.ts";
 
 const FlightClientLayer = FlightClient.layer.pipe(Layer.provide(InitialFlightStream.layer));
 

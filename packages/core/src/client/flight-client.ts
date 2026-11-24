@@ -8,8 +8,8 @@ import {
   ServerFnIdHeader,
   type FlightPayload,
   type ServerFnResult,
-} from "../rsc/flight";
-import { InitialFlightStream } from "./initial-flight-stream";
+} from "../rsc/flight.ts";
+import { InitialFlightStream } from "./initial-flight-stream.ts";
 
 export class FlightLoadError extends Schema.TaggedError<FlightLoadError>()("FlightLoadError", {
   cause: Schema.Defect(),

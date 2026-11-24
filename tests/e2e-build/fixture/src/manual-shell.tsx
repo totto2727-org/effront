@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Counter } from "./counter";
+import { Counter } from "./counter.tsx";
 
-import { pages } from "./manual-pages";
+import { pages } from "./manual-pages.ts";
 
 export function ManualShell({
   children,

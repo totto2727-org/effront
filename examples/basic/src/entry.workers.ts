@@ -2,7 +2,7 @@ import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/applicati
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 import type application from "./entry.effront";
-import { CacheClient } from "./features/greeting/services";
+import { CacheClient } from "./features/greeting/services.ts";
 export const Cache = Cloudflare.KV.Namespace("Cache");
 
 export default class App extends Cloudflare.Worker<App>()(

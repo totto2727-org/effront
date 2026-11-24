@@ -1,6 +1,6 @@
 import { Context, Effect, Layer, MutableRef } from "effect";
 
-import type { RouteTreeModel } from "../rsc/route-tree";
+import type { RouteTreeModel } from "../rsc/route-tree.ts";
 
 export type BrowserRendererNavigation = {
   readonly committed: Promise<void>;

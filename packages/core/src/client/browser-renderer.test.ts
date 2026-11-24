@@ -2,8 +2,8 @@ import { expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { vi } from "vitest";
 
-import { type BrowserRender, BrowserRenderer } from "./browser-renderer";
-import type { RouteTreeModel } from "../rsc/route-tree";
+import { type BrowserRender, BrowserRenderer } from "./browser-renderer.ts";
+import type { RouteTreeModel } from "../rsc/route-tree.ts";
 
 const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
 

@@ -3,10 +3,10 @@ import type { PlatformError } from "effect/PlatformError";
 import type { HttpServerError } from "effect/http";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
-import type { ApplicationDefinition } from "./application/definition";
-import { ServerApplication } from "./server/application";
-import type { HtmlRenderError } from "./server/html-renderer";
-import type { ServerFnRequestFailure } from "./server/server-fn-request";
+import type { ApplicationDefinition } from "./application/definition.tsx";
+import { ServerApplication } from "./server/application.ts";
+import type { HtmlRenderError } from "./server/html-renderer.tsx";
+import type { ServerFnRequestFailure } from "./server/server-fn-request.ts";
 
 type HttpRequirements<Requirements> =
   | Scope.Scope

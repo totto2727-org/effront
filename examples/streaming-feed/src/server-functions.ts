@@ -1,8 +1,8 @@
 "use server";
 
 import { Effect, Schema, Stream } from "effect";
-import { EFFRONT } from "./effront";
-import { storiesAfter, storyById } from "./feed-data";
+import { EFFRONT } from "./effront.ts";
+import { storiesAfter, storyById } from "./feed-data.ts";
 
 export const getNote = EFFRONT.ServerFn.make({
   input: Schema.Struct({ id: Schema.Natural }),

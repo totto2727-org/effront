@@ -9,10 +9,10 @@ import {
   EFFRONTStateTypeId,
   getEFFRONTIdentity,
   isEFFRONTMember,
-} from "./effront-identity";
-import { type CompiledRouteGraph, compileRouteGraph } from "./route-graph";
-import type { AbsolutePath, ReservedRoutePath } from "./route-path";
-import { type AnyRoutes, type RoutesHasLayout, type RoutesPaths } from "./routes";
+} from "./effront-identity.ts";
+import { type CompiledRouteGraph, compileRouteGraph } from "./route-graph.ts";
+import type { AbsolutePath, ReservedRoutePath } from "./route-path.ts";
+import { type AnyRoutes, type RoutesHasLayout, type RoutesPaths } from "./routes.ts";
 
 declare const ApplicationContractTypeId: unique symbol;
 

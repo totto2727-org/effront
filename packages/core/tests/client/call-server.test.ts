@@ -4,16 +4,16 @@ import { HttpClient } from "effect/http";
 import { vi } from "vitest";
 import { encodeReply } from "@vitejs/plugin-rsc/browser";
 
-import { BrowserEffectRunner } from "../../src/client/browser-effect-runner";
-import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer";
-import { FlightClient, FlightLoadError } from "../../src/client/flight-client";
-import { NavigationApi } from "../../src/client/navigation-api";
-import { RouteLoader } from "../../src/client/route-loader";
-import { RouteRefresher } from "../../src/client/route-refresh";
-import { query, stream } from "../../src/client/query";
-import { ServerFnTransportError } from "../../src/rsc/server-fn-error";
-import type { FlightPayload } from "../../src/rsc/flight";
-import type { RouteTreeModel } from "../../src/rsc/route-tree";
+import { BrowserEffectRunner } from "../../src/client/browser-effect-runner.ts";
+import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer.ts";
+import { FlightClient, FlightLoadError } from "../../src/client/flight-client.ts";
+import { NavigationApi } from "../../src/client/navigation-api.ts";
+import { RouteLoader } from "../../src/client/route-loader.ts";
+import { RouteRefresher } from "../../src/client/route-refresh.ts";
+import { query, stream } from "../../src/client/query.ts";
+import { ServerFnTransportError } from "../../src/rsc/server-fn-error.ts";
+import type { FlightPayload } from "../../src/rsc/flight.ts";
+import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
 type ServerCallback = (id: string, args: ReadonlyArray<unknown>) => Promise<unknown>;
 
@@ -39,7 +39,7 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
   }),
 }));
 
-const { installCallServer } = await import("../../src/client/call-server");
+const { installCallServer } = await import("../../src/client/call-server.ts");
 
 const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
 

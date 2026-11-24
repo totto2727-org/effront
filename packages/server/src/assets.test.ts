@@ -9,7 +9,7 @@ import { systemError } from "effect/PlatformError";
 import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { type AssetOptions, withAssets } from "./assets";
+import { type AssetOptions, withAssets } from "./assets.ts";
 
 const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
 let root: string;

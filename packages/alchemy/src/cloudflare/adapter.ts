@@ -12,7 +12,7 @@ import { Self } from "alchemy/Self";
 import { Context, Effect, Layer, Scope } from "effect";
 import { HttpRouter, HttpServerRequest } from "effect/http";
 
-import type { loadConfiguredApplication } from "./application-loader";
+import type { loadConfiguredApplication } from "./application-loader.ts";
 
 type HostServices =
   | Request

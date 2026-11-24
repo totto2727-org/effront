@@ -1,11 +1,11 @@
 import { Context, Effect, Exit, FiberSet, Layer, Scope } from "effect";
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
 
-import type { AnyMiddleware } from "../application/middleware";
-import type { RenderRuntimeContext } from "../application/render-runtime";
-import type { FlightPayload, ServerFnResult } from "../rsc/flight";
-import type { RouteTreeModel } from "../rsc/route-tree";
-import { nextErrorDigest } from "./error-digest";
+import type { AnyMiddleware } from "../application/middleware.ts";
+import type { RenderRuntimeContext } from "../application/render-runtime.ts";
+import type { FlightPayload, ServerFnResult } from "../rsc/flight.ts";
+import type { RouteTreeModel } from "../rsc/route-tree.ts";
+import { nextErrorDigest } from "./error-digest.ts";
 
 type FlightStream = ReadableStream<Uint8Array>;
 

@@ -2,8 +2,8 @@ import { beforeEach, expect, it, vi } from "@effect/vitest";
 import { Effect, Fiber, Layer } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
-import { InitialFlightStream } from "./initial-flight-stream";
-import { ServerFnIdHeader, type FlightPayload, type ServerFnResult } from "../rsc/flight";
+import { InitialFlightStream } from "./initial-flight-stream.ts";
+import { ServerFnIdHeader, type FlightPayload, type ServerFnResult } from "../rsc/flight.ts";
 
 const decodedPayload = {
   formState: null,
@@ -32,7 +32,7 @@ const initialFlightStream = new ReadableStream<Uint8Array>({
   },
 });
 
-const { FlightClient, FlightLoadError } = await import("./flight-client");
+const { FlightClient, FlightLoadError } = await import("./flight-client.ts");
 type FlightRequest = Exclude<import("./flight-client").FlightRequest, { readonly _tag: "Query" }>;
 const FlightClientTestLayer = FlightClient.layer.pipe(
   Layer.provide(InitialFlightStream.layerTest({ stream: initialFlightStream })),

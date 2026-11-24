@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { PageViewTransitionBoundary } from "./page-view-transition";
+import { PageViewTransitionBoundary } from "./page-view-transition.tsx";
 
 describe("PageViewTransitionBoundary SSR", () => {
   it("renders the same page HTML without adding wrapper elements", () => {

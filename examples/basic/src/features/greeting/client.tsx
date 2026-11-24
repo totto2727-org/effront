@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { greet } from "./server";
+import { greet } from "./server.ts";
 
 export function GreetingAction() {
   const [greeting, submit, pending] = useActionState(() => greet("Ada"), "");

@@ -1,4 +1,7 @@
 import { createFetchHandler } from "@effront/core/workers";
-import application from "./entry.effront";
+import application from "./entry.effront.tsx";
 
-export default { fetch: createFetchHandler(application) };
+const worker = { fetch: createFetchHandler(application) };
+
+// oxlint-disable-next-line import/no-default-export -- Cloudflare Workers reads the module default handler.
+export default worker;

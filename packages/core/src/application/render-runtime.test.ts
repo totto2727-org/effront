@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect } from "effect";
 
-import { makeRenderRuntimeContext, type RenderRuntime } from "./render-runtime";
+import { makeRenderRuntimeContext, type RenderRuntime } from "./render-runtime.ts";
 
 class RequestLabel extends Context.Service<RequestLabel, { readonly value: string }>()(
   "effront/tests/application/render-runtime/RequestLabel",

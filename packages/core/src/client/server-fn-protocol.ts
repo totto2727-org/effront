@@ -6,7 +6,7 @@ import {
   ServerFnDefect,
   ServerFnInputError,
   ServerFnTransportError,
-} from "../rsc/server-fn-error";
+} from "../rsc/server-fn-error.ts";
 
 const isServerFnError = Schema.is(
   Schema.Union([ServerFnDefect, ServerFnInputError, ServerFnTransportError]),

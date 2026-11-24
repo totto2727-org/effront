@@ -2,7 +2,7 @@ import { Effect, Stream } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { describe, expect, it } from "vite-plus/test";
 
-import { responseCache } from "./response-cache";
+import { responseCache } from "./response-cache.ts";
 
 const html = () =>
   HttpServerResponse.text("rendered", {

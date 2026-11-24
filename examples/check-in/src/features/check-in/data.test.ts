@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeCheckInStore } from "./data";
+import { makeCheckInStore } from "./data.ts";
 
 describe("makeCheckInStore", () => {
   it("scopes previews to the authenticated organizer", () => {

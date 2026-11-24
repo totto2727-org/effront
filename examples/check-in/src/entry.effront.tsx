@@ -1,7 +1,7 @@
 import { Effect, Layer } from "effect";
-import { CheckInConsole } from "./features/check-in/client";
-import { CheckInStore } from "./features/check-in/services";
-import { EFFRONT } from "./effront";
+import { CheckInConsole } from "./features/check-in/client.tsx";
+import { CheckInStore } from "./features/check-in/services.ts";
+import { EFFRONT } from "./effront.ts";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>

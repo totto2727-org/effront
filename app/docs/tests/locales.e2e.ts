@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { architectureBaseline } from "../src/content/architecture-baseline";
-import { articleCatalog } from "../src/content/catalog";
-import { corePages, coreSources } from "../src/content/core";
-import { englishArticleCatalog } from "../src/content/en/catalog";
-import { englishCorePages } from "../src/content/en/core";
+import { architectureBaseline } from "../src/content/architecture-baseline.ts";
+import { articleCatalog } from "../src/content/catalog.ts";
+import { corePages, coreSources } from "../src/content/core.ts";
+import { englishArticleCatalog } from "../src/content/en/catalog.ts";
+import { englishCorePages } from "../src/content/en/core.ts";
 
 // Import metadata directly: content/pages also loads the Vite-only Markdown glob.
 // Expectations deliberately construct public URLs without the production locale helpers.

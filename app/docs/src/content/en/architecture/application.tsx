@@ -1,6 +1,6 @@
-import { coreModelSources } from "../../core-model";
-import { SourceExcerpt } from "../../core-source";
-import type { DocPage } from "../../types";
+import { coreModelSources } from "../../core-model.tsx";
+import { SourceExcerpt } from "../../core-source.tsx";
+import type { DocPage } from "../../types.ts";
 
 export const page: DocPage = {
   slug: "/architecture/implementation/application",

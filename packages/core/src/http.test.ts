@@ -2,10 +2,10 @@ import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Layer, Scope, Stream } from "effect";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
-import { Application } from "./application/effront";
-import type { ApplicationRequirements, ApplicationServices } from "./application/definition";
-import { getApplicationState } from "./application/definition";
-import { makeHttpEffect, toHttpEffect } from "./http";
+import { Application } from "./application/effront.ts";
+import type { ApplicationRequirements, ApplicationServices } from "./application/definition.tsx";
+import { getApplicationState } from "./application/definition.tsx";
+import { makeHttpEffect, toHttpEffect } from "./http.ts";
 
 class External extends Context.Service<External, { readonly label: string }>()(
   "effront/test/http/External",

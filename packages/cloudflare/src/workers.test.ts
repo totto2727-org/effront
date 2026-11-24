@@ -6,7 +6,7 @@ import {
   createWorkersContextAccessors,
   getWorkersEnv,
   getWorkersRequestContext,
-} from "./workers";
+} from "./workers.ts";
 
 type Env = { readonly label: string };
 

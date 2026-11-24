@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-import { loadingRoutes } from "./features/loading/routes";
+import { EFFRONT } from "./effront.ts";
+import { loadingRoutes } from "./features/loading/routes.tsx";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>

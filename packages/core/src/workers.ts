@@ -1,8 +1,8 @@
 import { Context, Effect } from "effect";
 import { HttpEffect, type HttpRouter, type HttpServerRequest } from "effect/http";
 
-import type { ApplicationDefinition } from "./application/definition";
-import { toHttpEffect } from "./http";
+import type { ApplicationDefinition } from "./application/definition.tsx";
+import { toHttpEffect } from "./http.ts";
 
 /**
  * Per-request values supplied by a Fetch host.

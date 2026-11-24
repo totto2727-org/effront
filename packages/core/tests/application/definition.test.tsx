@@ -2,20 +2,23 @@ import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Layer, Schema } from "effect";
 import { isValidElement, Suspense, type ReactElement, type ReactNode } from "react";
 
-import { type ApplicationDefinition, getApplicationState } from "../../src/application/definition";
-import { Application } from "../../src/application/effront";
+import {
+  type ApplicationDefinition,
+  getApplicationState,
+} from "../../src/application/definition.tsx";
+import { Application } from "../../src/application/effront.ts";
 import {
   type AnyPageDefinition,
   getPageState,
   type EncodedPageParams,
   type PageRuntimeProps,
-} from "../../src/application/page";
-import type { CompiledDestination } from "../../src/application/route-graph";
-import type { AbsolutePath } from "../../src/application/route-path";
-import { getRoutesState } from "../../src/application/routes";
-import { RouteOutlet } from "../../src/client/route-tree";
-import { renderRouteTree } from "../../src/rsc/render-route-tree";
-import type { RouteTreeModel } from "../../src/rsc/route-tree";
+} from "../../src/application/page.ts";
+import type { CompiledDestination } from "../../src/application/route-graph.ts";
+import type { AbsolutePath } from "../../src/application/route-path.ts";
+import { getRoutesState } from "../../src/application/routes.ts";
+import { RouteOutlet } from "../../src/client/route-tree.tsx";
+import { renderRouteTree } from "../../src/rsc/render-route-tree.tsx";
+import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
 const asElement = <Props,>(node: ReactNode): ReactElement<Props> => {
   if (!isValidElement<Props>(node)) {

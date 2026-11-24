@@ -3,7 +3,7 @@ import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { Application } from "@effront/core";
-import { manual } from "../content";
+import { manual } from "../content.ts";
 
 const EFFRONT = Application.effront();
 class CurrentEntry extends Context.Service<CurrentEntry, MarkdownEntry>()("e2e-dev/CurrentEntry") {}

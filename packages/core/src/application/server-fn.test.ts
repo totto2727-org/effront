@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Ref, Schema } from "effect";
 
-import { Application } from "./effront";
-import { type EFFRONTIdentity, getEFFRONTIdentity } from "./effront-identity";
-import { matchServerFnInvocation } from "./server-fn";
+import { Application } from "./effront.ts";
+import { type EFFRONTIdentity, getEFFRONTIdentity } from "./effront-identity.ts";
+import { matchServerFnInvocation } from "./server-fn.ts";
 
 class Greeting extends Context.Service<Greeting, { readonly prefix: string }>()(
   "effront/tests/application/server-fn/Greeting",

@@ -1,12 +1,12 @@
 import { Effect, Schema, type Types } from "effect";
 import { createElement, type ReactNode } from "react";
 
-import { PageViewTransitionBoundary } from "../client/page-view-transition";
+import { PageViewTransitionBoundary } from "../client/page-view-transition.tsx";
 import {
   PageViewTransition,
   type PageViewTransitionConfig,
   resolvePageViewTransition,
-} from "./page-view-transition";
+} from "./page-view-transition.ts";
 
 import {
   type EFFRONTIdentity,
@@ -15,9 +15,9 @@ import {
   EFFRONTMemberKindTypeId,
   type EFFRONTStatefulMember,
   EFFRONTStateTypeId,
-} from "./effront-identity";
-import type { AnyMiddleware } from "./middleware";
-import type { ValidRouteParamName } from "./route-path";
+} from "./effront-identity.ts";
+import type { AnyMiddleware } from "./middleware.ts";
+import type { ValidRouteParamName } from "./route-path.ts";
 
 declare const PageContractTypeId: unique symbol;
 

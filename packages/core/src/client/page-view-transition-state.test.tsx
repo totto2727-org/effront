@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { isValidElement, ViewTransition, type ViewTransitionProps } from "react";
 
-import { PageViewTransitionBoundary } from "./page-view-transition";
+import { PageViewTransitionBoundary } from "./page-view-transition.tsx";
 
 const media = vi.hoisted(() => ({ reduced: false }));
 vi.mock("react", async (importOriginal) => ({

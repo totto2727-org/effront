@@ -5,7 +5,7 @@ import { effront } from "@effront/vite";
 import { normalizePath, resolveConfig } from "vite";
 import { describe, expect, it } from "vite-plus/test";
 
-import { effrontAlchemy } from "./vite";
+import { effrontAlchemy } from "./vite.ts";
 
 const root = fileURLToPath(new URL("../../../../examples/basic/", import.meta.url));
 

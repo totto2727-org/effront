@@ -2,14 +2,15 @@ import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/applicati
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 
-import type application from "./entry.effront";
+import type application from "./entry.effront.tsx";
 
+// oxlint-disable-next-line import/no-default-export -- Alchemy treats the worker definition as the default entry.
 export default Cloudflare.Worker(
   "App",
   {
-    main: import.meta.url,
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-    vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+    main: import.meta.url,
+    vite: { viteEnvironments: { children: ["ssr"], entry: "rsc" } },
   },
   Effect.gen(function* () {
     const fetch = yield* makeApplicationHttpEffect<typeof application>();

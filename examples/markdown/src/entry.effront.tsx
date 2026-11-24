@@ -3,8 +3,8 @@ import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { Application } from "@effront/core";
-import { manual } from "../content";
-import { Shell } from "./components/shell";
+import { manual } from "../content.ts";
+import { Shell } from "./components/shell.tsx";
 
 const EFFRONT = Application.effront();
 const RootLayout = EFFRONT.Layout.make({

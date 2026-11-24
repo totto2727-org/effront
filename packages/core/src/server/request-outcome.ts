@@ -1,6 +1,6 @@
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
 
-import type { FlightPayload } from "../rsc/flight";
+import type { FlightPayload } from "../rsc/flight.ts";
 
 export type RequestOutcome = {
   readonly formState: FlightPayload["formState"];

@@ -1,8 +1,8 @@
 import { toHttpEffect } from "@effront/core/http";
 
-import { type ApplicationAdapter, makeApplicationAdapter } from "./adapter";
+import { type ApplicationAdapter, makeApplicationAdapter } from "./adapter.ts";
 
-export type { ApplicationLoader } from "./adapter";
+export type { ApplicationLoader } from "./adapter.ts";
 
 /** Selected only by hosts that compile the react-server execution graph. */
 const adapter = makeApplicationAdapter(toHttpEffect);

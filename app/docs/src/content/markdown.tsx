@@ -2,11 +2,11 @@ import type { ComponentProps } from "react";
 import { MarkdownDocument } from "@effront/markdown/document";
 import { createMarkdownCollection, parseMarkdown } from "@effront/markdown";
 import { Effect } from "effect";
-import { articleCatalog } from "./catalog";
-import { englishArticleCatalog } from "./en/catalog";
-import { localizedPath, localizeDocumentLink, type DocLocale } from "./locale";
-import type { RenderableDocPage } from "./types";
-import { markdownAlertComponents } from "../components/markdown-alert";
+import { articleCatalog } from "./catalog.ts";
+import { englishArticleCatalog } from "./en/catalog.ts";
+import { localizedPath, localizeDocumentLink, type DocLocale } from "./locale.ts";
+import type { RenderableDocPage } from "./types.ts";
+import { markdownAlertComponents } from "../components/markdown-alert.tsx";
 
 // Vite owns loading. No runtime filesystem access or client-side parser is needed.
 const articles = createMarkdownCollection({

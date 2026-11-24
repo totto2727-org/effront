@@ -2,7 +2,7 @@
 
 import { Array } from "effect";
 import * as React from "react";
-import { localizedPath, type DocLocale } from "../content/locale";
+import { localizedPath, type DocLocale } from "../content/locale.ts";
 import { ArrowLeftIcon, ArrowRightIcon, ExternalLinkIcon, SearchIcon } from "lucide-react";
 import {
   Sidebar,
@@ -20,7 +20,7 @@ import {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
-} from "./ui/sidebar";
+} from "./ui/sidebar.tsx";
 
 type NavigationItem = Readonly<{ slug: string; title: string; section: string; group?: string }>;
 type Heading = Readonly<{ id: string; title: string }>;

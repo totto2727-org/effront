@@ -14,7 +14,7 @@ import {
 } from "vite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { effrontServer } from "./vite";
+import { effrontServer } from "./vite.ts";
 
 const root = fileURLToPath(new URL("../../../tests/e2e-server/fixtures/node/", import.meta.url));
 const resolveServerConfig = (config: UserConfig = {}, command: "serve" | "build" = "build") =>

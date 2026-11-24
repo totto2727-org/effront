@@ -1,6 +1,6 @@
 import { Predicate, type Types } from "effect";
 
-import { makeRenderRuntimeContext, type RenderRuntimeContext } from "./render-runtime";
+import { makeRenderRuntimeContext, type RenderRuntimeContext } from "./render-runtime.ts";
 
 declare const EFFRONTServicesTypeId: unique symbol;
 

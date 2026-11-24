@@ -1,8 +1,8 @@
 "use server";
 
 import { Effect, Schema } from "effect";
-import { EFFRONT } from "../../effront";
-import { Host } from "./services";
+import { EFFRONT } from "../../effront.ts";
+import { Host } from "./services.ts";
 
 export const greet = EFFRONT.ServerFn.make({
   input: Schema.String,

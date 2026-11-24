@@ -3,7 +3,7 @@ import { createMarkdownCollection, parseMarkdown } from "@effront/markdown";
 import { Effect } from "effect";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it } from "vite-plus/test";
-import { markdownAlertComponents } from "./markdown-alert";
+import { markdownAlertComponents } from "./markdown-alert.tsx";
 
 async function render(markdown: string) {
   const collection = await Effect.runPromise(

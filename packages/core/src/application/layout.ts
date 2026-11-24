@@ -1,8 +1,12 @@
 import { Effect } from "effect";
 import type { ReactNode } from "react";
 
-import { attachEFFRONTMember, type EFFRONTIdentity, type EFFRONTMember } from "./effront-identity";
-import type { AnyMiddleware } from "./middleware";
+import {
+  attachEFFRONTMember,
+  type EFFRONTIdentity,
+  type EFFRONTMember,
+} from "./effront-identity.ts";
+import type { AnyMiddleware } from "./middleware.ts";
 
 type LayoutProps = {
   readonly children: Awaited<ReactNode>;

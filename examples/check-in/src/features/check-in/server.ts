@@ -1,9 +1,9 @@
 "use server";
 
 import { Effect, Schema } from "effect";
-import { EFFRONT } from "../../effront";
-import { demoOrganizer } from "./data";
-import { CheckInStore } from "./services";
+import { EFFRONT } from "../../effront.ts";
+import { demoOrganizer } from "./data.ts";
+import { CheckInStore } from "./services.ts";
 
 // In production, obtain this actor from verified request authentication, never from action input.
 const currentOrganizer = demoOrganizer;

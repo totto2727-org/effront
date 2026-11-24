@@ -1,7 +1,7 @@
 import { it, expect } from "@effect/vitest";
 import { Cause, Deferred, Effect, Exit, Fiber, Scope, Stream } from "effect";
 
-import { serverFnStream } from "./server-fn-stream";
+import { serverFnStream } from "./server-fn-stream.ts";
 
 it.effect("preserves stream values and finishes its producer before request scope release", () =>
   Effect.gen(function* () {

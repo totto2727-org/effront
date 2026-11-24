@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, Schema, SchemaTransformation } from "effect";
 
-import { Application } from "./effront";
-import { getRoutesState } from "./routes";
-import { analyzeRoutePath, type ValidRoutePath } from "./route-path";
+import { Application } from "./effront.ts";
+import { getRoutesState } from "./routes.ts";
+import { analyzeRoutePath, type ValidRoutePath } from "./route-path.ts";
 
 const EFFRONT = Application.effront();
 const Shell = EFFRONT.Layout.make({

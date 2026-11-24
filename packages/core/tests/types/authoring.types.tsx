@@ -1,11 +1,11 @@
 import { Context, Effect, Layer, Option, Schema, SchemaTransformation } from "effect";
 import type { ReactNode } from "react";
 
-import type { ApplicationServices } from "../../src/application/definition";
-import { Application } from "../../src/application/effront";
-import type { AnyPageDefinition } from "../../src/application/page";
-import type { AbsolutePath } from "../../src/application/route-path";
-import type { AnyRoutes, RoutesDefinition, RoutesPaths } from "../../src/application/routes";
+import type { ApplicationServices } from "../../src/application/definition.tsx";
+import { Application } from "../../src/application/effront.ts";
+import type { AnyPageDefinition } from "../../src/application/page.ts";
+import type { AbsolutePath } from "../../src/application/route-path.ts";
+import type { AnyRoutes, RoutesDefinition, RoutesPaths } from "../../src/application/routes.ts";
 
 class LayoutService extends Context.Service<LayoutService, object>()(
   "effront/tests/types/LayoutService",

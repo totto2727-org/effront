@@ -1,8 +1,8 @@
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
-import { makeCheckInStore } from "./features/check-in/data";
-import { CheckInStore } from "./features/check-in/services";
+import { makeCheckInStore } from "./features/check-in/data.ts";
+import { CheckInStore } from "./features/check-in/services.ts";
 
 import type application from "./entry.effront";
 

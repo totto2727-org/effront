@@ -2,8 +2,8 @@ import { expect, it } from "@effect/vitest";
 import { Deferred, Effect, Stream } from "effect";
 import { HttpEffect, HttpRouter, HttpServerResponse } from "effect/http";
 
-import { Application } from "../../src/application/effront";
-import { getScopedMiddlewareHandler } from "../../src/application/middleware";
+import { Application } from "../../src/application/effront.ts";
+import { getScopedMiddlewareHandler } from "../../src/application/middleware.ts";
 
 const makeHandler = Effect.fn(function* (events: Array<string>, stream: Stream.Stream<Uint8Array>) {
   const EFFRONT = Application.effront();

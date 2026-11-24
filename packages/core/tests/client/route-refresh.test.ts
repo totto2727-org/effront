@@ -27,13 +27,13 @@ vi.mock("react", (importOriginal) =>
   })),
 );
 
-import { BrowserEffectRunner } from "../../src/client/browser-effect-runner";
-import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer";
-import { FlightLoadError } from "../../src/client/flight-client";
-import { NavigationApi } from "../../src/client/navigation-api";
-import { RouteLoader } from "../../src/client/route-loader";
-import { installRouteRefresh, RouteRefresher } from "../../src/client/route-refresh";
-import type { RouteTreeModel } from "../../src/rsc/route-tree";
+import { BrowserEffectRunner } from "../../src/client/browser-effect-runner.ts";
+import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer.ts";
+import { FlightLoadError } from "../../src/client/flight-client.ts";
+import { NavigationApi } from "../../src/client/navigation-api.ts";
+import { RouteLoader } from "../../src/client/route-loader.ts";
+import { installRouteRefresh, RouteRefresher } from "../../src/client/route-refresh.ts";
+import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
 const committedRefresh = () => ({
   committed: Promise.resolve(),

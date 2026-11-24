@@ -8,8 +8,8 @@ import { Array as EffectArray, Effect } from "effect";
 import {
   type EmbeddedFlightChunk,
   makeInitialFlightStream,
-} from "../../src/client/initial-flight-stream";
-import { injectFlightPayload } from "../../src/server/flight-html-stream";
+} from "../../src/client/initial-flight-stream.ts";
+import { injectFlightPayload } from "../../src/server/flight-html-stream.ts";
 
 const Encoder = new TextEncoder();
 

@@ -5,7 +5,7 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import { build } from "vite";
 import { describe, expect, it } from "vite-plus/test";
 
-import { alchemyRuntimeProjection } from "./runtime-projection";
+import { alchemyRuntimeProjection } from "./runtime-projection.ts";
 
 const hooks = () => {
   const plugin = alchemyRuntimeProjection();

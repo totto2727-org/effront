@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { Effect, Layer } from "effect";
 import { HttpServer } from "effect/http";
 import type { HttpServerResponse } from "effect/http/HttpServerResponse";
-import { withAssets, type AssetOptions } from "./assets";
+import { withAssets, type AssetOptions } from "./assets.ts";
 
 export interface ServeOptions {
   readonly assets: AssetOptions;

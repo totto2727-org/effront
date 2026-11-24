@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import type { CodeLanguage } from "./code-block";
+import type { CodeLanguage } from "./code-block.tsx";
 
 let CodeBlock: typeof import("./code-block").CodeBlock;
 let offlineMarkup: string;
@@ -46,7 +46,7 @@ beforeAll(async () => {
     throw new Error("CodeBlock must not compile WebAssembly.");
   });
   try {
-    ({ CodeBlock } = await import("./code-block"));
+    ({ CodeBlock } = await import("./code-block.tsx"));
     offlineMarkup = renderToStaticMarkup(
       CodeBlock({ code: 'const message = "日本語";\n', language: "typescript" }),
     );

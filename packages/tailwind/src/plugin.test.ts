@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { normalizePath, resolveConfig } from "vite";
 import { describe, expect, it } from "vite-plus/test";
 
-import { effrontTailwind } from "./plugin";
+import { effrontTailwind } from "./plugin.ts";
 
 const root = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 

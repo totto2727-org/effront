@@ -1,5 +1,5 @@
-import { SourceExcerpt, type CoreSource } from "./core-source";
-import type { DocPage } from "./types";
+import { SourceExcerpt, type CoreSource } from "./core-source.tsx";
+import type { DocPage } from "./types.ts";
 
 export const coreRuntimeSources = {
   requestHandler: {

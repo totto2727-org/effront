@@ -1,7 +1,7 @@
 import type { ReactFormState } from "react-dom/client";
 
-import type { RouteTreeModel } from "./route-tree";
-import type { ServerFnFailureModel } from "./server-fn-error";
+import type { RouteTreeModel } from "./route-tree.ts";
+import type { ServerFnFailureModel } from "./server-fn-error.ts";
 
 export type FlightPayload = {
   readonly formState: ReactFormState | null;

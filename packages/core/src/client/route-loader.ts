@@ -1,8 +1,8 @@
 import { Context, Effect, Layer, MutableRef } from "effect";
 
-import type { RouteTreeModel } from "../rsc/route-tree";
-import { FlightClient, type FlightLoadError } from "./flight-client";
-import { NavigationApi } from "./navigation-api";
+import type { RouteTreeModel } from "../rsc/route-tree.ts";
+import { FlightClient, type FlightLoadError } from "./flight-client.ts";
+import { NavigationApi } from "./navigation-api.ts";
 
 type CachedRoute = {
   readonly entry: CacheHistoryEntry;

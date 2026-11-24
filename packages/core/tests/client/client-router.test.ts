@@ -34,14 +34,14 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
   }),
 }));
 
-import { BrowserEffectRunner } from "../../src/client/browser-effect-runner";
-import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer";
-import { installClientRouter } from "../../src/client/client-router";
-import { FlightClient } from "../../src/client/flight-client";
-import { InitialFlightStream } from "../../src/client/initial-flight-stream";
-import { NavigationApi } from "../../src/client/navigation-api";
-import { RouteLoader, type RouteLoad } from "../../src/client/route-loader";
-import type { RouteTreeModel } from "../../src/rsc/route-tree";
+import { BrowserEffectRunner } from "../../src/client/browser-effect-runner.ts";
+import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer.ts";
+import { installClientRouter } from "../../src/client/client-router.ts";
+import { FlightClient } from "../../src/client/flight-client.ts";
+import { InitialFlightStream } from "../../src/client/initial-flight-stream.ts";
+import { NavigationApi } from "../../src/client/navigation-api.ts";
+import { RouteLoader, type RouteLoad } from "../../src/client/route-loader.ts";
+import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
 const FlightClientLayer = FlightClient.layer.pipe(Layer.provide(InitialFlightStream.layer));
 

@@ -1,11 +1,11 @@
 import { Context, Effect, Layer } from "effect";
 import { Application } from "@effront/core";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
-import { DocsShell } from "./components/docs-shell";
-import { getPage, navigation, localizedNavigation } from "./content/pages";
-import { documentLocale, documentPath, localizedPath } from "./content/locale";
-import { architectureBaseline } from "./content/architecture-baseline";
-import { responseCache } from "./response-cache";
+import { DocsShell } from "./components/docs-shell.tsx";
+import { getPage, navigation, localizedNavigation } from "./content/pages.ts";
+import { documentLocale, documentPath, localizedPath } from "./content/locale.ts";
+import { architectureBaseline } from "./content/architecture-baseline.ts";
+import { responseCache } from "./response-cache.ts";
 
 class RequestPath extends Context.Service<RequestPath, string>()("app/docs/RequestPath") {}
 const RequestPathLive = Layer.effect(

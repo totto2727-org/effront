@@ -2,16 +2,16 @@ import { expect, it } from "@effect/vitest";
 import { Effect, Schema } from "effect";
 import { vi } from "vitest";
 
-import { getApplicationState } from "../../src/application/definition";
-import { getEFFRONTIdentity } from "../../src/application/effront-identity";
-import { getPageState } from "../../src/application/page";
-import { getRoutesState } from "../../src/application/routes";
-import { matchServerFnInvocation } from "../../src/application/server-fn";
+import { getApplicationState } from "../../src/application/definition.tsx";
+import { getEFFRONTIdentity } from "../../src/application/effront-identity.ts";
+import { getPageState } from "../../src/application/page.ts";
+import { getRoutesState } from "../../src/application/routes.ts";
+import { matchServerFnInvocation } from "../../src/application/server-fn.ts";
 
 it.effect("composes values loaded from a duplicated framework module instance", () =>
   Effect.gen(function* () {
     vi.resetModules();
-    const { Application } = yield* Effect.promise(() => import("../../src/application/effront"));
+    const { Application } = yield* Effect.promise(() => import("../../src/application/effront.ts"));
     const EFFRONT = Application.effront();
     const RootLayout = EFFRONT.Layout.make({ render: ({ children }) => Effect.succeed(children) });
     const Page = EFFRONT.Page.make({ render: () => Effect.succeed(null) });

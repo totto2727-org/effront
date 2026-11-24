@@ -8,11 +8,11 @@ import {
   EFFRONTStateTypeId,
   getEFFRONTIdentity,
   isEFFRONTMember,
-} from "./effront-identity";
-import type { LayoutComponent } from "./layout";
-import type { LoadingComponent } from "./loading";
-import type { AnyMiddleware } from "./middleware";
-import { type AnyPageDefinition, getPageState, type PageConcern } from "./page";
+} from "./effront-identity.ts";
+import type { LayoutComponent } from "./layout.ts";
+import type { LoadingComponent } from "./loading.ts";
+import type { AnyMiddleware } from "./middleware.ts";
+import { type AnyPageDefinition, getPageState, type PageConcern } from "./page.ts";
 import {
   type AbsolutePath,
   analyzeRoutePath,
@@ -21,7 +21,7 @@ import {
   type RouteParamNames,
   type RouteShape,
   type ValidRoutePath,
-} from "./route-path";
+} from "./route-path.ts";
 
 declare const RoutesContractTypeId: unique symbol;
 

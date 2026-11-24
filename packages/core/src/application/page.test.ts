@@ -12,9 +12,9 @@ import {
   Scope,
 } from "effect";
 
-import { Application } from "./effront";
-import { getEFFRONTIdentity } from "./effront-identity";
-import { getPageState } from "./page";
+import { Application } from "./effront.ts";
+import { getEFFRONTIdentity } from "./effront-identity.ts";
+import { getPageState } from "./page.ts";
 
 class Greeting extends Context.Service<Greeting, { readonly value: string }>()(
   "effront/tests/application/page/Greeting",

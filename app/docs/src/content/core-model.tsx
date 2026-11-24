@@ -1,5 +1,5 @@
-import { type CoreSource, SourceExcerpt } from "./core-source";
-import type { DocPage } from "./types";
+import { type CoreSource, SourceExcerpt } from "./core-source.tsx";
+import type { DocPage } from "./types.ts";
 
 export const coreModelSources = {
   fetchBoundary: {

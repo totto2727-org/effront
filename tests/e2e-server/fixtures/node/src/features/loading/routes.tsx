@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { Suspense } from "react";
-import { EFFRONT } from "../../effront";
-import { Counter } from "../../components/counter";
-import { SuspensionDemo } from "./client";
-import { QueryDemo } from "./query-client";
+import { EFFRONT } from "../../effront.ts";
+import { Counter } from "../../components/counter.tsx";
+import { SuspensionDemo } from "./client.tsx";
+import { QueryDemo } from "./query-client.tsx";
 
 function Timing({
   startedAt,

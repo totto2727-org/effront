@@ -3,11 +3,11 @@ import { HttpServerRequest } from "effect/http";
 import type { Scope } from "effect";
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
 
-import type { EFFRONTIdentity } from "../application/effront-identity";
-import type { AnyMiddleware } from "../application/middleware";
-import { ServerFnIdHeader, type ServerFnResult } from "../rsc/flight";
-import { serverFnResponse } from "./server-fn-outcome";
-import { decodeServerFnCall, ServerFnRequestError, validateOrigin } from "./server-fn-request";
+import type { EFFRONTIdentity } from "../application/effront-identity.ts";
+import type { AnyMiddleware } from "../application/middleware.ts";
+import { ServerFnIdHeader, type ServerFnResult } from "../rsc/flight.ts";
+import { serverFnResponse } from "./server-fn-outcome.ts";
+import { decodeServerFnCall, ServerFnRequestError, validateOrigin } from "./server-fn-request.ts";
 
 export type PreparedServerFnQuery<Services> = {
   readonly execute: Effect.Effect<ServerFnResult, never, Services | Scope.Scope>;

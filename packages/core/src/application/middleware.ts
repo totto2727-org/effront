@@ -8,7 +8,7 @@ import {
   EFFRONTMemberKindTypeId,
   type EFFRONTStatefulMember,
   EFFRONTStateTypeId,
-} from "./effront-identity";
+} from "./effront-identity.ts";
 
 type MiddlewareConfig = {
   readonly provides?: unknown;

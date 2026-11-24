@@ -79,7 +79,7 @@ it("ships pnpm toolchain metadata through the published CLI for every platform",
     if (platform === "alchemy-cloudflare") {
       const worker = await readFile(join(project, "src/entry.workers.ts"), "utf8");
       expect(worker).toContain('from "@effront/alchemy/cloudflare/application"');
-      expect(worker).toContain('import type application from "./entry.effront"');
+      expect(worker).toContain('import type application from "./entry.effront.tsx"');
       expect(worker).toContain("makeApplicationHttpEffect<typeof application>()");
       expect(worker).not.toContain("import(");
     }
@@ -193,9 +193,13 @@ for (const platform of platforms) {
         // Only standalone check wiring differs from the runnable workspace host configuration.
         generated = generated
           .replace('import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";\n', "")
-          .replace('import { createLintConfig } from "./lint.config";\n', "")
+          .replace('import { createLintConfig } from "./lint.config.ts";\n', "")
           .replace(
             '\nconst ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));\n',
+            "",
+          )
+          .replace(
+            "// oxlint-disable-next-line import/no-default-export -- Vite loads its configuration from a default export.\n",
             "",
           )
           .replace("  fmt: { ignorePatterns },\n  lint: createLintConfig(ignorePatterns),\n", "");
@@ -256,10 +260,10 @@ for (const platform of ["node", "bun"] as const) {
     const config = await readFile(join(directory, "vite.config.ts"), "utf8");
     const server = await readFile(join(directory, "src/entry.server.ts"), "utf8");
     expect(config).not.toContain("server:");
-    expect(server).toContain('process.env["PORT"]');
-    expect(server).toContain('process.env["HOST"]');
-    expect(server).toContain("...(port ? { port: Number(port) } : {})");
-    expect(server).toContain("...(hostname ? { hostname } : {})");
+    expect(server).toContain('PORT: port = ""');
+    expect(server).toContain('HOST: hostname = ""');
+    expect(server).toContain("...(String.isNonEmpty(port) ? { port: Number(port) } : {})");
+    expect(server).toContain("...(String.isNonEmpty(hostname) ? { hostname } : {})");
     expect(server).not.toContain("port: undefined");
     expect(server).not.toMatch(/1340|1343|127\.0\.0\.1/);
   });

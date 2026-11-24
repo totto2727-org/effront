@@ -5,6 +5,7 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "strict": true,
     "types": ["node", "vite-plus/client"],

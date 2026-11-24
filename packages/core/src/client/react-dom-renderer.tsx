@@ -9,12 +9,12 @@ import {
 } from "react";
 import { hydrateRoot } from "react-dom/client";
 
-import type { FlightPayload } from "../rsc/flight";
-import { BrowserEffectRunner } from "./browser-effect-runner";
-import { BrowserRenderStatus } from "./browser-render-status";
-import { type BrowserRender, BrowserRenderer } from "./browser-renderer";
-import { BrowserFailureScreen } from "./browser-screen";
-import { RouteTree } from "./route-tree";
+import type { FlightPayload } from "../rsc/flight.ts";
+import { BrowserEffectRunner } from "./browser-effect-runner.ts";
+import { BrowserRenderStatus } from "./browser-render-status.ts";
+import { type BrowserRender, BrowserRenderer } from "./browser-renderer.ts";
+import { BrowserFailureScreen } from "./browser-screen.tsx";
+import { RouteTree } from "./route-tree.tsx";
 
 export class ReactDOMHydrationError extends Schema.TaggedError<ReactDOMHydrationError>()(
   "ReactDOMHydrationError",

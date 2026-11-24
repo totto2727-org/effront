@@ -2,27 +2,27 @@ import { Array, Context, Effect, Layer, Option, Stream, String, type Types } fro
 import type { PlatformError } from "effect/PlatformError";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
-import { type ApplicationDefinition, getApplicationState } from "../application/definition";
-import { getEFFRONTIdentity } from "../application/effront-identity";
+import { type ApplicationDefinition, getApplicationState } from "../application/definition.tsx";
+import { getEFFRONTIdentity } from "../application/effront-identity.ts";
 import {
   applyMiddleware,
   type AnyMiddleware,
   getScopedHttpMiddleware,
-} from "../application/middleware";
-import type { EncodedPageParams, PageParams } from "../application/page";
-import type { CompiledDestination } from "../application/route-graph";
-import { analyzeRoutePath, isAbsolutePath } from "../application/route-path";
-import { FlightMediaType, ServerFnQueryPath } from "../rsc/flight";
-import { renderRouteTree } from "../rsc/render-route-tree";
-import { FlightRenderer } from "./flight-renderer";
-import { HtmlRenderError, HtmlRenderer } from "./html-renderer";
-import type { RequestOutcome } from "./request-outcome";
-import { prepareServerFnQuery } from "./server-fn-query";
+} from "../application/middleware.ts";
+import type { EncodedPageParams, PageParams } from "../application/page.ts";
+import type { CompiledDestination } from "../application/route-graph.ts";
+import { analyzeRoutePath, isAbsolutePath } from "../application/route-path.ts";
+import { FlightMediaType, ServerFnQueryPath } from "../rsc/flight.ts";
+import { renderRouteTree } from "../rsc/render-route-tree.tsx";
+import { FlightRenderer } from "./flight-renderer.tsx";
+import { HtmlRenderError, HtmlRenderer } from "./html-renderer.tsx";
+import type { RequestOutcome } from "./request-outcome.ts";
+import { prepareServerFnQuery } from "./server-fn-query.ts";
 import {
   prepareServerFnRequest,
   type PreparedServerFnRequest,
   type ServerFnRequestFailure,
-} from "./server-fn-request";
+} from "./server-fn-request.ts";
 
 const RenderersLayer = Layer.mergeAll(FlightRenderer.layer, HtmlRenderer.layer);
 

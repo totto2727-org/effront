@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Counter } from "./counter";
+import { Counter } from "./counter.tsx";
 import "./styles.css";
 
 export function PageNote() {

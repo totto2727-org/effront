@@ -3,9 +3,13 @@ import { Deferred, Effect, Fiber, Stream } from "effect";
 import { AsyncResult, AtomRegistry } from "effect/reactivity";
 import { vi } from "vitest";
 
-import { ServerFnDefect, ServerFnInputError, ServerFnTransportError } from "../rsc/server-fn-error";
-import { query, stream, streamAtom } from "./query";
-import { matchServerFnQuery } from "./server-fn-protocol";
+import {
+  ServerFnDefect,
+  ServerFnInputError,
+  ServerFnTransportError,
+} from "../rsc/server-fn-error.ts";
+import { query, stream, streamAtom } from "./query.ts";
+import { matchServerFnQuery } from "./server-fn-protocol.ts";
 
 describe("query", () => {
   it.effect("invokes the Server Function with positional args and an abort signal", () =>

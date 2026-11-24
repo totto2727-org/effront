@@ -2,7 +2,7 @@
 
 import { createContext, use } from "react";
 
-import type { RouteTreeModel } from "../rsc/route-tree";
+import type { RouteTreeModel } from "../rsc/route-tree.ts";
 
 type RouteNodeRendererProps = { readonly node: RouteTreeModel };
 type RouteTreeProps = { readonly root: RouteTreeModel };

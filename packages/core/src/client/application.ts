@@ -1,19 +1,19 @@
 import * as BrowserHttpClient from "@effect/platform-browser/BrowserHttpClient";
 import { Effect, Layer } from "effect";
 
-import { navigationMode } from "./browser-capabilities";
-import { BrowserEffectRunner } from "./browser-effect-runner";
-import { BrowserRenderStatus } from "./browser-render-status";
-import { BrowserRenderer } from "./browser-renderer";
-import { showBrowserFailure } from "./browser-screen";
-import { installCallServer } from "./call-server";
-import { installClientRouter } from "./client-router";
-import { FlightClient } from "./flight-client";
-import { InitialFlightStream } from "./initial-flight-stream";
-import { NavigationApi } from "./navigation-api";
-import { ReactDOMRenderer } from "./react-dom-renderer";
-import { RouteLoader } from "./route-loader";
-import { installRouteRefresh, RouteRefresher } from "./route-refresh";
+import { navigationMode } from "./browser-capabilities.ts";
+import { BrowserEffectRunner } from "./browser-effect-runner.ts";
+import { BrowserRenderStatus } from "./browser-render-status.ts";
+import { BrowserRenderer } from "./browser-renderer.ts";
+import { showBrowserFailure } from "./browser-screen.tsx";
+import { installCallServer } from "./call-server.ts";
+import { installClientRouter } from "./client-router.ts";
+import { FlightClient } from "./flight-client.ts";
+import { InitialFlightStream } from "./initial-flight-stream.ts";
+import { NavigationApi } from "./navigation-api.ts";
+import { ReactDOMRenderer } from "./react-dom-renderer.tsx";
+import { RouteLoader } from "./route-loader.ts";
+import { installRouteRefresh, RouteRefresher } from "./route-refresh.ts";
 
 const BrowserServicesLayer = Layer.mergeAll(
   BrowserEffectRunner.layer,

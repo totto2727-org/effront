@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Context, Deferred, Effect, Exit, FiberSet, Ref, Scope } from "effect";
 
-import { Application } from "./effront";
-import { getEFFRONTIdentity } from "./effront-identity";
-import type { RenderRuntime } from "./render-runtime";
+import { Application } from "./effront.ts";
+import { getEFFRONTIdentity } from "./effront-identity.ts";
+import type { RenderRuntime } from "./render-runtime.ts";
 
 class Greeting extends Context.Service<Greeting, { readonly prefix: string }>()(
   "effront/tests/application/component/Greeting",

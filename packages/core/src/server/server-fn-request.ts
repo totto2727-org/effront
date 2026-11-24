@@ -1,13 +1,13 @@
 import { Cause, Effect, Schema, type Scope } from "effect";
 import { HttpServerRequest } from "effect/http";
 
-import type { EFFRONTIdentity } from "../application/effront-identity";
-import type { AnyMiddleware } from "../application/middleware";
-import { matchServerFnInvocation, type ServerFnOperationError } from "../application/server-fn";
-import { ServerFnIdHeader } from "../rsc/flight";
-import { ServerFnInputError } from "../rsc/server-fn-error";
-import type { RequestOutcome } from "./request-outcome";
-import { serverFnOutcome } from "./server-fn-outcome";
+import type { EFFRONTIdentity } from "../application/effront-identity.ts";
+import type { AnyMiddleware } from "../application/middleware.ts";
+import { matchServerFnInvocation, type ServerFnOperationError } from "../application/server-fn.ts";
+import { ServerFnIdHeader } from "../rsc/flight.ts";
+import { ServerFnInputError } from "../rsc/server-fn-error.ts";
+import type { RequestOutcome } from "./request-outcome.ts";
+import { serverFnOutcome } from "./server-fn-outcome.ts";
 
 const ServerFnArraySizeLimit = 10_000;
 const ServerFnBodySizeLimit = 10 * 1024 * 1024;

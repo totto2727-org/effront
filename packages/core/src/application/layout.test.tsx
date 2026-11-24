@@ -2,8 +2,8 @@ import { describe, expect, it } from "@effect/vitest";
 import { Context, Deferred, Effect, Exit, FiberSet, Layer, Ref, Scope } from "effect";
 import type { ReactNode } from "react";
 
-import { Application } from "./effront";
-import { getEFFRONTIdentity } from "./effront-identity";
+import { Application } from "./effront.ts";
+import { getEFFRONTIdentity } from "./effront-identity.ts";
 
 class ShellTitle extends Context.Service<ShellTitle, { readonly value: string }>()(
   "effront/tests/application/layout/ShellTitle",

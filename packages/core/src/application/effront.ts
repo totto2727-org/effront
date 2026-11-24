@@ -1,17 +1,17 @@
-import type { ComponentFactory } from "./component";
-import { makeComponentFactory } from "./component";
-import { type EFFRONTMake, makeApplication } from "./definition";
+import type { ComponentFactory } from "./component.ts";
+import { makeComponentFactory } from "./component.ts";
+import { type EFFRONTMake, makeApplication } from "./definition.tsx";
 import {
   attachEFFRONTMember,
   type EFFRONTIdentity,
   type EFFRONTMember,
   getEFFRONTIdentity,
   makeEFFRONTIdentity,
-} from "./effront-identity";
-import type { LayoutFactory } from "./layout";
-import { makeLayoutFactory } from "./layout";
-import type { LoadingFactory } from "./loading";
-import { makeLoadingFactory } from "./loading";
+} from "./effront-identity.ts";
+import type { LayoutFactory } from "./layout.ts";
+import { makeLayoutFactory } from "./layout.ts";
+import type { LoadingFactory } from "./loading.ts";
+import { makeLoadingFactory } from "./loading.ts";
 import {
   type AnyMiddleware,
   getMiddlewareState,
@@ -19,13 +19,13 @@ import {
   type MiddlewareProvidedServices,
   type MiddlewareRequiredServices,
   makeMiddlewareFactory,
-} from "./middleware";
-import type { PageFactory } from "./page";
-import { makePageFactory } from "./page";
-import type { RoutesFactory } from "./routes";
-import { makeRoutesFactory } from "./routes";
-import type { ServerFnFactory } from "./server-fn";
-import { makeServerFnFactory } from "./server-fn";
+} from "./middleware.ts";
+import type { PageFactory } from "./page.ts";
+import { makePageFactory } from "./page.ts";
+import type { RoutesFactory } from "./routes.ts";
+import { makeRoutesFactory } from "./routes.ts";
+import type { ServerFnFactory } from "./server-fn.ts";
+import { makeServerFnFactory } from "./server-fn.ts";
 
 type ApplicableMiddleware<AvailableServices, Value> = [
   Exclude<MiddlewareRequiredServices<Value>, AvailableServices>,

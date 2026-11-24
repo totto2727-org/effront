@@ -6,10 +6,10 @@ import { Context, Effect, Layer, Option, Scope } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { describe, expect, expectTypeOf, it, vi } from "vite-plus/test";
 
-import * as deployment from "./deployment";
-import { applicationHttpEffect, makeApplicationHttpEffect } from "./runtime";
-import * as configuredDeployment from "./application";
-import { makeApplicationHttpEffect as makeConfiguredApplicationHttpEffect } from "./application-runtime";
+import * as deployment from "./deployment.ts";
+import { applicationHttpEffect, makeApplicationHttpEffect } from "./runtime.ts";
+import * as configuredDeployment from "./application.ts";
+import { makeApplicationHttpEffect as makeConfiguredApplicationHttpEffect } from "./application-runtime.ts";
 
 class Capability extends Context.Service<Capability, string>()("effront/test/alchemy/Capability") {}
 

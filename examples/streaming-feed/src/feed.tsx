@@ -3,9 +3,9 @@
 import { query, stream } from "@effront/core/query";
 import { Effect, Stream } from "effect";
 import { useEffect, useRef, useState } from "react";
-import type { Story } from "./feed-data";
-import { pageSize, storyCount } from "./feed-data";
-import { getNote, streamFeed } from "./server-functions";
+import type { Story } from "./feed-data.ts";
+import { pageSize, storyCount } from "./feed-data.ts";
+import { getNote, streamFeed } from "./server-functions.ts";
 
 const readNote = query(getNote);
 const readPage = stream(streamFeed);

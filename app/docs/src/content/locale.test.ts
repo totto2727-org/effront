@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { documentLocale, documentPath, localizedPath, localizeDocumentLink } from "./locale";
-import { localizedMarkdownPages, markdownPages } from "./markdown";
+import { documentLocale, documentPath, localizedPath, localizeDocumentLink } from "./locale.ts";
+import { localizedMarkdownPages, markdownPages } from "./markdown.tsx";
 
 // Keep the Japanese article available, but point its English metadata at a missing source.
 // A loader that silently falls back to the Japanese article must fail this test.

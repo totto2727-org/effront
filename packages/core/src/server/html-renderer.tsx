@@ -1,7 +1,7 @@
 import { Context, Effect, Layer, Schema, type Scope } from "effect";
 
-import type { FlightPayload } from "../rsc/flight";
-import type { FlightRender } from "./flight-renderer";
+import type { FlightPayload } from "../rsc/flight.ts";
+import type { FlightRender } from "./flight-renderer.tsx";
 
 declare global {
   interface ImportMeta {

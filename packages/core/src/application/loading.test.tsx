@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 
-import { Application } from "./effront";
+import { Application } from "./effront.ts";
 
 const EFFRONT = Application.effront();
 

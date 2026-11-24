@@ -1,9 +1,9 @@
-import type { LayoutComponent } from "./layout";
-import type { LoadingComponent } from "./loading";
-import type { AnyMiddleware } from "./middleware";
-import { getPageState, type PageImplementationState } from "./page";
-import { type AbsolutePath, joinRoutePaths, validateUnreservedPath } from "./route-path";
-import { type AnyRoutes, getRoutesState } from "./routes";
+import type { LayoutComponent } from "./layout.ts";
+import type { LoadingComponent } from "./loading.ts";
+import type { AnyMiddleware } from "./middleware.ts";
+import { getPageState, type PageImplementationState } from "./page.ts";
+import { type AbsolutePath, joinRoutePaths, validateUnreservedPath } from "./route-path.ts";
+import { type AnyRoutes, getRoutesState } from "./routes.ts";
 
 export type RouteScope<Services> = {
   readonly id: string;

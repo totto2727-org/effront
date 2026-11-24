@@ -1,6 +1,6 @@
-import { CodeBlock } from "../../../components/code-block";
-import { coreRuntimeSources } from "../../core-runtime";
-import type { DocPage } from "../../types";
+import { CodeBlock } from "../../../components/code-block.tsx";
+import { coreRuntimeSources } from "../../core-runtime.tsx";
+import type { DocPage } from "../../types.ts";
 
 export const page: DocPage = {
   slug: "/architecture/implementation/server-functions",

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-import { Feed } from "./feed";
-import { storiesAfter, storyCount } from "./feed-data";
+import { EFFRONT } from "./effront.ts";
+import { Feed } from "./feed.tsx";
+import { storiesAfter, storyCount } from "./feed-data.ts";
 
 const Layout = EFFRONT.Layout.make({
   render: ({ children }) =>
