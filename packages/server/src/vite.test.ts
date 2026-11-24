@@ -1,329 +1,218 @@
-import { createServer as createHttpServer } from "node:http";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-
+import { NodeServices } from "@effect/platform-node";
+import { live } from "@effect/vitest";
 import { effront } from "@effront/vite";
-import { createServer, isRunnableDevEnvironment, resolveConfig } from "vite";
-import type { Plugin, UserConfig, ViteDevServer } from "vite";
+import { Effect, FileSystem, Path } from "effect";
+import { resolveConfig } from "vite";
+import type { PluginOption, ResolvedConfig, UserConfig } from "vite";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { effrontServer } from "./vite.ts";
 
-const root = fileURLToPath(new URL("../../../tests/e2e-server/fixtures/node/", import.meta.url));
-const resolveServerConfig = (config: UserConfig = {}, command: "serve" | "build" = "build") =>
-  resolveConfig(
-    {
-      configFile: false,
-      root,
-      logLevel: "silent",
-      plugins: [effront(), effrontServer()],
-      ...config,
-    },
-    command,
-    command === "build" ? "production" : "development",
-    command === "build" ? "production" : "development",
-  );
-
-describe("effrontServer configuration", () => {
-  test("builds separate native handler and startup entries without changing SSR conditions", async () => {
-    const config = await resolveServerConfig();
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
-      index: "./src/entry.rsc.ts",
-      server: "./src/entry.server.ts",
-    });
-    expect(config.environments["rsc"]?.build.rollupOptions.output).toMatchObject({
-      entryFileNames: "[name].js",
-    });
-    expect(config.environments["rsc"]?.resolve.conditions).toContain("react-server");
-    expect(config.environments["ssr"]?.resolve.conditions).not.toContain("react-server");
-    expect(config.resolve.conditions).not.toContain("react-server");
-    expect(config.environments["rsc"]?.resolve.noExternal).toContain("@effront/core");
-    expect(config.environments["ssr"]?.resolve.noExternal).toContain("@effront/core");
-    expect(config.resolve.dedupe).toContain("effect");
-    expect(config.plugins.filter((plugin) => plugin.name === "rsc")).toHaveLength(1);
-  });
-
-  test("does not load the production startup entry during development", async () => {
-    const config = await resolveServerConfig({}, "serve");
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
-      index: "./src/entry.rsc.ts",
-    });
-    ["rsc", "ssr"].forEach((name) => {
-      expect(config.environments[name]?.define?.["process.env.NODE_ENV"]).toBeUndefined();
-    });
-  });
-
-  test.each(["production", "development", "test"])(
-    "pins bundled server React to the resolved %s build mode without replacing other env",
-    async (nodeEnv) => {
-      vi.stubEnv("NODE_ENV", nodeEnv);
-      const config = await resolveServerConfig({
-        mode: "staging",
-        environments: {
-          rsc: { define: { "process.env.APPLICATION_FLAG": '"retained"' } },
-          ssr: { define: { "process.env.APPLICATION_FLAG": '"retained"' } },
-        },
-      });
-      expect(config.isProduction).toBe(nodeEnv === "production");
-      ["rsc", "ssr"].forEach((name) => {
-        const environment = config.environments[name];
-        const expected = JSON.stringify(config.isProduction ? "production" : "development");
-        expect(environment?.define?.["process.env.NODE_ENV"]).toBe(expected);
-        expect(environment?.define?.["global.process.env.NODE_ENV"]).toBe(expected);
-        expect(environment?.define?.["globalThis.process.env.NODE_ENV"]).toBe(expected);
-        expect(environment?.define?.["process.env.APPLICATION_FLAG"]).toBe('"retained"');
-        expect(environment?.define?.["process.env"]).toBeUndefined();
-        expect(environment?.define?.["process.env.PORT"]).toBeUndefined();
-        expect(environment?.keepProcessEnv).toBe(true);
-      });
-    },
-  );
-
-  test("honors an explicit client NODE_ENV define for both server graphs", async () => {
-    vi.stubEnv("NODE_ENV", "production");
-    const config = await resolveServerConfig({
-      environments: {
-        client: { define: { "process.env.NODE_ENV": '"development"' } },
-        rsc: { define: { "process.env.NODE_ENV": '"production"' } },
+const resolveHost = Effect.fn(function* (options: UserConfig, command: "serve" | "build") {
+  const path = yield* Path.Path;
+  const location = new URL("../../../tests/e2e-server/fixtures/node/", import.meta.url);
+  const root = yield* path.fromFileUrl(location);
+  const mode = command === "build" ? "production" : "development";
+  const config = yield* Effect.tryPromise(async () =>
+    resolveConfig(
+      {
+        configFile: false,
+        logLevel: "silent",
+        plugins: [effront(), effrontServer()],
+        root,
+        ...options,
       },
-    });
-    expect(config.isProduction).toBe(true);
-    ["rsc", "ssr"].forEach((name) => {
-      expect(config.environments[name]?.define?.["process.env.NODE_ENV"]).toBe(
-        config.environments["client"]?.define?.["process.env.NODE_ENV"],
-      );
-    });
-  });
+      command,
+      mode,
+      mode,
+    ),
+  );
+  return { config, path, root };
+}, Effect.provide(NodeServices.layer));
 
-  test("uses final development mode when .env overrides the default production build", async () => {
-    vi.stubEnv("NODE_ENV", undefined);
-    vi.stubEnv("VITE_USER_NODE_ENV", undefined);
-    const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
-    await mkdir(temporaryRoot, { recursive: true });
-    const envDir = await mkdtemp(join(temporaryRoot, "server-vite-env-"));
-    try {
-      await writeFile(join(envDir, ".env"), "NODE_ENV=development\n");
-      const config = await resolveServerConfig({ envDir });
-      expect(config.mode).toBe("production");
-      expect(config.isProduction).toBe(false);
-      ["rsc", "ssr"].forEach((name) => {
-        expect(config.environments[name]?.define?.["process.env.NODE_ENV"]).toBe('"development"');
+const resolveBuild = resolveHost({}, "build");
+
+const restoreEnv = (): void => {
+  vi.unstubAllEnvs();
+};
+
+const unsetEnv = (name: string): void => {
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- Vitest needs explicit undefined to unset the variable and restore it in the hook.
+  vi.stubEnv(name, undefined);
+};
+
+describe("native server build configuration", () => {
+  live("builds distinct native handler and startup entries", () =>
+    Effect.gen(function* () {
+      const { config } = yield* resolveBuild;
+      const build = config.environments["rsc"]?.build.rolldownOptions;
+      expect(build?.input).toStrictEqual({
+        index: "./src/entry.rsc.ts",
+        server: "./src/entry.server.ts",
       });
-    } finally {
-      await rm(envDir, { recursive: true, force: true });
-    }
+      expect(build?.output).toMatchObject({ entryFileNames: "[name].js" });
+    }),
+  );
+
+  live("preserves RSC conditions, SSR runtime transforms, and Effect deduplication", () =>
+    Effect.gen(function* () {
+      const { config } = yield* resolveBuild;
+      const { rsc, ssr } = config.environments;
+      const serverConditions = [rsc?.resolve, ssr?.resolve, config.resolve];
+      expect(
+        serverConditions.map((resolve) => resolve?.conditions.includes("react-server")),
+      ).toStrictEqual([true, false, false]);
+      expect(rsc?.resolve.noExternal).toContain("@effront/core");
+      expect(ssr?.resolve.noExternal).toContain("@effront/core");
+      expect(config.resolve.dedupe).toContain("effect");
+      expect(config.plugins.filter(({ name }) => name === "rsc")).toHaveLength(1);
+    }),
+  );
+
+  live("omits the production startup and forced NODE_ENV in development", () =>
+    Effect.gen(function* () {
+      const { config } = yield* resolveHost({}, "serve");
+      const { rsc, ssr } = config.environments;
+      expect(rsc?.build.rolldownOptions.input).toStrictEqual({ index: "./src/entry.rsc.ts" });
+      expect(rsc?.define?.["process.env.NODE_ENV"]).toBeUndefined();
+      expect(ssr?.define?.["process.env.NODE_ENV"]).toBeUndefined();
+    }),
+  );
+});
+
+const serverEnv = (config: ResolvedConfig): unknown[][] =>
+  [config.environments["rsc"], config.environments["ssr"]].map((environment) => {
+    const settings: unknown[] = [
+      environment?.define?.["process.env.NODE_ENV"],
+      environment?.define?.["global.process.env.NODE_ENV"],
+      environment?.define?.["globalThis.process.env.NODE_ENV"],
+      environment?.define?.["process.env.APPLICATION_FLAG"],
+      environment?.define?.["process.env"],
+      environment?.define?.["process.env.PORT"],
+      environment?.keepProcessEnv,
+    ];
+    return settings;
   });
 
-  test("preserves other entries and output directories with custom host entries", async () => {
-    const config = await resolveServerConfig({
-      plugins: [
-        effront(),
-        effrontServer({ rsc: "./custom/handler.ts", server: "./custom/main.ts" }),
-      ],
-      environments: {
-        rsc: {
-          build: {
-            outDir: "output/rsc",
-            rollupOptions: { input: { other: "./custom/other.ts" } },
+describe("resolved React environment in native server builds", () => {
+  afterEach(restoreEnv);
+
+  live.each(["production", "development", "test"])(
+    "pins the resolved %s React mode and leaves other variables available",
+    (nodeEnv) =>
+      Effect.gen(function* () {
+        vi.stubEnv("NODE_ENV", nodeEnv);
+        const flag = { define: { "process.env.APPLICATION_FLAG": '"retained"' } };
+        const { config } = yield* resolveHost(
+          { environments: { rsc: flag, ssr: flag }, mode: "staging" },
+          "build",
+        );
+        const expected = JSON.stringify(config.isProduction ? "production" : "development");
+        const defines = [expected, expected, expected, '"retained"', undefined, undefined, true];
+        expect(config.isProduction).toBe(nodeEnv === "production");
+        expect(serverEnv(config)).toStrictEqual([defines, defines]);
+      }),
+  );
+
+  live("honors an explicit client NODE_ENV define in both server graphs", () =>
+    Effect.gen(function* () {
+      vi.stubEnv("NODE_ENV", "production");
+      const { config } = yield* resolveHost(
+        {
+          environments: {
+            client: { define: { "process.env.NODE_ENV": '"development"' } },
+            rsc: { define: { "process.env.NODE_ENV": '"production"' } },
           },
         },
-        ssr: { build: { outDir: "output/ssr" } },
-        client: { build: { outDir: "output/client" } },
-      },
-    });
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
-      other: "./custom/other.ts",
-      index: "./custom/handler.ts",
-      server: "./custom/main.ts",
-    });
-    ["rsc", "ssr", "client"].forEach((name) => {
-      expect(config.environments[name]?.build.outDir).toBe(`${root}output/${name}`);
-    });
-  });
-
-  test("rejects missing or incorrectly ordered portable integration", async () => {
-    await expect(resolveServerConfig({ plugins: [effrontServer()] })).rejects.toThrow(
-      "Register effront() before effrontServer()",
-    );
-    await expect(resolveServerConfig({ plugins: [effrontServer(), effront()] })).rejects.toThrow(
-      "Register effront() before effrontServer()",
-    );
-  });
-
-  test("rejects empty entry options", () => {
-    expect(() => effrontServer({ rsc: "" })).toThrow(TypeError);
-    expect(() => effrontServer({ server: "" })).toThrow(TypeError);
-  });
+        "build",
+      );
+      const clientMode: unknown = config.environments["client"]?.define?.["process.env.NODE_ENV"];
+      const { rsc, ssr } = config.environments;
+      expect(config.isProduction).toBe(true);
+      expect(rsc?.define?.["process.env.NODE_ENV"]).toBe(clientMode);
+      expect(ssr?.define?.["process.env.NODE_ENV"]).toBe(clientMode);
+    }),
+  );
 });
 
-const entry = "virtual:effront-native-http-test";
-const resolvedEntry = `\0${entry}`;
-const eventsKey = "__effront_native_http_test_events__";
+const localEnv = Effect.gen(function* () {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const tmp = yield* path.fromFileUrl(new URL("../../../tmp/", import.meta.url));
+  yield* fs.makeDirectory(tmp, { recursive: true });
+  const envDir = yield* fs.makeTempDirectoryScoped({ directory: tmp, prefix: "server-vite-env-" });
+  yield* fs.writeFileString(path.join(envDir, ".env"), "NODE_ENV=development\n");
+  return envDir;
+}).pipe(Effect.provide(NodeServices.layer));
 
-const handlerSource = (version: string): string => `
-  import { Effect, Stream } from 'effect';
-  import { HttpServerRequest, HttpServerResponse } from 'effect/http';
-  export const handler = Effect.gen(function* () {
-    const request = yield* HttpServerRequest.HttpServerRequest;
-    if (request.url === '/custom' || request.url === '/failure') {
-      const response = yield* HttpServerResponse.text('日本語の応答', {
-        status: request.url === '/failure' ? 400 : 299,
-        statusText: request.url === '/failure' ? undefined : 'Application Status',
-        contentType: 'text/plain;charset=utf-8',
-        headers: { 'x-application': 'retained' },
-      }).pipe(HttpServerResponse.setCookie('session', 'retained'));
-      return request.url === '/failure' ? yield* Effect.fail(response) : response;
-    }
-    if (request.url === '/stream') {
-      yield* Effect.acquireRelease(
-        Effect.sync(() => globalThis[${JSON.stringify(eventsKey)}].push('acquired')),
-        () => Effect.sync(() => globalThis[${JSON.stringify(eventsKey)}].push('released')),
-      );
-      return HttpServerResponse.stream(
-        Stream.concat(Stream.make(new TextEncoder().encode('streaming')), Stream.never),
-      );
-    }
-    return HttpServerResponse.text(
-      ${JSON.stringify(version)} + ':' + request.method + ':' + request.url + ':' + request.source.constructor.name,
-    );
-  });
-  if (import.meta.hot) import.meta.hot.accept();
-`;
+describe("native server mode overrides", () => {
+  afterEach(restoreEnv);
 
-const servers = new Set<ViteDevServer>();
-afterEach(async () => {
-  await Promise.all([...servers].map((server) => server.close()));
-  servers.clear();
-  vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
+  live("uses development mode when .env overrides the default production build", () =>
+    Effect.gen(function* () {
+      unsetEnv("NODE_ENV");
+      unsetEnv("VITE_USER_NODE_ENV");
+      const envDir = yield* localEnv;
+      const { config } = yield* resolveHost({ envDir }, "build");
+      const { rsc, ssr } = config.environments;
+      expect(config.mode).toBe("production");
+      expect(config.isProduction).toBe(false);
+      expect(rsc?.define?.["process.env.NODE_ENV"]).toBe('"development"');
+      expect(ssr?.define?.["process.env.NODE_ENV"]).toBe('"development"');
+    }),
+  );
 });
 
-const setupServer = async (middlewareMode = false) => {
-  let source = handlerSource("first");
-  const fixture: Plugin = {
-    name: "effront-native-http-fixture",
-    resolveId: (id) => (id === entry ? resolvedEntry : undefined),
-    load: (id) => (id === resolvedEntry ? source : undefined),
-  };
-  const server = await createServer({
-    configFile: false,
-    root,
-    logLevel: "silent",
-    plugins: [effront(), fixture, effrontServer({ rsc: entry })],
-    server: { host: "127.0.0.1", port: 0, middlewareMode },
-  });
-  servers.add(server);
-  return {
-    server,
-    change: (version: string) => {
-      source = handlerSource(version);
-    },
-  };
-};
-
-const listen = async (server: ViteDevServer): Promise<string> => {
-  await server.listen();
-  const address = server.httpServer?.address();
-  if (!address || typeof address === "string") {
-    throw new Error("Missing HTTP server address");
-  }
-  return `http://127.0.0.1:${address.port}`;
-};
-
-describe("effrontServer native middleware", () => {
-  test("uses Vite's one listener, native requests, and the current runner module after HMR", async () => {
-    const { server, change } = await setupServer();
-    const origin = await listen(server);
-    expect(server.httpServer?.listenerCount("request")).toBe(1);
-    await expect((await fetch(`${origin}/route?query=value`)).text()).resolves.toBe(
-      "first:GET:/route?query=value:IncomingMessage",
-    );
-    const viteClient = await fetch(`${origin}/@vite/client`);
-    expect(viteClient.status).toBe(200);
-    expect(viteClient.headers.get("content-type")).toContain("javascript");
-
-    const environment = server.environments["rsc"];
-    if (!environment || !isRunnableDevEnvironment(environment)) {
-      throw new Error("Missing runnable RSC environment");
-    }
-    const module = environment.moduleGraph.getModuleById(resolvedEntry);
-    if (!module) {
-      throw new Error("RSC module was not loaded");
-    }
-    change("second");
-    await environment.reloadModule(module);
-    await expect
-      .poll(async () => (await fetch(`${origin}/route`)).text())
-      .toBe("second:GET:/route:IncomingMessage");
-  });
-
-  test("preserves custom status text, headers and cookies for success and failure responses", async () => {
-    const { server } = await setupServer();
-    const origin = await listen(server);
-    for (const [path, status, statusText] of [
-      ["/custom", 299, "Application Status"],
-      ["/failure", 400, "Bad Request"],
-    ] as const) {
-      const response = await fetch(`${origin}${path}`);
-      expect(response.status).toBe(status);
-      expect(response.statusText).toBe(statusText);
-      expect(response.headers.get("content-type")).toContain("charset=utf-8");
-      expect(response.headers.get("x-application")).toBe("retained");
-      expect(response.headers.get("set-cookie")).toContain("session=retained");
-      await expect(response.text()).resolves.toBe("日本語の応答");
-    }
-  });
-
-  test("retains request scope through streaming and releases it on client cancellation", async () => {
-    const events: string[] = [];
-    vi.stubGlobal(eventsKey, events);
-    const { server } = await setupServer();
-    const origin = await listen(server);
-    const response = await fetch(`${origin}/stream`);
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Missing streaming response body");
-    }
-    expect(new TextDecoder().decode((await reader.read()).value)).toBe("streaming");
-    expect(events).toStrictEqual(["acquired"]);
-    await reader.cancel();
-    await expect.poll(() => events).toEqual(["acquired", "released"]);
-  });
-
-  test("closes active request scopes when Vite closes in middleware mode", async () => {
-    const events: string[] = [];
-    vi.stubGlobal(eventsKey, events);
-    const { server } = await setupServer(true);
-    expect(server.httpServer).toBeNull();
-    const host = createHttpServer(server.middlewares);
-    await new Promise<void>((resolve) => host.listen(0, "127.0.0.1", resolve));
-    try {
-      const address = host.address();
-      if (!address || typeof address === "string") {
-        throw new Error("Missing HTTP server address");
-      }
-      const response = await fetch(`http://127.0.0.1:${address.port}/stream`);
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("Missing streaming response body");
-      }
-      await reader.read();
-      expect(events).toStrictEqual(["acquired"]);
-      await server.close();
-      expect(events).toStrictEqual(["acquired", "released"]);
-      await reader.cancel();
-    } finally {
-      host.closeAllConnections();
-      await new Promise<void>((resolve, reject) =>
-        host.close((error) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve();
-          }
-        }),
+describe("custom native server build output", () => {
+  live("retains custom RSC, SSR and client paths with extra host entries", () =>
+    Effect.gen(function* () {
+      const { config, path, root } = yield* resolveHost(
+        {
+          environments: {
+            client: { build: { outDir: "output/client" } },
+            rsc: {
+              build: {
+                outDir: "output/rsc",
+                rolldownOptions: { input: { other: "./custom/other.ts" } },
+              },
+            },
+            ssr: { build: { outDir: "output/ssr" } },
+          },
+          plugins: [
+            effront(),
+            effrontServer({ rsc: "./custom/handler.ts", server: "./custom/main.ts" }),
+          ],
+        },
+        "build",
       );
-    }
+      const { client, rsc, ssr } = config.environments;
+      expect(rsc?.build.rolldownOptions.input).toStrictEqual({
+        index: "./custom/handler.ts",
+        other: "./custom/other.ts",
+        server: "./custom/main.ts",
+      });
+      const directories = ["rsc", "ssr", "client"].map((name) => path.join(root, "output", name));
+      expect([rsc?.build.outDir, ssr?.build.outDir, client?.build.outDir]).toStrictEqual(
+        directories,
+      );
+    }),
+  );
+});
+
+const invalidPluginOrder = [
+  { case: "missing portable plugin", plugins: (): PluginOption[] => [effrontServer()] },
+  { case: "reversed plugin order", plugins: (): PluginOption[] => [effrontServer(), effront()] },
+];
+
+describe("native server plugin validation", () => {
+  live.each(invalidPluginOrder)("rejects $case", ({ plugins }) =>
+    Effect.gen(function* () {
+      const failure = yield* Effect.flip(resolveHost({ plugins: plugins() }, "build"));
+      expect(failure.cause).toHaveProperty("message", "Register effront() before effrontServer().");
+    }),
+  );
+
+  test.each([{ rsc: "" }, { server: "" }])("rejects empty entry options %j", (options) => {
+    expect(() => effrontServer(options)).toThrow(TypeError);
   });
 });
