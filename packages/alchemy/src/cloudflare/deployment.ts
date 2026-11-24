@@ -8,6 +8,7 @@ export type { ApplicationLoader } from "./adapter.ts";
 
 const unavailable: typeof toHttpEffect = () =>
   Effect.die(
+    // oxlint-disable-next-line rules/require-tagged-error -- The deployment graph reports a native TypeError when used as a request host.
     new TypeError(
       "Effront Alchemy request handling requires the react-server runtime. Use effront() followed by effrontAlchemy().",
     ),

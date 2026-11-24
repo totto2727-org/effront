@@ -9,7 +9,7 @@ import {
 import { CloudflareEnvironment } from "alchemy/Cloudflare";
 import { RuntimeContext } from "alchemy/RuntimeContext";
 import { Self } from "alchemy/Self";
-import { Context, Effect, Layer, Scope } from "effect";
+import { Context, Effect, Layer, Predicate, Scope } from "effect";
 import { HttpRouter, HttpServerRequest } from "effect/http";
 
 import type { loadConfiguredApplication } from "./application-loader.ts";
@@ -69,8 +69,8 @@ type ApplicationConstruction<ApplicationError, Requirements> = Effect.Effect<
 >;
 
 /** Keeps declaration emission on named contracts and canonical public provider imports. */
-export interface ApplicationAdapter {
-  readonly applicationHttpEffect: {
+export type ApplicationAdapter = Readonly<{
+  applicationHttpEffect: {
     <Services, ApplicationError, Requirements, Captured>(
       load: ApplicationLoader<Services, ApplicationError, Requirements>,
       options: Readonly<{ context: Context.Context<Captured> }>,
@@ -80,32 +80,32 @@ export interface ApplicationAdapter {
       options?: Readonly<{ context?: Context.Context<Captured> }>,
     ): HttpApplicationEffect<ApplicationError, Requirements>;
   };
-  readonly makeApplicationHttpEffect: <Services, ApplicationError, Requirements>(
+  makeApplicationHttpEffect: <Services, ApplicationError, Requirements>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
   ) => ApplicationConstruction<ApplicationError, Requirements>;
-}
+}>;
 
-export interface ConfiguredApplicationHttpEffect {
-  <
-    Definition extends ApplicationDefinition<ApplicationServices<Definition>, unknown, unknown>,
-  >(): Definition extends ApplicationDefinition<
-    infer _Services,
-    infer ApplicationError,
-    infer Requirements
-  >
-    ? ApplicationConstruction<ApplicationError, Requirements>
-    : never;
-}
+export type ConfiguredApplicationHttpEffect = <
+  Definition extends ApplicationDefinition<ApplicationServices<Definition>, unknown, unknown>,
+>() => Definition extends ApplicationDefinition<
+  infer _Services,
+  infer ApplicationError,
+  infer Requirements
+>
+  ? ApplicationConstruction<ApplicationError, Requirements>
+  : never;
+
+const requestHandler = <Services, ApplicationError, Requirements>(
+  toHttpEffect: typeof CoreHttpEffect,
+  load: ApplicationLoader<Services, ApplicationError, Requirements>,
+): HttpApplicationEffect<ApplicationError, Requirements> =>
+  Effect.gen(function* () {
+    const application = yield* Effect.promise(load);
+    return yield* toHttpEffect(application);
+  });
 
 export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect): ApplicationAdapter => {
-  /**
-   * Builds a native HTTP effect without running the loader during construction.
-   *
-   * The supplied context holds constructed capabilities, such as Alchemy KV clients.
-   * Live request services take precedence, and a construction-time scope or execution
-   * context is never restored. Application layers are acquired in the host's request
-   * scope, which Alchemy retains through streaming response completion or cancellation.
-   */
+  // Load the application during the request. The host keeps its scope until the body ends.
   function applicationHttpEffect<Services, ApplicationError, Requirements, Captured>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
     options: Readonly<{ context: Context.Context<Captured> }>,
@@ -117,39 +117,38 @@ export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect): App
   function applicationHttpEffect<Services, ApplicationError, Requirements, Captured>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
     options?: Readonly<{ context?: Context.Context<Captured> }>,
-  ) {
-    const handler = Effect.gen(function* () {
-      const application = yield* Effect.promise(load);
-      return yield* toHttpEffect(application);
-    });
-    if (options?.context === undefined) {
+  ):
+    | HttpApplicationEffect<ApplicationError, Requirements>
+    | ApplicationHttpEffect<ApplicationError, Requirements, Captured> {
+    const handler = requestHandler(toHttpEffect, load);
+    const context = options?.context;
+    // oxlint-disable-next-line rules/prefer-is-nullish -- An omitted capture uses the host context; an explicit invalid context remains a defect.
+    if (Predicate.isUndefined(context)) {
       return handler;
     }
-    const captured = omitHostServices(options.context);
+    const captured = omitHostServices(context);
     return Effect.contextWith((live: Context.Context<never>) =>
       Effect.provideContext(handler, Context.merge(captured, live)),
     );
   }
 
-  /**
-   * Captures application capabilities during Alchemy Worker construction.
-   *
-   * Supply only application services here. RuntimeContext, the HTTP request, and the
-   * request scope are supplied by Alchemy when the returned fetch effect executes.
-   * Capturing references does not acquire services or extend their lifetime.
-   */
-  function makeApplicationHttpEffect<Services, ApplicationError, Requirements>(
+  // Capture references while the Worker is constructed. Request services are supplied by Alchemy.
+  const makeApplicationHttpEffect = <Services, ApplicationError, Requirements>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
-  ): ApplicationConstruction<ApplicationError, Requirements> {
-    return Effect.map(Effect.context<ApplicationCapabilities<Requirements>>(), (context) =>
+  ): ApplicationConstruction<ApplicationError, Requirements> =>
+    Effect.map(Effect.context<ApplicationCapabilities<Requirements>>(), (context) =>
       applicationHttpEffect(load, { context }),
     );
-  }
 
   return { applicationHttpEffect, makeApplicationHttpEffect };
 };
 
-/** Binds the configured entry without importing it into explicit-loader hosts. */
+/**
+ * Binds the configured entry for owners of the application loader.
+ * @param {ApplicationAdapter["makeApplicationHttpEffect"]} make - The native HTTP construction function.
+ * @param {typeof loadConfiguredApplication} load - The configured application loader.
+ * @returns {ConfiguredApplicationHttpEffect} The construction effect with the configured loader bound.
+ */
 export const configureApplication = (
   make: ApplicationAdapter["makeApplicationHttpEffect"],
   load: typeof loadConfiguredApplication,
@@ -163,7 +162,9 @@ export const configureApplication = (
   >
     ? ApplicationConstruction<ApplicationError, Requirements>
     : never;
-  function makeApplicationHttpEffect() {
+  function makeApplicationHttpEffect(): ReturnType<
+    ApplicationAdapter["makeApplicationHttpEffect"]
+  > {
     return make(load);
   }
   return makeApplicationHttpEffect;
