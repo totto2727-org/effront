@@ -10,52 +10,15 @@ import {
   NativeDocumentNavigationInfo,
   preserveRequestedHash,
 } from "./navigation-routing.ts";
+import {
+  getLinkTransitionTypes,
+  getNavigationTransitionTypes,
+} from "./navigation-transition-types.ts";
 import { RouteLoader } from "./route-loader.ts";
 import type { RouteLoad } from "./route-loader.ts";
 
 type NavigationGeneration = symbol;
 type RouteResource = Extract<RouteLoad, Readonly<{ _tag: "Route" }>>;
-
-const reservedTransitionTypes = new Set(["navigation", "server-function", "hmr-refresh"]);
-
-const isApplicationTransitionType = (type: string): boolean =>
-  !reservedTransitionTypes.has(type) && !type.startsWith("navigation-");
-
-const getLinkTransitionTypes = (event: NavigateEvent): Readonly<string[]> => {
-  if (
-    (event.navigationType !== "push" && event.navigationType !== "replace") ||
-    !(event.sourceElement instanceof HTMLAnchorElement)
-  ) {
-    return [];
-  }
-  const types = event.sourceElement.dataset["effrontTransitionTypes"]?.match(/\S+/g) ?? [];
-  return [...new Set(types.filter(isApplicationTransitionType))];
-};
-
-const getNavigationTransitionTypes = (
-  event: NavigateEvent,
-  fromIndex: number | null,
-): Readonly<string[]> => {
-  const types = [
-    "navigation",
-    `navigation-${event.navigationType}`,
-    ...(event.hasUAVisualTransition ? ["navigation-ua-visual-transition"] : []),
-  ];
-  if (event.navigationType === "push") {
-    return [...types, "navigation-forward"];
-  }
-  if (event.navigationType !== "traverse") {
-    return types;
-  }
-
-  if (Predicate.isNullish(fromIndex) || fromIndex === event.destination.index) {
-    return types;
-  }
-  return [
-    ...types,
-    event.destination.index < fromIndex ? "navigation-backward" : "navigation-forward",
-  ];
-};
 
 type NavigationEntryState =
   | Readonly<{ _tag: "PendingCommit" }>
