@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+const httpStatusOk = 200;
+const httpStatusNotFound = 404;
+
 const serverSecret = "acceptance-test-secret";
 
 // The independent Wrangler host supplies these test-only runtime overrides.
@@ -12,7 +15,7 @@ test("serves HTML and Flight responses without leaking server bindings", async (
   const html = await request.get("/");
   const htmlBody = await html.text();
 
-  expect(html.status()).toBe(200);
+  expect(html.status()).toBe(httpStatusOk);
   expect(html.headers()["content-type"]).toContain("text/html");
   expect(html.headers()["cache-control"]).toBe("private, no-store");
   expect(html.headers()["vary"]).toContain("Accept");
@@ -21,7 +24,7 @@ test("serves HTML and Flight responses without leaking server bindings", async (
   const flight = await request.get("/", { headers: { Accept: "text/x-component" } });
   const flightBody = await flight.text();
 
-  expect(flight.status()).toBe(200);
+  expect(flight.status()).toBe(httpStatusOk);
   expect(flight.headers()["content-type"]).toContain("text/x-component");
   expect(flight.headers()["cache-control"]).toBe("private, no-store");
   expect(flight.headers()["vary"]).toContain("Accept");
@@ -80,5 +83,5 @@ test("invokes a Server Function with the request-scoped Workers greeting binding
 
 test("returns a non-success response for an unknown route", async ({ request }) => {
   const response = await request.get("/not-a-route");
-  expect(response.status()).toBe(404);
+  expect(response.status()).toBe(httpStatusNotFound);
 });

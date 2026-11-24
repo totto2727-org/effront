@@ -6,6 +6,10 @@ import { corePages, coreSources } from "../src/content/core.ts";
 import { englishArticleCatalog } from "../src/content/en/catalog.ts";
 import { englishCorePages } from "../src/content/en/core.ts";
 
+const httpStatusOk = 200;
+const httpStatusPermanentRedirect = 308;
+const httpStatusNotFound = 404;
+
 // Import metadata directly: content/pages also loads the Vite-only Markdown glob.
 // Expectations deliberately construct public URLs without the production locale helpers.
 const locales = [
@@ -75,7 +79,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
       const slug = localizedUrl(article.slug);
       test(`${slug} serves localized content, TOC, code and article links`, async ({ page }) => {
         const response = await page.goto(slug);
-        expect(response?.status()).toBe(200);
+        expect(response?.status()).toBe(httpStatusOk);
         await expect(page).toHaveTitle(`${article.title} | Effront`);
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         await expect(page.locator("html")).toHaveClass("dark");
@@ -190,7 +194,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
         page,
       }) => {
         const response = await page.goto(`${canonical}/`);
-        expect(response?.status()).toBe(200);
+        expect(response?.status()).toBe(httpStatusOk);
         expect(response?.headers()["content-type"]).toContain("text/html");
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         await expect(page.locator("article")).toHaveAttribute("data-doc-page", canonical);
@@ -212,7 +216,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
     for (const { retired, canonical, fragment } of retiredArticles) {
       test(`${localizedUrl(retired)} keeps a bookmarked query and anchor`, async ({ page }) => {
         const response = await page.goto(`${localizedUrl(retired)}?from=bookmark${fragment}`);
-        expect(response?.status()).toBe(200);
+        expect(response?.status()).toBe(httpStatusOk);
         await expect(page).toHaveURL(`${localizedUrl(canonical)}?from=bookmark${fragment}`);
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         await expect(page.locator("article")).toHaveAttribute(
@@ -358,11 +362,11 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
             headers: { Accept: accept },
             maxRedirects: 0,
           });
-          expect(response.status()).toBe(308);
+          expect(response.status()).toBe(httpStatusPermanentRedirect);
           expect(response.headers()["location"]).toBe(`${localizedUrl(canonical)}?from=bookmark`);
           expect(await response.body()).toHaveLength(0);
           const followed = await request.fetch(bookmark, { method, headers: { Accept: accept } });
-          expect(followed.status()).toBe(200);
+          expect(followed.status()).toBe(httpStatusOk);
           expect(new URL(followed.url()).pathname).toBe(localizedUrl(canonical));
           expect(new URL(followed.url()).search).toBe("?from=bookmark");
           expect(followed.headers()["content-type"]).toContain(accept);
@@ -390,7 +394,7 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
           headers: { Accept: accept },
           maxRedirects: 0,
         });
-        expect(response.status()).toBe(404);
+        expect(response.status()).toBe(httpStatusNotFound);
       });
     }
   }

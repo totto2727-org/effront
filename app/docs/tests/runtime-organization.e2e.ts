@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+const httpStatusPermanentRedirect = 308;
+
 for (const prefix of ["", "/en", "/ja"]) {
   const target = `${prefix}/advanced/server-function-execution-and-refresh`;
   for (const accept of ["text/html", "text/x-component"]) {
@@ -12,7 +14,7 @@ for (const prefix of ["", "/en", "/ja"]) {
           headers: { Accept: accept },
           maxRedirects: 0,
         });
-        expect(response.status()).toBe(308);
+        expect(response.status()).toBe(httpStatusPermanentRedirect);
         expect(response.headers()["location"]).toBe(`${target}?from=bookmark#execution`);
         expect(await response.body()).toHaveLength(0);
       }

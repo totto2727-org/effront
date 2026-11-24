@@ -1,17 +1,21 @@
 import { expect, test } from "@playwright/test";
 
+const httpStatusOk = 200;
+const httpStatusNotModified = 304;
+const httpStatusNotFound = 404;
+
 test("native HTTP serves SSR, hydration, Server Functions and navigation", async ({
   page,
   request,
 }, testInfo) => {
   const runtime = testInfo.project.name === "bun" ? "Bun" : "Node";
   const response = await request.get("/");
-  expect(response.status()).toBe(200);
+  expect(response.status()).toBe(httpStatusOk);
   expect(response.headers()["content-type"]).toContain("charset=utf-8");
   expect(response.headers()["cache-control"]).toBe("private, no-store");
   expect(await response.text()).toContain(`Hello from ${runtime}!`);
   const head = await request.head("/");
-  expect(head.status()).toBe(200);
+  expect(head.status()).toBe(httpStatusOk);
   expect(await head.body()).toHaveLength(0);
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -75,7 +79,7 @@ test("public files and generated CSS are available in initial HTML without JavaS
 }, testInfo) => {
   const runtime = testInfo.project.name === "bun" ? "Bun" : "Node";
   const asset = await request.get("/hello.txt");
-  expect(asset.status()).toBe(200);
+  expect(asset.status()).toBe(httpStatusOk);
   expect(await asset.text()).toBe(`Hello from ${runtime} public assets!\n`);
   const context = await browser.newContext({ javaScriptEnabled: false });
   try {
@@ -92,7 +96,7 @@ test("public files and generated CSS are available in initial HTML without JavaS
     expect(styles.length).toBeGreaterThan(0);
     for (const href of styles) {
       const css = await request.get(href!, { headers: { Accept: "text/css" } });
-      expect(css.status()).toBe(200);
+      expect(css.status()).toBe(httpStatusOk);
       expect(css.headers()["content-type"]).toContain("text/css");
     }
   } finally {
@@ -112,12 +116,12 @@ test("production static policy never exposes server source or replaces missing a
     "/.env",
   ]) {
     const response = await request.get(path);
-    expect(response.status()).toBe(404);
+    expect(response.status()).toBe(httpStatusNotFound);
   }
   const response = await request.get("/hello.txt");
   const etag = response.headers()["etag"];
   expect(etag).toBeTruthy();
   const cached = await request.get("/hello.txt", { headers: { "If-None-Match": etag! } });
-  expect(cached.status()).toBe(304);
+  expect(cached.status()).toBe(httpStatusNotModified);
   expect(await cached.body()).toHaveLength(0);
 });

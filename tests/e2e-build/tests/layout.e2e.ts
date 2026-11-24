@@ -2,6 +2,8 @@ import { writeFile } from "node:fs/promises";
 import { expect, test as base } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
+const httpStatusOk = 200;
+
 // Content completeness and provenance belong to app/docs unit tests. These small
 // independent pages exercise the framework's persistent documentation-shell contract.
 const routes = [
@@ -102,7 +104,7 @@ test.describe("documentation shell without JavaScript", () => {
   for (const route of routes) {
     test(`renders article, navigation and heading anchors for ${route.title}`, async ({ page }) => {
       const response = await page.goto(route.path);
-      expect(response?.status()).toBe(200);
+      expect(response?.status()).toBe(httpStatusOk);
       const article = page.locator("main article");
       await expect(article).toHaveAttribute("data-doc-page", route.path);
       await expect(article.getByRole("heading", { level: 1 })).toHaveText(route.title);

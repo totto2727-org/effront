@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { expect, test as base } from "@playwright/test";
 
+const httpStatusOk = 200;
+const httpStatusNotFound = 404;
+
 const unicodePath = `/manual/guide/${encodeURIComponent("日本語 space")}`;
 const destinations = [
   { path: "/manual/guide/getting-started", title: "Getting started", hash: "installation" },
@@ -64,7 +67,7 @@ test.describe("Markdown without JavaScript", () => {
 
   test("renders default Markdown plugins in the original server document", async ({ page }) => {
     const response = await page.goto("/manual");
-    expect(response?.status()).toBe(200);
+    expect(response?.status()).toBe(httpStatusOk);
     expect(response?.headers()["content-type"]).toContain("text/html");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Markdown manual");
     await expect(page.getByRole("heading", { name: "Features", exact: true })).toHaveAttribute(
@@ -158,7 +161,7 @@ test.describe("Markdown without JavaScript", () => {
     }
     expect(src).not.toMatch(/^(?:data:|file:)/u);
     const asset = await request.get(new URL(src, page.url()).href);
-    expect(asset.status()).toBe(200);
+    expect(asset.status()).toBe(httpStatusOk);
     expect(asset.headers()["content-type"]).toMatch(/^image\//u);
     expect(await asset.body()).toEqual(
       await readFile(new URL("../fixture/content/manual/images/diagram.svg", import.meta.url)),
@@ -174,7 +177,7 @@ test.describe("Markdown without JavaScript", () => {
   for (const destination of destinations) {
     test(`directly serves nested source page ${destination.title}`, async ({ page }) => {
       const response = await page.goto(destination.path);
-      expect(response?.status()).toBe(200);
+      expect(response?.status()).toBe(httpStatusOk);
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(destination.title);
       if (destination.hash) {
         await expect(page.locator(`[id=${JSON.stringify(destination.hash)}]`)).toBeVisible();
@@ -227,7 +230,7 @@ test("renders configured upstream math and diagrams after hydration", async ({ p
   ).toBeGreaterThan(0);
   for (const href of stylesheets) {
     const stylesheet = await request.get(href);
-    expect(stylesheet.status()).toBe(200);
+    expect(stylesheet.status()).toBe(httpStatusOk);
   }
 
   const prose = await page
@@ -304,7 +307,7 @@ test("keeps a document with server-only rich overrides out of Math and Mermaid c
   request,
 }) => {
   const html = await request.get("/manual-server-only", { headers: { Accept: "text/html" } });
-  expect(html.status()).toBe(200);
+  expect(html.status()).toBe(httpStatusOk);
   const htmlBody = await html.text();
   expect(htmlBody).toContain('data-testid="server-only-markdown"');
   expect(htmlBody).toMatch(/Server math: (?:<!-- -->)?E = mc\^2/u);
@@ -312,7 +315,7 @@ test("keeps a document with server-only rich overrides out of Math and Mermaid c
   expect(htmlBody).not.toMatch(/class="(?:math|mermaid)\b|class="katex\b/u);
 
   const normalFlight = await request.get("/manual", { headers: { Accept: "text/x-component" } });
-  expect(normalFlight.status()).toBe(200);
+  expect(normalFlight.status()).toBe(httpStatusOk);
   expect(normalFlight.headers()["content-type"]).toContain("text/x-component");
   const richReferences = flightClientReferences(await normalFlight.text()).filter((reference) =>
     /^(?:Math|Mermaid)$/u.test(reference.exportName),
@@ -326,7 +329,7 @@ test("keeps a document with server-only rich overrides out of Math and Mermaid c
   const flight = await request.get("/manual-server-only", {
     headers: { Accept: "text/x-component" },
   });
-  expect(flight.status()).toBe(200);
+  expect(flight.status()).toBe(httpStatusOk);
   expect(flight.headers()["content-type"]).toContain("text/x-component");
   const flightBody = await flight.text();
   expect(flightBody).toMatch(/Server math:[\s\S]{0,30}E = mc\^2/);
@@ -365,7 +368,7 @@ for (const destination of [{ path: "/manual", title: "Markdown manual" }, ...des
     const response = await request.get(destination.path, {
       headers: { Accept: "text/x-component" },
     });
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(httpStatusOk);
     expect(response.headers()["content-type"]).toContain("text/x-component");
     expect(response.headers()["vary"]).toContain("Accept");
     const body = await response.text();
@@ -380,7 +383,7 @@ for (const accept of ["text/html", "text/x-component"]) {
     const response = await request.get("/manual/guide/deep/unknown", {
       headers: { Accept: accept },
     });
-    expect(response.status()).toBe(404);
+    expect(response.status()).toBe(httpStatusNotFound);
   });
 
   test(`returns 404 for unindexed URL segments without aliasing Markdown content with ${accept}`, async ({
@@ -399,7 +402,7 @@ for (const accept of ["text/html", "text/x-component"]) {
       expect(
         response.status(),
         `No indexed document for ${path}, without aliasing or throwing`,
-      ).toBe(404);
+      ).toBe(httpStatusNotFound);
       expect(await response.text()).not.toContain("Deep details");
     }
   });
@@ -435,7 +438,7 @@ test("hydrates and follows Markdown links with Flight while retaining shared lay
       .getByRole("link", { name: destination.title, exact: true })
       .click();
     const flight = await flightPromise;
-    expect(flight.status()).toBe(200);
+    expect(flight.status()).toBe(httpStatusOk);
     expect(flight.headers()["content-type"]).toContain("text/x-component");
     expect(
       flightContent,
@@ -475,7 +478,7 @@ test("keeps Markdown parsing and Shiki out of the actual browser build while inc
   request,
 }) => {
   const response = await request.get("/acceptance-client-graph.json");
-  expect(response.status()).toBe(200);
+  expect(response.status()).toBe(httpStatusOk);
   const graph: { modules: string[]; assets: string[] } = await response.json();
   expect(graph.modules.length, "Audit a real nonempty client build").toBeGreaterThan(10);
   expect(graph.modules.some((id) => id.includes("/e2e-build/fixture/src/"))).toBe(true);

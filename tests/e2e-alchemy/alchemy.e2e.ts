@@ -1,14 +1,16 @@
 import { expect, test } from "@playwright/test";
 
+const httpStatusOk = 200;
+
 test("native Alchemy Worker serves KV-backed RSC, hydration, Server Functions and navigation", async ({
   page,
   request,
 }) => {
   const response = await request.get("/");
-  expect(response.status()).toBe(200);
+  expect(response.status()).toBe(httpStatusOk);
   expect(await response.text()).toContain("Hello from Alchemy KV");
   const head = await request.head("/");
-  expect(head.status()).toBe(200);
+  expect(head.status()).toBe(httpStatusOk);
   expect(await head.body()).toHaveLength(0);
 
   const errors: string[] = [];

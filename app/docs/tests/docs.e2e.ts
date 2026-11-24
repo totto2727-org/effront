@@ -3,6 +3,10 @@ import { articleCatalog } from "../src/content/catalog.ts";
 import { corePages, coreSources } from "../src/content/core.ts";
 import { architectureBaseline } from "../src/content/architecture-baseline.ts";
 
+const httpStatusOk = 200;
+const httpStatusPermanentRedirect = 308;
+const httpStatusNotFound = 404;
+
 const pages = [...articleCatalog, ...corePages];
 
 function articleMetadata(slug: string) {
@@ -18,7 +22,7 @@ test.describe("built documentation without JavaScript", () => {
   for (const article of pages) {
     test(`${article.slug} serves its article, navigation, anchors and styles`, async ({ page }) => {
       const response = await page.goto(article.slug);
-      expect(response?.status()).toBe(200);
+      expect(response?.status()).toBe(httpStatusOk);
       await expect(page).toHaveTitle(`${article.title} | Effront`);
       await expect(page.locator("html")).toHaveClass("dark");
       await expect(page.locator("html")).toHaveAttribute("lang", "ja");
@@ -243,9 +247,9 @@ test("unknown and historical removed routes return real HTML and Flight 404 resp
     "/guide/testing-extra",
   ]) {
     const html = await request.get(slug);
-    expect(html.status()).toBe(404);
+    expect(html.status()).toBe(httpStatusNotFound);
     const flight = await request.get(slug, { headers: { Accept: "text/x-component" } });
-    expect(flight.status()).toBe(404);
+    expect(flight.status()).toBe(httpStatusNotFound);
   }
 });
 
@@ -265,15 +269,15 @@ for (const { retired, canonical } of [
       const bookmark = `${retired}?from=bookmark`;
       const headers = { Accept: accept };
       const redirect = await request.get(bookmark, { headers, maxRedirects: 0 });
-      expect(redirect.status()).toBe(308);
+      expect(redirect.status()).toBe(httpStatusPermanentRedirect);
       expect(redirect.headers()["location"]).toBe(`${canonical}?from=bookmark`);
       expect(await redirect.body()).toHaveLength(0);
       const head = await request.head(bookmark, { headers, maxRedirects: 0 });
-      expect(head.status()).toBe(308);
+      expect(head.status()).toBe(httpStatusPermanentRedirect);
       expect(head.headers()["location"]).toBe(`${canonical}?from=bookmark`);
       expect(await head.body()).toHaveLength(0);
       const followed = await request.get(bookmark, { headers });
-      expect(followed.status()).toBe(200);
+      expect(followed.status()).toBe(httpStatusOk);
       expect(new URL(followed.url()).pathname).toBe(canonical);
       expect(followed.headers()["content-type"]).toContain(accept);
       expect(await followed.text()).toContain(articleMetadata(canonical).title);
@@ -327,7 +331,7 @@ test("native Flight navigation follows the retired URL while preserving the shel
       response.headers()["content-type"]?.includes("text/x-component") === true,
   );
   await page.locator('article a[href="/advanced/production-startup"]').click();
-  expect((await flight).status()).toBe(200);
+  expect((await flight).status()).toBe(httpStatusOk);
   await expect(page).toHaveURL(/\/platforms$/u);
   await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
   expect(await search?.evaluate((node) => node.isConnected)).toBe(true);
