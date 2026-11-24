@@ -1,7 +1,7 @@
 import { invokeServerFn, resetReactClient, transitionTypes } from "./call-server-react.fixture.ts";
 
 import { beforeEach, expect, it } from "@effect/vitest";
-import { Deferred, Effect, Layer, MutableRef } from "effect";
+import { Deferred, Effect, Layer } from "effect";
 import { HttpClient } from "effect/http";
 import { vi } from "vitest";
 
@@ -12,147 +12,11 @@ import { FlightClient } from "#core/client/flight-client.ts";
 import { NavigationApi } from "#core/client/navigation-api.ts";
 import { RouteLoader } from "#core/client/route-loader.ts";
 import { RouteRefresher } from "#core/client/route-refresh.ts";
-import type { FlightPayload } from "#core/rsc/flight.ts";
-import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
-import { firstEntry, listen, secondEntry } from "./call-server-service.fixture.ts";
-
-const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
-
-const makeFlight = (id: string, value: unknown, release: Effect.Effect<void>) => ({
-  _tag: "Flight" as const,
-  completed: Effect.void,
-  payload: {
-    formState: null,
-    routeTree: makeRouteTree(id),
-    serverFnResult: { _tag: "Success" as const, value },
-  } satisfies FlightPayload,
-  release,
-  resolvedUrl: new URL(firstEntry.url),
-});
+import { makeFlight, makeRouteTree } from "./call-server-mutation.fixture.ts";
+import { firstEntry, listen } from "./call-server-service.fixture.ts";
 
 beforeEach(resetReactClient);
-
-type TestNavigationState = Readonly<{
-  currentEntry: MutableRef.MutableRef<NavigationHistoryEntry | null>;
-  transition: MutableRef.MutableRef<NavigationTransition | null>;
-}>;
-
-const staleResponseScenario = (
-  changeNavigation: (state: TestNavigationState) => void,
-  changeTiming: "BeforeResponse" | "DuringInterruption" = "BeforeResponse",
-): Effect.Effect<void> =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const response = yield* Deferred.make<ReturnType<typeof makeFlight>>();
-      const requestStarted = yield* Deferred.make<void>();
-      const currentRouteRefresh = yield* Deferred.make<void>();
-      const refreshTransitionTypes: string[] = [];
-      const released = vi.fn();
-      const rendered = vi.fn(() => {
-        throw new TypeError("Unexpected response render.");
-      });
-      const navigationState: TestNavigationState = {
-        currentEntry: MutableRef.make(firstEntry),
-        transition: MutableRef.make(null),
-      };
-      const navigationApiLayer = NavigationApi.layerTest({
-        getCurrentEntry: () => MutableRef.get(navigationState.currentEntry),
-        getCurrentUrl: () => MutableRef.get(navigationState.currentEntry)?.url ?? firstEntry.url,
-        getTransition: () => MutableRef.get(navigationState.transition),
-        navigate: () => {
-          throw new TypeError("Unexpected navigation.");
-        },
-        reloadDocument: () => undefined,
-        replaceDocument: () => undefined,
-        subscribe: () => () => undefined,
-      });
-      const flightClientLayer = FlightClient.layerTest({
-        load: () =>
-          Deferred.succeed(requestStarted, undefined).pipe(
-            Effect.andThen(Deferred.await(response)),
-          ),
-        loadInitial: Effect.die("Unexpected initial Flight load."),
-      });
-      const browserRendererLayer = BrowserRenderer.layerTest({
-        commit: () => undefined,
-        initialize: () => undefined,
-        navigate: () => {
-          throw new TypeError("Unexpected navigation render.");
-        },
-        refresh: rendered,
-      });
-      const routeLoaderLayer = RouteLoader.layerTest({
-        invalidate: () => undefined,
-        load: () => Effect.die("Unexpected route load."),
-        loadInitial: Effect.die("Unexpected initial route load."),
-        prepareRefresh: () => () => undefined,
-      });
-      const routeRefresherLayer = RouteRefresher.layerTest({
-        interruptCurrentRouteRefresh: Effect.sync(() => {
-          if (changeTiming === "DuringInterruption") {
-            changeNavigation(navigationState);
-          }
-        }),
-        refreshCurrentRoute: (transitionType) =>
-          Effect.sync(() => refreshTransitionTypes.push(transitionType)).pipe(
-            Effect.andThen(Deferred.succeed(currentRouteRefresh, undefined)),
-          ),
-        replace: () => Effect.void,
-      });
-      yield* listen(
-        Layer.mergeAll(
-          BrowserEffectRunner.layer,
-          browserRendererLayer,
-          flightClientLayer,
-          navigationApiLayer,
-          routeLoaderLayer,
-          routeRefresherLayer,
-        ),
-      );
-
-      const result = invokeServerFn("first");
-      yield* Deferred.await(requestStarted);
-      if (changeTiming === "BeforeResponse") {
-        changeNavigation(navigationState);
-      }
-      yield* Deferred.succeed(response, makeFlight("stale", "first result", Effect.sync(released)));
-
-      const value = yield* Effect.promise(() => result);
-      expect(value).toBe("first result");
-      yield* Deferred.await(currentRouteRefresh);
-      expect(refreshTransitionTypes).toStrictEqual(["server-function"]);
-      expect(released).toHaveBeenCalledOnce();
-      expect(rendered).not.toHaveBeenCalled();
-    }).pipe(
-      Effect.provideService(
-        HttpClient.HttpClient,
-        HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
-      ),
-    ),
-  );
-
-it.effect("refreshes the current route instead of applying a response from another entry", () =>
-  staleResponseScenario(({ currentEntry }) => MutableRef.set(currentEntry, secondEntry)),
-);
-
-it.effect("rechecks the entry after awaiting older refresh cleanup", () =>
-  staleResponseScenario(
-    ({ currentEntry }) => MutableRef.set(currentEntry, secondEntry),
-    "DuringInterruption",
-  ),
-);
-
-it.effect("does not apply a Server Function response while navigation is in progress", () =>
-  staleResponseScenario(({ transition }) =>
-    MutableRef.set(transition, {
-      committed: Promise.resolve(),
-      finished: Promise.withResolvers<void>().promise,
-      from: firstEntry,
-      navigationType: "push",
-    }),
-  ),
-);
 
 it.effect("does not let an older invocation response overwrite a newer response", () =>
   Effect.scoped(

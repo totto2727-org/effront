@@ -37,27 +37,46 @@ const unexpectedCall = (message: string): never => {
   throw new TypeError(message);
 };
 
-const idleCallServer = Layer.mergeAll(
-  BrowserEffectRunner.layer,
+export const rendererFor = (
+  refresh: BrowserRenderer["Service"]["refresh"] = () =>
+    unexpectedCall("Unexpected route refresh."),
+): Layer.Layer<BrowserRenderer> =>
   BrowserRenderer.layerTest({
     commit: Function.constVoid,
     initialize: Function.constVoid,
     navigate: () => unexpectedCall("Unexpected navigation render."),
-    refresh: () => unexpectedCall("Unexpected route refresh."),
-  }),
+    refresh,
+  });
+
+export const navigationFor = (
+  getCurrentEntry: NavigationApi["Service"]["getCurrentEntry"] = () => firstEntry,
+  getTransition: NavigationApi["Service"]["getTransition"] = () => absentNavigationValue,
+): Layer.Layer<NavigationApi> =>
   NavigationApi.layerTest({
-    getCurrentEntry: () => firstEntry,
-    getCurrentUrl: () => firstEntry.url,
-    getTransition: () => absentNavigationValue,
+    getCurrentEntry,
+    getCurrentUrl: () => getCurrentEntry()?.url ?? firstEntry.url,
+    getTransition,
     navigate: () => unexpectedCall("Unexpected navigation."),
     reloadDocument: Function.constVoid,
     replaceDocument: Function.constVoid,
     subscribe: () => Function.constVoid,
-  }),
+  });
+
+export const routeLoaderFor = (
+  prepareRefresh: RouteLoader["Service"]["prepareRefresh"] = () => Function.constVoid,
+): Layer.Layer<RouteLoader> =>
   RouteLoader.layerTest({
     invalidate: Function.constVoid,
-    prepareRefresh: () => Function.constVoid,
-  }),
+    load: () => Effect.die("Unexpected route load."),
+    loadInitial: Effect.die("Unexpected initial route load."),
+    prepareRefresh,
+  });
+
+const idleCallServer = Layer.mergeAll(
+  BrowserEffectRunner.layer,
+  rendererFor(),
+  navigationFor(),
+  routeLoaderFor(),
   RouteRefresher.layerTest({}),
 );
 
@@ -66,12 +85,13 @@ type MissingIdleService = Exclude<
   Layer.Success<typeof idleCallServer>
 >;
 
-const forbiddenNetwork = HttpClient.make(() => Effect.die("Unexpected HTTP request."));
+export const withoutNetwork: Layer.Layer<HttpClient.HttpClient> = Layer.succeed(
+  HttpClient.HttpClient,
+  HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
+);
 
 export const listenIdle = Effect.fn("effront.test.listenToIdleServerFunction")(function* (
   flight: Layer.Layer<MissingIdleService>,
 ) {
-  yield* listen(Layer.merge(idleCallServer, flight)).pipe(
-    Effect.provideService(HttpClient.HttpClient, forbiddenNetwork),
-  );
+  yield* listen(Layer.merge(idleCallServer, flight)).pipe(Effect.provide(withoutNetwork));
 });
