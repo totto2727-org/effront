@@ -1,173 +1,174 @@
-import { Predicate, Context, Effect, Layer, MutableRef } from "effect";
+import { Context, Data, Effect, Function, Layer, MutableRef, Predicate } from "effect";
+import type { Scope } from "effect";
 
+import type { FlightPayload } from "#core/rsc/flight.ts";
 import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 import { FlightClient } from "./flight-client.ts";
 import type { FlightLoadError } from "./flight-client.ts";
+import { flightRequests, flightResources } from "./flight-client-model.ts";
 import { NavigationApi } from "./navigation-api.ts";
+import { clearRoutes, storeRoute } from "./route-history-cache.ts";
+import type { RouteCache } from "./route-history-cache.ts";
 
-type CachedRoute = Readonly<{
-  entry: CacheHistoryEntry;
-  onDispose: () => void;
-  routeTree: RouteTreeModel;
+type CacheRoute = (entry: NavigationHistoryEntry) => void;
+type CacheRef = MutableRef.MutableRef<RouteCache>;
+
+export type RouteLoad = Data.TaggedEnum<{
+  Document: { release: Effect.Effect<void> };
+  Route: {
+    cache: CacheRoute;
+    completed: Effect.Effect<void, FlightLoadError>;
+    release: Effect.Effect<void>;
+    resolvedUrl: URL;
+    routeTree: RouteTreeModel;
+  };
 }>;
-
-type CacheHistoryEntry = Pick<
-  NavigationHistoryEntry,
-  "addEventListener" | "id" | "index" | "removeEventListener"
->;
-
-type RouteCache = Map<string, CachedRoute>;
-
-export type RouteLoad =
-  | Readonly<{
-      _tag: "Route";
-      cache: (entry: NavigationHistoryEntry) => void;
-      completed: Effect.Effect<void, FlightLoadError>;
-      release: Effect.Effect<void>;
-      resolvedUrl: URL;
-      routeTree: RouteTreeModel;
-    }>
-  | Readonly<{
-      _tag: "Document";
-      release: Effect.Effect<void>;
-    }>;
 
 export type RouteLoadRequest = Readonly<{
   destination: Pick<NavigationDestination, "id" | "url">;
   navigationType: NavigationType;
 }>;
 
-export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/RouteLoader", {
-  make: Effect.gen(function* () {
-    const flightClient = yield* FlightClient;
-    const navigationApi = yield* NavigationApi;
-    const scope = yield* Effect.scope;
-    const cacheRef = MutableRef.make<RouteCache>(new Map());
+const routeLoads = Data.taggedEnum<RouteLoad>();
 
-    const remove = (cache: RouteCache, entry: CacheHistoryEntry): void => {
-      const cached = cache.get(entry.id);
-      if (cached?.entry === entry) {
-        cache.delete(entry.id);
-      }
-    };
+const isDocument = flightResources.$is("Document");
 
-    const store = (
-      cache: RouteCache,
-      entry: CacheHistoryEntry,
-      routeTree: RouteTreeModel,
-    ): void => {
-      const cached = cache.get(entry.id);
-      if (cached?.entry !== entry) {
-        cached?.entry.removeEventListener("dispose", cached.onDispose);
-        const onDispose = (): void => {
-          remove(cache, entry);
-        };
-        entry.addEventListener("dispose", onDispose, { once: true });
-        cache.set(entry.id, { entry, onDispose, routeTree });
-        return;
-      }
-      cache.set(entry.id, { ...cached, routeTree });
-    };
+const inactiveHistoryIndex = -1;
 
-    const clear = (cache: RouteCache): void => {
-      for (const cached of cache.values()) {
-        cached.entry.removeEventListener("dispose", cached.onDispose);
-      }
-      cache.clear();
-    };
+const cacheCurrentRoute =
+  (cacheRef: CacheRef, cache: RouteCache, routeTree: RouteTreeModel): CacheRoute =>
+  (entry) => {
+    if (MutableRef.get(cacheRef) === cache) {
+      storeRoute(cache, entry, routeTree);
+    }
+  };
 
-    const invalidate = (): void => {
-      clear(MutableRef.get(cacheRef));
-      MutableRef.set(cacheRef, new Map());
-    };
-
-    const cacheRoute =
-      (cache: RouteCache, routeTree: RouteTreeModel) => (entry: NavigationHistoryEntry) => {
-        if (MutableRef.get(cacheRef) !== cache) {
-          return;
-        }
-        store(cache, entry, routeTree);
-      };
-
-    const prepareRefresh = (routeTree: RouteTreeModel) => {
-      invalidate();
-      const cache = MutableRef.get(cacheRef);
-      const entry = navigationApi.getCurrentEntry();
-      return () => {
-        if (
-          MutableRef.get(cacheRef) === cache &&
-          Predicate.isNotNullish(entry) &&
-          entry.index !== -1
-        ) {
-          store(cache, entry, routeTree);
-        }
-      };
-    };
-
-    const load = Effect.fnUntraced(function* (request: RouteLoadRequest) {
-      const cache = MutableRef.get(cacheRef);
-      if (request.navigationType === "traverse") {
-        const cached = cache.get(request.destination.id);
-        if (Predicate.isNotNullish(cached)) {
-          return {
-            _tag: "Route",
-            cache: () => undefined,
-            completed: Effect.void,
-            release: Effect.void,
-            resolvedUrl: new URL(request.destination.url),
-            routeTree: cached.routeTree,
-          } satisfies RouteLoad;
-        }
-      }
-
-      const resource = yield* flightClient.load({
-        _tag: "Navigation",
-        destination: new URL(request.destination.url),
+const makeLoad = (
+  cacheRef: CacheRef,
+  flightClient: FlightClient["Service"],
+): ((request: RouteLoadRequest) => Effect.Effect<RouteLoad, FlightLoadError, Scope.Scope>) =>
+  Effect.fnUntraced(function* (request: RouteLoadRequest) {
+    const cache = MutableRef.get(cacheRef);
+    const destination = new URL(request.destination.url);
+    const cached =
+      request.navigationType === "traverse" ? cache.get(request.destination.id) : undefined;
+    if (Predicate.isNotNullish(cached)) {
+      return routeLoads.Route({
+        cache: Function.constVoid,
+        completed: Effect.void,
+        release: Effect.void,
+        resolvedUrl: destination,
+        routeTree: cached.routeTree,
       });
-      if (resource._tag === "Document") {
-        return resource satisfies RouteLoad;
-      }
-      return {
-        _tag: "Route",
-        cache: cacheRoute(cache, resource.payload.routeTree),
-        completed: resource.completed,
-        release: resource.release,
-        resolvedUrl: resource.resolvedUrl,
-        routeTree: resource.payload.routeTree,
-      } satisfies RouteLoad;
+    }
+
+    const resource = yield* flightClient.load(flightRequests.Navigation({ destination }));
+    if (isDocument(resource)) {
+      return resource;
+    }
+    const {
+      completed,
+      payload: { routeTree },
+      release,
+      resolvedUrl,
+    } = resource;
+    return routeLoads.Route({
+      cache: cacheCurrentRoute(cacheRef, cache, routeTree),
+      completed,
+      release,
+      resolvedUrl,
+      routeTree,
     });
+  });
 
-    const loadInitial = Effect.gen(function* () {
-      const cache = MutableRef.get(cacheRef);
-      const entry = navigationApi.getCurrentEntry();
-      const resource = yield* flightClient.loadInitial;
+const prepareCacheWrite = (
+  cacheRef: CacheRef,
+  navigationApi: NavigationApi["Service"],
+): Readonly<{
+  commit: (routeTree: RouteTreeModel) => void;
+  entry: NavigationHistoryEntry | null;
+}> => {
+  const cache = MutableRef.get(cacheRef);
+  const entry = navigationApi.getCurrentEntry();
+  const commit = (routeTree: RouteTreeModel): void => {
+    if (
+      MutableRef.get(cacheRef) === cache &&
+      Predicate.isNotNullish(entry) &&
+      entry.index !== inactiveHistoryIndex
+    ) {
+      storeRoute(cache, entry, routeTree);
+    }
+  };
+  return { commit, entry };
+};
 
-      if (Predicate.isNotNullish(entry)) {
-        yield* resource.completed.pipe(
-          Effect.andThen(
-            Effect.sync(() => {
-              if (MutableRef.get(cacheRef) === cache && entry.index !== -1) {
-                store(cache, entry, resource.payload.routeTree);
-              }
-            }),
-          ),
-          Effect.forkIn(scope),
-        );
-      }
+type InitialLoadServices = Readonly<{
+  cacheRef: CacheRef;
+  flightClient: FlightClient["Service"];
+  navigationApi: NavigationApi["Service"];
+  scope: Scope.Scope;
+}>;
 
-      return resource.payload;
-    });
+const loadInitial = ({
+  cacheRef,
+  flightClient,
+  navigationApi,
+  scope,
+}: InitialLoadServices): Effect.Effect<FlightPayload, FlightLoadError> =>
+  Effect.gen(function* () {
+    const cacheWrite = prepareCacheWrite(cacheRef, navigationApi);
+    const resource = yield* flightClient.loadInitial;
 
-    yield* Effect.addFinalizer(() =>
-      Effect.sync(() => {
-        clear(MutableRef.get(cacheRef));
-      }),
-    );
+    if (Predicate.isNotNullish(cacheWrite.entry)) {
+      yield* resource.completed.pipe(
+        Effect.andThen(
+          Effect.sync(() => {
+            cacheWrite.commit(resource.payload.routeTree);
+          }),
+        ),
+        Effect.forkIn(scope),
+      );
+    }
+    return resource.payload;
+  });
 
-    return { invalidate, load, loadInitial, prepareRefresh };
-  }),
+const makeRouteLoader = Effect.gen(function* () {
+  const flightClient = yield* FlightClient;
+  const navigationApi = yield* NavigationApi;
+  const scope = yield* Effect.scope;
+  const cacheRef = MutableRef.make<RouteCache>(new Map());
+
+  const invalidate = (): void => {
+    clearRoutes(MutableRef.get(cacheRef));
+    MutableRef.set(cacheRef, new Map());
+  };
+  const prepareRefresh = (routeTree: RouteTreeModel) => {
+    invalidate();
+    const cacheWrite = prepareCacheWrite(cacheRef, navigationApi);
+    return () => {
+      cacheWrite.commit(routeTree);
+    };
+  };
+  yield* Effect.addFinalizer(() =>
+    Effect.sync(() => {
+      clearRoutes(MutableRef.get(cacheRef));
+    }),
+  );
+
+  return {
+    invalidate,
+    load: makeLoad(cacheRef, flightClient),
+    loadInitial: loadInitial({ cacheRef, flightClient, navigationApi, scope }),
+    prepareRefresh,
+  };
+});
+
+export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/RouteLoader", {
+  make: makeRouteLoader,
 }) {
-  static readonly layer = Layer.effect(this, this.make);
+  // oxlint-disable-next-line rules/no-readonly -- The shared layer reference is fixed for this service.
+  public static readonly layer = Layer.effect(this, this.make);
 
-  static readonly layerTest = Layer.mock(this);
+  // oxlint-disable-next-line rules/no-readonly -- Preserve the fixed reference used by test layers.
+  public static readonly layerTest = Layer.mock(this);
 }

@@ -1,6 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { expect, test as base } from "@playwright/test";
 
+import { observeMarkdownFlight, observedFlightBody } from "./flight-observation.fixture.ts";
+
 const httpStatusOk = 200;
 const httpStatusNotFound = 404;
 
@@ -418,6 +420,10 @@ for (const accept of ["text/html", "text/x-component"]) {
 test("hydrates and follows Markdown links with Flight while retaining shared layout state", async ({
   page,
 }) => {
+  await observeMarkdownFlight(
+    page,
+    destinations.map(({ path }) => path),
+  );
   await page.goto("/manual");
   await page.waitForLoadState("networkidle");
   await page.getByRole("button", { name: "Count: 0", exact: true }).click();
@@ -430,16 +436,11 @@ test("hydrates and follows Markdown links with Flight while retaining shared lay
   });
 
   for (const destination of destinations) {
-    let flightContent: Promise<string> | undefined;
-    const flightPromise = page.waitForResponse((response) => {
-      const matches =
+    const flightPromise = page.waitForResponse(
+      (response) =>
         new URL(response.url()).pathname === destination.path &&
-        response.headers()["content-type"]?.includes("text/x-component") === true;
-      if (matches) {
-        flightContent = response.text();
-      }
-      return matches;
-    });
+        response.headers()["content-type"]?.includes("text/x-component") === true,
+    );
     await page
       .locator("main article")
       .getByRole("link", { name: destination.title, exact: true })
@@ -447,11 +448,9 @@ test("hydrates and follows Markdown links with Flight while retaining shared lay
     const flight = await flightPromise;
     expect(flight.status()).toBe(httpStatusOk);
     expect(flight.headers()["content-type"]).toContain("text/x-component");
-    expect(
-      flightContent,
-      "The matched native Flight response starts reading before navigation",
-    ).toBeDefined();
-    expect(await flightContent).toContain(destination.title);
+    await expect
+      .poll(async () => observedFlightBody(page, flight.url()))
+      .toContain(destination.title);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(destination.title);
     const url = new URL(page.url());
     expect(url.pathname).toBe(destination.path);
