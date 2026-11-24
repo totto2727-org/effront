@@ -1,3 +1,4 @@
+import { live } from "@effect/vitest";
 import { Effect, Layer } from "effect";
 import { WorkersRequestContext } from "@effront/core/workers";
 import { describe, expect, expectTypeOf, test, vi } from "vitest";
@@ -10,7 +11,7 @@ import type { CloudflareExecutionContext } from "./workers.ts";
 
 type Env = Readonly<{ label: string }>;
 
-describe("Cloudflare Workers context accessors", () => {
+describe("workers context accessors for Cloudflare", () => {
   test("fixes ExecutionContext while allowing application-specific Env", () => {
     const accessors = createWorkersContextAccessors<Env>();
     expectTypeOf(accessors.getWorkersEnv()).toEqualTypeOf<Effect.Effect<Env>>();
@@ -28,25 +29,28 @@ describe("Cloudflare Workers context accessors", () => {
     createWorkersContextAccessors<Env, Readonly<{ requestId: string }>>();
   });
 
-  test("uses the core Layer and invokes the host's original waitUntil", async () => {
-    const waitUntil = vi.fn<(promise: Promise<unknown>) => void>();
-    const context = {
-      env: { label: "cloudflare" },
-      executionContext: { waitUntil },
-      request: new Request("https://example.test/"),
-    };
-    const accessors = createWorkersContextAccessors<Env>();
-    const pending = Promise.resolve("background result");
-    await Effect.runPromise(
-      Effect.gen(function* () {
+  live("uses the core Layer and invokes the host's original waitUntil", () =>
+    Effect.gen(function* () {
+      const context = {
+        env: { label: "cloudflare" },
+        executionContext: { waitUntil: vi.fn<(promise: Promise<unknown>) => void>() },
+        request: new Request("https://example.test/"),
+      };
+      const accessors = createWorkersContextAccessors<Env>();
+      const pending = Promise.resolve("background result");
+      const layer = Layer.succeed(WorkersRequestContext, context);
+      const read = Effect.gen(function* () {
         const env = yield* accessors.getWorkersEnv();
         const actual = yield* accessors.getWorkersRequestContext();
-        expect(env).toBe(context.env);
-        expect(actual).toBe(context);
-        expect(yield* getWorkersRequestContext()).toBe(context);
+        const direct = yield* getWorkersRequestContext();
         actual.executionContext.waitUntil(pending);
-      }).pipe(Effect.provide(Layer.succeed(WorkersRequestContext, context))),
-    );
-    expect(waitUntil).toHaveBeenCalledExactlyOnceWith(pending);
-  });
+        return { actual, direct, env };
+      });
+      const { actual, direct, env } = yield* read.pipe(Effect.provide(layer));
+      expect(env).toBe(context.env);
+      expect(actual).toBe(context);
+      expect(direct).toBe(context);
+      expect(context.executionContext.waitUntil).toHaveBeenCalledExactlyOnceWith(pending);
+    }),
+  );
 });
