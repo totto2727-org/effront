@@ -7,10 +7,7 @@ import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
 import { BrowserRenderer } from "#core/client/browser-renderer.ts";
 import type { BrowserRender } from "#core/client/browser-renderer.ts";
 import { installClientRouter } from "#core/client/client-router.ts";
-import { FlightClient } from "#core/client/flight-client.ts";
-import { InitialFlightStream } from "#core/client/initial-flight-stream.ts";
 import { RouteLoader } from "#core/client/route-loader.ts";
-import type { RouteLoad } from "#core/client/route-loader.ts";
 
 import { makeNavigationEvent, TestAnchor } from "./client-routing-events.fixture.ts";
 import {
@@ -30,6 +27,15 @@ import {
   renderRequests,
 } from "./client-routing-renderer.fixture.ts";
 import type { BrowserRenderRequest } from "./client-routing-renderer.fixture.ts";
+
+import {
+  invokeNavigationHandler,
+  invokePrecommitHandler,
+  makePrecommitController,
+  prepareNavigation,
+} from "./client-routing-commit.fixture.ts";
+import { makeControlledRoute } from "./client-routing-flight.fixture.ts";
+import { listen } from "./client-routing-router.fixture.ts";
 
 const react = vi.hoisted(() => ({
   transitionTypes: [] as string[],
@@ -62,124 +68,12 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
   }),
 }));
 
-const FlightClientLayer = FlightClient.layer.pipe(Layer.provide(InitialFlightStream.layer));
-
 beforeEach(() => {
   react.transitionTypes.length = 0;
   vi.stubGlobal("HTMLAnchorElement", TestAnchor);
 });
 
 afterEach(() => vi.unstubAllGlobals());
-
-const makePrecommitController = (
-  redirects: Readonly<{
-    options: NavigationNavigateOptions | undefined;
-    url: string;
-  }>[] = [],
-  handlers: NavigationInterceptHandler[] = [],
-): NavigationPrecommitController => ({
-  addHandler: (handler) => handlers.push(handler),
-  redirect: (url, options) => redirects.push({ options, url: url.toString() }),
-});
-
-const invokeNavigationHandler = (handler: NavigationInterceptHandler): Promise<void> =>
-  Promise.resolve(handler());
-
-const invokePrecommitHandler = (
-  handler: NavigationPrecommitHandler,
-  controller: NavigationPrecommitController,
-): Promise<void> => Promise.resolve(handler(controller));
-
-const prepareNavigation = Effect.fn(function* (navigation: TestNavigationApi, url: string) {
-  const pendingNavigation = makeNavigationEvent({ destination: { url } });
-  navigation.dispatch(pendingNavigation.event);
-  const precommitHandler = pendingNavigation.interception()?.precommitHandler;
-  if (Predicate.isNullish(precommitHandler)) {
-    return yield* Effect.die("Expected a precommit handler.");
-  }
-  const handlers: NavigationInterceptHandler[] = [];
-  yield* Effect.promise(() =>
-    invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
-  );
-  const handler = handlers[0];
-  if (Predicate.isNullish(handler)) {
-    return yield* Effect.die("Expected a post-commit handler.");
-  }
-  return handler;
-});
-
-const makeControlledRoute = Effect.fn(function* (url: string) {
-  const completed = yield* Deferred.make<void>();
-  const released = Promise.withResolvers<void>();
-  const cachedEntries: NavigationHistoryEntry[] = [];
-  return {
-    cachedEntries,
-    completed,
-    released,
-    resource: {
-      _tag: "Route",
-      cache: (entry) => cachedEntries.push(entry),
-      completed: Deferred.await(completed),
-      release: Effect.sync(released.resolve),
-      resolvedUrl: new URL(url),
-      routeTree: { ...initialRouteTree, id: new URL(url).pathname },
-    } satisfies RouteLoad,
-  };
-});
-
-const listen = (
-  navigation: TestNavigationApi,
-  browserRenderer: BrowserRenderer["Service"] = makeBrowserRenderer(),
-  httpClient = makeHttpClient(),
-  documentReplacements: string[] = [],
-  reloadDocument: () => void = () => undefined,
-) =>
-  Effect.gen(function* () {
-    const installed = yield* Deferred.make<void>();
-    const navigationApiLayer = makeNavigationApiLayer(
-      navigation,
-      documentReplacements,
-      reloadDocument,
-    );
-    const flightClientLayer = Layer.effect(
-      FlightClient,
-      Effect.gen(function* () {
-        const flightClient = yield* FlightClient;
-        return FlightClient.of({
-          ...flightClient,
-          loadInitial: Effect.succeed({
-            completed: Effect.void,
-            payload: {
-              formState: null,
-              routeTree: initialRouteTree,
-              serverFnResult: null,
-            },
-          }),
-        });
-      }),
-    ).pipe(Layer.provide(FlightClientLayer));
-    const routeLoaderLayer = RouteLoader.layer.pipe(
-      Layer.provide(flightClientLayer),
-      Layer.provide(navigationApiLayer),
-    );
-    const servicesLayer = Layer.mergeAll(
-      BrowserEffectRunner.layer,
-      BrowserRenderer.layerTest(browserRenderer),
-      navigationApiLayer,
-      routeLoaderLayer,
-    ).pipe(Layer.provideMerge(Layer.succeed(HttpClient.HttpClient, httpClient)));
-    const routerLayer = Layer.effectDiscard(
-      Effect.gen(function* () {
-        const routeLoader = yield* RouteLoader;
-        yield* routeLoader.loadInitial;
-        yield* installClientRouter;
-        yield* Deferred.succeed(installed, undefined);
-      }),
-    ).pipe(Layer.provideMerge(servicesLayer));
-
-    const running = yield* Layer.launch(routerLayer).pipe(Effect.forkScoped);
-    yield* Effect.raceFirst(Deferred.await(installed), Fiber.join(running));
-  });
 
 it.effect("splits a cancelable navigation between React commit and Flight completion", () =>
   Effect.gen(function* () {
@@ -188,7 +82,10 @@ it.effect("splits a cancelable navigation between React commit and Flight comple
     const renders: BrowserRenderRequest[] = [];
     yield* Effect.scoped(
       Effect.gen(function* () {
-        yield* listen(navigation, makeBrowserRenderer(renders), makeHttpClient(requestedUrls));
+        yield* listen(navigation, {
+          httpClient: makeHttpClient(requestedUrls),
+          renderer: makeBrowserRenderer(renders),
+        });
         const pendingNavigation = makeNavigationEvent({ hasUAVisualTransition: true });
 
         navigation.dispatch(pendingNavigation.event);
@@ -272,7 +169,7 @@ it.effect("reserves only EFFRONT-owned types and preserves application tokens un
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
       const renders: BrowserRenderRequest[] = [];
-      yield* listen(navigation, makeBrowserRenderer(renders));
+      yield* listen(navigation, { renderer: makeBrowserRenderer(renders) });
       const applicationTypes = [
         "docs-jump",
         "NAVIGATION-BACKWARD",
@@ -369,7 +266,7 @@ it.effect("settles the post-commit handler before the Flight stream reaches EOF"
           ),
         ),
       );
-      yield* listen(navigation, makeBrowserRenderer(), httpClient);
+      yield* listen(navigation, { httpClient, renderer: makeBrowserRenderer() });
       const pendingNavigation = makeNavigationEvent();
 
       navigation.dispatch(pendingNavigation.event);
@@ -410,7 +307,10 @@ it.effect("uses a post-commit handler for a non-cancelable traversal", () =>
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
       const requestedUrls: string[] = [];
-      yield* listen(navigation, makeBrowserRenderer(), makeHttpClient(requestedUrls));
+      yield* listen(navigation, {
+        httpClient: makeHttpClient(requestedUrls),
+        renderer: makeBrowserRenderer(),
+      });
       const pendingNavigation = makeNavigationEvent({
         cancelable: false,
         navigationType: "traverse",
@@ -438,13 +338,12 @@ it.effect("reloads after a non-cancelable traversal fails to load Flight", () =>
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
       const reloadDocument = vi.fn();
-      yield* listen(
-        navigation,
-        makeBrowserRenderer(),
-        makeInvalidFlightClient(),
-        [],
+      yield* listen(navigation, {
+        documentReplacements: [],
+        httpClient: makeInvalidFlightClient(),
         reloadDocument,
-      );
+        renderer: makeBrowserRenderer(),
+      });
       const pendingNavigation = makeNavigationEvent({
         cancelable: false,
         navigationType: "traverse",
@@ -470,13 +369,12 @@ it.effect("does not reload a superseded non-cancelable traversal", () => {
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
       const reloadDocument = vi.fn();
-      yield* listen(
-        navigation,
-        makeBrowserRenderer(),
-        makeInvalidFlightClient(),
-        [],
+      yield* listen(navigation, {
+        documentReplacements: [],
+        httpClient: makeInvalidFlightClient(),
         reloadDocument,
-      );
+        renderer: makeBrowserRenderer(),
+      });
       const pendingNavigation = makeNavigationEvent({
         cancelable: false,
         navigationType: "traverse",
@@ -580,7 +478,10 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       const dayTwoEntry = makeNavigationEntry("day-two", "https://effront.test/schedule/day-two");
       const requestedUrls: string[] = [];
       const renders: BrowserRenderRequest[] = [];
-      yield* listen(navigation, makeBrowserRenderer(renders), makeHttpClient(requestedUrls));
+      yield* listen(navigation, {
+        httpClient: makeHttpClient(requestedUrls),
+        renderer: makeBrowserRenderer(renders),
+      });
       yield* Effect.yieldNow;
 
       const push = makeNavigationEvent();
@@ -654,7 +555,10 @@ it.effect("promotes a non-Flight response to native document navigation", () =>
   Effect.scoped(
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
-      yield* listen(navigation, makeBrowserRenderer(), makeHttpClient([], "text/html"));
+      yield* listen(navigation, {
+        httpClient: makeHttpClient([], "text/html"),
+        renderer: makeBrowserRenderer(),
+      });
       const pendingNavigation = makeNavigationEvent();
 
       navigation.dispatch(pendingNavigation.event);
@@ -688,7 +592,7 @@ it.effect("redirects a cancelable navigation before committing its Flight tree",
       }>[] = [];
       const handlers: NavigationInterceptHandler[] = [];
       const renders: BrowserRenderRequest[] = [];
-      yield* listen(navigation, makeBrowserRenderer(renders));
+      yield* listen(navigation, { renderer: makeBrowserRenderer(renders) });
       const pendingNavigation = makeNavigationEvent({
         destination: { url: "https://effront.test/schedule/day-one" },
       });
@@ -721,7 +625,11 @@ it.effect("falls back to document replacement for a redirected traversal", () =>
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
       const documentReplacements: string[] = [];
-      yield* listen(navigation, makeBrowserRenderer(), makeHttpClient(), documentReplacements);
+      yield* listen(navigation, {
+        documentReplacements,
+        httpClient: makeHttpClient(),
+        renderer: makeBrowserRenderer(),
+      });
       const pendingNavigation = makeNavigationEvent({
         cancelable: false,
         destination: { url: "https://effront.test/schedule/day-one" },
@@ -799,7 +707,7 @@ it.effect("cancels a streaming Flight response abandoned before React commits", 
           );
         }),
       );
-      yield* listen(navigation, browserRenderer, httpClient);
+      yield* listen(navigation, { httpClient, renderer: browserRenderer });
       const pendingNavigation = makeNavigationEvent({ signal: navigationAbort.signal });
 
       navigation.dispatch(pendingNavigation.event);
@@ -865,7 +773,7 @@ it.effect("interrupts a pending Flight load when a newer navigation starts", () 
           ),
         ),
       );
-      yield* listen(navigation, makeBrowserRenderer(renders), httpClient);
+      yield* listen(navigation, { httpClient, renderer: makeBrowserRenderer(renders) });
       const firstNavigation = makeNavigationEvent({ signal: navigationAbort.signal });
 
       navigation.dispatch(firstNavigation.event);
@@ -951,7 +859,7 @@ it.effect("discards and releases a scheduled candidate when a newer navigation s
           );
         }),
       );
-      yield* listen(navigation, browserRenderer, httpClient);
+      yield* listen(navigation, { httpClient, renderer: browserRenderer });
       const firstNavigation = makeNavigationEvent({ signal: navigationAbort.signal });
 
       navigation.dispatch(firstNavigation.event);
@@ -1051,7 +959,7 @@ it.effect("retains a committed Flight response until its render retires", () => 
           throw new TypeError("Unexpected refresh.");
         },
       });
-      yield* listen(navigation, browserRenderer, httpClient);
+      yield* listen(navigation, { httpClient, renderer: browserRenderer });
       const pendingNavigation = makeNavigationEvent({ signal: navigationAbort.signal });
 
       navigation.dispatch(pendingNavigation.event);
@@ -1112,7 +1020,10 @@ it.effect("leaves navigations outside the router boundary to the browser", () =>
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
       const requestedUrls: string[] = [];
-      yield* listen(navigation, makeBrowserRenderer(), makeHttpClient(requestedUrls));
+      yield* listen(navigation, {
+        httpClient: makeHttpClient(requestedUrls),
+        renderer: makeBrowserRenderer(),
+      });
       const nativeNavigations = [
         makeNavigationEvent({ canIntercept: false }),
         makeNavigationEvent({ hashChange: true }),
@@ -1158,7 +1069,7 @@ it.effect(
           published.resolve(render);
         });
         const { httpClient, responseSignals } = makeStreamingHttpClient();
-        yield* listen(navigation, renderer, httpClient);
+        yield* listen(navigation, { httpClient, renderer });
 
         const firstUrl = "https://effront.test/schedule/day-two";
         const firstPreparation = yield* prepareNavigation(navigation, firstUrl).pipe(
@@ -1203,7 +1114,7 @@ it.effect(
           published.resolve(render);
         });
         const { httpClient, responseSignals } = makeStreamingHttpClient();
-        yield* listen(navigation, renderer, httpClient);
+        yield* listen(navigation, { httpClient, renderer });
 
         const first = makeNavigationEvent();
         navigation.dispatch(first.event);
@@ -1262,7 +1173,7 @@ it.effect("keeps an older navigation stream while a queued discard can restore i
         published.resolve(render);
       });
       const { httpClient, responseSignals } = makeStreamingHttpClient();
-      yield* listen(navigation, renderer, httpClient);
+      yield* listen(navigation, { httpClient, renderer });
 
       const firstUrl = "https://effront.test/schedule/day-two";
       const firstPreparation = yield* prepareNavigation(navigation, firstUrl).pipe(
