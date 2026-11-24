@@ -5,7 +5,7 @@ export default defineConfig({
   pack: {
     dts: true,
     entry: {
-      "*": ["src/**/*.ts", "!src/**/*.test.ts"],
+      "*": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.fixture.ts"],
     },
     format: "esm",
     outExtensions: () => ({ dts: ".d.ts", js: ".js" }),
