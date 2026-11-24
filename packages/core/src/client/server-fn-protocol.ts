@@ -1,4 +1,4 @@
-import { Deferred, Effect, Predicate, Schema, Stream } from "effect";
+import { Array, Deferred, Effect, Option, Predicate, Schema, Stream } from "effect";
 
 import {
   serverFnErrorDetail,
@@ -8,36 +8,49 @@ import {
 } from "#core/rsc/server-fn-error.ts";
 import type { ServerFnError } from "#core/rsc/server-fn-error.ts";
 
+type Completed = Effect.Success<typeof Effect.void>;
+
 const isServerFnError = Schema.is(
   Schema.Union([ServerFnDefect, ServerFnInputError, ServerFnTransportError]),
 );
 const ServerFnQueryTypeId: unique symbol = Symbol.for("effront/ServerFnQuery");
-const QueryOptions = Schema.Union([
-  Schema.TaggedStruct("Query", { signal: Schema.instanceOf(AbortSignal) }),
-  Schema.TaggedStruct("Stream", {
-    signal: Schema.instanceOf(AbortSignal),
-    completed: Schema.declare(Deferred.isDeferred<void, ServerFnError>),
-  }),
-]);
+const Query = Schema.TaggedStruct("Query", { signal: Schema.instanceOf(AbortSignal) });
+const StreamingQuery = Schema.TaggedStruct("Stream", {
+  completed: Schema.declare(Deferred.isDeferred<Completed, ServerFnError>),
+  signal: Schema.instanceOf(AbortSignal),
+});
+const QueryOptions = Schema.Union([Query, StreamingQuery]);
 const isQueryOptions = Schema.is(QueryOptions);
+const queryMarkerCount = 1;
 
 export type MatchedQuery = typeof QueryOptions.Type &
   Readonly<{
     args: Readonly<unknown[]>;
   }>;
 
-export const matchServerFnQuery = (args: Readonly<unknown[]>): MatchedQuery | null => {
-  const last = args.at(-1);
+const matchQueryMarker = (
+  last: unknown,
+  args: Readonly<unknown[]>,
+): Option.Option<MatchedQuery> => {
   try {
-    if (typeof last !== "object" || Predicate.isNullish(last) || !(ServerFnQueryTypeId in last)) {
-      return null;
+    if (Predicate.isFunction(last) || !Predicate.hasProperty(last, ServerFnQueryTypeId)) {
+      return Option.none();
     }
     const options = last[ServerFnQueryTypeId];
-    return isQueryOptions(options) ? { ...options, args: args.slice(0, -1) } : null;
+    return isQueryOptions(options)
+      ? Option.some({ ...options, args: Array.dropRight(args, queryMarkerCount) })
+      : Option.none();
   } catch {
-    return null;
+    // Reading a caller's getter can throw. Only valid query metadata may be stripped.
+    return Option.none();
   }
 };
+
+export const matchServerFnQuery = (args: Readonly<unknown[]>): MatchedQuery | undefined =>
+  Array.last(args).pipe(
+    Option.flatMap((last) => matchQueryMarker(last, args)),
+    Option.getOrUndefined,
+  );
 
 export const transportError = (cause: unknown): ServerFnTransportError =>
   new ServerFnTransportError({ detail: serverFnErrorDetail(cause) });
@@ -50,12 +63,13 @@ const streamError = (cause: unknown): ServerFnError =>
     ? new ServerFnDefect({ detail: serverFnErrorDetail(cause), digest: cause.digest })
     : transportError(cause);
 
-const invoke = <Args extends Readonly<unknown[]>>(
-  serverFn: (...args: Args) => Promise<unknown>,
+const invoke = async <Args extends Readonly<unknown[]>, Output>(
+  serverFn: (...args: Args) => Promise<Output>,
   args: Args,
   options: typeof QueryOptions.Type,
-) =>
-  (serverFn as (...args: Readonly<unknown[]>) => Promise<unknown>)(...args, {
+): Promise<Output> =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- React's proxy takes a framework marker after the caller's typed arguments.
+  (serverFn as (...args: Readonly<unknown[]>) => Promise<Output>)(...args, {
     [ServerFnQueryTypeId]: options,
   });
 
@@ -65,7 +79,7 @@ export const callQuery = <Args extends Readonly<unknown[]>, Output>(
 ): Effect.Effect<Output, ServerFnError> =>
   Effect.tryPromise({
     catch: invocationError,
-    try: (signal) => invoke(serverFn, args, { _tag: "Query", signal }) as Promise<Output>,
+    try: async (signal) => invoke(serverFn, args, Query.make({ signal })),
   });
 
 export const callQueryStream = Effect.fnUntraced(function* <Args extends Readonly<unknown[]>>(
@@ -73,12 +87,14 @@ export const callQueryStream = Effect.fnUntraced(function* <Args extends Readonl
   args: Args,
 ) {
   const signal = yield* Effect.abortSignal;
-  const completed = yield* Deferred.make<void, ServerFnError>();
+  const completed = yield* Deferred.make<Completed, ServerFnError>();
+  const options = StreamingQuery.make({ completed, signal });
   const value = yield* Effect.tryPromise({
     catch: invocationError,
-    try: () => invoke(serverFn, args, { _tag: "Stream", signal, completed }),
+    try: async () => invoke(serverFn, args, options),
   });
   return Stream.fromReadableStream({
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The public streaming API requires a native ReadableStream which React reconstructs.
     evaluate: () => value as ReadableStream<unknown>,
     onError: streamError,
   }).pipe(Stream.onEnd(Deferred.await(completed)));
