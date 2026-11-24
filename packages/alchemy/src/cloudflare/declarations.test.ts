@@ -1,63 +1,99 @@
-import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import { NodeServices } from "@effect/platform-node";
+import { live } from "@effect/vitest";
+import { Data, Effect, FileSystem, Path, Predicate, Stream } from "effect";
+import { ChildProcess } from "effect/process";
+import { assert, describe } from "vite-plus/test";
 
-import { expect, test } from "vite-plus/test";
+const testTimeout = 90_000;
+const archiveTimeout = "15 seconds";
+const compilerTimeout = "60 seconds";
+const dependencies = ["effect", "@effront/core", "alchemy"];
+const entries = [
+  { configured: false, entry: "@effront/alchemy/cloudflare" },
+  { configured: true, entry: "@effront/alchemy/cloudflare/application" },
+  { configured: false, entry: "./package/dist/cloudflare/runtime.js" },
+  { configured: true, entry: "./package/dist/cloudflare/application-runtime.js" },
+];
+type Consumer = (typeof entries)[number];
 
-const exec = promisify(execFile);
-const archiveTimeout = 15_000;
-const compilerTimeout = 60_000;
+class ArchiveProcessFailure extends Data.TaggedError("ArchiveProcessFailure")<{
+  code: number;
+  executable: string;
+  stderr: string;
+}> {}
 
-const repository = fileURLToPath(new URL("../../../../", import.meta.url));
-const owner = join(repository, "packages/alchemy");
-const compiler = join(
-  dirname(fileURLToPath(import.meta.resolve("typescript/package.json"))),
-  "bin/tsc",
-);
-
-test("packed default and react-server declarations preserve application capabilities through public Alchemy exports", async () => {
-  await mkdir(join(repository, "tmp"), { recursive: true });
-  const workspace = await mkdtemp(join(repository, "tmp/alchemy-declarations-"));
-  try {
-    await exec("pnpm", ["pack", "--pack-destination", workspace], {
-      cwd: owner,
-      timeout: archiveTimeout,
+const run = Effect.fn(function* (executable: string, args: string[], cwd: string) {
+  const { exitCode, stderr, stdout } = yield* ChildProcess.make(executable, args, { cwd });
+  const output = yield* Effect.all(
+    {
+      code: exitCode,
+      stderr: stderr.pipe(Stream.decodeText, Stream.mkString),
+      stdout: stdout.pipe(Stream.decodeText, Stream.mkString),
+    },
+    { concurrency: "unbounded" },
+  );
+  if (output.code !== 0) {
+    return yield* new ArchiveProcessFailure({
+      code: output.code,
+      executable,
+      stderr: output.stderr,
     });
-    const archive = (await readdir(workspace)).find((file) => file.endsWith(".tgz"));
-    if (!archive) {
-      throw new Error("pnpm pack did not produce a package archive");
-    }
-    const { stdout: contents } = await exec("tar", ["-tzf", join(workspace, archive)], {
-      timeout: archiveTimeout,
-    });
-    expect(contents).not.toMatch(/\.(?:test|e2e)\.[cm]?[jt]sx?$/mu);
-    await exec("tar", ["-xzf", join(workspace, archive), "-C", workspace], {
-      timeout: archiveTimeout,
-    });
-    const packed = join(workspace, "package");
-    await symlink(join(owner, "node_modules"), join(packed, "node_modules"), "dir");
-    await mkdir(join(workspace, "node_modules/@effront"), { recursive: true });
-    await symlink(packed, join(workspace, "node_modules/@effront/alchemy"), "dir");
-    for (const dependency of ["effect", "@effront/core", "alchemy"]) {
-      await symlink(
-        join(owner, "node_modules", dependency),
-        join(workspace, "node_modules", dependency),
-        "dir",
-      );
-    }
+  }
+  return output.stdout;
+}, Effect.scoped);
 
-    const entries = [
-      ["@effront/alchemy/cloudflare", false],
-      ["@effront/alchemy/cloudflare/application", true],
-      ["./package/dist/cloudflare/runtime.js", false],
-      ["./package/dist/cloudflare/application-runtime.js", true],
-    ] as const;
-    for (const [index, [entry, configured]] of entries.entries()) {
-      await writeFile(
-        join(workspace, `consumer-${index}.ts`),
-        `
+const unpack = Effect.fn(function* (owner: string, workspace: string) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  yield* run("pnpm", ["pack", "--pack-destination", workspace], owner).pipe(
+    Effect.timeout(archiveTimeout),
+  );
+  const files = yield* fs.readDirectory(workspace);
+  const archive = files.find((file) => file.endsWith(".tgz"));
+  assert.isDefined(archive);
+  const pathToArchive = path.join(workspace, archive);
+  const contents = yield* run("tar", ["-tzf", pathToArchive], workspace).pipe(
+    Effect.timeout(archiveTimeout),
+  );
+  assert.notMatch(contents, /\.(?:test|e2e)\.[cm]?[jt]sx?$/mu);
+  yield* run("tar", ["-xzf", pathToArchive, "-C", workspace], workspace).pipe(
+    Effect.timeout(archiveTimeout),
+  );
+});
+
+const installConsumer = Effect.fn(function* (owner: string, workspace: string) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const packed = path.join(workspace, "package");
+  const ownerModules = path.join(owner, "node_modules");
+  const consumerModules = path.join(workspace, "node_modules");
+  yield* fs.makeDirectory(path.join(consumerModules, "@effront"), { recursive: true });
+  yield* fs.symlink(ownerModules, path.join(packed, "node_modules"));
+  yield* fs.symlink(packed, path.join(consumerModules, "@effront/alchemy"));
+  yield* Effect.forEach(
+    dependencies,
+    (dependency) =>
+      fs.symlink(path.join(ownerModules, dependency), path.join(consumerModules, dependency)),
+    { discard: true },
+  );
+});
+
+const explicitLoaderChecks = `
+          const uncaptured = applicationHttpEffect(load);
+          export type Uncaptured = Assert<Equal<Effect.Services<typeof uncaptured>, Effect.Services<Native>>>;
+          const phantom = applicationHttpEffect<ControlApi, Failure, Requirements, ControlApi>(load);
+          export type PhantomNotProvided = Assert<Equal<Effect.Services<typeof phantom>, Effect.Services<Native>>>;
+          const options: { readonly context?: Context.Context<ControlApi> } = {};
+          const optional = applicationHttpEffect(load, options);
+          export type OptionalNotProvided = Assert<Equal<Effect.Services<typeof optional>, Effect.Services<Native>>>;
+          const captured = applicationHttpEffect(load, { context: Context.make(ControlApi, { read: () => "ok" }) });
+          export type Provided = Assert<Equal<Effect.Services<typeof captured>, Effect.Services<Handler>>>;
+          declare const hosts: Context.Context<Hosts>;
+          const hostContext = applicationHttpEffect(load, { context: hosts });
+          export type HostNotCaptured = Assert<Equal<Effect.Services<typeof hostContext>, Effect.Services<Native>>>;
+`;
+
+const consumerSource = ({ configured, entry }: Consumer): string => `
         import { makeApplicationHttpEffect ${configured ? "" : ", applicationHttpEffect"} } from ${JSON.stringify(entry)};
         import type { ApplicationDefinition } from "@effront/core";
         import type { HttpApplicationEffect } from "@effront/core/http";
@@ -92,71 +128,97 @@ test("packed default and react-server declarations preserve application capabili
         // @ts-expect-error A consumer must provide the captured application capability.
         Effect.runPromise(construction);
         Effect.runPromise(Effect.provideService(construction, ControlApi, { read: () => "ok" }));
-        ${
-          configured
-            ? ""
-            : `
-          const uncaptured = applicationHttpEffect(load);
-          export type Uncaptured = Assert<Equal<Effect.Services<typeof uncaptured>, Effect.Services<Native>>>;
-          const phantom = applicationHttpEffect<ControlApi, Failure, Requirements, ControlApi>(load);
-          export type PhantomNotProvided = Assert<Equal<Effect.Services<typeof phantom>, Effect.Services<Native>>>;
-          const options: { readonly context?: Context.Context<ControlApi> } = {};
-          const optional = applicationHttpEffect(load, options);
-          export type OptionalNotProvided = Assert<Equal<Effect.Services<typeof optional>, Effect.Services<Native>>>;
-          const captured = applicationHttpEffect(load, { context: Context.make(ControlApi, { read: () => "ok" }) });
-          export type Provided = Assert<Equal<Effect.Services<typeof captured>, Effect.Services<Handler>>>;
-          declare const hosts: Context.Context<Hosts>;
-          const hostContext = applicationHttpEffect(load, { context: hosts });
-          export type HostNotCaptured = Assert<Equal<Effect.Services<typeof hostContext>, Effect.Services<Native>>>;
-        `
-        }
-      `,
-      );
-    }
+        ${configured ? "" : explicitLoaderChecks}
+`;
 
-    // Check only module references emitted by this package, not unrelated third-party declarations.
-    // skipLibCheck alone would silently turn an unresolvable declaration import into an error-any.
-    const specifiers = new Set<string>();
-    for (const file of await readdir(join(packed, "dist/cloudflare"))) {
-      if (!file.endsWith(".d.ts")) {
-        continue;
-      }
-      const declaration = await readFile(join(packed, "dist/cloudflare", file), "utf8");
-      const references = [
-        ...declaration.matchAll(/(?:from\s*|import\()(["'])(alchemy(?:\/[^"']*)?)\1/g),
-      ];
-      for (const match of references) {
-        if (match[2]) {
-          specifiers.add(match[2]);
-        }
-      }
-    }
-    const probes = [...specifiers].map(
-      (specifier, index) => `import * as module${index} from ${JSON.stringify(specifier)};`,
-    );
-    expect(probes.length).toBeGreaterThan(0);
-    await writeFile(join(workspace, "resolution.ts"), probes.join("\n"));
-    await writeFile(
-      join(workspace, "tsconfig.json"),
-      JSON.stringify({
-        compilerOptions: {
-          strict: true,
-          exactOptionalPropertyTypes: true,
-          noEmit: true,
-          skipLibCheck: true,
-          target: "ESNext",
-          module: "ESNext",
-          moduleResolution: "Bundler",
-          types: [],
-          lib: ["ESNext", "DOM", "DOM.Iterable"],
-        },
-        include: ["consumer-*.ts", "resolution.ts"],
-      }),
-    );
-    await exec(process.execPath, [compiler, "--project", join(workspace, "tsconfig.json")], {
-      timeout: compilerTimeout,
-    });
-  } finally {
-    await rm(workspace, { recursive: true, force: true });
-  }
-}, 90_000);
+const declarationImports = (content: string): string[] =>
+  [
+    ...content.matchAll(
+      /(?:from\s*|import\()(?<quote>["'])(?<specifier>alchemy(?:\/[^"']*)?)\k<quote>/gu,
+    ),
+  ].flatMap(({ groups }) => {
+    const specifier = groups?.["specifier"];
+    return Predicate.isNullish(specifier) ? [] : [specifier];
+  });
+
+const resolveImports = Effect.fn(function* (workspace: string) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const output = path.join(workspace, "package/dist/cloudflare");
+  const files = yield* fs.readDirectory(output);
+  const imports = yield* Effect.forEach(
+    files.filter((file) => file.endsWith(".d.ts")),
+    (file) => fs.readFileString(path.join(output, file)).pipe(Effect.map(declarationImports)),
+  );
+  // Check package imports explicitly so skipLibCheck cannot turn them into error-any.
+  const specifiers = [...new Set(imports.flat())];
+  assert.isNotEmpty(specifiers);
+  const probes = specifiers.map(
+    (specifier, index) => `import * as module${index} from ${JSON.stringify(specifier)};`,
+  );
+  yield* fs.writeFileString(path.join(workspace, "resolution.ts"), probes.join("\n"));
+});
+
+const tsconfig = JSON.stringify({
+  compilerOptions: {
+    exactOptionalPropertyTypes: true,
+    lib: ["ESNext", "DOM", "DOM.Iterable"],
+    module: "ESNext",
+    moduleResolution: "Bundler",
+    noEmit: true,
+    skipLibCheck: true,
+    strict: true,
+    target: "ESNext",
+    types: [],
+  },
+  include: ["consumer-*.ts", "resolution.ts"],
+});
+
+const compileConsumer = Effect.fn(function* (workspace: string) {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const manifest = yield* path.fromFileUrl(new URL(import.meta.resolve("typescript/package.json")));
+  const compiler = path.join(path.dirname(manifest), "bin/tsc");
+  const config = path.join(workspace, "tsconfig.json");
+  yield* fs.writeFileString(config, tsconfig);
+  yield* run(process.execPath, [compiler, "--project", config], workspace).pipe(
+    Effect.timeout(compilerTimeout),
+  );
+});
+
+const packageWorkspace = Effect.gen(function* () {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const repository = yield* path.fromFileUrl(new URL("../../../../", import.meta.url));
+  const tmp = path.join(repository, "tmp");
+  yield* fs.makeDirectory(tmp, { recursive: true });
+  const workspace = yield* fs.makeTempDirectoryScoped({
+    directory: tmp,
+    prefix: "alchemy-declarations-",
+  });
+  return { owner: path.join(repository, "packages/alchemy"), workspace };
+});
+
+const declarations = Effect.gen(function* () {
+  const fs = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
+  const { owner, workspace } = yield* packageWorkspace;
+  yield* unpack(owner, workspace);
+  yield* installConsumer(owner, workspace);
+  yield* Effect.forEach(
+    entries,
+    (entry, index) =>
+      fs.writeFileString(path.join(workspace, `consumer-${index}.ts`), consumerSource(entry)),
+    { discard: true },
+  );
+  yield* resolveImports(workspace);
+  yield* compileConsumer(workspace);
+}).pipe(Effect.provide(NodeServices.layer));
+
+describe("packed Alchemy declarations", () => {
+  live(
+    "preserves application capabilities through default and react-server exports",
+    () => declarations,
+    testTimeout,
+  );
+});
