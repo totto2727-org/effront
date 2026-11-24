@@ -1,3 +1,4 @@
+import { live } from "@effect/vitest";
 import type { ApplicationDefinition } from "@effront/core";
 import type { HttpApplicationEffect } from "@effront/core/http";
 import { CloudflareEnvironment } from "alchemy/Cloudflare";
@@ -46,43 +47,45 @@ const request = (path: string) =>
   HttpServerRequest.fromWeb(new Request(`https://example.test${path}`));
 
 describe("Alchemy native application effects", () => {
-  test("keeps the deployment and RSC APIs type-identical and construction-safe", async () => {
-    expectTypeOf(deployment.makeApplicationHttpEffect).toEqualTypeOf(makeApplicationHttpEffect);
-    expectTypeOf(deployment.applicationHttpEffect).toEqualTypeOf(applicationHttpEffect);
-    expectTypeOf(configuredDeployment.makeApplicationHttpEffect).toEqualTypeOf(
-      makeConfiguredApplicationHttpEffect,
-    );
-    const handler = await Effect.runPromise(
-      deployment
+  live("keeps the deployment and RSC APIs type-identical and construction-safe", () =>
+    Effect.gen(function* () {
+      expectTypeOf(deployment.makeApplicationHttpEffect).toEqualTypeOf(makeApplicationHttpEffect);
+      expectTypeOf(deployment.applicationHttpEffect).toEqualTypeOf(applicationHttpEffect);
+      expectTypeOf(configuredDeployment.makeApplicationHttpEffect).toEqualTypeOf(
+        makeConfiguredApplicationHttpEffect,
+      );
+      const handler = yield* deployment
         .makeApplicationHttpEffect(async () => application)
-        .pipe(Effect.provideService(Capability, "constructed")),
-    );
-    expect(Effect.isEffect(handler)).toBe(true);
-  });
+        .pipe(Effect.provideService(Capability, "constructed"));
+      expect(Effect.isEffect(handler)).toBe(true);
+    }),
+  );
 
-  test("captures configured application capabilities without loading the application during construction", async () => {
-    type ApplicationFailure = Readonly<{ _tag: "ApplicationFailure" }>;
-    type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
-    type Definition = ApplicationDefinition<
-      Capability,
-      ApplicationFailure,
-      | HttpRouter.Request.From<"Requires", Capability>
-      | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
-      | HttpRouter.Request.From<"Error", RouteFailure>
-    >;
-    const construction = makeConfiguredApplicationHttpEffect<Definition>();
-    expectTypeOf<Effect.Services<typeof construction>>().toEqualTypeOf<Capability>();
-    const handler = await Effect.runPromise(
-      construction.pipe(Effect.provideService(Capability, "constructed")),
-    );
-    expectTypeOf<Effect.Services<typeof handler>>().toEqualTypeOf<
-      RuntimeContext | Scope.Scope | HttpServerRequest.HttpServerRequest
-    >();
-    expectTypeOf<
-      Extract<Effect.Error<typeof handler>, ApplicationFailure | RouteFailure>
-    >().toEqualTypeOf<ApplicationFailure | RouteFailure>();
-    expect(handler).toBeDefined();
-  });
+  live(
+    "captures configured application capabilities without loading the application during construction",
+    () =>
+      Effect.gen(function* () {
+        type ApplicationFailure = Readonly<{ _tag: "ApplicationFailure" }>;
+        type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
+        type Definition = ApplicationDefinition<
+          Capability,
+          ApplicationFailure,
+          | HttpRouter.Request.From<"Requires", Capability>
+          | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
+          | HttpRouter.Request.From<"Error", RouteFailure>
+        >;
+        const construction = makeConfiguredApplicationHttpEffect<Definition>();
+        expectTypeOf<Effect.Services<typeof construction>>().toEqualTypeOf<Capability>();
+        const handler = yield* construction.pipe(Effect.provideService(Capability, "constructed"));
+        expectTypeOf<Effect.Services<typeof handler>>().toEqualTypeOf<
+          RuntimeContext | Scope.Scope | HttpServerRequest.HttpServerRequest
+        >();
+        expectTypeOf<
+          Extract<Effect.Error<typeof handler>, ApplicationFailure | RouteFailure>
+        >().toEqualTypeOf<ApplicationFailure | RouteFailure>();
+        expect(handler).toBeDefined();
+      }),
+  );
 
   test("reports a missing Vite integration only when the configured handler executes", async () => {
     const handler = await Effect.runPromise(
@@ -118,27 +121,27 @@ describe("Alchemy native application effects", () => {
     expect(check).toBeTypeOf("function");
   });
 
-  test("normalizes native router requirement and error markers before construction capture", async () => {
-    type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
-    type GlobalFailure = Readonly<{ _tag: "GlobalFailure" }>;
-    type Requirements =
-      | HttpRouter.Request.From<"Requires", Capability>
-      | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
-      | HttpRouter.Request.From<"Error", RouteFailure>
-      | HttpRouter.Request.From<"GlobalError", GlobalFailure>;
-    const markedApplication = {} as ApplicationDefinition<never, never, Requirements>;
-    const construction = makeApplicationHttpEffect(async () => markedApplication);
-    expectTypeOf<Effect.Services<typeof construction>>().toEqualTypeOf<Capability>();
-    const handler = await Effect.runPromise(
-      construction.pipe(Effect.provideService(Capability, "constructed")),
-    );
-    expectTypeOf<Effect.Services<typeof handler>>().toEqualTypeOf<
-      RuntimeContext | Scope.Scope | HttpServerRequest.HttpServerRequest
-    >();
-    expectTypeOf<
-      Extract<Effect.Error<typeof handler>, RouteFailure | GlobalFailure>
-    >().toEqualTypeOf<RouteFailure | GlobalFailure>();
-  });
+  live("normalizes native router requirement and error markers before construction capture", () =>
+    Effect.gen(function* () {
+      type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
+      type GlobalFailure = Readonly<{ _tag: "GlobalFailure" }>;
+      type Requirements =
+        | HttpRouter.Request.From<"Requires", Capability>
+        | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
+        | HttpRouter.Request.From<"Error", RouteFailure>
+        | HttpRouter.Request.From<"GlobalError", GlobalFailure>;
+      const markedApplication = {} as ApplicationDefinition<never, never, Requirements>;
+      const construction = makeApplicationHttpEffect(async () => markedApplication);
+      expectTypeOf<Effect.Services<typeof construction>>().toEqualTypeOf<Capability>();
+      const handler = yield* construction.pipe(Effect.provideService(Capability, "constructed"));
+      expectTypeOf<Effect.Services<typeof handler>>().toEqualTypeOf<
+        RuntimeContext | Scope.Scope | HttpServerRequest.HttpServerRequest
+      >();
+      expectTypeOf<
+        Extract<Effect.Error<typeof handler>, RouteFailure | GlobalFailure>
+      >().toEqualTypeOf<RouteFailure | GlobalFailure>();
+    }),
+  );
 
   test("captures constructed capabilities without importing the application or requiring runtime services", async () => {
     const load = vi.fn(async () => application);
