@@ -1,17 +1,14 @@
-import { execFileSync, spawnSync } from "node:child_process";
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 import { expect, test } from "vite-plus/test";
+
+const exec = promisify(execFile);
+const archiveTimeout = 15_000;
+const compilerTimeout = 60_000;
 
 const repository = fileURLToPath(new URL("../../../../", import.meta.url));
 const owner = join(repository, "packages/alchemy");
@@ -20,27 +17,31 @@ const compiler = join(
   "bin/tsc",
 );
 
-test("packed default and react-server declarations preserve application capabilities through public Alchemy exports", () => {
-  mkdirSync(join(repository, "tmp"), { recursive: true });
-  const workspace = mkdtempSync(join(repository, "tmp/alchemy-declarations-"));
+test("packed default and react-server declarations preserve application capabilities through public Alchemy exports", async () => {
+  await mkdir(join(repository, "tmp"), { recursive: true });
+  const workspace = await mkdtemp(join(repository, "tmp/alchemy-declarations-"));
   try {
-    execFileSync("pnpm", ["pack", "--pack-destination", workspace], {
+    await exec("pnpm", ["pack", "--pack-destination", workspace], {
       cwd: owner,
-      encoding: "utf8",
+      timeout: archiveTimeout,
     });
-    const archive = readdirSync(workspace).find((file) => file.endsWith(".tgz"));
+    const archive = (await readdir(workspace)).find((file) => file.endsWith(".tgz"));
     if (!archive) {
       throw new Error("pnpm pack did not produce a package archive");
     }
-    const contents = execFileSync("tar", ["-tzf", join(workspace, archive)], { encoding: "utf8" });
+    const { stdout: contents } = await exec("tar", ["-tzf", join(workspace, archive)], {
+      timeout: archiveTimeout,
+    });
     expect(contents).not.toMatch(/\.(?:test|e2e)\.[cm]?[jt]sx?$/m);
-    execFileSync("tar", ["-xzf", join(workspace, archive), "-C", workspace]);
+    await exec("tar", ["-xzf", join(workspace, archive), "-C", workspace], {
+      timeout: archiveTimeout,
+    });
     const packed = join(workspace, "package");
-    symlinkSync(join(owner, "node_modules"), join(packed, "node_modules"), "dir");
-    mkdirSync(join(workspace, "node_modules/@effront"), { recursive: true });
-    symlinkSync(packed, join(workspace, "node_modules/@effront/alchemy"), "dir");
+    await symlink(join(owner, "node_modules"), join(packed, "node_modules"), "dir");
+    await mkdir(join(workspace, "node_modules/@effront"), { recursive: true });
+    await symlink(packed, join(workspace, "node_modules/@effront/alchemy"), "dir");
     for (const dependency of ["effect", "@effront/core", "alchemy"]) {
-      symlinkSync(
+      await symlink(
         join(owner, "node_modules", dependency),
         join(workspace, "node_modules", dependency),
         "dir",
@@ -54,7 +55,7 @@ test("packed default and react-server declarations preserve application capabili
       ["./package/dist/cloudflare/application-runtime.js", true],
     ] as const;
     for (const [index, [entry, configured]] of entries.entries()) {
-      writeFileSync(
+      await writeFile(
         join(workspace, `consumer-${index}.ts`),
         `
         import { makeApplicationHttpEffect ${configured ? "" : ", applicationHttpEffect"} } from ${JSON.stringify(entry)};
@@ -116,11 +117,11 @@ test("packed default and react-server declarations preserve application capabili
     // Check only module references emitted by this package, not unrelated third-party declarations.
     // skipLibCheck alone would silently turn an unresolvable declaration import into an error-any.
     const specifiers = new Set<string>();
-    for (const file of readdirSync(join(packed, "dist/cloudflare"))) {
+    for (const file of await readdir(join(packed, "dist/cloudflare"))) {
       if (!file.endsWith(".d.ts")) {
         continue;
       }
-      const declaration = readFileSync(join(packed, "dist/cloudflare", file), "utf8");
+      const declaration = await readFile(join(packed, "dist/cloudflare", file), "utf8");
       const references = [
         ...declaration.matchAll(/(?:from\s*|import\()(["'])(alchemy(?:\/[^"']*)?)\1/g),
       ];
@@ -134,8 +135,8 @@ test("packed default and react-server declarations preserve application capabili
       (specifier, index) => `import * as module${index} from ${JSON.stringify(specifier)};`,
     );
     expect(probes.length).toBeGreaterThan(0);
-    writeFileSync(join(workspace, "resolution.ts"), probes.join("\n"));
-    writeFileSync(
+    await writeFile(join(workspace, "resolution.ts"), probes.join("\n"));
+    await writeFile(
       join(workspace, "tsconfig.json"),
       JSON.stringify({
         compilerOptions: {
@@ -152,17 +153,10 @@ test("packed default and react-server declarations preserve application capabili
         include: ["consumer-*.ts", "resolution.ts"],
       }),
     );
-    const result = spawnSync(
-      process.execPath,
-      [compiler, "--project", join(workspace, "tsconfig.json")],
-      {
-        encoding: "utf8",
-        timeout: 60_000,
-      },
-    );
-    expect(result.error).toBeUndefined();
-    expect(result.status, result.stdout + result.stderr).toBe(0);
+    await exec(process.execPath, [compiler, "--project", join(workspace, "tsconfig.json")], {
+      timeout: compilerTimeout,
+    });
   } finally {
-    rmSync(workspace, { recursive: true, force: true });
+    await rm(workspace, { recursive: true, force: true });
   }
 }, 90_000);

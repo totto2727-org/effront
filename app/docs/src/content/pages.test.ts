@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { access, readFile, readdir } from "node:fs/promises";
 import { Effect } from "effect";
 import { describe, expect, test } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -117,16 +117,17 @@ describe("documentation catalog", () => {
     },
   );
 
-  test("keeps client navigation code examples identical in English and Japanese", () => {
-    const examples = (directory: string) => {
-      const source = readFileSync(
+  test("keeps client navigation code examples identical in English and Japanese", async () => {
+    const examples = async (directory: string): Promise<ReadonlyArray<string | undefined>> => {
+      const source = await readFile(
         new URL(`./${directory}/advanced/client-navigation.md`, import.meta.url),
         "utf8",
       );
       return [...source.matchAll(/```tsx\n([\s\S]*?)\n```/g)].map((match) => match[1]);
     };
-    expect(examples("en/articles")).toHaveLength(4);
-    expect(examples("articles")).toStrictEqual(examples("en/articles"));
+    const [english, japanese] = await Promise.all([examples("en/articles"), examples("articles")]);
+    expect(english).toHaveLength(4);
+    expect(japanese).toStrictEqual(english);
   });
 
   test("preserves published URLs and unique serializable navigation metadata", () => {
@@ -200,7 +201,7 @@ describe("documentation catalog", () => {
         const page = getPage(localizedPath(slug, locale));
         expect(page.headings.map((heading) => heading.id)).toStrictEqual(ids);
         const directory = locale === "en" ? "en/articles" : "articles";
-        const source = readFileSync(new URL(`./${directory}${slug}.md`, import.meta.url), "utf8");
+        const source = await readFile(new URL(`./${directory}${slug}.md`, import.meta.url), "utf8");
         expect(page.headings).toStrictEqual(
           [...source.matchAll(/^#{2,6} (.*?) \{#([^}]+)\}$/gm)].map((match) => ({
             id: match[2],
@@ -295,8 +296,8 @@ describe("documentation catalog", () => {
     }
   });
 
-  test("registers the Server Function error-handling page at every published locale URL", () => {
-    const entry = readFileSync(new URL("../entry.effront.tsx", import.meta.url), "utf8");
+  test("registers the Server Function error-handling page at every published locale URL", async () => {
+    const entry = await readFile(new URL("../entry.effront.tsx", import.meta.url), "utf8");
     const source = "/best-practices/server-function-error-handling";
     for (const prefix of ["", "/ja", "/en"]) {
       const slug = `${prefix}${source}`;
@@ -390,14 +391,17 @@ describe("documentation catalog", () => {
         "platforms/cloudflare",
         "platforms/alchemy",
       ]) {
-        const source = readFileSync(new URL(`./${directory}/${guide}.md`, import.meta.url), "utf8");
+        const source = await readFile(
+          new URL(`./${directory}/${guide}.md`, import.meta.url),
+          "utf8",
+        );
         expect(source).toContain("vp install");
         if (guide !== "guide/getting-started") {
           expect(source).toContain(guide === "platforms/alchemy" ? "vp run dev" : "vp dev");
         }
         expect(source).not.toMatch(/vp pack|vp preview/);
       }
-      const start = readFileSync(
+      const start = await readFile(
         new URL(`./${directory}/guide/getting-started.md`, import.meta.url),
         "utf8",
       );
@@ -411,7 +415,7 @@ describe("documentation catalog", () => {
       expect(start).toContain("../platforms.md");
       expect(start).not.toMatch(/\.\.\/platforms\/(bun|cloudflare|alchemy)\.md/);
       expect(start).not.toMatch(/--platform (bun|cloudflare|alchemy-cloudflare)/);
-      const alchemy = readFileSync(
+      const alchemy = await readFile(
         new URL(`./${directory}/platforms/alchemy.md`, import.meta.url),
         "utf8",
       );
@@ -482,9 +486,9 @@ describe("documentation catalog", () => {
 
   test.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
-    (example) => {
+    async (example) => {
       const manifest = JSON.parse(
-        readFileSync(
+        await readFile(
           new URL(`../../../../examples/${example}/package.json`, import.meta.url),
           "utf8",
         ),
@@ -586,7 +590,7 @@ describe("documentation catalog", () => {
       ] as const) {
         const html = await render(`/${locale}/platforms/${slug}`);
         const prose = await text(`/${locale}/platforms/${slug}`);
-        const config = readFileSync(
+        const config = await readFile(
           new URL(`examples/${example}/vite.config.ts`, repository),
           "utf8",
         );
@@ -602,11 +606,11 @@ describe("documentation catalog", () => {
         }
         for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
           expect(prose).toContain(file);
-          expect(readFileSync(new URL(`examples/${example}/${file}`, repository), "utf8")).not.toBe(
-            "",
-          );
+          expect(
+            await readFile(new URL(`examples/${example}/${file}`, repository), "utf8"),
+          ).not.toBe("");
         }
-        const application = readFileSync(
+        const application = await readFile(
           new URL(`examples/${example}/src/entry.effront.tsx`, repository),
           "utf8",
         );
@@ -629,13 +633,13 @@ describe("documentation catalog", () => {
       );
       await expect(text(`/${locale}/platforms/alchemy`)).resolves.not.toContain("git clone");
       expect(
-        readFileSync(
+        await readFile(
           new URL("examples/alchemy-cloudflare/src/entry.effront.tsx", repository),
           "utf8",
         ),
       ).toContain("<h1>Hello, world</h1>");
       expect(
-        readFileSync(
+        await readFile(
           new URL("examples/alchemy-cloudflare/src/entry.workers.ts", repository),
           "utf8",
         ),
@@ -653,9 +657,9 @@ describe("documentation catalog", () => {
 
   test.each(["en", "ja"] as const)(
     "introduces Layout, Page, Routes, then the complete entry in %s",
-    (locale) => {
+    async (locale) => {
       const directory = locale === "en" ? "en/articles" : "articles";
-      const source = readFileSync(
+      const source = await readFile(
         new URL(`./${directory}/guide/routes.md`, import.meta.url),
         "utf8",
       );
@@ -692,7 +696,7 @@ describe("documentation catalog", () => {
         expect(html).not.toContain("127.0.0.1:1340");
         expect(html).not.toMatch(/開発サーバー\s*に\s*表示された\s*URL/);
       }
-      const config = readFileSync(
+      const config = await readFile(
         new URL("../../../../examples/node/vite.config.ts", import.meta.url),
         "utf8",
       );
@@ -708,9 +712,9 @@ describe("documentation catalog", () => {
       expect(html).toContain("lockfile");
       expect(html).not.toMatch(/\b\d+\.\d+\.\d+\b/);
       const root = new URL("../../../../packages/", import.meta.url);
-      for (const name of readdirSync(root).filter((name) => name !== "create-effront")) {
+      for (const name of (await readdir(root)).filter((name) => name !== "create-effront")) {
         const manifest = JSON.parse(
-          readFileSync(new URL(`${name}/package.json`, root), "utf8"),
+          await readFile(new URL(`${name}/package.json`, root), "utf8"),
         ) as {
           name: string;
           exports: Record<string, unknown>;
@@ -726,26 +730,28 @@ describe("documentation catalog", () => {
     },
   );
 
-  test("keeps ordinary installation examples unversioned in both locales and READMEs", () => {
-    const sources = ["articles", "en/articles"].flatMap((directory) =>
-      readdirSync(new URL(`./${directory}/`, import.meta.url), {
-        recursive: true,
-        encoding: "utf8",
-      })
-        .filter((path) => path.endsWith(".md"))
-        .map((path) => new URL(`./${directory}/${path}`, import.meta.url)),
+  test("keeps ordinary installation examples unversioned in both locales and READMEs", async () => {
+    const articles = await Promise.all(
+      ["articles", "en/articles"].map(async (directory) => {
+        const files = await readdir(new URL(`./${directory}/`, import.meta.url), {
+          recursive: true,
+          encoding: "utf8",
+        });
+        return files
+          .filter((path) => path.endsWith(".md"))
+          .map((path) => new URL(`./${directory}/${path}`, import.meta.url));
+      }),
     );
-    sources.push(
-      new URL("../../../../README.md", import.meta.url),
-      ...readdirSync(new URL("../../../../packages/", import.meta.url)).map(
-        (name) => new URL(`../../../../packages/${name}/README.md`, import.meta.url),
-      ),
-    );
-    const commands = sources.flatMap(
-      (source) =>
-        readFileSync(source, "utf8").match(
-          /(?:vp add|npm install|pnpm add|bun add|yarn add)\b[^`\n]*/g,
-        ) ?? [],
+    const repository = new URL("../../../../", import.meta.url);
+    const packages = await readdir(new URL("packages/", repository));
+    const sources = [
+      ...articles.flat(),
+      new URL("README.md", repository),
+      ...packages.map((name) => new URL(`packages/${name}/README.md`, repository)),
+    ];
+    const contents = await Promise.all(sources.map((source) => readFile(source, "utf8")));
+    const commands = contents.flatMap(
+      (source) => source.match(/(?:vp add|npm install|pnpm add|bun add|yarn add)\b[^`\n]*/g) ?? [],
     );
     expect(commands.length).toBeGreaterThan(0);
     for (const command of commands) {
@@ -789,10 +795,10 @@ describe("documentation catalog", () => {
     "packages/markdown/README.md",
     "packages/markdown/AGENTS.md",
     "packages/markdown/docs/IMPLEMENTATION.md",
-  ])("%s links Markdown readers to maintained documentation", (path) => {
+  ])("%s links Markdown readers to maintained documentation", async (path) => {
     const repository = new URL("../../../../", import.meta.url);
     const file = new URL(path, repository);
-    const source = readFileSync(file, "utf8");
+    const source = await readFile(file, "utf8");
     expect(source).not.toContain("markdown/docs/GUIDE.md");
     if (path.startsWith("packages/markdown/")) {
       expect(source).not.toMatch(/\]\((?:\.\/)?(?:docs\/)?GUIDE\.md(?:[#)]|$)/);
@@ -804,18 +810,23 @@ describe("documentation catalog", () => {
         expect(target.origin).toBe("https://effront.totto2727.dev");
         expect(localizedPages.map((page) => page.slug)).toContain(target.pathname);
       } else if (href.includes("markdown") && !/^[a-z]+:|^#/.test(href)) {
-        expect(existsSync(new URL(href.split("#")[0]!, file)), href).toBe(true);
+        await expect(
+          access(new URL(href.split("#")[0] ?? "", file)),
+          href,
+        ).resolves.toBeUndefined();
       }
     }
   });
 
-  test("keeps the Markdown README as a canonical documentation entry point", () => {
+  test("keeps the Markdown README as a canonical documentation entry point", async () => {
     const repository = new URL("../../../../", import.meta.url);
-    const source = readFileSync(new URL("packages/markdown/README.md", repository), "utf8");
+    const source = await readFile(new URL("packages/markdown/README.md", repository), "utf8");
     for (const section of ["guide", "api-reference"]) {
       expect(source).toContain(`https://effront.totto2727.dev/en/${section}/markdown`);
     }
-    expect(existsSync(new URL("packages/markdown/docs/GUIDE.md", repository))).toBe(false);
+    await expect(
+      access(new URL("packages/markdown/docs/GUIDE.md", repository)),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   test.each(["en", "ja"])("%s explains Markdown article lookup and asset usage", async (locale) => {

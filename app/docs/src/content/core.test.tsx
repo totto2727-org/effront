@@ -1,22 +1,28 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { architectureBaseline } from "./architecture-baseline.ts";
-import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { promisify } from "node:util";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vite-plus/test";
 import { corePages, coreSources } from "./core.ts";
 import { coreRuntimeSources } from "./core-runtime.tsx";
 
+const exec = promisify(execFile);
+const repository = new URL("../../../../", import.meta.url);
+const gitTimeout = 4_000;
+
+const baselineSource = async (path: string): Promise<string> => {
+  const { stdout } = await exec("git", ["show", `${architectureBaseline.commit}:${path}`], {
+    cwd: repository,
+    timeout: gitTimeout,
+  });
+  return stdout;
+};
+
 // Source is inspected only by tests. Production pages ship authored snippets, not filesystem reads.
 describe("current core learning material", () => {
-  test("records the version from the exact architecture baseline commit", () => {
-    const manifest = execFileSync(
-      "git",
-      ["show", `${architectureBaseline.commit}:packages/core/package.json`],
-      {
-        cwd: new URL("../../../../", import.meta.url),
-        encoding: "utf8",
-      },
-    );
+  test("records the version from the exact architecture baseline commit", async () => {
+    const manifest = await baselineSource("packages/core/package.json");
     expect(JSON.parse(manifest)).toMatchObject({
       name: "@effront/core",
       version: architectureBaseline.version,
@@ -25,13 +31,10 @@ describe("current core learning material", () => {
   });
   test.each(coreSources)(
     "keeps the $path excerpt identical to current implementation",
-    (source) => {
+    async (source) => {
       expect(source.path).toMatch(/^packages\/core\/src\/[a-z0-9/.-]+\.tsx?$/);
       expect(source.code.length).toBeGreaterThan(60);
-      const implementation = readFileSync(
-        new URL(`../../../../${source.path}`, import.meta.url),
-        "utf8",
-      );
+      const implementation = await readFile(new URL(source.path, repository), "utf8");
       expect(implementation).toContain(source.code);
     },
   );
@@ -45,16 +48,9 @@ describe("current core learning material", () => {
         source !== coreRuntimeSources.serverFnBrand &&
         source !== coreRuntimeSources.responseLifetime,
     ),
-  )("retains the $path excerpt in the architecture baseline", (source) => {
-    const baselineSource = execFileSync(
-      "git",
-      ["show", `${architectureBaseline.commit}:${source.path}`],
-      {
-        cwd: new URL("../../../../", import.meta.url),
-        encoding: "utf8",
-      },
-    );
-    expect(baselineSource).toContain(source.code);
+  )("retains the $path excerpt in the architecture baseline", async (source) => {
+    const baseline = await baselineSource(source.path);
+    expect(baseline).toContain(source.code);
   });
 
   test.each(corePages)("explains $slug with current source and navigable sections", (page) => {
