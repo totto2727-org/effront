@@ -70,12 +70,12 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
         }),
       );
       const payload = yield* Effect.tryPromise({
+        catch: (cause) => new FlightLoadError({ cause, reason: "DecodeFailed" }),
         try: () =>
           createFromReadableStream<FlightPayload>(
             stream,
             import.meta.env.DEV ? { startTime: 0 } : undefined,
           ),
-        catch: (cause) => new FlightLoadError({ cause, reason: "DecodeFailed" }),
       });
 
       return {
@@ -148,12 +148,12 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
           });
         }
         const resolvedUrl = yield* Effect.try({
-          try: () => new URL(responseUrl),
           catch: (cause) =>
             new FlightLoadError({
               cause,
               reason: "UnexpectedResponse",
             }),
+          try: () => new URL(responseUrl),
         });
 
         const completed = yield* Deferred.make<void, FlightLoadError>();
@@ -191,13 +191,13 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
                 }
               : undefined;
         const payload = yield* Effect.tryPromise({
-          try: () =>
-            createFromReadableStream<FlightPayload | ServerFnResult>(responseBody, decodeOptions),
           catch: (cause) =>
             new FlightLoadError({
               cause,
               reason: "DecodeFailed",
             }),
+          try: () =>
+            createFromReadableStream<FlightPayload | ServerFnResult>(responseBody, decodeOptions),
         });
 
         if (flightRequest._tag === "Query") {

@@ -39,6 +39,7 @@ export class HtmlRenderer extends Context.Service<HtmlRenderer>()(
       }>): Effect.fn.Return<ReadableStream<Uint8Array>, HtmlRenderError, Scope.Scope> {
         const signal = yield* Effect.abortSignal;
         return yield* Effect.tryPromise({
+          catch: (cause) => new HtmlRenderError({ cause }),
           try: async () => {
             const ssr = await import.meta.viteRsc.loadModule<typeof import("./ssr")>(
               "ssr",
@@ -46,7 +47,6 @@ export class HtmlRenderer extends Context.Service<HtmlRenderer>()(
             );
             return ssr.renderHtml(flight.stream, { formState, signal });
           },
-          catch: (cause) => new HtmlRenderError({ cause }),
         });
       }),
     }),

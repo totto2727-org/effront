@@ -57,7 +57,9 @@ describe("rendering Markdown documents", () => {
         expect(html).not.toContain('class="math');
       }),
   );
+});
 
+describe("diagram and combined component overrides", () => {
   live.each(["Mermaid", "mermaid", "ProseMermaid"])(
     "preserves the %s component override instead of the default diagram leaf",
     (name) =>

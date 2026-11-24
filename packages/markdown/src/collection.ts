@@ -1,6 +1,14 @@
 import { NodePath } from "@effect/platform-node-shared";
 import { Array, Effect, Path, Predicate, Schema, String } from "effect";
 
+import {
+  encodedPathname,
+  encodeReference,
+  isOutsideBase,
+  findEntry,
+  segments,
+  splitReference,
+} from "./collection-path.ts";
 import { MarkdownError } from "./error.ts";
 
 type CollectionOptions = Readonly<{
@@ -40,24 +48,6 @@ export interface MarkdownCollection extends CollectionFields {
   /* oxlint-enable typescript/method-signature-style */
 }
 
-const decodeSegment = (segment: string): string => {
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    return segment;
-  }
-};
-const missingSeparator = -1;
-const splitReference = (reference: string): Readonly<[string, string]> => {
-  const index = reference.search(/[?#]/u);
-  return index === missingSeparator
-    ? [reference, ""]
-    : [String.takeLeft(reference, index), reference.slice(index)];
-};
-const segments = (path: string): string[] =>
-  path.split("/").filter((part) => String.isNonEmpty(part) && part !== ".");
-const encodedPathname = (parts: Readonly<string[]>): string =>
-  `/${Array.map(parts, encodeURIComponent).join("/")}`;
 const markdownExtension = /\.md$/iu;
 const markdownExtensionLength = ".md".length;
 const slashLength = "/".length;
@@ -95,14 +85,6 @@ const indexAssets = (
 
 const isExternal = (reference: string): boolean =>
   reference.startsWith("#") || reference.startsWith("/") || /^[a-z][a-z\d+.-]*:/iu.test(reference);
-
-// Encode each decoded URL segment before POSIX normalization so %2F stays a filename character.
-const encodeReference = (path: string): string => {
-  const decoded = Array.map(path.split("/"), decodeSegment);
-  return Array.map(decoded, encodeURIComponent).join("/");
-};
-const isOutsideBase = (relative: string): boolean =>
-  relative === ".." || relative.startsWith("../");
 
 type ResolveReference = (
   entry: MarkdownEntry,
@@ -170,18 +152,6 @@ const documentUrl = (
   const stem = String.takeLeft(filename, filename.length - markdownExtensionLength);
   const directories = Array.initNonEmpty(parts);
   return Effect.succeed(encodedPathname([...base, ...directories, stem]));
-};
-
-const findEntry = (
-  entries: ReadonlyMap<string, MarkdownEntry>,
-  pathname: string,
-): MarkdownEntry | undefined => {
-  const [path] = splitReference(pathname);
-  const withoutTrailingSlash = path.replace(/(?<last>[^/])\/$/u, "$<last>");
-  const parts = withoutTrailingSlash.slice(slashLength).split("/");
-  return path.startsWith("/")
-    ? entries.get(encodedPathname(Array.map(parts, decodeSegment)))
-    : undefined;
 };
 
 /**

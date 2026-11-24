@@ -32,8 +32,8 @@ export const command = Command.make(
           }),
         );
     const target = yield* Effect.tryPromise({
-      try: () => createProject(targetDirectory, targetPlatform),
       catch: (cause) => new CliError.UserError({ cause }),
+      try: () => createProject(targetDirectory, targetPlatform),
     });
     yield* Console.log(
       `Created ${targetPlatform} Effront project at ${target}\nNext: cd ${targetDirectory} && vp install && ${targetPlatform === "alchemy-cloudflare" ? "vp run dev" : "vp dev"}`,

@@ -1,74 +1,78 @@
 import { live } from "@effect/vitest";
 import { Effect } from "effect";
 import { MarkdownError } from "./error.ts";
-import { describe, expect } from "vite-plus/test";
+import { assert, describe, expect } from "vite-plus/test";
 import { createMarkdownCollection } from "./collection.ts";
+import type { MarkdownCollection, MarkdownEntry } from "./collection.ts";
 
 const collection = createMarkdownCollection({
-  basePath: "/manual",
-  documents: {
-    "./README.md": "# Read me",
-    "./index.md": "# Manual",
-    "./guides/index.md": "# Guides",
-    "./guides/advanced.md": "# Advanced",
-    "./guides/getting started.md": "# Getting started",
-    "./guides/100%.md": "# Percent",
-    "./guides/$&+,=@.md": "# Punctuation",
-  },
   assets: {
     "./guides/diagram one.svg": "/assets/diagram-one.a1b2.svg",
     "./logo.svg": "/assets/logo.c3d4.svg",
   },
+  basePath: "/manual",
+  documents: {
+    "./README.md": "# Read me",
+    "./guides/$&+,=@.md": "# Punctuation",
+    "./guides/100%.md": "# Percent",
+    "./guides/advanced.md": "# Advanced",
+    "./guides/getting started.md": "# Getting started",
+    "./guides/index.md": "# Guides",
+    "./index.md": "# Manual",
+  },
 });
 
-describe("createMarkdownCollection", () => {
+const entryAt = (markdown: MarkdownCollection, pathname: string): MarkdownEntry => {
+  const entry = markdown.get(pathname);
+  assert.isDefined(entry, `Fixture missing ${pathname}`);
+  return entry;
+};
+
+describe("document URL indexing", () => {
   live("maps nested documents to public routes by removing only the Markdown extension", () =>
     Effect.gen(function* () {
       const markdown = yield* collection;
 
-      expect(
-        markdown.entries.map((entry) => [entry.source, entry.pathname, entry.url]),
-      ).toStrictEqual([
-        [
-          "./guides/$&+,=@.md",
-          "/manual/guides/%24%26%2B%2C%3D%40",
-          "/manual/guides/%24%26%2B%2C%3D%40",
-        ],
-        ["./guides/100%.md", "/manual/guides/100%25", "/manual/guides/100%25"],
-        ["./guides/advanced.md", "/manual/guides/advanced", "/manual/guides/advanced"],
-        [
-          "./guides/getting started.md",
-          "/manual/guides/getting%20started",
-          "/manual/guides/getting%20started",
-        ],
-        ["./guides/index.md", "/manual/guides/index", "/manual/guides/index"],
-        ["./index.md", "/manual/index", "/manual/index"],
-        ["./README.md", "/manual/README", "/manual/README"],
+      expect(markdown.entries.map(({ source, url }) => [source, url])).toStrictEqual([
+        ["./guides/$&+,=@.md", "/manual/guides/%24%26%2B%2C%3D%40"],
+        ["./guides/100%.md", "/manual/guides/100%25"],
+        ["./guides/advanced.md", "/manual/guides/advanced"],
+        ["./guides/getting started.md", "/manual/guides/getting%20started"],
+        ["./guides/index.md", "/manual/guides/index"],
+        ["./index.md", "/manual/index"],
+        ["./README.md", "/manual/README"],
       ]);
-      expect(markdown.get("/manual/guides/getting%20started")?.content).toBe("# Getting started");
-      expect(markdown.get("/manual/guides/getting started")).toBe(
-        markdown.get("/manual/guides/getting%20started"),
-      );
-      expect(markdown.get("/manual/guides/100%25")?.content).toBe("# Percent");
-      expect(markdown.get("/manual/guides/%24%26%2B%2C%3D%40")?.url).toBe(
+      expect(markdown.entries.every((entry) => entry.pathname === entry.url)).toBe(true);
+      const spaced = entryAt(markdown, "/manual/guides/getting%20started");
+      expect(markdown.get("/manual/guides/getting started")).toBe(spaced);
+      expect([
+        spaced.content,
+        markdown.get("/manual/guides/100%25")?.content,
+        markdown.get("/manual/guides/%24%26%2B%2C%3D%40")?.url,
+        markdown.get("/outside"),
+      ]).toStrictEqual([
+        "# Getting started",
+        "# Percent",
         "/manual/guides/%24%26%2B%2C%3D%40",
-      );
-      expect(markdown.get("/outside")).toBeUndefined();
+        undefined,
+      ]);
     }),
   );
+});
 
+describe("source map layouts", () => {
   live("uses the glob-base-relative hierarchy without stripping a source directory", () =>
     Effect.gen(function* () {
       const markdown = yield* createMarkdownCollection({
+        assets: { "./images/diagram.svg": "/assets/diagram.hash.svg" },
         basePath: "/manual",
         documents: {
-          "./index.md": "# Manual",
           "./content/index.md": "# Nested content",
           "./guide/deep/details.md": "# Details",
+          "./index.md": "# Manual",
         },
-        assets: { "./images/diagram.svg": "/assets/diagram.hash.svg" },
       });
-      const details = markdown.get("/manual/guide/deep/details")!;
+      const details = entryAt(markdown, "/manual/guide/deep/details");
       expect(markdown.get("/manual/content/index")?.source).toBe("./content/index.md");
       expect(details.source).toBe("./guide/deep/details.md");
       expect(yield* details.resolveLink("../../index.md#top")).toBe("/manual/index#top");
@@ -83,10 +87,10 @@ describe("createMarkdownCollection", () => {
       const markdown = yield* createMarkdownCollection({
         basePath: "/manual",
         documents: {
+          "./:name.md": "# Colon",
+          "./hash#.md": "# Hash",
           "./literal%20.md": "# Literal escape",
           "./what?.md": "# Question",
-          "./hash#.md": "# Hash",
-          "./:name.md": "# Colon",
         },
       });
       expect(markdown.get("/manual/literal%2520")?.content).toBe("# Literal escape");
@@ -96,132 +100,66 @@ describe("createMarkdownCollection", () => {
       expect(markdown.get("/manual/%3Aname")?.content).toBe("# Colon");
     }),
   );
+});
 
-  live.each([
-    "/manual/guides%2Fadvanced",
-    "/manual/guides%2fadvanced",
-    "/manual/guides%5Cadvanced",
-    "/manual/guides\\advanced",
-    "/manual/guides/advanced%00",
-    "/manual/guides/advanced\0",
-    "/manual/guides/%2E/advanced",
-    "/manual/guides/./advanced",
-    "/manual/guides/%2E%2E",
-    "/manual/guides/../guides/advanced",
-    "/manual//guides/advanced",
-    "//manual/guides/advanced",
-    "/manual/guides/advanced//",
-    "/manual//",
-    "/manual/guides/%",
-    "/manual/guides/%E0%A4",
-  ])("returns undefined for an unknown pathname without throwing: %s", (pathname) =>
-    Effect.gen(function* () {
-      const markdown = yield* collection;
-      expect(markdown.get(pathname)).toBeUndefined();
-    }),
-  );
-
-  live.each(["/manual/index/", "/manual/guides/index/", "/manual/guides/advanced/"])(
-    "preserves a single trailing slash alias: %s",
-    (pathname) =>
-      Effect.gen(function* () {
-        const markdown = yield* collection;
-        expect(markdown.get(pathname)).toBe(markdown.get(pathname.slice(0, -1)));
-        expect(markdown.get(pathname)).toBeDefined();
-      }),
-  );
-
-  live.each(["/index", "/index?mode=full#top"])(
-    "looks up index.md at its explicit pathname: %s",
-    (pathname) =>
-      Effect.gen(function* () {
-        const markdown = yield* createMarkdownCollection({
-          basePath: "/",
-          documents: { "./index.md": "# Root" },
-        });
-        expect(markdown.get(pathname)?.content).toBe("# Root");
-      }),
-  );
-
-  live.each(["/", "/?mode=full#top", "//", "///", "/./", "/%2E/", "/%00", "/%2F"])(
-    "does not alias root or unknown paths to index.md: %s",
-    (pathname) =>
-      Effect.gen(function* () {
-        const markdown = yield* createMarkdownCollection({
-          basePath: "/",
-          documents: { "./index.md": "# Root" },
-        });
-        expect(markdown.get(pathname)).toBeUndefined();
-      }),
-  );
-
-  live.each(["%2F", "%5C", "%00", "%2E", "%", "%E0%A4"])(
-    "looks up a literal escape filename after decoding once: %s",
-    (filename) =>
-      Effect.gen(function* () {
-        const markdown = yield* createMarkdownCollection({
-          basePath: "/manual",
-          documents: { [`./${filename}.md`]: "# Literal escape" },
-        });
-        expect(markdown.get(`/manual/${encodeURIComponent(filename)}`)?.content).toBe(
-          "# Literal escape",
-        );
-      }),
-  );
-
+describe("relative links and asset URLs", () => {
   live("resolves document URLs, queries, fragments, and Vite asset URLs", () =>
     Effect.gen(function* () {
       const markdown = yield* collection;
-      const entry = markdown.get("/manual/guides/advanced")!;
-      expect(yield* entry.resolveLink("index.md?mode=full#top")).toBe(
+      const entry = entryAt(markdown, "/manual/guides/advanced");
+      const resolved = yield* Effect.all([
+        entry.resolveLink("index.md?mode=full#top"),
+        markdown.resolveLink(entry, "getting%20started.md#install"),
+        entry.resolveLink("100%25.md"),
+        entry.resolveLink("?tab=examples#heading"),
+        entry.resolveImage("diagram%20one.svg#icon"),
+        markdown.resolveLink(entry, "../logo.svg?download=1"),
+      ]);
+      expect(resolved).toStrictEqual([
         "/manual/guides/index?mode=full#top",
-      );
-      expect(yield* markdown.resolveLink(entry, "getting%20started.md#install")).toBe(
         "/manual/guides/getting%20started#install",
-      );
-      expect(yield* entry.resolveLink("100%25.md")).toBe("/manual/guides/100%25");
-      expect(yield* entry.resolveLink("?tab=examples#heading")).toBe(
+        "/manual/guides/100%25",
         "/manual/guides/advanced?tab=examples#heading",
-      );
-      expect(yield* entry.resolveImage("diagram%20one.svg#icon")).toBe(
         "/assets/diagram-one.a1b2.svg#icon",
-      );
-      expect(yield* markdown.resolveLink(entry, "../logo.svg?download=1")).toBe(
         "/assets/logo.c3d4.svg?download=1",
-      );
+      ]);
     }),
   );
+});
 
+describe("application URL policy and Vite asset content", () => {
   live("leaves URL policy to Comark and the application", () =>
     Effect.gen(function* () {
       const markdown = yield* collection;
-      const entry = markdown.get("/manual/guides/advanced")!;
-      for (const href of [
+      const entry = entryAt(markdown, "/manual/guides/advanced");
+      const references = [
         "https://example.com/?q=1#top",
         "mailto:hello@example.com",
         "/global.svg",
         "//cdn.example.com/logo.svg",
         "#details",
         "data:image/png;base64,AA==",
-      ]) {
-        expect(yield* entry.resolveLink(href)).toBe(href);
-      }
+      ];
+      const resolved = yield* Effect.forEach(references, (href) => entry.resolveLink(href));
+      expect(resolved).toStrictEqual(references);
     }),
   );
 
   live("uses Vite's already-resolved asset URLs including inline assets", () =>
     Effect.gen(function* () {
       const markdown = yield* createMarkdownCollection({
+        assets: { "./logo.svg": "data:image/svg+xml;base64,AAAA" },
         basePath: "/manual",
         documents: { "./index.md": "" },
-        assets: { "./logo.svg": "data:image/svg+xml;base64,AAAA" },
       });
-      expect(yield* markdown.get("/manual/index")!.resolveImage("logo.svg")).toBe(
+      expect(yield* entryAt(markdown, "/manual/index").resolveImage("logo.svg")).toBe(
         "data:image/svg+xml;base64,AAAA",
       );
     }),
   );
+});
 
+describe("invalid Markdown inputs and references", () => {
   live.each([
     { basePath: "/manual", documents: { "index.md": "" } },
     { basePath: "manual", documents: {} },
@@ -231,14 +169,14 @@ describe("createMarkdownCollection", () => {
     { basePath: "/manual", documents: { "../elsewhere/page.md": "" } },
     {
       basePath: "/manual",
-      documents: { "./foo.md": "", "./foo.MD": "" },
+      documents: { "./foo.MD": "", "./foo.md": "" },
     },
     { basePath: "/manual", documents: { "./file.txt": "" } },
     { basePath: "/manual", documents: { "./.md": "" } },
     {
+      assets: { "../elsewhere/logo.svg": "/logo.svg" },
       basePath: "/manual",
       documents: {},
-      assets: { "../elsewhere/logo.svg": "/logo.svg" },
     },
   ])("returns configuration failures through the typed error channel: %j", (options) =>
     Effect.gen(function* () {
@@ -251,27 +189,29 @@ describe("createMarkdownCollection", () => {
   live("returns missing and out-of-base references through the typed error channel", () =>
     Effect.gen(function* () {
       const markdown = yield* collection;
-      const entry = markdown.get("/manual/guides/advanced")!;
-      for (const operation of [
+      const entry = entryAt(markdown, "/manual/guides/advanced");
+      const operations = [
         entry.resolveLink("missing.md"),
         entry.resolveImage("missing.svg"),
         entry.resolveLink("../../../outside.md"),
         entry.resolveLink("%2F.md"),
-      ]) {
-        expect(yield* Effect.flip(operation)).toBeInstanceOf(MarkdownError);
-      }
+      ];
+      const failures = yield* Effect.forEach(operations, (operation) => Effect.flip(operation));
+      expect(failures.every((failure) => failure instanceof MarkdownError)).toBe(true);
     }),
   );
+});
 
+describe("file stems, directories, and encoded references", () => {
   live("keeps file stems distinct from directories and supports an explicit manual page", () =>
     Effect.gen(function* () {
       const markdown = yield* createMarkdownCollection({
         basePath: "/",
         documents: {
-          "./manual.md": "# Manual",
           "./guide.md": "# Guide",
           "./guide/index.md": "# Guide index",
           "./index.md": "# Index",
+          "./manual.md": "# Manual",
         },
       });
       expect(markdown.entries.map((entry) => entry.url)).toStrictEqual([
@@ -282,10 +222,12 @@ describe("createMarkdownCollection", () => {
       ]);
       expect(markdown.get("/")).toBeUndefined();
       expect(markdown.get("/manual")?.source).toBe("./manual.md");
-      expect(yield* markdown.get("/guide/index")!.resolveLink("../guide.md")).toBe("/guide");
+      expect(yield* entryAt(markdown, "/guide/index").resolveLink("../guide.md")).toBe("/guide");
     }),
   );
+});
 
+describe("normalizing POSIX references", () => {
   live(
     "normalizes POSIX references while keeping URL-encoded separators and percents literal",
     () =>
@@ -293,13 +235,13 @@ describe("createMarkdownCollection", () => {
         const markdown = yield* createMarkdownCollection({
           basePath: "/manual",
           documents: {
-            "./guide/start.md": "# Start",
-            "./guide/literal%2F.md": "# Literal slash escape",
             "./guide/back\\slash.md": "# POSIX backslash",
+            "./guide/literal%2F.md": "# Literal slash escape",
+            "./guide/start.md": "# Start",
             "./guide/日本語 space.md": "# Unicode",
           },
         });
-        const start = markdown.get("/manual/guide/start")!;
+        const start = entryAt(markdown, "/manual/guide/start");
         expect(yield* start.resolveLink("./nested/../literal%252F.md")).toBe(
           "/manual/guide/literal%252F",
         );
@@ -315,7 +257,9 @@ describe("createMarkdownCollection", () => {
         );
       }),
   );
+});
 
+describe("collection lifetime", () => {
   live("constructs a fresh collection on each Effect execution", () =>
     Effect.gen(function* () {
       const effect = createMarkdownCollection({

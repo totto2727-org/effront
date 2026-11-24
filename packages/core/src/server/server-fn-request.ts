@@ -62,6 +62,7 @@ export type PreparedServerFnRequest<ApplicationServices> = Readonly<{
 
 export const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
   Effect.try({
+    catch: (cause) => requestError("Rejected a cross-origin Server Function request.", 403, cause),
     try: () => {
       const origin = request.headers["origin"];
       if (origin === undefined) {
@@ -73,7 +74,6 @@ export const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
         throw new Error(`Origin "${origin}" does not match host "${expectedHost ?? ""}".`);
       }
     },
-    catch: (cause) => requestError("Rejected a cross-origin Server Function request.", 403, cause),
   });
 
 const readBodyBytes = Effect.fnUntraced(function* (request: Request) {
@@ -87,8 +87,8 @@ const readBodyBytes = Effect.fnUntraced(function* (request: Request) {
   try {
     while (true) {
       const result = yield* Effect.tryPromise({
-        try: () => reader.read(),
         catch: (cause) => bodyReadError("Failed to read the Server Function request body.", cause),
+        try: () => reader.read(),
       });
       if (result.done) {
         break;
@@ -120,14 +120,14 @@ const readBody = Effect.fnUntraced(function* (request: Request) {
   const replay = new Request(request, { body: bytes, method: request.method });
   if (request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data")) {
     return yield* Effect.tryPromise({
-      try: () => replay.formData(),
       catch: (cause) => bodyReadError("Failed to read the Server Function request body.", cause),
+      try: () => replay.formData(),
     });
   }
 
   return yield* Effect.tryPromise({
-    try: () => replay.text(),
     catch: (cause) => bodyReadError("Failed to read the Server Function request body.", cause),
+    try: () => replay.text(),
   });
 });
 
@@ -234,8 +234,8 @@ const prepareProgressiveServerFn = Effect.fnUntraced(function* <ApplicationServi
   }
   const formData = body;
   const decodedAction = yield* Effect.tryPromise({
-    try: () => Promise.resolve(decodeAction(formData)),
     catch: (cause) => requestError("Failed to decode the Server Function form action.", 400, cause),
+    try: () => Promise.resolve(decodeAction(formData)),
   });
   if (decodedAction === null) {
     return yield* requestError(
@@ -257,8 +257,8 @@ const prepareProgressiveServerFn = Effect.fnUntraced(function* <ApplicationServi
       ),
     );
     const decodedFormState = yield* Effect.tryPromise({
-      try: () => decodeFormState(actionResult, formData),
       catch: (cause) => requestError("Failed to decode React form state.", 500, cause),
+      try: () => decodeFormState(actionResult, formData),
     });
 
     return {

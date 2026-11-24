@@ -95,8 +95,8 @@ export const installCallServer = Effect.gen(function* () {
     const temporaryReferences = createTemporaryReferenceSet();
     const signal = yield* Effect.abortSignal;
     const body = yield* Effect.tryPromise({
-      try: () => encodeReply([...args], { signal, temporaryReferences }),
       catch: (cause) => new ServerFnCallError({ cause, message: "Failed to encode arguments." }),
+      try: () => encodeReply([...args], { signal, temporaryReferences }),
     });
     const resource = yield* flightClient
       .load({
@@ -175,8 +175,8 @@ export const installCallServer = Effect.gen(function* () {
     const temporaryReferences = createTemporaryReferenceSet();
     const signal = yield* Effect.abortSignal;
     const body = yield* Effect.tryPromise({
-      try: () => encodeReply([...args], { signal, temporaryReferences }),
       catch: (cause) => transportError(cause),
+      try: () => encodeReply([...args], { signal, temporaryReferences }),
     });
     const resource = yield* flightClient
       .loadQuery({

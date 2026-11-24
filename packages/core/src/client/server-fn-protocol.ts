@@ -64,8 +64,8 @@ export const callQuery = <Args extends Readonly<unknown[]>, Output>(
   args: Args,
 ): Effect.Effect<Output, ServerFnError> =>
   Effect.tryPromise({
-    try: (signal) => invoke(serverFn, args, { _tag: "Query", signal }) as Promise<Output>,
     catch: invocationError,
+    try: (signal) => invoke(serverFn, args, { _tag: "Query", signal }) as Promise<Output>,
   });
 
 export const callQueryStream = Effect.fnUntraced(function* <Args extends Readonly<unknown[]>>(
@@ -75,8 +75,8 @@ export const callQueryStream = Effect.fnUntraced(function* <Args extends Readonl
   const signal = yield* Effect.abortSignal;
   const completed = yield* Deferred.make<void, ServerFnError>();
   const value = yield* Effect.tryPromise({
-    try: () => invoke(serverFn, args, { _tag: "Stream", signal, completed }),
     catch: invocationError,
+    try: () => invoke(serverFn, args, { _tag: "Stream", signal, completed }),
   });
   return Stream.fromReadableStream({
     evaluate: () => value as ReadableStream<unknown>,

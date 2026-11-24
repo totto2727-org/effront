@@ -127,6 +127,7 @@ export class ReactDOMRenderer extends Context.Service<ReactDOMRenderer>()(
 
         yield* Effect.acquireRelease(
           Effect.try({
+            catch: (cause) => new ReactDOMHydrationError({ cause }),
             try: () =>
               hydrateRoot(
                 container,
@@ -135,7 +136,6 @@ export class ReactDOMRenderer extends Context.Service<ReactDOMRenderer>()(
                 </StrictMode>,
                 { formState: initialPayload.formState },
               ),
-            catch: (cause) => new ReactDOMHydrationError({ cause }),
           }),
           (root) => Effect.sync(() => root.unmount()),
         );
