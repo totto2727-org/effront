@@ -33,6 +33,8 @@ const routeLoads = Data.taggedEnum<RouteLoad>();
 
 export type RouteResource = ReturnType<typeof routeLoads.Route>;
 
+export const isDocumentLoad = routeLoads.$is("Document");
+
 const isDocument = flightResources.$is("Document");
 
 const inactiveHistoryIndex = -1;

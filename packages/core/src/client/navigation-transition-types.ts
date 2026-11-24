@@ -18,7 +18,7 @@ export const getLinkTransitionTypes = (event: NavigateEvent): Readonly<string[]>
 
 export const getNavigationTransitionTypes = (
   event: NavigateEvent,
-  fromIndex: number | null,
+  fromIndex: number | undefined,
 ): Readonly<string[]> => {
   const types = [
     "navigation",
