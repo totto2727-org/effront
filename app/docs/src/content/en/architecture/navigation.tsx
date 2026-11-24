@@ -86,11 +86,11 @@ export const page: DocPage = {
         </li>
       </ul>
       <p>
-        Before publication, <code>client/client-router.ts</code> checks the resolved destination. A
-        different origin requires document navigation. A changed same-origin URL requires document
-        replacement for traversal or when no precommit controller is available. Otherwise, that
-        controller can redirect after React commits. The requested hash survives only if the
-        resolved URL lacks a hash and has the same origin, path, and query.
+        Before publication, <code>client/navigation-preparation.ts</code> checks the resolved
+        destination. A different origin requires document navigation. A changed same-origin URL
+        requires document replacement for traversal or when no precommit controller is available.
+        Otherwise, that controller can redirect after React commits. The requested hash survives
+        only if the resolved URL lacks a hash and has the same origin, path, and query.
       </p>
       <h2 id="transition-commit">Distinguish scheduling a render from committing it</h2>
       <p>
@@ -107,14 +107,12 @@ export const page: DocPage = {
         />
       </figure>
       <p>
-        <code>browserRenderer.navigate</code> schedules a state update and returns three lifecycle
-        handles:
+        <code>renderer.navigate</code> schedules a state update and returns three lifecycle handles:
       </p>
       <ul>
         <li>
           <code>committed</code> resolves when a layout effect in{" "}
-          <code>client/react-dom-renderer.tsx</code> calls{" "}
-          <code>browserRenderer.commit(render)</code>.
+          <code>client/browser-root.tsx</code> calls <code>renderer.commit(render)</code>.
         </li>
         <li>
           <code>retired</code> resolves when a replacement commit no longer retains the tree.

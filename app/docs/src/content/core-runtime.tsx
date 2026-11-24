@@ -128,25 +128,24 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   event.navigationType !== "reload";`,
   },
   navigationPublication: {
-    path: "packages/core/src/client/client-router.ts",
+    path: "packages/core/src/client/navigation-publication.ts",
     language: "typescript",
-    code: `          const rendererNavigation = yield* Effect.sync(() => {
-            let navigation!: BrowserRendererNavigation;
-            startTransition(() => {
-              const fromIndex =
-                navigationApi.getTransition()?.from.index ??
-                navigationApi.getCurrentEntry()?.index ??
-                null;
-              for (const type of getNavigationTransitionTypes(event, fromIndex)) {
-                addTransitionType(type);
-              }
-              for (const type of linkTransitionTypes) {
-                addTransitionType(type);
-              }
-              navigation = browserRenderer.navigate(command.resource.routeTree);
-            });
-            return navigation;
-          });`,
+    code: `export const publishNavigation = (
+  { navigation, renderer }: PublicationContext,
+  { event, linkTransitionTypes }: PublicationRequest,
+  resource: RouteResource,
+): Effect.Effect<BrowserRendererNavigation> =>
+  Effect.sync(() => {
+    const current = MutableRef.make(Option.none<BrowserRendererNavigation>());
+    startTransition(() => {
+      const fromIndex =
+        navigation.getTransition()?.from.index ?? navigation.getCurrentEntry()?.index;
+      Array.forEach(getNavigationTransitionTypes(event, fromIndex), addTransitionType);
+      Array.forEach(linkTransitionTypes, addTransitionType);
+      MutableRef.set(current, Option.some(renderer.navigate(resource.routeTree)));
+    });
+    return Option.getOrThrow(MutableRef.get(current));
+  });`,
   },
   serverFnSchema: {
     path: "packages/core/src/application/server-fn.ts",
@@ -540,7 +539,7 @@ export const coreRuntimePages: Readonly<DocPage[]> = [
           </li>
         </ul>
         <p>
-          公開前に <code>client/client-router.ts</code> が解決済みの移動先を検査します。
+          公開前に <code>client/navigation-preparation.ts</code> が解決済みの移動先を検査します。
           originが異なればドキュメント遷移が必要です。
           同じoriginでもURLが変わる場合、履歴遷移かprecommit
           controllerがない状況ではドキュメントを置き換えます。
@@ -555,13 +554,12 @@ export const coreRuntimePages: Readonly<DocPage[]> = [
         </p>
         <SourceExcerpt source={coreRuntimeSources.navigationPublication} />
         <p>
-          <code>browserRenderer.navigate</code>{" "}
-          はstate更新を予約し、三つのライフサイクル操作を返します。
+          <code>renderer.navigate</code> はstate更新を予約し、三つのライフサイクル操作を返します。
         </p>
         <ul>
           <li>
             <code>committed</code> は、<code>client/browser-root.tsx</code> のlayout effectが{" "}
-            <code>browserRenderer.commit(render)</code> を呼ぶと解決します。
+            <code>renderer.commit(render)</code> を呼ぶと解決します。
           </li>
           <li>
             <code>retired</code> は、置き換えのcommitでツリーを保持する必要がなくなると解決します。
