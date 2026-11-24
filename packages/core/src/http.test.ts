@@ -136,7 +136,7 @@ describe("native HTTP effects", () => {
     const external: ApplicationRequirements<typeof application> = External;
     expect(services).toBe(RequestResource);
     expect(external).toBe(External);
-    const checkTypes = () => {
+    const checkTypes = (): void => {
       // @ts-expect-error External is required while constructing the captured handler.
       void Effect.runPromise(makeHttpEffect(application));
       // @ts-expect-error An ambient handler retains the external service requirement.

@@ -4,7 +4,10 @@ import Negotiator from "negotiator";
 
 const privateCacheControl = "private, no-store";
 
-const acceptsRepresentation = (accept: string | undefined, contentType: string | undefined) => {
+const acceptsRepresentation = (
+  accept: string | undefined,
+  contentType: string | undefined,
+): boolean => {
   if (!accept || !contentType) {
     return false;
   }
@@ -16,7 +19,7 @@ const acceptsRepresentation = (accept: string | undefined, contentType: string |
   return new Negotiator({ headers: { accept } }).mediaType([contentType]) !== undefined;
 };
 
-const varyFor = (vary: string | undefined) => {
+const varyFor = (vary: string | undefined): string => {
   const values = new Set(
     (vary ?? "")
       .split(",")

@@ -48,7 +48,7 @@ const retiredArticles = [
 ];
 
 for (const { locale, articles, core, contentDirectory, labels } of locales) {
-  const localizedUrl = (slug: string) => `/${locale}${slug === "/" ? "" : slug}`;
+  const localizedUrl = (slug: string): string => `/${locale}${slug === "/" ? "" : slug}`;
   const pages = [
     ...articles.map((article) => ({
       ...article,

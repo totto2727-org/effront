@@ -18,7 +18,7 @@ type RouteResource = Extract<RouteLoad, Readonly<{ _tag: "Route" }>>;
 
 const reservedTransitionTypes = new Set(["navigation", "server-function", "hmr-refresh"]);
 
-const isApplicationTransitionType = (type: string) =>
+const isApplicationTransitionType = (type: string): boolean =>
   !reservedTransitionTypes.has(type) && !type.startsWith("navigation-");
 
 const getLinkTransitionTypes = (event: NavigateEvent): Readonly<string[]> => {
@@ -429,7 +429,7 @@ export const installClientRouter = Effect.gen(function* () {
     }
   });
 
-  const openDocument = (event: NavigateEvent, destination: URL) => {
+  const openDocument = (event: NavigateEvent, destination: URL): void => {
     if (event.navigationType === "traverse") {
       navigationApi.replaceDocument(destination.href);
       return;
@@ -440,7 +440,7 @@ export const installClientRouter = Effect.gen(function* () {
     });
   };
 
-  const onNavigate = (event: NavigateEvent) => {
+  const onNavigate = (event: NavigateEvent): void => {
     if (!isRoutedNavigation(event)) {
       return;
     }
@@ -457,7 +457,7 @@ export const installClientRouter = Effect.gen(function* () {
     });
     void run(executeRouterCommand(begin.command)).catch(() => undefined);
     // Navigation handlers are native Promise boundaries.
-    const handler = async (precommitController?: NavigationPrecommitController) => {
+    const handler = async (precommitController?: NavigationPrecommitController): Promise<void> => {
       const preparation = Promise.withResolvers<NavigationPreparation>();
 
       const navigationAction = Effect.gen(function* () {

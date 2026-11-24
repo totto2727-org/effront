@@ -34,7 +34,7 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
     () =>
       new Promise<boolean>((resolve) => {
         const deadline = performance.now() + 5_000;
-        const observe = () => {
+        const observe = (): void => {
           for (const animation of document.getAnimations()) {
             const effect = animation.effect;
             if (!(effect instanceof KeyframeEffect)) {

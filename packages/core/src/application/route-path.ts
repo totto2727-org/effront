@@ -224,9 +224,9 @@ export const analyzeRoutePath = (path: string): RouteAnalysis => {
       };
 };
 
-export const validateUnreservedPath = (path: string) => {
+export const validateUnreservedPath = (path: string): void => {
   const segments = path.slice(1).split("/");
-  const canMatch = (segment: string | undefined, expected: string) =>
+  const canMatch = (segment: string | undefined, expected: string): boolean =>
     segment?.startsWith(":") === true ||
     segment?.startsWith("*") === true ||
     segment?.toLowerCase() === expected;

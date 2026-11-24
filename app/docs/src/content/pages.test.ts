@@ -8,7 +8,7 @@ import { englishArticleCatalog } from "./en/catalog.ts";
 import { documentLocale, documentPath, localizedPath } from "./locale.ts";
 
 const renderedPages = new Map<string, Promise<string>>();
-function render(slug: string) {
+function render(slug: string): Promise<string> {
   let html = renderedPages.get(slug);
   if (!html) {
     html = Effect.runPromise(getPage(slug).content()).then(renderToStaticMarkup);
@@ -16,7 +16,7 @@ function render(slug: string) {
   }
   return html;
 }
-const text = async (slug: string) => (await render(slug)).replace(/<[^>]*>/g, "");
+const text = async (slug: string): Promise<string> => (await render(slug)).replace(/<[^>]*>/g, "");
 
 // These are published URLs, not a count that can silently hide a removed article.
 const retainedUrls = [
@@ -667,7 +667,7 @@ describe("documentation catalog", () => {
       expect(
         sections.slice(0, 4).map((section) => section.match(/\{#([^}]+)\}/)?.[1]),
       ).toStrictEqual(["layouts", "pages", "routes", "application"]);
-      const code = (section: string) => section.match(/```tsx\n([\s\S]*?)\n```/)?.[1] ?? "";
+      const code = (section: string): string => section.match(/```tsx\n([\s\S]*?)\n```/)?.[1] ?? "";
       expect(code(sections[0]!)).toContain("EFFRONT.Layout.make");
       expect(code(sections[0]!)).not.toContain("EFFRONT.Page.make");
       expect(code(sections[1]!)).toContain("EFFRONT.Page.make");

@@ -47,7 +47,7 @@ const test = base.extend({
   },
 });
 
-const expectNoHorizontalOverflow = async (page: Page) => {
+const expectNoHorizontalOverflow = async (page: Page): Promise<void> => {
   const dimensions = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
     document: document.documentElement.scrollWidth,
@@ -61,7 +61,7 @@ const expectNoHorizontalOverflow = async (page: Page) => {
   );
 };
 
-const expectUnclippedSidebarLabels = async (scope: Locator) => {
+const expectUnclippedSidebarLabels = async (scope: Locator): Promise<void> => {
   const labels = await scope.locator('a[data-sidebar="menu-button"]').evaluateAll((nodes) =>
     nodes.map((node) => {
       const anchor = node as HTMLElement;
@@ -168,7 +168,7 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
   });
   expect(await retained.evaluate((before) => before.scrollTop)).toBeGreaterThan(20);
 
-  const expectRetainedSidebar = async () => {
+  const expectRetainedSidebar = async (): Promise<void> => {
     const state = await retained.evaluate((before) => {
       const sidebar = document.querySelector('[data-sidebar="sidebar"]');
       const scroller = sidebar?.querySelector<HTMLElement>('[data-sidebar="content"]');
@@ -189,7 +189,7 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
     await expect(filter).toHaveValue(" ");
   };
 
-  const expectCurrentDocument = async (path: string) => {
+  const expectCurrentDocument = async (path: string): Promise<void> => {
     await expect.poll(() => new URL(page.url()).pathname).toBe(path);
     const article = page.locator("main article");
     await expect(article).toHaveAttribute("data-doc-page", path);
@@ -278,7 +278,7 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
       attributeOldValue: true,
       attributeFilter: ["style"],
     });
-    const sample = () => {
+    const sample = (): void => {
       if (!evidence.running) {
         return;
       }

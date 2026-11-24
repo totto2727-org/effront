@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 // Local workerd validates origin policy, not the managed Workers Cache in front
 // of a deployed Worker. Native HITs and version isolation need deployment checks.
-const expectPolicy = (headers: Record<string, string>, publicResponse: boolean) => {
+const expectPolicy = (headers: Record<string, string>, publicResponse: boolean): void => {
   expect(headers["cache-control"]).toBe(
     publicResponse ? "public, max-age=0, must-revalidate" : "private, no-store",
   );

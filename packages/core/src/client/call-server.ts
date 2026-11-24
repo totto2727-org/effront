@@ -44,7 +44,7 @@ export const installCallServer = Effect.gen(function* () {
   const settleInvocation = (
     invocationResult: PromiseWithResolvers<unknown>,
     result: ServerFnResult,
-  ) => {
+  ): void => {
     switch (result._tag) {
       case "Success":
         invocationResult.resolve(result.value);

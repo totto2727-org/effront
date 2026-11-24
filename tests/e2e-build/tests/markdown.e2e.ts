@@ -272,8 +272,11 @@ test("keeps configured MarkdownDocument readable in dark mode and a narrow built
     { background: "rgb(52, 26, 0)", color: "rgb(139, 148, 158)" },
     { background: "rgb(52, 26, 0)", color: "rgb(139, 148, 158)" },
   ]);
-  const contrast = (foreground: [number, number, number], background: [number, number, number]) => {
-    const luminance = (color: [number, number, number]) =>
+  const contrast = (
+    foreground: [number, number, number],
+    background: [number, number, number],
+  ): number => {
+    const luminance = (color: [number, number, number]): number =>
       color
         .map((channel) => channel / 255)
         .map((channel) =>

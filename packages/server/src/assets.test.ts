@@ -53,7 +53,7 @@ const withServer = (
     deniedStatPath?: string;
     onStreamExit?: (completed: boolean) => void;
   }> = {},
-) =>
+): Promise<void> =>
   Effect.runPromise(
     Effect.scoped(
       Effect.gen(function* () {

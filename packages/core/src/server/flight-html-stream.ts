@@ -13,7 +13,7 @@ export type FlightHtmlStreamOptions = Readonly<{
   nonce?: string;
 }>;
 
-const trailerPrefixLength = (bytes: Uint8Array) => {
+const trailerPrefixLength = (bytes: Uint8Array): number => {
   const maximumLength = Math.min(bytes.byteLength, htmlTrailer.byteLength);
   for (let length = maximumLength; length > 0; length -= 1) {
     const offset = bytes.byteLength - length;
@@ -31,12 +31,12 @@ const trailerPrefixLength = (bytes: Uint8Array) => {
   return 0;
 };
 
-const escapeInlineScript = (script: string) =>
+const escapeInlineScript = (script: string): string =>
   script.replace(/<!--|<\/script/gi, (match) =>
     match === "<!--" ? "<\\!--" : `</\\${match.slice(2)}`,
   );
 
-const toBase64 = (bytes: Uint8Array) => {
+const toBase64 = (bytes: Uint8Array): string => {
   let binary = "";
   for (const byte of bytes) {
     binary += String.fromCodePoint(byte);
@@ -48,7 +48,7 @@ const writeFlightValue = (
   value: string,
   controller: StreamController,
   nonce: string | undefined,
-) => {
+): void => {
   const script = escapeInlineScript(`(self.__FLIGHT_DATA||=[]).push(${value})`);
   const nonceAttribute = nonce === undefined ? "" : ` nonce="${nonce}"`;
   controller.enqueue(encoder.encode(`<script${nonceAttribute}>${script}</script>`));
@@ -59,7 +59,7 @@ const writeFlightChunk = (
   chunk: Uint8Array,
   controller: StreamController,
   nonce: string | undefined,
-) => {
+): void => {
   try {
     // Decode each chunk independently: a streaming fatal decoder can discard pending
     // bytes from the previous chunk when the next chunk contains binary Flight data.
@@ -81,7 +81,7 @@ const writeFlightStream = async (
   reader: ReadableStreamDefaultReader<Uint8Array>,
   controller: StreamController,
   nonce: string | undefined,
-) => {
+): Promise<void> => {
   const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
   while (true) {
     const result = await reader.read();
@@ -121,13 +121,13 @@ export const injectFlightPayload = (
   const htmlWriter = makeHtmlWriter();
   const flightReader = flightStream.getReader();
   let flightReleased = false;
-  const releaseFlight = () => {
+  const releaseFlight = (): void => {
     if (!flightReleased) {
       flightReleased = true;
       flightReader.releaseLock();
     }
   };
-  const cancelFlight = (reason: unknown) => {
+  const cancelFlight = (reason: unknown): void => {
     if (!flightReleased) {
       // Cancelling a tee branch settles its pending reads immediately, but the
       // cancellation promise waits for the sibling. Do not block request-scope

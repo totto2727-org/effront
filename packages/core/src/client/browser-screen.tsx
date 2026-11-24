@@ -168,10 +168,10 @@ export function BrowserFailureScreen() {
   );
 }
 
-const renderBrowserScreen = (screen: ReactNode) => {
+const renderBrowserScreen = (screen: ReactNode): void => {
   const container = document.createElement("div");
   document.body.replaceChildren(container);
   createRoot(container).render(screen);
 };
 
-export const showBrowserFailure = () => renderBrowserScreen(<BrowserFailureScreen />);
+export const showBrowserFailure = (): void => renderBrowserScreen(<BrowserFailureScreen />);

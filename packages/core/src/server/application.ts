@@ -26,7 +26,7 @@ const DynamicResponseHeaders = {
   "cache-control": "private, no-store",
 } as const;
 
-const appendAcceptVary = (vary: string | undefined) => {
+const appendAcceptVary = (vary: string | undefined): string => {
   if (vary === undefined || String.isEmpty(vary.trim())) {
     return "Accept";
   }

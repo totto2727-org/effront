@@ -405,7 +405,7 @@ const servicesAreExact: [Services] extends [LayoutService | PageService | Nested
   : false = true;
 void servicesAreExact;
 
-const typecheckLoadingRenderers = (loading: boolean) => {
+const typecheckLoadingRenderers = (loading: boolean): void => {
   EFFRONT.Loading.make({
     // @ts-expect-error Loading must be immediately renderable, not asynchronous.
     // intentional invalid renderer fixture

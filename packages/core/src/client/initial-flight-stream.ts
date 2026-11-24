@@ -15,7 +15,7 @@ export const makeInitialFlightStream = (
   let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      const enqueue = (chunk: EmbeddedFlightChunk) => {
+      const enqueue = (chunk: EmbeddedFlightChunk): void => {
         controller.enqueue(typeof chunk === "string" ? Encoder.encode(chunk) : chunk);
       };
       for (const chunk of queue) {

@@ -20,7 +20,7 @@ it.effect("initializes once for a React root", () =>
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer;
     const initialRouteTree = makeRouteTree("initial");
-    const publish = () => undefined;
+    const publish = (): undefined => undefined;
 
     expect(() => renderer.navigate(makeRouteTree("destination"))).toThrow(
       "BrowserRenderer must be initialized by ReactDOMRenderer.",

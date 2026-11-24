@@ -30,7 +30,7 @@ const englishNavigation = [englishIntroduction, englishChapter, englishNextChapt
 function render(
   current: DocsShellProps["current"],
   options: Partial<Omit<DocsShellProps, "current" | "children">> = {},
-) {
+): string {
   return renderToStaticMarkup(
     <DocsShell current={current} navigation={navigation} headings={[]} {...options}>
       <h1>{current.title}</h1>

@@ -161,7 +161,7 @@ const entry = "virtual:effront-native-http-test";
 const resolvedEntry = `\0${entry}`;
 const eventsKey = "__effront_native_http_test_events__";
 
-const handlerSource = (version: string) => `
+const handlerSource = (version: string): string => `
   import { Effect, Stream } from 'effect';
   import { HttpServerRequest, HttpServerResponse } from 'effect/http';
   export const handler = Effect.gen(function* () {
@@ -222,7 +222,7 @@ const setupServer = async (middlewareMode = false) => {
   };
 };
 
-const listen = async (server: ViteDevServer) => {
+const listen = async (server: ViteDevServer): Promise<string> => {
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string") {

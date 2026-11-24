@@ -81,7 +81,7 @@ for (const theme of ["light", "dark"] as const) {
         if (!context) {
           throw new TypeError("Canvas color conversion is unavailable");
         }
-        const luminance = (color: string) => {
+        const luminance = (color: string): number => {
           context.fillStyle = color;
           context.fillRect(0, 0, 1, 1);
           const channels = Array.from(context.getImageData(0, 0, 1, 1).data)
@@ -95,7 +95,7 @@ for (const theme of ["light", "dark"] as const) {
         const background = luminance(
           getComputedStyle(document.documentElement).getPropertyValue("--background"),
         );
-        const contrast = (color: string) => {
+        const contrast = (color: string): number => {
           const foreground = luminance(color);
           return (
             (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)

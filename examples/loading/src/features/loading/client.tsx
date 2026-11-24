@@ -12,7 +12,7 @@ export function SuspensionDemo({ local }: Readonly<{ local: boolean }>) {
   const [isPending, startTransition] = useTransition();
   const attempt = useRef(0);
 
-  function load(transition: boolean) {
+  function load(transition: boolean): void {
     attempt.current += 1;
     const current = attempt.current;
     // An event owns each promise. Creating it during render would suspend again on retry.

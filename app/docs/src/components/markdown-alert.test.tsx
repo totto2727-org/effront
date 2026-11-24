@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vite-plus/test";
 import { markdownAlertComponents } from "./markdown-alert.tsx";
 
-async function render(markdown: string) {
+async function render(markdown: string): Promise<string> {
   const collection = await Effect.runPromise(
     createMarkdownCollection({ basePath: "/", documents: { "./alert.md": markdown } }),
   );

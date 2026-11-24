@@ -6,7 +6,7 @@ import type { CodeLanguage } from "./code-block.tsx";
 let CodeBlock: typeof import("./code-block").CodeBlock;
 let offlineMarkup: string;
 
-const decodeText = (value: string) =>
+const decodeText = (value: string): string =>
   value.replace(/&(amp|lt|gt|quot|#x27);/gu, (entity) => {
     switch (entity) {
       case "&amp;":
@@ -26,7 +26,7 @@ const decodeText = (value: string) =>
 
 // Inspect React's serialized text without executing markup. Real browser parsing,
 // computed colors and no-JavaScript rendering are covered by docs.e2e.ts.
-const serializedCodeText = (html: string) => {
+const serializedCodeText = (html: string): string => {
   const body = html.match(/<code>([\s\S]*?)<\/code>/)?.[1];
   expect(body).toBeDefined();
   return decodeText(body!.replace(/<\/?span\b[^>]*>/g, ""));

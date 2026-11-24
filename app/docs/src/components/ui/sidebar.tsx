@@ -76,7 +76,7 @@ function SidebarProvider({
     }
   }, [isMobile, openMobile, setOpen]);
   React.useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
+    const handler = (event: KeyboardEvent): void => {
       if (event.key === "b" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         toggleSidebar();

@@ -69,7 +69,7 @@ export const installRouteRefresh = Effect.gen(function* () {
   }).pipe(Effect.repeat({ while: (state) => state === "Settled" }), Effect.asVoid);
 
   const waitForRoutedNavigation = Effect.callback<void>((resume) => {
-    const onNavigate = (event: NavigateEvent) => {
+    const onNavigate = (event: NavigateEvent): void => {
       if (isRoutedNavigation(event)) {
         resume(Effect.void);
       }

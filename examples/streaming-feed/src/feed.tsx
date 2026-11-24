@@ -77,7 +77,7 @@ export function Feed({ seed }: Readonly<{ seed: Readonly<Story[]> }>) {
     return () => request.current?.abort();
   }, []);
 
-  const loadMore = () => {
+  const loadMore = (): void => {
     if (request.current || ended) {
       return;
     }

@@ -24,7 +24,7 @@ declare global {
 
 // Observe native browser animations on every frame. Do not replace startViewTransition or
 // infer an animation merely from a React callback, URL change, or generated CSS rule.
-const observeAnimations = (page: Page) =>
+const observeAnimations = (page: Page): Promise<void> =>
   page.evaluate(() => {
     window.transitionEvidence = {
       samples: [],
@@ -33,7 +33,7 @@ const observeAnimations = (page: Page) =>
       layout: document.querySelector('[aria-label="Persistent transition layout"]'),
     };
     const evidence = window.transitionEvidence;
-    const observe = () => {
+    const observe = (): void => {
       if (!evidence.running) {
         return;
       }
@@ -77,7 +77,7 @@ const finishObservation = async (page: Page) => {
   });
 };
 
-const visitExample = async (page: Page, mode: string) => {
+const visitExample = async (page: Page, mode: string): Promise<void> => {
   await page.goto(`/transitions/${mode}-a`);
   await page.waitForLoadState("networkidle");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${mode} page A`);
@@ -90,7 +90,7 @@ const visitExample = async (page: Page, mode: string) => {
   await observeAnimations(page);
 };
 
-const assertLayoutRetained = async (page: Page) => {
+const assertLayoutRetained = async (page: Page): Promise<void> => {
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
   expect(
     await page.evaluate(
@@ -101,7 +101,7 @@ const assertLayoutRetained = async (page: Page) => {
   ).toBe(true);
 };
 
-const isPlaying = (sample: AnimationSample) =>
+const isPlaying = (sample: AnimationSample): boolean =>
   sample.playState === "running" &&
   sample.progress !== null &&
   sample.progress > 0 &&

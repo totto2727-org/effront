@@ -215,7 +215,7 @@ describe("named catch-all routes", () => {
       // @ts-expect-error A catch-all Page requires a parameter Schema.
       EFFRONT.Routes.make().page("/manual/*path", HomePage),
     ).toThrow("must declare a parameter Schema");
-    const checkNames = () => {
+    const checkNames = (): void => {
       // @ts-expect-error The schema must declare path, not slug.
       EFFRONT.Routes.make().page("/manual/*path", SlugPage);
       // @ts-expect-error Both regular and catch-all parameters must appear in the Schema.
@@ -246,7 +246,7 @@ describe("named catch-all routes", () => {
       "/manual/:path/*path",
     ];
     type Accepted = { [Path in Invalid]: ValidRoutePath<Path> }[Invalid];
-    const assertInvalid = (path: Accepted) => path;
+    const assertInvalid = (path: Accepted): never => path;
     for (const path of invalid) {
       // @ts-expect-error None of the malformed patterns is a valid route path.
       assertInvalid(path);

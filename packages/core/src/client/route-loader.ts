@@ -44,18 +44,22 @@ export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/
     const scope = yield* Effect.scope;
     const cacheRef = MutableRef.make<RouteCache>(new Map());
 
-    const remove = (cache: RouteCache, entry: CacheHistoryEntry) => {
+    const remove = (cache: RouteCache, entry: CacheHistoryEntry): void => {
       const cached = cache.get(entry.id);
       if (cached?.entry === entry) {
         cache.delete(entry.id);
       }
     };
 
-    const store = (cache: RouteCache, entry: CacheHistoryEntry, routeTree: RouteTreeModel) => {
+    const store = (
+      cache: RouteCache,
+      entry: CacheHistoryEntry,
+      routeTree: RouteTreeModel,
+    ): void => {
       const cached = cache.get(entry.id);
       if (cached?.entry !== entry) {
         cached?.entry.removeEventListener("dispose", cached.onDispose);
-        const onDispose = () => remove(cache, entry);
+        const onDispose = (): void => remove(cache, entry);
         entry.addEventListener("dispose", onDispose, { once: true });
         cache.set(entry.id, { entry, onDispose, routeTree });
         return;
@@ -63,14 +67,14 @@ export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/
       cache.set(entry.id, { ...cached, routeTree });
     };
 
-    const clear = (cache: RouteCache) => {
+    const clear = (cache: RouteCache): void => {
       for (const cached of cache.values()) {
         cached.entry.removeEventListener("dispose", cached.onDispose);
       }
       cache.clear();
     };
 
-    const invalidate = () => {
+    const invalidate = (): void => {
       clear(MutableRef.get(cacheRef));
       MutableRef.set(cacheRef, new Map());
     };

@@ -39,7 +39,7 @@ const nativeHandler = (module: unknown): NativeHandler => {
 const makeMiddleware = async (load: () => Promise<unknown>) => {
   const scope = await Effect.runPromise(Scope.make());
   let closing: Promise<void> | undefined;
-  const close = () => (closing ??= Effect.runPromise(Scope.close(scope, Exit.void)));
+  const close = (): Promise<void> => (closing ??= Effect.runPromise(Scope.close(scope, Exit.void)));
 
   try {
     // Import on every request, not once during startup. Vite's runner owns the
@@ -100,7 +100,7 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
 
   const disposers = new Set<() => Promise<void>>();
   const retain = (instance: Awaited<ReturnType<typeof makeMiddleware>>) => {
-    const dispose = async () => {
+    const dispose = async (): Promise<void> => {
       try {
         await instance.close();
       } finally {

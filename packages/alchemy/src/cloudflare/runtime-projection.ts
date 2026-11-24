@@ -41,11 +41,11 @@ export const alchemyRuntimeProjection = (): Plugin => {
   const prefix = "\0effront:alchemy-runtime:";
   const facadePrefix = "\0effront:alchemy-facade:";
   const cache = new Map<string, Promise<string>>();
-  const excluded = (file: string) =>
+  const excluded = (file: string): boolean =>
     deploymentModules.has(relative(cloudflare, file).replace(/\.ts$/u, ""));
-  const facade = (file: string) => facadePrefix + file;
+  const facade = (file: string): string => facadePrefix + file;
 
-  const compile = async (entry: string) => {
+  const compile = async (entry: string): Promise<string> => {
     const result = await build({
       configFile: false,
       root,
@@ -105,7 +105,7 @@ export const alchemyRuntimeProjection = (): Plugin => {
               }
             }
             const lines: string[] = [];
-            const target = async (source: string) => {
+            const target = async (source: string): Promise<string> => {
               if (!source.startsWith(".")) {
                 const resolved = await this.resolve(source, file);
                 if (!resolved) {

@@ -13,8 +13,8 @@ const subscribe = (onChange: () => void) => {
   query.addEventListener("change", onChange);
   return () => query.removeEventListener("change", onChange);
 };
-const getSnapshot = () => window.matchMedia(reducedMotionQuery).matches;
-const getServerSnapshot = () => false;
+const getSnapshot = (): boolean => window.matchMedia(reducedMotionQuery).matches;
+const getServerSnapshot = (): boolean => false;
 
 export function PageViewTransitionBoundary({
   children,

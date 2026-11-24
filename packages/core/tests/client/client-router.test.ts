@@ -92,11 +92,11 @@ class TestNavigationApi {
     }>
   > = [];
 
-  addEventListener(_type: "navigate", listener: EventListener) {
+  addEventListener(_type: "navigate", listener: EventListener): void {
     this.listener = listener;
   }
 
-  removeEventListener(_type: "navigate", listener: EventListener) {
+  removeEventListener(_type: "navigate", listener: EventListener): void {
     if (this.listener === listener) {
       this.listener = null;
     }
@@ -116,7 +116,7 @@ class TestNavigationApi {
     };
   }
 
-  dispatch(event: TestNavigateEvent) {
+  dispatch(event: TestNavigateEvent): void {
     this.listener?.(event);
   }
 
@@ -306,12 +306,13 @@ const makePrecommitController = (
   redirect: (url, options) => redirects.push({ options, url: url.toString() }),
 });
 
-const invokeNavigationHandler = (handler: NavigationInterceptHandler) => Promise.resolve(handler());
+const invokeNavigationHandler = (handler: NavigationInterceptHandler): Promise<void> =>
+  Promise.resolve(handler());
 
 const invokePrecommitHandler = (
   handler: NavigationPrecommitHandler,
   controller: NavigationPrecommitController,
-) => Promise.resolve(handler(controller));
+): Promise<void> => Promise.resolve(handler(controller));
 
 const prepareNavigation = Effect.fn(function* (navigation: TestNavigationApi, url: string) {
   const pendingNavigation = makeNavigationEvent({ destination: { url } });

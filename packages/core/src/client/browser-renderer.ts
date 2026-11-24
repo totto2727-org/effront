@@ -62,7 +62,7 @@ export class BrowserRenderer extends Context.Service<BrowserRenderer>()(
       const initialize = (
         initialRouteTree: RouteTreeModel,
         publish: (render: BrowserRender) => void,
-      ) => {
+      ): void => {
         const current = MutableRef.get(state);
         if (current._tag === "Ready") {
           if (current.publish === publish) {
@@ -80,7 +80,7 @@ export class BrowserRenderer extends Context.Service<BrowserRenderer>()(
         });
       };
 
-      const publish = (render: BrowserRender) => {
+      const publish = (render: BrowserRender): void => {
         publications.add(render);
         getReadyState().publish(render);
       };
@@ -132,7 +132,7 @@ export class BrowserRenderer extends Context.Service<BrowserRenderer>()(
       const navigate = (routeTree: RouteTreeModel) => schedule(routeTree, "Navigation");
       const refresh = (routeTree: RouteTreeModel) => schedule(routeTree, "Refresh");
 
-      const commit = (render: BrowserRender) => {
+      const commit = (render: BrowserRender): void => {
         const ready = getReadyState();
         if (render._tag === "Initial") {
           return;

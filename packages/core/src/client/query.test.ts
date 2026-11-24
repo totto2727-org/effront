@@ -26,7 +26,7 @@ describe("query", () => {
   it.effect("matches a query marker without leaking it into encoded arguments", () =>
     Effect.gen(function* () {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
-      const serverFn = (...args: Readonly<unknown[]>) => {
+      const serverFn = (...args: Readonly<unknown[]>): Promise<string> => {
         const matched = matchServerFnQuery(args);
         if (matched !== null) {
           observed.resolve(matched);

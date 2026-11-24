@@ -47,17 +47,17 @@ class BrowserErrorBoundary extends Component<BrowserErrorBoundaryProps, BrowserE
       : { _tag: "Ready", render: props.render };
   }
 
-  override componentDidCatch(error: unknown, info: ErrorInfo) {
+  override componentDidCatch(error: unknown, info: ErrorInfo): void {
     this.props.onError(error, info);
   }
 
-  override componentDidMount() {
+  override componentDidMount(): void {
     if (this.state._tag === "Ready") {
       this.props.onRendered();
     }
   }
 
-  override componentDidUpdate() {
+  override componentDidUpdate(): void {
     if (this.state._tag === "Ready") {
       this.props.onRendered();
     }
@@ -85,7 +85,7 @@ export class ReactDOMRenderer extends Context.Service<ReactDOMRenderer>()(
         initialPayload: FlightPayload,
       ) {
         const browserRendererReady = Promise.withResolvers<void>();
-        const reportError = (error: unknown, info: ErrorInfo) => {
+        const reportError = (error: unknown, info: ErrorInfo): void => {
           void run(
             Effect.gen(function* () {
               yield* renderStatus.report({
@@ -98,7 +98,7 @@ export class ReactDOMRenderer extends Context.Service<ReactDOMRenderer>()(
           );
         };
 
-        const reportRendered = () => {
+        const reportRendered = (): void => {
           void run(renderStatus.report({ _tag: "Rendered" }));
         };
 

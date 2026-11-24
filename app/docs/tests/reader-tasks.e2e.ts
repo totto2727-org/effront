@@ -8,7 +8,7 @@ const locales = [
 
 type ReaderLocale = (typeof locales)[number];
 
-async function openGuide(page: Page, reader: ReaderLocale, slug: string) {
+async function openGuide(page: Page, reader: ReaderLocale, slug: string): Promise<void> {
   await page.goto(`/${reader.locale}`);
   await page
     .getByRole("list", {
@@ -22,7 +22,7 @@ async function openGuide(page: Page, reader: ReaderLocale, slug: string) {
   await expect(page.locator("article").getByRole("heading", { level: 1 })).toBeVisible();
 }
 
-async function followHeading(page: Page, reader: ReaderLocale, id: string) {
+async function followHeading(page: Page, reader: ReaderLocale, id: string): Promise<void> {
   await page.getByRole("complementary", { name: reader.toc }).locator(`a[href="#${id}"]`).click();
   await expect(page.locator(`article h2#${id}`)).toBeInViewport();
 }

@@ -108,7 +108,7 @@ describe("Alchemy native application effects", () => {
   });
 
   test("does not erase missing capabilities or accept non-application types", () => {
-    const check = () => {
+    const check = (): void => {
       // @ts-expect-error The configured application still requires Capability.
       void Effect.runPromise(makeConfiguredApplicationHttpEffect<typeof application>());
       // @ts-expect-error A configured entry must be an Effront application definition.
@@ -231,7 +231,7 @@ describe("Alchemy native application effects", () => {
     type Requirements = Effect.Services<HttpApplicationEffect<never, Capability | RuntimeContext>>;
     expectTypeOf<Effect.Services<typeof omitted>>().toEqualTypeOf<Requirements>();
     expectTypeOf<Effect.Services<typeof optional>>().toEqualTypeOf<Requirements>();
-    const check = () => {
+    const check = (): void => {
       const missingCapability = Effect.scoped(omitted).pipe(
         Effect.provideService(RuntimeContext, runtime("current")),
         Effect.provideService(HttpServerRequest.HttpServerRequest, request("/missing")),
@@ -255,7 +255,7 @@ describe("Alchemy native application effects", () => {
   });
 
   test("retains application capabilities in construction requirements", () => {
-    const check = () => {
+    const check = (): void => {
       // @ts-expect-error Construction requires Capability, but not host RuntimeContext.
       void Effect.runPromise(makeApplicationHttpEffect(async () => application));
     };

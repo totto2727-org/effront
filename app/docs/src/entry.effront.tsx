@@ -24,7 +24,7 @@ const RetiredArticleRedirects = HttpRouter.middleware(
       if (request.method === "GET" || request.method === "HEAD") {
         const canonicalPath = documentPath(url.pathname);
         const prefixed = /^\/(en|ja)(?:\/|$)/u.test(url.pathname);
-        const destination = (path: string) =>
+        const destination = (path: string): string =>
           prefixed ? localizedPath(path, documentLocale(url.pathname)) : path;
         if (canonicalPath === "/advanced") {
           return HttpServerResponse.redirect(

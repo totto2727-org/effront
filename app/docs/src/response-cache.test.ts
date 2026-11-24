@@ -27,7 +27,7 @@ const pageRequest = (headers: Record<string, string> = {}, method = "GET") =>
     method,
     headers: { accept: "text/html", ...headers },
   });
-const expectPolicy = (response: HttpServerResponse.HttpServerResponse, isPublic: boolean) => {
+const expectPolicy = (response: HttpServerResponse.HttpServerResponse, isPublic: boolean): void => {
   expect(response.headers["cache-control"]).toBe(
     isPublic ? "public, max-age=0, must-revalidate" : "private, no-store",
   );

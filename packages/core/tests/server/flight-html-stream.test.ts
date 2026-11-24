@@ -39,7 +39,7 @@ const streamFrom = (source: Readonly<SourceChunk[]>) => {
 const streamToBytes = (stream: ReadableStream<Uint8Array>) =>
   Effect.promise(async () => new Uint8Array(await new Response(stream).arrayBuffer()));
 
-const sleep = (milliseconds: number) =>
+const sleep = (milliseconds: number): Promise<void> =>
   new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
 const streamToText = (stream: ReadableStream<Uint8Array>) =>
@@ -59,7 +59,7 @@ const embeddedFlightQueue = (html: string, nonce?: string) => {
 const reconstructFlight = (html: string, nonce?: string) =>
   streamToBytes(makeInitialFlightStream(embeddedFlightQueue(html, nonce), (close) => close()));
 
-const flightScript = (text: string) =>
+const flightScript = (text: string): string =>
   `<script>(self.__FLIGHT_DATA||=[]).push(${JSON.stringify(text)})</script>`;
 
 describe("injectFlightPayload", () => {

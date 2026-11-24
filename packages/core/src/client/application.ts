@@ -61,7 +61,7 @@ const installViteHmr = Effect.gen(function* () {
 
   const run = yield* BrowserEffectRunner;
   const routeRefresher = yield* RouteRefresher;
-  const refresh = () => {
+  const refresh = (): void => {
     void run(routeRefresher.refreshCurrentRoute("hmr-refresh"));
   };
   hot.on("rsc:update", refresh);
