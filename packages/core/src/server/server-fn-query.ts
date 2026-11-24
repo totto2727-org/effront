@@ -1,4 +1,4 @@
-import { Predicate, Cause, Effect, Option } from "effect";
+import { Cause, Effect, Option, Predicate } from "effect";
 import { HttpServerRequest } from "effect/http";
 import type { Scope } from "effect";
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
@@ -8,7 +8,12 @@ import type { AnyMiddleware } from "#core/application/middleware.ts";
 import { ServerFnIdHeader } from "#core/rsc/flight.ts";
 import type { ServerFnResult } from "#core/rsc/flight.ts";
 import { serverFnResponse } from "./server-fn-outcome.ts";
-import { decodeServerFnCall, ServerFnRequestError, validateOrigin } from "./server-fn-request.ts";
+import {
+  badRequest,
+  internalServerError,
+  ServerFnRequestError,
+} from "./server-fn-request-error.ts";
+import { decodeServerFnCall, validateOrigin } from "./server-fn-request.ts";
 
 export type PreparedServerFnQuery<Services> = Readonly<{
   execute: Effect.Effect<ServerFnResult, never, Services | Scope.Scope>;
@@ -24,9 +29,9 @@ const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
   const actionId = request.headers[ServerFnIdHeader];
   if (Predicate.isNullish(actionId)) {
     return yield* new ServerFnRequestError({
-      cause: new Error(`Missing the ${ServerFnIdHeader} header.`),
+      cause: new Cause.IllegalArgumentError(`Missing the ${ServerFnIdHeader} header.`),
       message: "A query request must identify its Server Function.",
-      status: 400,
+      status: badRequest,
     });
   }
 
@@ -41,7 +46,7 @@ const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
     execute: serverFnResponse(operation.effect),
     middleware: operation.middleware,
     temporaryReferences,
-  } as PreparedServerFnQuery<Services>;
+  } satisfies PreparedServerFnQuery<Services>;
 });
 
 export const prepareServerFnQuery = <Services>(
@@ -60,7 +65,7 @@ export const prepareServerFnQuery = <Services>(
           : new ServerFnRequestError({
               cause: Cause.squash(cause),
               message: "Failed to prepare the Server Function query.",
-              status: 500,
+              status: internalServerError,
             }),
       );
     }),

@@ -9,12 +9,12 @@ import type { AnyMiddleware } from "#core/application/middleware.ts";
 import { matchServerFnInvocation } from "#core/application/server-fn.ts";
 import type { ServerFnOperationError } from "#core/application/server-fn.ts";
 import type { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
+import { responseOk } from "./request-outcome.ts";
 import type { RequestOutcome } from "./request-outcome.ts";
 import { internalServerError, requestError } from "./server-fn-request-error.ts";
 import type { ServerFnRequestError } from "./server-fn-request-error.ts";
 
 const noMiddleware = Object.freeze([]);
-const ok = 200;
 
 // oxlint-disable-next-line unicorn/throw-new-error -- Effect’s schema error builder supplies the base class.
 export class ServerFnExecutionError extends Schema.TaggedError<ServerFnExecutionError>()(
@@ -103,6 +103,6 @@ export const executeProgressive = <ApplicationServices>(
       formState: decodedFormState ?? null,
       // oxlint-disable-next-line unicorn/no-null -- The progressive protocol uses null because the result is passed to React form state.
       serverFnResult: null,
-      status: ok,
+      status: responseOk,
     } satisfies RequestOutcome;
   });
