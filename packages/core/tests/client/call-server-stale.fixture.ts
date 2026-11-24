@@ -4,9 +4,8 @@ import { vi } from "vitest";
 import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
 import type { BrowserRenderer } from "#core/client/browser-renderer.ts";
 import { FlightClient } from "#core/client/flight-client.ts";
-import { RouteRefresher } from "#core/client/route-refresh.ts";
 
-import { makeFlight } from "./call-server-mutation.fixture.ts";
+import { makeFlight, recordRefresh } from "./call-server-mutation.fixture.ts";
 import { invokeServerFn } from "./call-server-react.fixture.ts";
 import {
   firstEntry,
@@ -46,28 +45,11 @@ const staleTransport = Effect.gen(function* () {
   return { flight, pending, started };
 });
 
-const recordRefresh = Effect.fn("effront.test.recordCurrentRouteRefresh")(function* (
-  onInterrupt: () => void,
-) {
-  const observed = yield* Deferred.make<boolean>();
-  const recorded: string[] = [];
-  const acknowledge = Deferred.succeed(observed, true);
-  const layer = RouteRefresher.layerTest({
-    interruptCurrentRouteRefresh: Effect.sync(onInterrupt),
-    refreshCurrentRoute: (type) =>
-      Effect.sync(() => {
-        recorded.push(type);
-      }).pipe(Effect.andThen(acknowledge), Effect.asVoid),
-    replace: () => Effect.void,
-  });
-  return { layer, observed, recorded };
-});
-
 type ChangeTiming = "BeforeResponse" | "DuringInterruption";
 type ChangeNavigation = (navigation: StaleNavigation) => void;
 const firstResult = "first result";
 
-export const runStaleResponse = Effect.fn("effront.test.observeStaleServerFunction")(function* (
+const runStaleResponse = Effect.fn("effront.test.observeStaleServerFunction")(function* (
   change: ChangeNavigation,
   timing: ChangeTiming,
 ) {

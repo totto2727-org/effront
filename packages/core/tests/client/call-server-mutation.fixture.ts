@@ -1,6 +1,7 @@
-import { Data, Effect } from "effect";
+import { Data, Deferred, Effect } from "effect";
 
 import { flightResources } from "#core/client/flight-client-model.ts";
+import { RouteRefresher } from "#core/client/route-refresh.ts";
 import type { ServerFnResult } from "#core/rsc/flight.ts";
 import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 import { firstEntry } from "./call-server-service.fixture.ts";
@@ -30,3 +31,20 @@ export const makeFlight = (
     release,
     resolvedUrl: new URL(firstEntry.url),
   });
+
+export const recordRefresh = Effect.fn("effront.test.recordCurrentRouteRefresh")(function* (
+  onInterrupt: () => void,
+) {
+  const observed = yield* Deferred.make<boolean>();
+  const recorded: string[] = [];
+  const acknowledge = Deferred.succeed(observed, true);
+  const layer = RouteRefresher.layerTest({
+    interruptCurrentRouteRefresh: Effect.sync(onInterrupt),
+    refreshCurrentRoute: (type) =>
+      Effect.sync(() => {
+        recorded.push(type);
+      }).pipe(Effect.andThen(acknowledge), Effect.asVoid),
+    replace: () => Effect.void,
+  });
+  return { layer, observed, recorded };
+});
