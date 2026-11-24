@@ -38,7 +38,7 @@ const test = base.extend({
     const remoteRequests: string[] = [];
     await page.route("**/*", (route) => {
       const url = new URL(route.request().url());
-      if (/^https?:$/.test(url.protocol) && url.origin !== new URL(baseURL).origin) {
+      if (/^https?:$/u.test(url.protocol) && url.origin !== new URL(baseURL).origin) {
         remoteRequests.push(url.href);
         return route.abort("blockedbyclient");
       }
@@ -141,7 +141,7 @@ test.describe("Markdown without JavaScript", () => {
       .locator("main article")
       .getByRole("link", { name: "Getting started", exact: true })
       .click();
-    await expect(page).toHaveURL(/\/manual\/guide\/getting-started\?from=manual#installation$/);
+    await expect(page).toHaveURL(/\/manual\/guide\/getting-started\?from=manual#installation$/u);
     await expect(page.locator("#installation")).toBeVisible();
   });
 
@@ -156,10 +156,10 @@ test.describe("Markdown without JavaScript", () => {
     if (!src) {
       throw new Error("The Markdown image must resolve to a public asset URL");
     }
-    expect(src).not.toMatch(/^(?:data:|file:)/);
+    expect(src).not.toMatch(/^(?:data:|file:)/u);
     const asset = await request.get(new URL(src, page.url()).href);
     expect(asset.status()).toBe(200);
-    expect(asset.headers()["content-type"]).toMatch(/^image\//);
+    expect(asset.headers()["content-type"]).toMatch(/^image\//u);
     expect(await asset.body()).toEqual(
       await readFile(new URL("../fixture/content/manual/images/diagram.svg", import.meta.url)),
     );
@@ -244,9 +244,9 @@ test("renders public Math and Mermaid subpaths with upstream props", async ({ pa
   await expect(diagram).toHaveCSS("width", "320px");
   await expect(diagram).toHaveCSS("height", "180px");
   await expect(diagram.locator("svg")).toBeVisible();
-  await expect(diagram.locator("svg")).toHaveAttribute("style", /#123456/);
+  await expect(diagram.locator("svg")).toHaveAttribute("style", /#123456/u);
   await page.locator("html").evaluate((element) => element.classList.add("dark"));
-  await expect(diagram.locator("svg")).toHaveAttribute("style", /#abcdef/);
+  await expect(diagram.locator("svg")).toHaveAttribute("style", /#abcdef/u);
 });
 
 test("keeps configured MarkdownDocument readable in dark mode and a narrow built host", async ({
@@ -304,15 +304,15 @@ test("keeps a document with server-only rich overrides out of Math and Mermaid c
   expect(html.status()).toBe(200);
   const htmlBody = await html.text();
   expect(htmlBody).toContain('data-testid="server-only-markdown"');
-  expect(htmlBody).toMatch(/Server math: (?:<!-- -->)?E = mc\^2/);
-  expect(htmlBody).toMatch(/Server diagram: (?:<!-- -->)?flowchart LR/);
-  expect(htmlBody).not.toMatch(/class="(?:math|mermaid)\b|class="katex\b/);
+  expect(htmlBody).toMatch(/Server math: (?:<!-- -->)?E = mc\^2/u);
+  expect(htmlBody).toMatch(/Server diagram: (?:<!-- -->)?flowchart LR/u);
+  expect(htmlBody).not.toMatch(/class="(?:math|mermaid)\b|class="katex\b/u);
 
   const normalFlight = await request.get("/manual", { headers: { Accept: "text/x-component" } });
   expect(normalFlight.status()).toBe(200);
   expect(normalFlight.headers()["content-type"]).toContain("text/x-component");
   const richReferences = flightClientReferences(await normalFlight.text()).filter((reference) =>
-    /^(?:Math|Mermaid)$/.test(reference.exportName),
+    /^(?:Math|Mermaid)$/u.test(reference.exportName),
   );
   expect(richReferences.map((reference) => reference.exportName).sort()).toEqual([
     "Math",
@@ -338,7 +338,7 @@ test("keeps a document with server-only rich overrides out of Math and Mermaid c
   ).not.toEqual([]);
   expect(
     serverReferences.filter((reference) =>
-      /^(?:Markdown)?(?:Math|Mermaid)$/.test(reference.exportName),
+      /^(?:Markdown)?(?:Math|Mermaid)$/u.test(reference.exportName),
     ),
     "Server-only overrides do not register rich client exports",
   ).toEqual([]);
@@ -368,7 +368,7 @@ for (const destination of [{ path: "/manual", title: "Markdown manual" }, ...des
     const body = await response.text();
     expect(body).toContain(destination.title);
     expect(body).not.toMatch(/<!doctype html/i);
-    expect(body).not.toMatch(/"digest":/);
+    expect(body).not.toMatch(/"digest":/u);
   });
 }
 
@@ -478,30 +478,30 @@ test("keeps Markdown parsing and Shiki out of the actual browser build while inc
   expect(graph.modules.some((id) => id.includes("/e2e-build/fixture/src/"))).toBe(true);
   const implementation = graph.modules;
   expect(
-    implementation.filter((id) => /(?:^|\/)node_modules\/(?:katex|beautiful-mermaid)\//.test(id)),
+    implementation.filter((id) => /(?:^|\/)node_modules\/(?:katex|beautiful-mermaid)\//u.test(id)),
     "Configured KaTeX and Mermaid runtime implementations are present in the browser build",
   ).toHaveLength(2);
   expect(
     implementation.filter((id) =>
-      /packages\/markdown\/(?:src|dist)\/(?:math|mermaid)\.(?:[jt]sx?)/.test(id),
+      /packages\/markdown\/(?:src|dist)\/(?:math|mermaid)\.(?:[jt]sx?)/u.test(id),
     ),
     "The Mermaid client wrapper is isolated while the Math re-export is optimized away",
   ).toHaveLength(1);
   expect(
     implementation.filter((id) =>
-      /packages\/markdown\/(?:src|dist)\/(?:document|index|parse)\.(?:[jt]sx?)/.test(id),
+      /packages\/markdown\/(?:src|dist)\/(?:document|index|parse)\.(?:[jt]sx?)/u.test(id),
     ),
     "The parsed document renderer remains in the RSC graph",
   ).toEqual([]);
   expect(
     implementation.filter((id) =>
-      /(?:^|\/)node_modules\/@comark\/react\/dist\/components\/(?:Math|Mermaid)\.js/.test(id),
+      /(?:^|\/)node_modules\/@comark\/react\/dist\/components\/(?:Math|Mermaid)\.js/u.test(id),
     ),
     "Configured upstream Math and Mermaid leaves are present in the browser build",
   ).toHaveLength(2);
   expect(
     implementation.filter((id) =>
-      /(?:^|\/)node_modules\/@comark\/react\/(?:dist\/(?:index|components\/MarkdownDocument)|index)/.test(
+      /(?:^|\/)node_modules\/@comark\/react\/(?:dist\/(?:index|components\/MarkdownDocument)|index)/u.test(
         id,
       ),
     ),
@@ -509,7 +509,7 @@ test("keeps Markdown parsing and Shiki out of the actual browser build while inc
   ).toEqual([]);
   expect(
     implementation.filter((id) =>
-      /(?:^|\/)node_modules\/(?:comark|shiki|oniguruma|vscode-textmate|markdown-it|micromark)\//.test(
+      /(?:^|\/)node_modules\/(?:comark|shiki|oniguruma|vscode-textmate|markdown-it|micromark)\//u.test(
         id,
       ),
     ),

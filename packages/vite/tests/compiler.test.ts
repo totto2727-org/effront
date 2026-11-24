@@ -62,7 +62,7 @@ describe("default native React Compiler", () => {
 
     expect(enabled?.code).toContain("compiler-runtime");
     expect(enabled?.code).toContain(memoSentinel);
-    expect(enabled?.code).toMatch(/\$\[\d+\]/);
+    expect(enabled?.code).toMatch(/\$\[\d+\]/u);
     expect(disabled?.code).toContain("Count:");
     expect(disabled?.code).not.toContain("compiler-runtime");
     expect(disabled?.code).not.toContain(memoSentinel);

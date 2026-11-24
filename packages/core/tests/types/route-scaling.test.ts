@@ -57,7 +57,7 @@ test(
           [compiler, "--project", join(workspace, "tsconfig.json"), "--extendedDiagnostics"],
           { timeout: compilerTimeout },
         );
-        const match = diagnostics.match(/^Instantiations:\s+(\d+)/m);
+        const match = diagnostics.match(/^Instantiations:\s+(\d+)/mu);
         expect(match, diagnostics).not.toBeNull();
         return Number(match?.[1]);
       };

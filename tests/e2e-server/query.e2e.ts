@@ -124,7 +124,7 @@ test("query sample is linked from the playground and fits a narrow viewport", as
   await page.setViewportSize({ width: 375, height: 812 });
   await page.getByRole("link", { name: "使い方", exact: true }).click();
   await page.getByRole("link", { name: "4. Query で Suspend", exact: true }).click();
-  await expect(page).toHaveURL(/\/loading\/query$/);
+  await expect(page).toHaveURL(/\/loading\/query$/u);
   await page.getByRole("button", { name: "開始（ブラウザーで取得）" }).click();
   await expect(page.getByTestId("query-result")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);

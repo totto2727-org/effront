@@ -42,7 +42,7 @@ export const alchemyRuntimeProjection = (): Plugin => {
   const facadePrefix = "\0effront:alchemy-facade:";
   const cache = new Map<string, Promise<string>>();
   const excluded = (file: string) =>
-    deploymentModules.has(relative(cloudflare, file).replace(/\.ts$/, ""));
+    deploymentModules.has(relative(cloudflare, file).replace(/\.ts$/u, ""));
   const facade = (file: string) => facadePrefix + file;
 
   const compile = async (entry: string) => {
@@ -73,7 +73,7 @@ export const alchemyRuntimeProjection = (): Plugin => {
             const providerNamespaces = new Set(
               ast.body.flatMap((node) =>
                 node.type === "ImportDeclaration" &&
-                /\/(?:Provider|Local\/(?:ProviderLayer|RpcProvider|LocalProvider))\.[jt]s$/.test(
+                /\/(?:Provider|Local\/(?:ProviderLayer|RpcProvider|LocalProvider))\.[jt]s$/u.test(
                   String(node.source.value),
                 )
                   ? node.specifiers
@@ -113,7 +113,7 @@ export const alchemyRuntimeProjection = (): Plugin => {
                 }
                 return resolved.id;
               }
-              const path = resolve(dirname(file), source.replace(/\.js$/, ".ts"));
+              const path = resolve(dirname(file), source.replace(/\.js$/u, ".ts"));
               return path.startsWith(cloudflare + "/") ? facade(path) : path;
             };
             for (const node of ast.body) {
@@ -206,7 +206,9 @@ export const alchemyRuntimeProjection = (): Plugin => {
         return;
       }
       const resolved = fileURLToPath(import.meta.resolve(id));
-      const source = resolved.replace(join(root, "lib"), join(root, "src")).replace(/\.js$/, ".ts");
+      const source = resolved
+        .replace(join(root, "lib"), join(root, "src"))
+        .replace(/\.js$/u, ".ts");
       if (!existsSync(source)) {
         throw new TypeError(`Alchemy runtime module is missing: ${source}`);
       }

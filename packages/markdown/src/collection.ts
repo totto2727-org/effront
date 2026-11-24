@@ -3,30 +3,41 @@ import { Array, Effect, Path, Predicate, Schema, String } from "effect";
 
 import { MarkdownError } from "./error.ts";
 
-export interface MarkdownCollectionOptions {
+type CollectionOptions = Readonly<{
   /** Absolute public page prefix, for example `/manual`. */
-  readonly basePath: string;
+  basePath: string;
   /** Eager Vite `?raw` imports with keys relative to the glob `base`. */
-  readonly documents: Readonly<Record<string, string>>;
+  documents: Readonly<Record<string, string>>;
   /** Eager Vite `?url` imports using the same glob `base`. Vite owns asset output. */
-  readonly assets?: Readonly<Record<string, string>>;
-}
+  assets?: Readonly<Record<string, string>>;
+}>;
 
-export interface MarkdownEntry {
+// oxlint-disable-next-line typescript/no-empty-object-type, typescript/no-empty-interface -- Keep the published interface open to declaration merging.
+export interface MarkdownCollectionOptions extends CollectionOptions {}
+
+type EntryFields = Readonly<{
   /** Glob-base-relative source key, for example `./guides/start.md`. */
-  readonly source: string;
-  readonly content: string;
-  readonly url: string;
-  readonly pathname: string;
+  source: string;
+  content: string;
+  url: string;
+  pathname: string;
+}>;
+
+export interface MarkdownEntry extends EntryFields {
+  /* oxlint-disable typescript/method-signature-style -- Keep method parameter variance in the public entry interface. */
   resolveLink(href: string): Effect.Effect<string, MarkdownError>;
   resolveImage(source: string): Effect.Effect<string, MarkdownError>;
+  /* oxlint-enable typescript/method-signature-style */
 }
 
-export interface MarkdownCollection {
-  readonly entries: Readonly<MarkdownEntry[]>;
+type CollectionFields = Readonly<{ entries: Readonly<MarkdownEntry[]> }>;
+
+export interface MarkdownCollection extends CollectionFields {
+  /* oxlint-disable typescript/method-signature-style -- Preserve method parameter variance for public collection implementations. */
   get(pathname: string): MarkdownEntry | undefined;
   resolveLink(entry: MarkdownEntry, href: string): Effect.Effect<string, MarkdownError>;
   resolveImage(entry: MarkdownEntry, source: string): Effect.Effect<string, MarkdownError>;
+  /* oxlint-enable typescript/method-signature-style */
 }
 
 const decodeSegment = (segment: string): string => {
@@ -99,43 +110,52 @@ type ResolveReference = (
   image: boolean,
 ) => Effect.Effect<string, MarkdownError>;
 
-const referenceResolver =
-  (
-    paths: Path.Path,
-    documents: ReadonlyMap<string, MarkdownEntry>,
-    assets: ReadonlyMap<string, string>,
-  ): ResolveReference =>
-  (entry, reference, image) =>
+const referenceResolver = (
+  paths: Path.Path,
+  documents: ReadonlyMap<string, MarkdownEntry>,
+  assets: ReadonlyMap<string, string>,
+): ResolveReference => {
+  const resolveImport = (
+    source: string,
+    [path, suffix]: Readonly<[string, string]>,
+    image: boolean,
+  ): Effect.Effect<string, MarkdownError> =>
     Effect.gen(function* () {
-      // URL policy belongs to Comark and the application. Only file-relative references need mapping.
-      if (isExternal(reference)) {
-        return reference;
-      }
-      const [path, suffix] = splitReference(reference);
-      if (String.isEmpty(path)) {
-        return `${entry.url}${suffix}`;
-      }
-      const directory = paths.dirname(encodedPathname(segments(entry.source))).slice(slashLength);
+      const directory = paths.dirname(encodedPathname(segments(source))).slice(slashLength);
       const relative = paths.join(directory, encodeReference(path));
       if (isOutsideBase(relative)) {
         return yield* new MarkdownError({
-          message: `reference resolves outside the collection base: ${reference} from ${entry.source}`,
+          message: `reference resolves outside the collection base: ${path}${suffix} from ${source}`,
         });
       }
       const target = paths.resolve("/", relative);
       const isDocument = !image && markdownExtension.test(paths.basename(target));
       const url = isDocument ? documents.get(target)?.url : assets.get(target);
-      if (Predicate.isNullish(url)) {
-        const kind = isDocument ? "Markdown document" : "local asset";
-        return yield* new MarkdownError({
-          message: `reference does not name an imported ${kind}: ${reference} from ${entry.source}`,
-        });
-      }
-      return `${url}${suffix}`;
+      const kind = isDocument ? "Markdown document" : "local asset";
+      return Predicate.isNullish(url)
+        ? yield* new MarkdownError({
+            message: `reference does not name an imported ${kind}: ${path}${suffix} from ${source}`,
+          })
+        : `${url}${suffix}`;
     });
 
+  return (entry, reference, image) =>
+    Effect.gen(function* () {
+      // URL policy belongs to Comark and the application. Only file-relative references need mapping.
+      if (isExternal(reference)) {
+        return reference;
+      }
+      const parts = splitReference(reference);
+      const [path, suffix] = parts;
+      if (String.isEmpty(path)) {
+        return `${entry.url}${suffix}`;
+      }
+      return yield* resolveImport(entry.source, parts, image);
+    });
+};
+
 const documentUrl = (
-  base: ReadonlyArray<string>,
+  base: Readonly<string[]>,
   parts: Array.NonEmptyArray<string>,
   source: string,
 ): Effect.Effect<string, MarkdownError> => {
@@ -157,12 +177,11 @@ const findEntry = (
   pathname: string,
 ): MarkdownEntry | undefined => {
   const [path] = splitReference(pathname);
-  if (!path.startsWith("/")) {
-    return;
-  }
   const withoutTrailingSlash = path.replace(/(?<last>[^/])\/$/u, "$<last>");
   const parts = withoutTrailingSlash.slice(slashLength).split("/");
-  return entries.get(encodedPathname(Array.map(parts, decodeSegment)));
+  return path.startsWith("/")
+    ? entries.get(encodedPathname(Array.map(parts, decodeSegment)))
+    : undefined;
 };
 
 /**
@@ -193,7 +212,7 @@ export const createMarkdownCollection = (
           const parts = yield* importedSegments(source, "document");
           const url = yield* documentUrl(base, parts, source);
           if (entriesByPathname.has(url)) {
-            return yield* new MarkdownError({
+            yield* new MarkdownError({
               message: `documents map to the same public pathname ${url}: ${source}`,
             });
           }

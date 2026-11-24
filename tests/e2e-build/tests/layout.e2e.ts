@@ -25,7 +25,7 @@ const test = base.extend({
     // This observes browser requests, not outbound requests made inside workerd.
     await page.route("**/*", (route) => {
       const url = new URL(route.request().url());
-      if (/^https?:$/.test(url.protocol) && url.origin !== origin) {
+      if (/^https?:$/u.test(url.protocol) && url.origin !== origin) {
         remoteRequests.push(url.href);
         return route.abort("blockedbyclient");
       }
@@ -262,7 +262,7 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
           continue;
         }
         const styles = `${record.oldValue ?? ""};${element.getAttribute("style") ?? ""}`;
-        if (!/view-transition-name:\s*effront-page/.test(styles)) {
+        if (!/view-transition-name:\s*effront-page/u.test(styles)) {
           continue;
         }
         evidence.targets.push({
@@ -348,7 +348,7 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
 
   const nextLink = page
     .getByRole("navigation", { name: "前後のページ" })
-    .getByRole("link", { name: /次のページ/ });
+    .getByRole("link", { name: /次のページ/u });
   const nextPath = await nextLink.getAttribute("href");
   if (!nextPath) {
     throw new Error("Expected a next article link");
@@ -358,12 +358,12 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(1);
   await page
     .getByRole("navigation", { name: "前後のページ" })
-    .getByRole("link", { name: /前のページ/ })
+    .getByRole("link", { name: /前のページ/u })
     .click();
   await expectCurrentDocument(contentPath);
   await page
     .getByRole("navigation", { name: "前後のページ" })
-    .getByRole("link", { name: /次のページ/ })
+    .getByRole("link", { name: /次のページ/u })
     .click();
   await expectCurrentDocument(nextPath);
   const changedScroll = await retained.evaluate((before) => {
@@ -422,7 +422,7 @@ test("supports mobile sidebar keyboard dismissal and link dismissal without over
   await toggle.click();
   await expect(sheet).toBeVisible();
   await sheet.getByRole("link", { name: "Markdown manual", exact: true }).click();
-  await expect(page).toHaveURL(/\/manual$/);
+  await expect(page).toHaveURL(/\/manual$/u);
   await expect(sheet).toBeHidden();
   await expect(page.locator("main article").getByRole("heading", { level: 1 })).toHaveText(
     "Markdown manual",

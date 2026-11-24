@@ -55,10 +55,10 @@ export const effrontTailwind = (options: EffrontTailwindOptions = {}): PluginOpt
       return `@import ${JSON.stringify(tailwind)};`;
     },
     transform(code, id) {
-      if (/[?&](?:raw|url|worker|sharedworker)(?:[=&]|$)/.test(id)) {
+      if (/[?&](?:raw|url|worker|sharedworker)(?:[=&]|$)/u.test(id)) {
         return;
       }
-      if (!/\.[cm]?[jt]sx?(?:\?|$)/.test(id) || !clientDirective.test(code)) {
+      if (!/\.[cm]?[jt]sx?(?:\?|$)/u.test(id) || !clientDirective.test(code)) {
         return;
       }
       // Keep the directive prologue intact. RSC collects the CSS from rendered client boundaries

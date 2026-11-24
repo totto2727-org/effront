@@ -20,7 +20,7 @@ const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.gen(function* () {
       const { request } = yield* getWorkersRequestContext();
-      const path = new URL(request.url).pathname.replace(/\/$/, "");
+      const path = new URL(request.url).pathname.replace(/\/$/u, "");
       const page = pages.find((page) => page.href === path);
       return (
         <html lang="en">
@@ -136,7 +136,7 @@ const ManualLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.gen(function* () {
       const { request } = yield* getWorkersRequestContext();
-      const pathname = new URL(request.url, "http://localhost").pathname.replace(/\/$/, "");
+      const pathname = new URL(request.url, "http://localhost").pathname.replace(/\/$/u, "");
       return <ManualShell pathname={pathname}>{children}</ManualShell>;
     }),
 });

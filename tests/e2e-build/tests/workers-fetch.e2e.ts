@@ -60,12 +60,12 @@ test("hydrates the client counter and navigates application links", async ({ pag
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "About" }).click();
-  await expect(page).toHaveURL(/\/about$/);
+  await expect(page).toHaveURL(/\/about$/u);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("About");
   await expect(page.getByTestId("label")).toHaveText(expected.label);
 
   await page.getByRole("link", { name: "Back home" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/$/u);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(expected.label);
 });
 

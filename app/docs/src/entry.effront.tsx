@@ -23,7 +23,7 @@ const RetiredArticleRedirects = HttpRouter.middleware(
       const url = new URL(request.url, "https://effront.local");
       if (request.method === "GET" || request.method === "HEAD") {
         const canonicalPath = documentPath(url.pathname);
-        const prefixed = /^\/(en|ja)(?:\/|$)/.test(url.pathname);
+        const prefixed = /^\/(en|ja)(?:\/|$)/u.test(url.pathname);
         const destination = (path: string) =>
           prefixed ? localizedPath(path, documentLocale(url.pathname)) : path;
         if (canonicalPath === "/advanced") {
@@ -63,7 +63,7 @@ const RootLayout = EFFRONT.Layout.make({
       // The shared layout keeps its client state while each request refreshes page metadata.
       const page = getPage(pathname);
       const locale = documentLocale(pathname);
-      const prefixed = /^\/(en|ja)(?:\/|$)/.test(pathname);
+      const prefixed = /^\/(en|ja)(?:\/|$)/u.test(pathname);
       return (
         <html lang={locale} className="dark">
           <head>

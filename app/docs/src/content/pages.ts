@@ -41,7 +41,7 @@ export function localizedNavigation(locale: DocLocale) {
 }
 
 export function getPage(slug: string) {
-  const canonicalSlug = slug.replace(/\/+$/, "") || "/";
+  const canonicalSlug = slug.replace(/\/+$/u, "") || "/";
   const page = [...pages, ...localizedPages].find((candidate) => candidate.slug === canonicalSlug);
   if (!page) {
     throw new TypeError(`Documentation route is missing content: ${slug}`);

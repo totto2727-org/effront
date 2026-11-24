@@ -22,7 +22,7 @@ test("native Alchemy Worker serves KV-backed RSC, hydration, Server Functions an
   await page.getByRole("button", { name: "Read KV through a Server Function" }).click();
   await expect(page.getByTestId("action-greeting")).toHaveText("Hello from Alchemy KV, Ada!");
   await page.getByRole("link", { name: "About", exact: true }).click();
-  await expect(page).toHaveURL(/\/about$/);
+  await expect(page).toHaveURL(/\/about$/u);
   await expect(page.getByTestId("label")).toHaveText("Effront + Alchemy");
   expect(errors).toEqual([]);
 });

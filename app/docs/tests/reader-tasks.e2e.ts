@@ -225,11 +225,11 @@ for (const reader of locales) {
         );
         await expect(page.locator("article")).not.toContainText("vp preview");
         await expect(
-          page.locator("article pre code").filter({ hasText: /^vp build$/ }),
+          page.locator("article pre code").filter({ hasText: /^vp build$/u }),
         ).toBeVisible();
         await followHeading(page, reader, host);
         await expect(
-          page.locator("article pre code").filter({ hasText: /^vp run start$/ }),
+          page.locator("article pre code").filter({ hasText: /^vp run start$/u }),
         ).toBeVisible();
         await expect(page.locator("article")).toContainText(`${host} dist/rsc/server.js`);
         await expect(page.locator('article a[href="http://127.0.0.1:3000"]')).toBeVisible();
@@ -296,7 +296,7 @@ for (const reader of locales) {
     await expect(theme).toContainText('@import "tailwindcss"');
     await expect(theme).toContainText("@theme");
     await followHeading(page, reader, "scope");
-    await expect(page.locator("article h2#scope")).toHaveText(/optional|必要に応じて/);
+    await expect(page.locator("article h2#scope")).toHaveText(/optional|必要に応じて/u);
     await expect(
       page.locator("article pre code").filter({ hasText: '@plugin "@tailwindcss/typography"' }),
     ).toBeVisible();
@@ -305,7 +305,7 @@ for (const reader of locales) {
     await expect(page.locator("article h2#stylesheet")).toHaveText("stylesheet");
     await expect(
       page.locator("article").getByRole("row").filter({ hasText: "undefined" }),
-    ).toContainText(/default|既定/);
+    ).toContainText(/default|既定/u);
   });
 
   test(`${reader.locale} reader follows Markdown configuration to defaults, extensions and safety limits`, async ({
@@ -387,17 +387,17 @@ for (const reader of locales) {
     for (const plugin of ["footnotes()", "math()", "mermaid({", "shiki()"]) {
       await expect(article.getByRole("row").filter({ hasText: plugin })).toBeVisible();
     }
-    await expect(article.locator("code").filter({ hasText: /^ParserOptions$/ })).toBeVisible();
+    await expect(article.locator("code").filter({ hasText: /^ParserOptions$/u })).toBeVisible();
     const options = article.locator("p").filter({ hasText: "options.plugins" });
-    await expect(options).toContainText(/after these four plugins|後に追加/);
-    await expect(options).toContainText(/not instead of them|置き換えにはなりません/);
-    await expect(article).toContainText(/No option removes|削除するオプションはありません/);
+    await expect(options).toContainText(/after these four plugins|後に追加/u);
+    await expect(options).toContainText(/not instead of them|置き換えにはなりません/u);
+    await expect(article).toContainText(/No option removes|削除するオプションはありません/u);
     await expect(
       article.locator("code").filter({ hasText: "registerDefaultPlugins: false" }),
     ).toBeVisible();
     await expect(
       article.locator('[data-alert="warning"]').filter({ hasText: "sanitizer" }),
-    ).toContainText(/not a sanitizer|sanitizer ではありません/);
+    ).toContainText(/not a sanitizer|sanitizer ではありません/u);
     await followHeading(page, reader, "rendering");
     const rendering = article.locator("p").filter({ hasText: "@effront/markdown/document" });
     await expect(rendering).toContainText("@effront/markdown/styles.css");
@@ -412,11 +412,11 @@ for (const reader of locales) {
     await expect(customization).toContainText("components={{ Mermaid: MyMermaid }}");
     const ssrWarning = article.locator('[data-alert="warning"]').filter({ hasText: "SSR" });
     await expect(ssrWarning).toContainText(
-      /need client-side JavaScript|クライアント JavaScript が必須/,
+      /need client-side JavaScript|クライアント JavaScript が必須/u,
     );
-    await expect(ssrWarning).toContainText(/server skips rendering|レンダリングをスキップ/);
+    await expect(ssrWarning).toContainText(/server skips rendering|レンダリングをスキップ/u);
     await expect(ssrWarning).toContainText(
-      /implement replacements that can render on the server|コンポーネントを独自に実装/,
+      /implement replacements that can render on the server|コンポーネントを独自に実装/u,
     );
     await expect(article.locator('a[href="https://comark.dev"]')).toBeVisible();
     await expect(article.locator('a[href="https://comark.dev/rendering/react"]')).toBeVisible();

@@ -32,7 +32,7 @@ test("packed default and react-server declarations preserve application capabili
     const { stdout: contents } = await exec("tar", ["-tzf", join(workspace, archive)], {
       timeout: archiveTimeout,
     });
-    expect(contents).not.toMatch(/\.(?:test|e2e)\.[cm]?[jt]sx?$/m);
+    expect(contents).not.toMatch(/\.(?:test|e2e)\.[cm]?[jt]sx?$/mu);
     await exec("tar", ["-xzf", join(workspace, archive), "-C", workspace], {
       timeout: archiveTimeout,
     });

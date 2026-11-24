@@ -8,7 +8,7 @@ export function documentPath(pathname: string): string {
   if (pathname === "/en" || pathname === "/ja") {
     return "/";
   }
-  return pathname.replace(/^\/(en|ja)\//, "/");
+  return pathname.replace(/^\/(en|ja)\//u, "/");
 }
 
 export function localizedPath(pathname: string, locale: DocLocale): string {
@@ -23,7 +23,7 @@ export function localizeDocumentLink(
   if (!href?.startsWith("/") || href.startsWith("//")) {
     return href;
   }
-  if (/^\/(en|ja)(?:\/|$|[?#])/.test(href)) {
+  if (/^\/(en|ja)(?:\/|$|[?#])/u.test(href)) {
     return href;
   }
   return `/${locale}${href === "/" ? "" : href}`;

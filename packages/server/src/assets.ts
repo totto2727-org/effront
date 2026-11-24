@@ -49,7 +49,7 @@ export const withAssets = <E, R>(
   FileSystem.FileSystem | Path.Path
 > =>
   Effect.gen(function* () {
-    const prefix = options.client.prefix.replace(/\/+$/, "");
+    const prefix = options.client.prefix.replace(/\/+$/u, "");
     const mount = (options: Omit<AssetMount, "prefix">) =>
       HttpStaticServer.make({
         root: options.root,

@@ -29,7 +29,7 @@ describe("Alchemy Vite graph composition", () => {
     expect(source).toContain('import application from "@effront/core/application-entry"');
     expect(source).toContain("() => Promise.resolve(application)");
     expect(source).not.toContain("import(");
-    expect(Reflect.apply(load, {}, [loader.replace(/\.ts$/, ".js")])).toBe(source);
+    expect(Reflect.apply(load, {}, [loader.replace(/\.ts$/u, ".js")])).toBe(source);
     expect(Reflect.apply(load, {}, [resolve(root, "src/application-loader.ts")])).toBeUndefined();
   });
 

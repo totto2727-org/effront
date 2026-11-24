@@ -129,7 +129,7 @@ export function makeCheckInStore() {
 
   function checkIn(organizerId: string, ticketCode: string): CheckInResult {
     const code = ticketCode.trim().toUpperCase();
-    if (!/^[A-Z0-9]+-[A-Z0-9]+$/.test(code)) {
+    if (!/^[A-Z0-9]+-[A-Z0-9]+$/u.test(code)) {
       return { status: "invalid-ticket" };
     }
 

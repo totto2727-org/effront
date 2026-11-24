@@ -7,7 +7,7 @@ let CodeBlock: typeof import("./code-block").CodeBlock;
 let offlineMarkup: string;
 
 const decodeText = (value: string) =>
-  value.replace(/&(amp|lt|gt|quot|#x27);/g, (entity) => {
+  value.replace(/&(amp|lt|gt|quot|#x27);/gu, (entity) => {
     switch (entity) {
       case "&amp;":
         return "&";
@@ -124,7 +124,7 @@ describe("server CodeBlock", () => {
     const html = renderToStaticMarkup(CodeBlock({ code, language: "tsx" }));
     expect(serializedCodeText(html)).toBe(code);
     expect(
-      new Set([...html.matchAll(/<\/?([a-z][a-z0-9]*)\b/g)].map((hit) => hit[1])),
+      new Set([...html.matchAll(/<\/?([a-z][a-z0-9]*)\b/gu)].map((hit) => hit[1])),
     ).toStrictEqual(new Set(["pre", "code", "span"]));
     expect(html).not.toMatch(/<[^>]+\bonerror\s*=/);
   });

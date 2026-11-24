@@ -1,45 +1,44 @@
-import { cpSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+// oxlint-disable-next-line rules/no-node-imports -- The build hook copies installed font assets and their license into the npm package.
+import { cp } from "node:fs/promises";
 import { defineConfig } from "vite-plus";
 
-const packageRoot = resolve(fileURLToPath(new URL(".", import.meta.url)));
-const require = createRequire(import.meta.url);
-const katexRoot = dirname(require.resolve("katex/package.json"));
-const katexFonts = resolve(katexRoot, "dist/fonts");
-const katexLicense = resolve(katexRoot, "LICENSE");
+const katexPackage = new URL(import.meta.resolve("katex/package.json"));
+const katexFonts = new URL("dist/fonts", katexPackage);
+const katexLicense = new URL("LICENSE", katexPackage);
+const dist = new URL("dist/", import.meta.url);
 
 const katexFontAssets = {
-  name: "effront-markdown-katex-fonts",
-  closeBundle() {
-    const dist = resolve(packageRoot, "dist");
-    cpSync(katexFonts, resolve(dist, "fonts"), { recursive: true });
-    cpSync(katexLicense, resolve(dist, "KaTeX-LICENSE"));
+  closeBundle: async (): Promise<void> => {
+    await Promise.all([
+      cp(katexFonts, new URL("fonts", dist), { recursive: true }),
+      cp(katexLicense, new URL("KaTeX-LICENSE", dist)),
+    ]);
   },
+  name: "effront-markdown-katex-fonts",
 };
 
+// oxlint-disable-next-line import/no-default-export -- Vite+ loads its configuration through the default export.
 export default defineConfig({
   pack: {
-    plugins: [katexFontAssets],
-    tsconfig: "./tsconfig.build.json",
-    format: "esm",
-    platform: "neutral",
+    dts: true,
     entry: {
       "*": ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.test.ts", "!src/**/*.test.tsx"],
     },
-    dts: true,
+    format: "esm",
+    outExtensions: () => ({ dts: ".d.ts", js: ".js" }),
+    platform: "neutral",
+    plugins: [katexFontAssets],
+    tsconfig: "./tsconfig.build.json",
     unbundle: true,
-    outExtensions: () => ({ js: ".js", dts: ".d.ts" }),
   },
   run: {
     tasks: {
       pack: {
-        command: "vp pack",
         cache: {
           input: [{ auto: true }, "!dist/**"],
           output: ["dist/**"],
         },
+        command: "vp pack",
       },
     },
   },

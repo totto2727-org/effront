@@ -101,7 +101,7 @@ describe("documentation catalog", () => {
       ]) {
         expect(content).toContain(example);
       }
-      expect(html.match(/data-alert="note"/g)).toHaveLength(3);
+      expect(html.match(/data-alert="note"/gu)).toHaveLength(3);
       expect(content).not.toContain("[!NOTE]");
       expect(html).toContain(`href="/${locale}/api-reference/components#view-transition"`);
       for (const referenceOnly of [
@@ -113,7 +113,7 @@ describe("documentation catalog", () => {
         expect(content).not.toContain(referenceOnly);
         await expect(text(`/${locale}/api-reference/components`)).resolves.toContain(referenceOnly);
       }
-      expect(content).not.toMatch(/transition boundary|遷移境界|NavigationPrecommitController/);
+      expect(content).not.toMatch(/transition boundary|遷移境界|NavigationPrecommitController/u);
     },
   );
 
@@ -143,7 +143,7 @@ describe("documentation catalog", () => {
       "アーキテクチャ",
     ]);
     for (const page of pages) {
-      expect(page.slug).toMatch(/^\/(?:[a-z-]+(?:\/[a-z-]+)*)?$/);
+      expect(page.slug).toMatch(/^\/(?:[a-z-]+(?:\/[a-z-]+)*)?$/u);
       expect(getPage(page.slug)).toBe(page);
       expect(navigation.find((item) => item.slug === page.slug)).toStrictEqual({
         slug: page.slug,
@@ -205,7 +205,7 @@ describe("documentation catalog", () => {
         expect(page.headings).toStrictEqual(
           [...source.matchAll(/^#{2,6} (.*?) \{#([^}]+)\}$/gm)].map((match) => ({
             id: match[2],
-            title: match[1]?.replace(/`/g, ""),
+            title: match[1]?.replace(/`/gu, ""),
           })),
         );
       }
@@ -335,7 +335,7 @@ describe("documentation catalog", () => {
     const allPages = [...pages, ...localizedPages];
     expect(new Set(allPages.map((page) => page.slug)).size).toBe(allPages.length);
     for (const page of localizedPages) {
-      expect(page.slug).toMatch(/^\/(en|ja)(?:\/[a-z-]+)*$/);
+      expect(page.slug).toMatch(/^\/(en|ja)(?:\/[a-z-]+)*$/u);
       expect(getPage(page.slug)).toBe(page);
     }
   });
@@ -352,7 +352,7 @@ describe("documentation catalog", () => {
       "/guide/middleware",
       "/guide/http",
     ]) {
-      await expect(text(slug)).resolves.not.toMatch(/Cloudflare|Workers|Wrangler|workerd|Vercel/);
+      await expect(text(slug)).resolves.not.toMatch(/Cloudflare|Workers|Wrangler|workerd|Vercel/u);
     }
     const start = await text("/guide/getting-started");
     for (const required of [
@@ -399,7 +399,7 @@ describe("documentation catalog", () => {
         if (guide !== "guide/getting-started") {
           expect(source).toContain(guide === "platforms/alchemy" ? "vp run dev" : "vp dev");
         }
-        expect(source).not.toMatch(/vp pack|vp preview/);
+        expect(source).not.toMatch(/vp pack|vp preview/u);
       }
       const start = await readFile(
         new URL(`./${directory}/guide/getting-started.md`, import.meta.url),
@@ -413,8 +413,8 @@ describe("documentation catalog", () => {
       expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
       expect(start).toContain("render: () => Effect.succeed(<h1>Hello, Effront</h1>),");
       expect(start).toContain("../platforms.md");
-      expect(start).not.toMatch(/\.\.\/platforms\/(bun|cloudflare|alchemy)\.md/);
-      expect(start).not.toMatch(/--platform (bun|cloudflare|alchemy-cloudflare)/);
+      expect(start).not.toMatch(/\.\.\/platforms\/(bun|cloudflare|alchemy)\.md/u);
+      expect(start).not.toMatch(/--platform (bun|cloudflare|alchemy-cloudflare)/u);
       const alchemy = await readFile(
         new URL(`./${directory}/platforms/alchemy.md`, import.meta.url),
         "utf8",
@@ -450,14 +450,14 @@ describe("documentation catalog", () => {
     async (locale) => {
       const queryGuide = await text(`/${locale}/guide/query-server-functions`);
       expect(queryGuide).not.toContain("effective-rsc");
-      expect(queryGuide).not.toMatch(/AbortSignal|request lifetime|リクエストの生存期間/);
+      expect(queryGuide).not.toMatch(/AbortSignal|request lifetime|リクエストの生存期間/u);
       const streamGuide = await text(`/${locale}/guide/stream-server-functions`);
       expect(streamGuide).not.toContain("effective-rsc");
       expect(streamGuide).toContain("streamFeed");
       expect(streamGuide).toContain("Stream.runForEach");
       expect(streamGuide).toContain("Effect.sleep(350)");
       expect(streamGuide).toContain("controller.abort");
-      expect(streamGuide).toMatch(/Retry|再試行/);
+      expect(streamGuide).toMatch(/Retry|再試行/u);
       expect(queryGuide).toContain("useAtom(ticketStatus)");
       expect(queryGuide).toContain("run([{ ticketCode }])");
       const failures = await text(`/${locale}/best-practices/server-function-error-handling`);
@@ -595,7 +595,7 @@ describe("documentation catalog", () => {
           "utf8",
         );
         expect(config).not.toContain("server:");
-        expect(prose).toMatch(/local URL printed by Vite|Vite が表示するローカル URL/);
+        expect(prose).toMatch(/local URL printed by Vite|Vite が表示するローカル URL/u);
         expect(config).not.toContain("preview:");
         expect(prose).not.toContain("vp preview");
         if (slug === "cloudflare") {
@@ -663,7 +663,7 @@ describe("documentation catalog", () => {
         new URL(`./${directory}/guide/routes.md`, import.meta.url),
         "utf8",
       );
-      const sections = source.split(/^## /m).slice(1);
+      const sections = source.split(/^## /mu).slice(1);
       expect(
         sections.slice(0, 4).map((section) => section.match(/\{#([^}]+)\}/)?.[1]),
       ).toStrictEqual(["layouts", "pages", "routes", "application"]);
@@ -694,7 +694,7 @@ describe("documentation catalog", () => {
       ]) {
         const html = await render(`/${locale}/guide/${guide}`);
         expect(html).not.toContain("127.0.0.1:1340");
-        expect(html).not.toMatch(/開発サーバー\s*に\s*表示された\s*URL/);
+        expect(html).not.toMatch(/開発サーバー\s*に\s*表示された\s*URL/u);
       }
       const config = await readFile(
         new URL("../../../../examples/node/vite.config.ts", import.meta.url),
@@ -710,7 +710,7 @@ describe("documentation catalog", () => {
       const html = await render(slug);
       expect(html).toContain("peerDependencies");
       expect(html).toContain("lockfile");
-      expect(html).not.toMatch(/\b\d+\.\d+\.\d+\b/);
+      expect(html).not.toMatch(/\b\d+\.\d+\.\d+\b/u);
       const root = new URL("../../../../packages/", import.meta.url);
       for (const name of (await readdir(root)).filter((name) => name !== "create-effront")) {
         const manifest = JSON.parse(
@@ -801,7 +801,7 @@ describe("documentation catalog", () => {
     const source = await readFile(file, "utf8");
     expect(source).not.toContain("markdown/docs/GUIDE.md");
     if (path.startsWith("packages/markdown/")) {
-      expect(source).not.toMatch(/\]\((?:\.\/)?(?:docs\/)?GUIDE\.md(?:[#)]|$)/);
+      expect(source).not.toMatch(/\]\((?:\.\/)?(?:docs\/)?GUIDE\.md(?:[#)]|$)/u);
     }
     const links = [...source.matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]!);
     for (const href of links) {
@@ -809,7 +809,7 @@ describe("documentation catalog", () => {
         const target = new URL(href);
         expect(target.origin).toBe("https://effront.totto2727.dev");
         expect(localizedPages.map((page) => page.slug)).toContain(target.pathname);
-      } else if (href.includes("markdown") && !/^[a-z]+:|^#/.test(href)) {
+      } else if (href.includes("markdown") && !/^[a-z]+:|^#/u.test(href)) {
         await expect(
           access(new URL(href.split("#")[0] ?? "", file)),
           href,
@@ -847,9 +847,9 @@ describe("documentation catalog", () => {
     ]),
   )("%s explains renderer capabilities without internal wiring", async (slug) => {
     const prose = await text(slug);
-    expect(prose).not.toMatch(/use client|client leaf|RSC|internal wrapper|クライアント境界/);
+    expect(prose).not.toMatch(/use client|client leaf|RSC|internal wrapper|クライアント境界/u);
     expect(prose).not.toMatch(
-      /document\.meta\.components|MarkdownDocumentProps|remote font|リモートフォント/,
+      /document\.meta\.components|MarkdownDocumentProps|remote font|リモートフォント/u,
     );
     for (const contract of [
       "@effront/markdown/document",
@@ -871,7 +871,7 @@ describe("documentation catalog", () => {
       expect(code).toContain("&lt;Mermaid {...props} width=&quot;100%&quot; /&gt;");
       expect(code).toContain("components={{ Mermaid: MyMermaid }}");
       expect(prose).toContain("nodejs_compat");
-      expect(prose).not.toMatch(/node:path|node:url/);
+      expect(prose).not.toMatch(/node:path|node:url/u);
     } else {
       expect(prose).toContain(
         slug.startsWith("/en") ? "registers Math and Mermaid by default" : "標準で登録",
@@ -913,7 +913,7 @@ describe("documentation catalog", () => {
     expect(architecture).toHaveLength(7);
     for (const page of architecture) {
       expect(page.group).toBe("実装解説");
-      expect(page.slug).toMatch(/^\/architecture\/implementation\//);
+      expect(page.slug).toMatch(/^\/architecture\/implementation\//u);
     }
     expect(pages.some((page) => page.slug.startsWith("/reading/"))).toBe(false);
     for (const locale of ["en", "ja"] as const) {
@@ -964,7 +964,7 @@ describe("documentation catalog", () => {
       );
       expect(headingIds).toStrictEqual(page.headings.map((heading) => heading.id));
       for (const heading of page.headings) {
-        expect(heading.id).toMatch(/^[a-z][a-z0-9-]*$/);
+        expect(heading.id).toMatch(/^[a-z][a-z0-9-]*$/u);
         expect(ids).toContain(heading.id);
       }
       for (const [, href] of html.matchAll(/href="([^"]+)"/g)) {
@@ -973,7 +973,7 @@ describe("documentation catalog", () => {
         }
         const url = new URL(href, `https://docs.example${page.slug}`);
         const target = getPage(url.pathname);
-        if (/^\/(en|ja)(?:\/|$)/.test(page.slug)) {
+        if (/^\/(en|ja)(?:\/|$)/u.test(page.slug)) {
           expect(target.slug, `${page.slug} -> ${href}`).toBe(
             localizedPath(target.slug, documentLocale(page.slug)),
           );

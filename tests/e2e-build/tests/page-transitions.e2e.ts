@@ -161,7 +161,7 @@ test("Page opt-out navigates without page animations and retains layout state", 
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await visitExample(page, "disabled");
   await page.getByRole("link", { name: "Next example page" }).click();
-  await expect(page).toHaveURL(/\/transitions\/disabled-b$/);
+  await expect(page).toHaveURL(/\/transitions\/disabled-b$/u);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("disabled page B");
   const samples = await finishObservation(page);
   expect(samples.filter(isPlaying)).toEqual([]);
@@ -240,7 +240,7 @@ test("navigates and retains layout state when native View Transitions are unavai
   await visitExample(page, "default");
   expect(await page.evaluate(() => typeof document.startViewTransition)).toBe("undefined");
   await page.getByRole("link", { name: "Next example page" }).click();
-  await expect(page).toHaveURL(/\/transitions\/default-b$/);
+  await expect(page).toHaveURL(/\/transitions\/default-b$/u);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("default page B");
   expect((await finishObservation(page)).filter(isPlaying)).toEqual([]);
   await assertLayoutRetained(page);
@@ -252,6 +252,6 @@ test("loads the shared example stylesheet on direct About entry", async ({ page 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("About");
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(248, 250, 252)");
   await page.getByRole("link", { name: "Back home" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/$/u);
   await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toBeVisible();
 });

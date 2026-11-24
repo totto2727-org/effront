@@ -62,7 +62,7 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
       }),
   );
   await page.getByRole("link", { name: "About", exact: true }).click();
-  await expect(page).toHaveURL(/\/about$/);
+  await expect(page).toHaveURL(/\/about$/u);
   await expect(page.getByTestId("label")).toHaveText(runtime);
   expect(await transition).toBe(true);
   expect(errors).toEqual([]);

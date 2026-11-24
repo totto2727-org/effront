@@ -21,7 +21,7 @@ test("plain anchor navigation shows route Loading without replacing the layout",
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "リンク先のページが完成（2秒）" })).toBeVisible();
   await expect(page.getByTestId("route-loading")).toBeHidden();
-  await expect(page).toHaveURL(/\/loading\/navigation$/);
+  await expect(page).toHaveURL(/\/loading\/navigation$/u);
   expect(errors).toEqual([]);
 });
 
@@ -64,8 +64,8 @@ test("independent siblings reveal separately or together while a dependent child
   }
   const parent = nested.getByText("親 完了（1.5秒）", { exact: true });
   const child = nested.getByText("子 完了（親の結果を使用 + 1.5秒）", { exact: true });
-  await expect(parent).toHaveAttribute("data-completed-at", /^\d+$/);
-  await expect(child).toHaveAttribute("data-started-at", /^\d+$/);
+  await expect(parent).toHaveAttribute("data-completed-at", /^\d+$/u);
+  await expect(child).toHaveAttribute("data-started-at", /^\d+$/u);
   expect(Number(await child.getAttribute("data-started-at"))).toBeGreaterThanOrEqual(
     Number(await parent.getAttribute("data-completed-at")),
   );
@@ -123,7 +123,7 @@ for (const destination of ["2. 段階的な表示", "3. 操作で Suspend"]) {
       await expect(
         page.getByText("子 完了（親の結果を使用 + 1.5秒）", { exact: true }),
       ).toBeVisible();
-      await expect(page.getByText(/サーバー UTC：開始/)).toHaveCount(6);
+      await expect(page.getByText(/サーバー UTC：開始/u)).toHaveCount(6);
     } else {
       await expect(page.getByTestId("interaction-page")).toBeVisible();
     }
@@ -144,7 +144,7 @@ test("plain links navigate without JavaScript", async ({ browser, baseURL }) => 
     const page = await context.newPage();
     await page.goto(`${baseURL}/loading`);
     await page.getByRole("link", { name: "1. リンクで2秒待つ" }).click();
-    await expect(page).toHaveURL(/\/loading\/navigation$/);
+    await expect(page).toHaveURL(/\/loading\/navigation$/u);
     await page.waitForLoadState("load");
   } finally {
     await context.close();
@@ -162,7 +162,7 @@ test("without navigation precommit a plain link uses a document navigation and r
   await page.getByRole("button", { name: "Count: 0", exact: true }).click();
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "1. リンクで2秒待つ" }).click();
-  await expect(page).toHaveURL(/\/loading\/navigation$/);
+  await expect(page).toHaveURL(/\/loading\/navigation$/u);
   await expect(page.getByRole("heading", { name: "リンク先のページが完成（2秒）" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toBeVisible();
 });

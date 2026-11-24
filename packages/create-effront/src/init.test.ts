@@ -35,7 +35,7 @@ const toolchainOverrides = `overrides:\n  "vite@*": npm:@voidzero-dev/vite-plus-
 async function expectPnpmConfiguration(directory: string, platform?: string): Promise<void> {
   const configuration = await readFile(join(directory, "pnpm-workspace.yaml"), "utf8");
   expect(configuration.replaceAll("'", '"')).toContain(toolchainOverrides);
-  expect(configuration).not.toMatch(/^minimumReleaseAge/m);
+  expect(configuration).not.toMatch(/^minimumReleaseAge/mu);
   expect(configuration.split("allowBuilds:\n")[1]).toBe(
     `${platform ? "" : "  bun: true\n"}  esbuild: true\n${!platform || platform.includes("cloudflare") ? "  workerd: true\n" : ""}`,
   );
@@ -106,7 +106,7 @@ for (const platform of platforms) {
       expect(manifest.scripts).not.toHaveProperty("dev");
       expect(manifest.scripts).not.toHaveProperty("build");
     }
-    expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
+    expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/u);
     expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.1.0");
     expect(manifest.devDependencies).toHaveProperty("@totto2727/gitignore-patterns", "^0.1.0");
     expect(manifest.devDependencies).toHaveProperty("@totto2727/oxlint", "^0.2.0");
@@ -122,7 +122,7 @@ for (const platform of platforms) {
     }
     for (const dependencies of [manifest.dependencies, manifest.devDependencies]) {
       for (const [name, version] of Object.entries(dependencies ?? {})) {
-        expect(version).toMatch(/^\^/);
+        expect(version).toMatch(/^\^/u);
         if (name.startsWith("@effront/")) {
           expect(version).toBe(`^${packageJson.version}`);
         }
@@ -267,7 +267,7 @@ for (const platform of ["node", "bun"] as const) {
     expect(server).toContain("...(String.isNonEmpty(port) ? { port: Number(port) } : {})");
     expect(server).toContain("...(String.isNonEmpty(hostname) ? { hostname } : {})");
     expect(server).not.toContain("port: undefined");
-    expect(server).not.toMatch(/1340|1343|127\.0\.0\.1/);
+    expect(server).not.toMatch(/1340|1343|127\.0\.0\.1/u);
   });
 }
 

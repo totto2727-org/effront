@@ -9,7 +9,7 @@ const expectPolicy = (headers: Record<string, string>, publicResponse: boolean) 
   expect(headers["cloudflare-cdn-cache-control"]).toBe(
     publicResponse ? "public, max-age=31536000" : "private, no-store",
   );
-  expect(headers["vary"]?.toLowerCase().split(/\s*,\s*/)).toEqual(
+  expect(headers["vary"]?.toLowerCase().split(/\s*,\s*/u)).toEqual(
     expect.arrayContaining(["accept"]),
   );
 };
@@ -90,7 +90,7 @@ for (const name of ["Cookie", "Authorization"]) {
     const vary = response
       .headers()
       ["vary"]?.toLowerCase()
-      .split(/\s*,\s*/);
+      .split(/\s*,\s*/u);
     expect(vary).not.toContain("cookie");
     expect(vary).not.toContain("authorization");
   });

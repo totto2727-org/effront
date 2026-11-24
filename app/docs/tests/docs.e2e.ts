@@ -75,13 +75,13 @@ test("styling distinguishes default setup from optional theme and plugin configu
   await expect(article).not.toContainText("stylingPlugins");
   await expect(defaults).not.toContainText("stylesheet:");
   await expect(article.locator("pre code").filter({ hasText: "--color-brand" })).toBeVisible();
-  await expect(article.locator("h2#scope")).toHaveText(/必要に応じて/);
+  await expect(article.locator("h2#scope")).toHaveText(/必要に応じて/u);
   await expect(
     article.locator("pre code").filter({ hasText: '@plugin "@tailwindcss/typography"' }),
   ).toBeVisible();
   await expect(article).toContainText(/Typography は[^。]*Markdown[^。]*必須ではありません/);
   await article.getByRole("link", { name: "Tailwind API", exact: true }).click();
-  await expect(page).toHaveURL(/\/api-reference\/tailwind$/);
+  await expect(page).toHaveURL(/\/api-reference\/tailwind$/u);
   await expect(page.locator("article h2#stylesheet")).toHaveText("stylesheet");
   await expect(
     page.locator("article").getByRole("row").filter({ hasText: "undefined" }),
@@ -98,7 +98,7 @@ test("Markdown readers can reach the default configuration and find the extensio
   await expect(article.locator("code").filter({ hasText: "linkify: false" })).toBeVisible();
   await expect(article.locator("pre code").filter({ hasText: "plugins: [toc()]" })).toBeVisible();
   await article.locator('a[href="/api-reference/markdown#parse"]').click();
-  await expect(page).toHaveURL(/\/api-reference\/markdown#parse$/);
+  await expect(page).toHaveURL(/\/api-reference\/markdown#parse$/u);
   await expect(page.locator("article #parse")).toBeInViewport();
   const reference = page.locator("article");
   await expect(reference.locator("p").filter({ hasText: "options.plugins" })).toContainText(
@@ -107,7 +107,7 @@ test("Markdown readers can reach the default configuration and find the extensio
   await expect(reference).toContainText(/プラグインを削除[^。]*オプションはありません/);
   await expect(
     reference.locator('[data-alert="warning"]').filter({ hasText: "sanitizer" }),
-  ).toContainText(/sanitizer ではありません/);
+  ).toContainText(/sanitizer ではありません/u);
   await expect(page.locator('article a[href="https://comark.dev"]')).toBeVisible();
 });
 
@@ -124,20 +124,20 @@ test("Markdown search and shell persist across sidebar, article and history navi
   const sidebar = page.locator('[data-slot="sidebar-content"]');
   await expect(sidebar.getByRole("link")).toHaveCount(2);
   await sidebar.locator('a[href="/guide/markdown"]').click();
-  await expect(page).toHaveURL(/\/guide\/markdown$/);
+  await expect(page).toHaveURL(/\/guide\/markdown$/u);
   await expect(page.locator("article h1")).toHaveText(articleMetadata("/guide/markdown").title);
   await expect(sidebar.locator('[aria-current="page"]')).toHaveText(
     articleMetadata("/guide/markdown").title,
   );
   await page.locator('article a[href="/api-reference/markdown"]').click();
-  await expect(page).toHaveURL(/\/api-reference\/markdown$/);
+  await expect(page).toHaveURL(/\/api-reference\/markdown$/u);
   await expect(page.getByRole("navigation", { name: "パンくずリスト" })).toContainText(
     articleMetadata("/api-reference/markdown").title,
   );
   await page.goBack();
-  await expect(page).toHaveURL(/\/guide\/markdown$/);
+  await expect(page).toHaveURL(/\/guide\/markdown$/u);
   await page.goForward();
-  await expect(page).toHaveURL(/\/api-reference\/markdown$/);
+  await expect(page).toHaveURL(/\/api-reference\/markdown$/u);
   await expect(search).toHaveValue("Markdown");
   expect(await searchNode?.evaluate((node) => node.isConnected)).toBe(true);
   expect(errors).toEqual([]);
@@ -156,21 +156,21 @@ test("sidebar DOM and latest scroll position survive article, previous-next and 
   const offset = await sidebar.evaluate((node) => node.scrollTop);
   expect(offset).toBeGreaterThan(0);
   await page.locator('article a[href="/platforms/bun"]').click();
-  await expect(page).toHaveURL(/\/platforms\/bun$/);
+  await expect(page).toHaveURL(/\/platforms\/bun$/u);
   await expect.poll(() => sidebar.evaluate((node) => node.scrollTop)).toBe(offset);
   expect(await sidebarNode?.evaluate((node) => node.isConnected)).toBe(true);
   await page.getByRole("navigation", { name: "前後のページ" }).getByRole("link").last().click();
-  await expect(page).toHaveURL(/\/platforms\/alchemy$/);
+  await expect(page).toHaveURL(/\/platforms\/alchemy$/u);
   await expect.poll(() => sidebar.evaluate((node) => node.scrollTop)).toBe(offset);
   await sidebar.evaluate((node) => {
     node.scrollTop = 180;
   });
   const latest = await sidebar.evaluate((node) => node.scrollTop);
   await page.goBack();
-  await expect(page).toHaveURL(/\/platforms\/bun$/);
+  await expect(page).toHaveURL(/\/platforms\/bun$/u);
   await expect.poll(() => sidebar.evaluate((node) => node.scrollTop)).toBe(latest);
   await page.goForward();
-  await expect(page).toHaveURL(/\/platforms\/alchemy$/);
+  await expect(page).toHaveURL(/\/platforms\/alchemy$/u);
   await expect.poll(() => sidebar.evaluate((node) => node.scrollTop)).toBe(latest);
   expect(await sidebarNode?.evaluate((node) => node.isConnected)).toBe(true);
 });
@@ -183,7 +183,7 @@ test("Markdown headings scroll natively and highlighted code remains selectable 
     .getByRole("complementary", { name: "このページ内" })
     .locator('a[href="#application"]')
     .click();
-  await expect(page).toHaveURL(/#application$/);
+  await expect(page).toHaveURL(/#application$/u);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
   const code = page
     .locator("article pre[data-code-block]")
@@ -206,7 +206,7 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox", { name: "ガイドを絞り込む" }).fill("Markdown");
   await dialog.locator('a[href="/guide/markdown"]').click();
-  await expect(page).toHaveURL(/\/guide\/markdown$/);
+  await expect(page).toHaveURL(/\/guide\/markdown$/u);
   await expect(dialog).not.toBeVisible();
   await expect(page.locator("article h1")).toBeVisible();
   await expect
@@ -223,7 +223,7 @@ test("mobile navigation opens a Markdown page without horizontal document overfl
   await finalSection.scrollIntoViewIfNeeded();
   await expect(finalSection).toBeInViewport();
   await page.goto("/guide/markdown#authoring");
-  await expect(page).toHaveURL(/#authoring$/);
+  await expect(page).toHaveURL(/#authoring$/u);
   await expect(finalSection).toBeInViewport();
   await expect(page.locator("article")).toContainText(
     /追加プラグイン[^。]*標準プラグインの後[^。]*置き換えるものではありません/,
@@ -285,7 +285,7 @@ test.describe("testing bookmark without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
   test("keeps the production anchor under Best practices", async ({ page }) => {
     await page.goto("/guide/testing?from=bookmark#production");
-    await expect(page).toHaveURL(/\/best-practices\/testing\?from=bookmark#production$/);
+    await expect(page).toHaveURL(/\/best-practices\/testing\?from=bookmark#production$/u);
     await expect(page.locator("article")).toHaveAttribute(
       "data-doc-page",
       "/best-practices/testing",
@@ -300,7 +300,7 @@ test.describe("retired startup bookmark without JavaScript", () => {
   test.use({ javaScriptEnabled: false });
   test("lands on Platforms without advertising the retired article", async ({ page }) => {
     await page.goto("/advanced/production-startup");
-    await expect(page).toHaveURL(/\/platforms$/);
+    await expect(page).toHaveURL(/\/platforms$/u);
     await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
     await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);
     await expect(page.locator("article h2#support")).toBeVisible();
@@ -328,7 +328,7 @@ test("native Flight navigation follows the retired URL while preserving the shel
   );
   await page.locator('article a[href="/advanced/production-startup"]').click();
   expect((await flight).status()).toBe(200);
-  await expect(page).toHaveURL(/\/platforms$/);
+  await expect(page).toHaveURL(/\/platforms$/u);
   await expect(page.locator("article")).toHaveAttribute("data-doc-page", "/platforms");
   expect(await search?.evaluate((node) => node.isConnected)).toBe(true);
   await expect(page.locator('a[href*="production-startup"]')).toHaveCount(0);

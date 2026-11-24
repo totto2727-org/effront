@@ -45,7 +45,7 @@ describe("documentation hierarchy", () => {
     expect(sidebar).toMatch(
       /<ul[^>]+aria-label="アーキテクチャ"><li[^>]*><span[^>]*>実装解説<\/span><ul/,
     );
-    expect(sidebar.match(/aria-label="実装解説"/g)).toHaveLength(1);
+    expect(sidebar.match(/aria-label="実装解説"/gu)).toHaveLength(1);
     expect(sidebar).toContain(`href="${chapter.slug}" aria-current="page"`);
     expect(sidebar).toContain(`href="${nextChapter.slug}"`);
     expect(sidebar).toMatch(/aria-label="Guide"><li[^>]*><a/);
@@ -97,7 +97,7 @@ describe("documentation hierarchy", () => {
     expect(sidebar).toMatch(
       /<ul[^>]+aria-label="Architecture"><li[^>]*><span[^>]*>Implementation<\/span><ul/,
     );
-    expect(sidebar.match(/aria-label="Implementation"/g)).toHaveLength(1);
+    expect(sidebar.match(/aria-label="Implementation"/gu)).toHaveLength(1);
     expect(sidebar).toContain(`href="${englishChapter.slug}" aria-current="page"`);
     expect(sidebar).toContain('href="/en"');
     expect(html.match(/<nav aria-label="Breadcrumbs"[^>]*>(.*?)<\/nav>/)?.[1]).toMatch(

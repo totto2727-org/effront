@@ -57,10 +57,10 @@ test.each(packages)(
       const exports = targets(published.exports);
       expect(exports.length).toBeGreaterThan(0);
       for (const target of exports) {
-        expect(files, target).toContain(`package/${target.replace(/^\.\//, "")}`);
-        expect(basename(target)).not.toMatch(/^index\.(?:js|d\.ts)$/);
+        expect(files, target).toContain(`package/${target.replace(/^\.\//u, "")}`);
+        expect(basename(target)).not.toMatch(/^index\.(?:js|d\.ts)$/u);
       }
-      expect(files.filter((file) => /\.(?:test|e2e)\.[cm]?[jt]sx?$/.test(file))).toStrictEqual([]);
+      expect(files.filter((file) => /\.(?:test|e2e)\.[cm]?[jt]sx?$/u.test(file))).toStrictEqual([]);
     } finally {
       rmSync(temporary, { recursive: true, force: true });
     }

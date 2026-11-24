@@ -7,7 +7,7 @@ import type { EnvironmentModuleNode, Plugin, PluginOption, UserConfig } from "vi
 
 const browserEntry = fileURLToPath(new URL("./browser.js", import.meta.url));
 
-const rawQuery = /[?&]raw(?:&|$)/;
+const rawQuery = /[?&]raw(?:&|$)/u;
 
 const rawAssetUpdates = (): Plugin => {
   const transformed = new WeakSet<EnvironmentModuleNode>();

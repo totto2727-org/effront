@@ -28,7 +28,7 @@ const exportsOf = (code: string) => {
   return clause.split(",").map((entry) =>
     entry
       .trim()
-      .split(/\s+as\s+/)
+      .split(/\s+as\s+/u)
       .at(-1),
   );
 };

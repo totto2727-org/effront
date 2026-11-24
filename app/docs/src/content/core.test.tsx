@@ -27,12 +27,12 @@ describe("current core learning material", () => {
       name: "@effront/core",
       version: architectureBaseline.version,
     });
-    expect(architectureBaseline.commit).toMatch(/^[a-f0-9]{40}$/);
+    expect(architectureBaseline.commit).toMatch(/^[a-f0-9]{40}$/u);
   });
   test.each(coreSources)(
     "keeps the $path excerpt identical to current implementation",
     async (source) => {
-      expect(source.path).toMatch(/^packages\/core\/src\/[a-z0-9/.-]+\.tsx?$/);
+      expect(source.path).toMatch(/^packages\/core\/src\/[a-z0-9/.-]+\.tsx?$/u);
       expect(source.code.length).toBeGreaterThan(60);
       const implementation = await readFile(new URL(source.path, repository), "utf8");
       expect(implementation).toContain(source.code);
@@ -56,7 +56,7 @@ describe("current core learning material", () => {
   test.each(corePages)("explains $slug with current source and navigable sections", (page) => {
     const html = renderToStaticMarkup(page.content());
     expect(html).toContain("data-core-source=");
-    expect(html).not.toMatch(/data-reading-excerpt|data-baseline|data-comparison/);
+    expect(html).not.toMatch(/data-reading-excerpt|data-baseline|data-comparison/u);
     expect(page.section).toBe("アーキテクチャ");
     expect(page.headings.length).toBeGreaterThanOrEqual(3);
   });

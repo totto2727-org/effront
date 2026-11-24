@@ -10,14 +10,14 @@ test("Alchemy Loading homepage navigates through the slow route to its completed
 
   await page.goto("/");
   await page.getByRole("link", { name: "実験室を開く" }).click();
-  await expect(page).toHaveURL(/\/loading$/);
+  await expect(page).toHaveURL(/\/loading$/u);
   await expect(page.getByTestId("loading-layout")).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "同じ「待つ」でも境界で見え方が変わる" }),
   ).toBeVisible();
   await page.getByRole("link", { name: "1. リンクで2秒待つ" }).click();
   await expect(page.getByTestId("route-loading")).toBeVisible();
-  await expect(page).toHaveURL(/\/loading\/navigation$/);
+  await expect(page).toHaveURL(/\/loading\/navigation$/u);
   await expect(page.getByRole("heading", { name: "リンク先のページが完成（2秒）" })).toBeVisible();
   await expect(page.getByTestId("loading-layout")).toBeVisible();
   expect(errors).toEqual([]);

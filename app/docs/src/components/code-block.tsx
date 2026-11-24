@@ -72,7 +72,7 @@ export function CodeBlock({ code, language = "text" }: CodeBlockProps) {
   const lines = highlighter.codeToTokensBase(code, { lang, theme: "github-dark" });
   // Shiki omits line delimiters from tokens. Reinsert the original delimiters,
   // not an unconditional trailing newline or trimmed/normalized source string.
-  const endings = code.match(/\r?\n/g) ?? [];
+  const endings = code.match(/\r?\n/gu) ?? [];
 
   return (
     <pre
