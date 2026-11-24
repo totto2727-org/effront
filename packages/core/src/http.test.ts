@@ -60,7 +60,7 @@ const makeProbeApplication = (
   return EFFRONT.make({ routes: EFFRONT.Routes.make({ layout: Shell }).page("/", Page), layer });
 };
 
-const request = (id: string, init?: RequestInit) => {
+const request = (id: string, init?: RequestInit): Request => {
   const headers = new Headers(init?.headers);
   headers.set("x-request-id", id);
   return new Request("https://example.test/probe", { ...init, headers });

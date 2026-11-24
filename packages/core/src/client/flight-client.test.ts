@@ -51,12 +51,12 @@ beforeEach(() => {
 
 const makeClient = (
   respond: (request: HttpClientRequest.HttpClientRequest, signal: AbortSignal) => Response,
-) =>
+): HttpClient.HttpClient =>
   HttpClient.make((request, _url, signal) =>
     Effect.sync(() => HttpClientResponse.fromWeb(request, respond(request, signal))),
   );
 
-const makePendingFlightResponse = (signal: AbortSignal) =>
+const makePendingFlightResponse = (signal: AbortSignal): Response =>
   new Response(
     new ReadableStream<Uint8Array>({
       start(controller) {

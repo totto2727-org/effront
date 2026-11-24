@@ -51,7 +51,7 @@ class TestNavigationHistory {
   }
 }
 
-const makeHttpClient = (requestedUrls: Array<string>) =>
+const makeHttpClient = (requestedUrls: Array<string>): HttpClient.HttpClient =>
   HttpClient.make((request) =>
     Effect.sync(() => {
       requestedUrls.push(request.url);
@@ -66,7 +66,9 @@ const makeHttpClient = (requestedUrls: Array<string>) =>
     }),
   );
 
-const makeNavigationApiLayer = (navigationHistory: TestNavigationHistory) =>
+const makeNavigationApiLayer = (
+  navigationHistory: TestNavigationHistory,
+): Layer.Layer<NavigationApi> =>
   NavigationApi.layerTest({
     getCurrentEntry: () => navigationHistory.currentEntry,
     getCurrentUrl: () => navigationHistory.currentEntry.url,

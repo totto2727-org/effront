@@ -39,7 +39,7 @@ export const matchServerFnQuery = (args: Readonly<unknown[]>): MatchedQuery | nu
   }
 };
 
-export const transportError = (cause: unknown) =>
+export const transportError = (cause: unknown): ServerFnTransportError =>
   new ServerFnTransportError({ detail: serverFnErrorDetail(cause) });
 
 export const invocationError = (cause: unknown): ServerFnError =>

@@ -41,7 +41,7 @@ const requiredChild = (node: RouteTreeModel) => {
 const findDestination = <Services,>(
   routes: Readonly<CompiledDestination<Services>[]>,
   pattern: AbsolutePath,
-) => {
+): CompiledDestination<Services> => {
   const destination = routes.find((route) => route.pattern === pattern);
   if (destination === undefined) {
     throw new Error(`Expected a compiled destination for "${pattern}".`);

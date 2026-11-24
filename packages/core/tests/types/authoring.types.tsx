@@ -102,7 +102,7 @@ EFFRONT.Routes.make().page("/:id", RenamedParamsPage);
 
 declare const uncertainPath: "/first" | "/second";
 const widenedPath: AbsolutePath = "/schedule/:day";
-const forgetPageContract = (page: AnyPageDefinition<never>) => page;
+const forgetPageContract = (page: AnyPageDefinition<never>): AnyPageDefinition<never> => page;
 const widenedPage = forgetPageContract(HomePage);
 const widenedRoutes: AnyRoutes<never> = EFFRONT.Routes.make().page("/", HomePage);
 // @ts-expect-error A widened path cannot provide exact parameter inference.

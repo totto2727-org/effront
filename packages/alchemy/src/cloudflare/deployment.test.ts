@@ -43,7 +43,7 @@ const runtime = (id: string): RuntimeContext["Service"] => ({
   get: () => Effect.undefined,
   set: (key) => Effect.succeed(key),
 });
-const request = (path: string) =>
+const request = (path: string): HttpServerRequest.HttpServerRequest =>
   HttpServerRequest.fromWeb(new Request(`https://example.test${path}`));
 
 describe("Alchemy native application effects", () => {
@@ -222,7 +222,9 @@ describe("Alchemy native application effects", () => {
   });
 
   test("retains live capability requirements when a capture type has no supplied context", async () => {
-    const load = async () => application;
+    const load = async (): Promise<
+      ApplicationDefinition<never, never, RuntimeContext | Capability>
+    > => application;
     const omitted = applicationHttpEffect<never, never, Capability | RuntimeContext, Capability>(
       load,
     );

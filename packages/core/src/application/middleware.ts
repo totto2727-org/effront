@@ -141,7 +141,11 @@ export const makeMiddlewareFactory = <ApplicationServices, AvailableServices>(
     type Provides = MiddlewareProvides<Config>;
     const httpHandler = (
       httpEffect: Effect.Effect<HttpServerResponse.HttpServerResponse, Types.unhandled, Provides>,
-    ) => handler<Types.unhandled, never>(httpEffect);
+    ): Effect.Effect<
+      HttpServerResponse.HttpServerResponse,
+      Types.unhandled,
+      HttpRouter.Provided | AvailableServices
+    > => handler<Types.unhandled, never>(httpEffect);
     return new MiddlewareImpl(
       identity,
       handler,

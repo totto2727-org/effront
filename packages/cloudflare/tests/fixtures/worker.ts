@@ -1,1 +1,1 @@
-export default { fetch: () => new Response("ok") };
+export default { fetch: (): Response => new Response("ok") };

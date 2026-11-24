@@ -10,7 +10,7 @@ import { PageViewTransition, resolvePageViewTransition } from "./page-view-trans
 import type { PageViewTransitionConfig } from "./page-view-transition.ts";
 import { PageViewTransitionBoundary } from "../client/page-view-transition.tsx";
 
-const boundaryConfig = (node: ReactNode) => {
+const boundaryConfig = (node: ReactNode): PageViewTransitionConfig => {
   if (!isValidElement<{ config: PageViewTransitionConfig; children: ReactNode }>(node)) {
     throw new TypeError("Expected the client transition boundary.");
   }

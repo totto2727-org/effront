@@ -81,7 +81,7 @@ const routedNavigation = () =>
     navigationType: "push" as const,
   });
 
-const makeNavigationApiLayer = (navigation: TestNavigation) =>
+const makeNavigationApiLayer = (navigation: TestNavigation): Layer.Layer<NavigationApi> =>
   NavigationApi.layerTest({
     getCurrentEntry: () => navigation.currentEntry,
     getCurrentUrl: () => entry.url,
@@ -131,7 +131,7 @@ const withBrowserRefresh = <A, E>(
     refresh: RouteRefresher["Service"]["refreshCurrentRoute"],
     interrupt: Effect.Effect<void>,
   ) => Effect.Effect<A, E>,
-) =>
+): Effect.Effect<A, E> =>
   Effect.scoped(
     Effect.gen(function* () {
       const initialized = yield* Deferred.make<RouteRefresher["Service"]>();

@@ -8,7 +8,7 @@ import type { RouteTreeModel } from "../rsc/route-tree.ts";
 
 const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
 
-const nextRender = (renders: Array<BrowserRender>) => {
+const nextRender = (renders: Array<BrowserRender>): BrowserRender => {
   const render = renders.shift();
   if (render === undefined) {
     throw new Error("Expected the browser renderer to publish an update.");

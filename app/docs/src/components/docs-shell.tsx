@@ -38,7 +38,7 @@ function DocsNavigation({
   current,
   navigation,
   locale = "ja",
-}: Pick<DocsShellProps, "current" | "navigation" | "locale">) {
+}: Pick<DocsShellProps, "current" | "navigation" | "locale">): React.JSX.Element {
   const [query, setQuery] = React.useState("");
   const { setOpenMobile } = useSidebar();
   const filtered = navigation.filter((item) =>
@@ -49,7 +49,7 @@ function DocsNavigation({
       .includes(query.toLocaleLowerCase()),
   );
   const sections = [...new Set(filtered.map((item) => item.section))];
-  const renderItem = (item: NavigationItem) => {
+  const renderItem = (item: NavigationItem): React.JSX.Element => {
     const active = item.slug === current.slug;
     return (
       <SidebarMenuItem key={item.slug}>
@@ -151,7 +151,7 @@ function PreviousNext({
   current,
   navigation,
   locale = "ja",
-}: Pick<DocsShellProps, "current" | "navigation" | "locale">) {
+}: Pick<DocsShellProps, "current" | "navigation" | "locale">): React.JSX.Element | null {
   const index = navigation.findIndex((item) => item.slug === current.slug);
   const previous = index > 0 ? navigation[index - 1] : undefined;
   const next = index >= 0 && index < navigation.length - 1 ? navigation[index + 1] : undefined;
@@ -199,7 +199,7 @@ export function DocsShell({
   headings,
   children,
   locale = "ja",
-}: DocsShellProps) {
+}: DocsShellProps): React.JSX.Element {
   return (
     <SidebarProvider defaultOpen>
       <a href="#main-content" className="skip-link">

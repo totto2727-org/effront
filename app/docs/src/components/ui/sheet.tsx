@@ -5,7 +5,7 @@ import { XIcon } from "lucide-react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 import { cn } from "../../lib/utils.ts";
 
-function Sheet(props: React.ComponentProps<typeof SheetPrimitive.Root>) {
+function Sheet(props: React.ComponentProps<typeof SheetPrimitive.Root>): React.JSX.Element {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
 }
 
@@ -18,7 +18,7 @@ function SheetContent({
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
-}) {
+}): React.JSX.Element {
   return (
     <SheetPrimitive.Portal data-slot="sheet-portal">
       <SheetPrimitive.Overlay
@@ -53,13 +53,15 @@ function SheetContent({
   );
 }
 
-function SheetHeader(props: React.ComponentProps<"div">) {
+function SheetHeader(props: React.ComponentProps<"div">): React.JSX.Element {
   return <div data-slot="sheet-header" {...props} />;
 }
-function SheetTitle(props: React.ComponentProps<typeof SheetPrimitive.Title>) {
+function SheetTitle(props: React.ComponentProps<typeof SheetPrimitive.Title>): React.JSX.Element {
   return <SheetPrimitive.Title data-slot="sheet-title" {...props} />;
 }
-function SheetDescription(props: React.ComponentProps<typeof SheetPrimitive.Description>) {
+function SheetDescription(
+  props: React.ComponentProps<typeof SheetPrimitive.Description>,
+): React.JSX.Element {
   return <SheetPrimitive.Description data-slot="sheet-description" {...props} />;
 }
 

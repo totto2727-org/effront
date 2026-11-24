@@ -11,7 +11,7 @@ type RoutingFields = Pick<
   "canIntercept" | "downloadRequest" | "formData" | "hashChange" | "info" | "navigationType"
 >;
 
-const makeEvent = (overrides: Partial<RoutingFields> = {}) =>
+const makeEvent = (overrides: Partial<RoutingFields> = {}): NavigateEvent =>
   ({
     canIntercept: true,
     downloadRequest: null,

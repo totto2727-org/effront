@@ -13,7 +13,9 @@ const Encoder = new TextEncoder();
 
 type SourceChunk = string | Uint8Array | (() => void | Promise<void>);
 
-const streamFrom = (source: Readonly<SourceChunk[]>) => {
+const streamFrom = (
+  source: Readonly<SourceChunk[]>,
+): ReadableStream<Uint8Array<ArrayBufferLike>> => {
   const chunks = [...source];
   return new ReadableStream<Uint8Array>({
     pull(controller) {
@@ -36,13 +38,15 @@ const streamFrom = (source: Readonly<SourceChunk[]>) => {
   });
 };
 
-const streamToBytes = (stream: ReadableStream<Uint8Array>) =>
+const streamToBytes = (
+  stream: ReadableStream<Uint8Array>,
+): Effect.Effect<Uint8Array<ArrayBuffer>> =>
   Effect.promise(async () => new Uint8Array(await new Response(stream).arrayBuffer()));
 
 const sleep = (milliseconds: number): Promise<void> =>
   new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
-const streamToText = (stream: ReadableStream<Uint8Array>) =>
+const streamToText = (stream: ReadableStream<Uint8Array>): Effect.Effect<string> =>
   streamToBytes(stream).pipe(Effect.map((bytes) => new TextDecoder().decode(bytes)));
 
 const embeddedFlightQueue = (html: string, nonce?: string) => {
@@ -56,7 +60,7 @@ const embeddedFlightQueue = (html: string, nonce?: string) => {
   return self.__FLIGHT_DATA ?? [];
 };
 
-const reconstructFlight = (html: string, nonce?: string) =>
+const reconstructFlight = (html: string, nonce?: string): Effect.Effect<Uint8Array<ArrayBuffer>> =>
   streamToBytes(makeInitialFlightStream(embeddedFlightQueue(html, nonce), (close) => close()));
 
 const flightScript = (text: string): string =>

@@ -40,7 +40,7 @@ export function localizedNavigation(locale: DocLocale) {
   );
 }
 
-export function getPage(slug: string) {
+export function getPage(slug: string): RenderableDocPage {
   const canonicalSlug = slug.replace(/\/+$/u, "") || "/";
   const page = [...pages, ...localizedPages].find((candidate) => candidate.slug === canonicalSlug);
   if (!page) {

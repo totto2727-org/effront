@@ -195,7 +195,10 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllGlobals());
 
-const makeHttpClient = (requestedUrls: Array<string> = [], contentType = "text/x-component") =>
+const makeHttpClient = (
+  requestedUrls: Array<string> = [],
+  contentType = "text/x-component",
+): HttpClient.HttpClient =>
   HttpClient.make((request) =>
     Effect.sync(() => {
       requestedUrls.push(request.url);
@@ -214,7 +217,7 @@ const makeHttpClient = (requestedUrls: Array<string> = [], contentType = "text/x
     }),
   );
 
-const makeInvalidFlightClient = () =>
+const makeInvalidFlightClient = (): HttpClient.HttpClient =>
   HttpClient.make(() =>
     Effect.succeed(
       HttpClientResponse.fromWeb(
@@ -355,7 +358,7 @@ const makeNavigationApiLayer = (
   navigation: TestNavigationApi,
   documentReplacements: Array<string> = [],
   reloadDocument: () => void = () => undefined,
-) =>
+): Layer.Layer<NavigationApi> =>
   NavigationApi.layerTest({
     getCurrentEntry: () => navigation.currentEntry,
     getCurrentUrl: () => navigation.currentEntry.url,

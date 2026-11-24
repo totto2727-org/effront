@@ -451,7 +451,7 @@ type TestNavigationState = Readonly<{
 const staleResponseScenario = (
   changeNavigation: (state: TestNavigationState) => void,
   changeTiming: "BeforeResponse" | "DuringInterruption" = "BeforeResponse",
-) =>
+): Effect.Effect<void> =>
   Effect.scoped(
     Effect.gen(function* () {
       const response = yield* Deferred.make<ReturnType<typeof makeFlight>>();

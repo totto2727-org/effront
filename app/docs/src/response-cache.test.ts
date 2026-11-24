@@ -4,7 +4,7 @@ import { describe, expect, test } from "vite-plus/test";
 
 import { responseCache } from "./response-cache.ts";
 
-const html = () =>
+const html = (): HttpServerResponse.HttpServerResponse =>
   HttpServerResponse.text("rendered", {
     contentType: "text/html",
     headers: { "cache-control": "private, no-store" },
@@ -12,7 +12,7 @@ const html = () =>
 const run = <E>(
   request: Request,
   app: Effect.Effect<HttpServerResponse.HttpServerResponse, E> = Effect.succeed(html()),
-) =>
+): Promise<HttpServerResponse.HttpServerResponse> =>
   Effect.runPromise(
     app.pipe(
       responseCache,
@@ -22,7 +22,7 @@ const run = <E>(
       ),
     ),
   );
-const pageRequest = (headers: Record<string, string> = {}, method = "GET") =>
+const pageRequest = (headers: Record<string, string> = {}, method = "GET"): Request =>
   new Request("https://docs.example/guide", {
     method,
     headers: { accept: "text/html", ...headers },

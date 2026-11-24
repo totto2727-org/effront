@@ -11,7 +11,7 @@ type FlightWindow = Window & { __FLIGHT_DATA?: EmbeddedFlightQueue };
 export const makeInitialFlightStream = (
   queue: EmbeddedFlightQueue,
   closeWhenReady: (close: () => void) => void,
-) => {
+): ReadableStream<Uint8Array<ArrayBufferLike>> => {
   let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -35,7 +35,7 @@ export const makeInitialFlightStream = (
   return stream;
 };
 
-const makeBrowserInitialFlightStream = () => {
+const makeBrowserInitialFlightStream = (): ReadableStream<Uint8Array<ArrayBufferLike>> => {
   const flightWindow = window as FlightWindow;
   const queue = (flightWindow.__FLIGHT_DATA ??= []);
   return makeInitialFlightStream(queue, (close) => {
@@ -47,7 +47,7 @@ const makeBrowserInitialFlightStream = () => {
   });
 };
 
-const makeServerInitialFlightStream = () =>
+const makeServerInitialFlightStream = (): ReadableStream<Uint8Array<ArrayBufferLike>> =>
   new ReadableStream<Uint8Array>({
     start(controller) {
       controller.close();
