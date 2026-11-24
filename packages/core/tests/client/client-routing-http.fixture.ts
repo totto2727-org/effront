@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Effect, MutableRef, Option } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
 const flightContentType = "text/x-component";
@@ -59,4 +59,27 @@ export const makeStreamingHttpClient = (): StreamingClient => {
     }),
   );
   return { httpClient, responseSignals };
+};
+
+type HeldFlight = Readonly<{ complete: () => void; httpClient: HttpClient.HttpClient }>;
+
+export const makeHeldFlight = (): HeldFlight => {
+  const active = MutableRef.make(Option.none<ReadableStreamDefaultController<Uint8Array>>());
+  const httpClient = HttpClient.make((request) =>
+    Effect.sync(() => {
+      const stream = new ReadableStream<Uint8Array>({
+        start: (controller) => {
+          MutableRef.set(active, Option.some(controller));
+          controller.enqueue(Uint8Array.of(firstChunk));
+        },
+      });
+      return HttpClientResponse.fromWeb(request, flightResponse(stream));
+    }),
+  );
+  return {
+    complete: () => {
+      Option.getOrThrow(MutableRef.get(active)).close();
+    },
+    httpClient,
+  };
 };
