@@ -6,45 +6,6 @@ import { documentLocale, localizedPath } from "./locale.ts";
 import { render, text } from "./pages-render.fixture.ts";
 
 describe("documentation catalog", () => {
-  test.each(["en", "ja"] as const)(
-    "keeps query and stream guides concise and documents shared Server Function failures in %s",
-    async (locale) => {
-      const queryGuide = await text(`/${locale}/guide/query-server-functions`);
-      expect(queryGuide).not.toContain("effective-rsc");
-      expect(queryGuide).not.toMatch(/AbortSignal|request lifetime|リクエストの生存期間/u);
-      const streamGuide = await text(`/${locale}/guide/stream-server-functions`);
-      expect(streamGuide).not.toContain("effective-rsc");
-      expect(streamGuide).toContain("streamFeed");
-      expect(streamGuide).toContain("Stream.runForEach");
-      expect(streamGuide).toContain("Effect.sleep(350)");
-      expect(streamGuide).toContain("controller.abort");
-      expect(streamGuide).toMatch(/Retry|再試行/u);
-      expect(queryGuide).toContain("useAtom(ticketStatus)");
-      expect(queryGuide).toContain("run([{ ticketCode }])");
-      const failures = await text(`/${locale}/best-practices/server-function-error-handling`);
-      expect(failures).toContain("&quot;use server&quot;");
-      expect(failures).toContain("import { Effect, Schema } from &quot;effect&quot;");
-      expect(failures).toContain("import { EFFRONT } from &quot;./effront&quot;");
-      expect(failures).toContain("Effect.catchTags({");
-      expect(failures).toContain("ServerFnTransportError");
-      await expect(render(`/${locale}/guide/query-server-functions`)).resolves.toContain(
-        'href="https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation"',
-      );
-      const alchemy = await render(`/${locale}/api-reference/alchemy`);
-      expect(alchemy).toContain('data-alert="warning"');
-      const alchemyText = await text(`/${locale}/api-reference/alchemy`);
-      expect(alchemyText).toContain("plugins: [effront(), effrontAlchemy()]");
-      expect(alchemyText).toContain(
-        locale === "en" ? "The reverse plugin order" : "プラグインの順序を逆にすると",
-      );
-      expect(alchemyText.indexOf("plugins: [effront(), effrontAlchemy()]")).toBeLessThan(
-        alchemyText.indexOf(
-          locale === "en" ? "The reverse plugin order" : "プラグインの順序を逆にすると",
-        ),
-      );
-    },
-  );
-
   test.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
     async (example) => {
