@@ -6,13 +6,14 @@ import { Deferred, Effect } from "effect";
 import { makeInitialFlightStream } from "./initial-flight-stream.ts";
 import type { EmbeddedFlightChunk } from "./initial-flight-stream.ts";
 
+const encoder = new TextEncoder();
+const binary = new Uint8Array([0, 255]);
+
 describe("initial Flight stream", () => {
   it.effect(
     "drains embedded chunks, accepts later scripts, and closes when the document is ready",
     () =>
       Effect.gen(function* () {
-        const encoder = new TextEncoder();
-        const binary = new Uint8Array([0, 255]);
         const queue: EmbeddedFlightChunk[] = ["initial", binary];
         const ready = yield* Deferred.make<() => void>();
         const reader = makeInitialFlightStream(queue, (close) => {
