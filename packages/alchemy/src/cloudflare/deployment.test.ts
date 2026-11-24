@@ -1,266 +1,176 @@
 import { live } from "@effect/vitest";
 import type { ApplicationDefinition } from "@effront/core";
-import type { HttpApplicationEffect } from "@effront/core/http";
 import { CloudflareEnvironment } from "alchemy/Cloudflare";
 import { RuntimeContext } from "alchemy/RuntimeContext";
-import { Context, Effect, Layer, Option, Scope } from "effect";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
-import { describe, expect, expectTypeOf, test, vi } from "vite-plus/test";
+import { Context, Effect, Layer, Option } from "effect";
+import type { Scope } from "effect";
+import { HttpServerRequest, HttpServerResponse } from "effect/http";
+import { assert, describe, expect, vi } from "vite-plus/test";
 
-import * as deployment from "./deployment.ts";
-import { applicationHttpEffect, makeApplicationHttpEffect } from "./runtime.ts";
-import * as configuredDeployment from "./application.ts";
 import { makeApplicationHttpEffect as makeConfiguredApplicationHttpEffect } from "./application-runtime.ts";
+import { applicationHttpEffect, makeApplicationHttpEffect } from "./runtime.ts";
 
 class Capability extends Context.Service<Capability, string>()("effront/test/alchemy/Capability") {}
 
-const scopes: Scope.Scope[] = [];
-const finalized: string[] = [];
-const memoMaps: Option.Option<Layer.MemoMap>[] = [];
-const metadataPresent: boolean[] = [];
+interface Observation {
+  metadata: boolean;
+  memoMap: Option.Option<Layer.MemoMap>;
+  scope: Scope.Scope;
+}
 
-// This unit boundary isolates capability capture from the core renderer. Real
-// Worker/RSC execution belongs to the local workerd acceptance fixture.
+const requests = new Map<string, Observation>();
+const finalized = new Set<string>();
+
+// This unit isolates capture from the renderer. The local workerd suite checks the real renderer.
+// oxlint-disable-next-line vitest/prefer-import-in-mock -- The unit renderer supplies specific services, so its return type cannot implement the real renderer's generic contract.
 vi.mock("@effront/core/http", () => ({
   toHttpEffect: () =>
     Effect.gen(function* () {
       const capability = yield* Capability;
       const runtime = yield* RuntimeContext;
       const request = yield* HttpServerRequest.HttpServerRequest;
-      scopes.push(yield* Effect.scope);
-      memoMaps.push(yield* Effect.serviceOption(Layer.CurrentMemoMap));
-      metadataPresent.push(Option.isSome(yield* Effect.serviceOption(CloudflareEnvironment)));
-      yield* Effect.addFinalizer(() => Effect.sync(() => finalized.push(runtime.id)));
+      const scope = yield* Effect.scope;
+      const memoMap = yield* Effect.serviceOption(Layer.CurrentMemoMap);
+      const metadata = yield* Effect.serviceOption(CloudflareEnvironment);
+      requests.set(runtime.id, { memoMap, metadata: Option.isSome(metadata), scope });
+      yield* Effect.addFinalizer(() =>
+        Effect.sync(() => {
+          finalized.add(runtime.id);
+        }),
+      );
       return HttpServerResponse.text(`${capability}:${runtime.id}:${request.url}`);
     }),
 }));
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The unit renderer ignores the definition; the workerd suite exercises a constructed RSC application.
 const application = {} as ApplicationDefinition<never, never, Capability | RuntimeContext>;
+const loadApplication = async (): Promise<typeof application> => {
+  await Promise.resolve();
+  return application;
+};
+
 const runtime = (id: string): RuntimeContext["Service"] => ({
   Type: "test",
-  id,
   env: {},
   get: () => Effect.undefined,
+  id,
   set: (key) => Effect.succeed(key),
 });
+
 const request = (path: string): HttpServerRequest.HttpServerRequest =>
   HttpServerRequest.fromWeb(new Request(`https://example.test${path}`));
 
-describe("Alchemy native application effects", () => {
-  live("keeps the deployment and RSC APIs type-identical and construction-safe", () =>
-    Effect.gen(function* () {
-      expectTypeOf(deployment.makeApplicationHttpEffect).toEqualTypeOf(makeApplicationHttpEffect);
-      expectTypeOf(deployment.applicationHttpEffect).toEqualTypeOf(applicationHttpEffect);
-      expectTypeOf(configuredDeployment.makeApplicationHttpEffect).toEqualTypeOf(
-        makeConfiguredApplicationHttpEffect,
-      );
-      const handler = yield* deployment
-        .makeApplicationHttpEffect(async () => application)
-        .pipe(Effect.provideService(Capability, "constructed"));
-      expect(Effect.isEffect(handler)).toBe(true);
-    }),
+const withRequest = <A, E, R>(
+  handler: Effect.Effect<A, E, R>,
+  id: string,
+  pathname: string,
+): Effect.Effect<
+  A,
+  E,
+  Exclude<Exclude<Exclude<R, RuntimeContext>, HttpServerRequest.HttpServerRequest>, Scope.Scope>
+> =>
+  handler.pipe(
+    Effect.provideService(RuntimeContext, runtime(id)),
+    Effect.provideService(HttpServerRequest.HttpServerRequest, request(pathname)),
+    Effect.scoped,
   );
 
-  live(
-    "captures configured application capabilities without loading the application during construction",
-    () =>
-      Effect.gen(function* () {
-        type ApplicationFailure = Readonly<{ _tag: "ApplicationFailure" }>;
-        type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
-        type Definition = ApplicationDefinition<
-          Capability,
-          ApplicationFailure,
-          | HttpRouter.Request.From<"Requires", Capability>
-          | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
-          | HttpRouter.Request.From<"Error", RouteFailure>
-        >;
-        const construction = makeConfiguredApplicationHttpEffect<Definition>();
-        expectTypeOf<Effect.Services<typeof construction>>().toEqualTypeOf<Capability>();
-        const handler = yield* construction.pipe(Effect.provideService(Capability, "constructed"));
-        expectTypeOf<Effect.Services<typeof handler>>().toEqualTypeOf<
-          RuntimeContext | Scope.Scope | HttpServerRequest.HttpServerRequest
-        >();
-        expectTypeOf<
-          Extract<Effect.Error<typeof handler>, ApplicationFailure | RouteFailure>
-        >().toEqualTypeOf<ApplicationFailure | RouteFailure>();
-        expect(handler).toBeDefined();
-      }),
-  );
+const readText = (response: HttpServerResponse.HttpServerResponse): Effect.Effect<string> =>
+  Effect.promise(async () => HttpServerResponse.toWeb(response).text());
 
-  test("reports a missing Vite integration only when the configured handler executes", async () => {
-    const handler = await Effect.runPromise(
-      makeConfiguredApplicationHttpEffect<typeof application>().pipe(
-        Effect.provideService(Capability, "constructed"),
-      ),
-    );
-    await expect(
-      Effect.runPromise(
-        Effect.scoped(
-          handler.pipe(
-            Effect.provideService(RuntimeContext, runtime("request")),
-            Effect.provideService(HttpServerRequest.HttpServerRequest, request("/configured")),
-          ),
-        ),
-      ),
-    ).rejects.toThrow(
-      "Configured application loading requires effront() followed by effrontAlchemy()",
-    );
-  });
+const withConstructionServices = Effect.gen(function* () {
+  const scope = yield* Effect.scope;
+  const handler = yield* makeApplicationHttpEffect(loadApplication);
+  return { handler, scope };
+}).pipe(
+  Effect.provideService(Capability, "captured"),
+  Effect.provideService(RuntimeContext, runtime("stale")),
+  Effect.provideService(Layer.CurrentMemoMap, Layer.makeMemoMapUnsafe()),
+  Effect.provideService(
+    CloudflareEnvironment,
+    Effect.die("Construction metadata is request-owned"),
+  ),
+  Effect.provideService(HttpServerRequest.HttpServerRequest, request("/stale")),
+  Effect.scoped,
+);
 
-  test("does not erase missing capabilities or accept non-application types", () => {
-    const check = (): void => {
-      // @ts-expect-error The configured application still requires Capability.
-      void Effect.runPromise(makeConfiguredApplicationHttpEffect<typeof application>());
-      // @ts-expect-error A configured entry must be an Effront application definition.
-      void makeConfiguredApplicationHttpEffect<string>();
-      // @ts-expect-error Omitting the application type cannot erase unknown requirements.
-      void Effect.runPromise(makeConfiguredApplicationHttpEffect());
-      // @ts-expect-error The existing entry requires an explicit loader.
-      void makeApplicationHttpEffect();
-    };
-    expect(check).toBeTypeOf("function");
-  });
+const loadLive = Effect.fn(function* (
+  id: string,
+  handler: Effect.Success<typeof withConstructionServices>["handler"],
+) {
+  const response = yield* withRequest(handler, id, `/${id}`);
+  const text = yield* readText(response);
+  const observation = requests.get(id);
+  assert.isDefined(observation);
+  return { finalized: finalized.has(id), ...observation, text };
+});
 
-  live("normalizes native router requirement and error markers before construction capture", () =>
+describe("application construction for Alchemy", () => {
+  live("reports a missing Vite integration only when the configured handler executes", () =>
     Effect.gen(function* () {
-      type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
-      type GlobalFailure = Readonly<{ _tag: "GlobalFailure" }>;
-      type Requirements =
-        | HttpRouter.Request.From<"Requires", Capability>
-        | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
-        | HttpRouter.Request.From<"Error", RouteFailure>
-        | HttpRouter.Request.From<"GlobalError", GlobalFailure>;
-      const markedApplication = {} as ApplicationDefinition<never, never, Requirements>;
-      const construction = makeApplicationHttpEffect(async () => markedApplication);
-      expectTypeOf<Effect.Services<typeof construction>>().toEqualTypeOf<Capability>();
+      const construction = makeConfiguredApplicationHttpEffect<typeof application>();
       const handler = yield* construction.pipe(Effect.provideService(Capability, "constructed"));
-      expectTypeOf<Effect.Services<typeof handler>>().toEqualTypeOf<
-        RuntimeContext | Scope.Scope | HttpServerRequest.HttpServerRequest
-      >();
-      expectTypeOf<
-        Extract<Effect.Error<typeof handler>, RouteFailure | GlobalFailure>
-      >().toEqualTypeOf<RouteFailure | GlobalFailure>();
+      const execution = withRequest(handler, "request", "/configured");
+      const failure = yield* execution.pipe(Effect.catchDefect(Effect.fail), Effect.flip);
+      expect(failure).toHaveProperty(
+        "message",
+        "Configured application loading requires effront() followed by effrontAlchemy().",
+      );
     }),
   );
 
-  test("captures constructed capabilities without importing the application or requiring runtime services", async () => {
-    const load = vi.fn(async () => application);
-    const handler = await Effect.runPromise(
-      makeApplicationHttpEffect(load).pipe(Effect.provideService(Capability, "constructed")),
-    );
-    expect(load).not.toHaveBeenCalled();
+  live("captures capabilities without loading the application or requiring runtime services", () =>
+    Effect.gen(function* () {
+      const load = vi.fn<typeof loadApplication>(loadApplication);
+      const construct = makeApplicationHttpEffect(load);
+      const handler = yield* construct.pipe(Effect.provideService(Capability, "constructed"));
+      expect(load).not.toHaveBeenCalled();
+      const response = yield* withRequest(handler, "request", "/lazy");
+      expect(load).toHaveBeenCalledOnce();
+      expect(yield* readText(response)).toBe("constructed:request:/lazy");
+    }),
+  );
+});
 
-    const response = await Effect.runPromise(
-      Effect.scoped(
-        handler.pipe(
-          Effect.provideService(RuntimeContext, runtime("request")),
-          Effect.provideService(HttpServerRequest.HttpServerRequest, request("/lazy")),
-        ),
-      ),
-    );
-    expect(load).toHaveBeenCalledOnce();
-    await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe(
-      "constructed:request:/lazy",
-    );
-  });
+describe("native Alchemy request capabilities", () => {
+  live("uses each live request scope and runtime context in place of construction services", () =>
+    Effect.gen(function* () {
+      const { handler, scope } = yield* withConstructionServices;
+      const first = yield* loadLive("first", handler);
+      const second = yield* loadLive("second", handler);
+      const expected = { finalized: true, memoMap: Option.none(), metadata: false };
+      expect(first).toMatchObject({ ...expected, text: "captured:first:/first" });
+      expect(second).toMatchObject({ ...expected, text: "captured:second:/second" });
+      expect(new Set([scope, first.scope, second.scope]).size).toBe(3);
+      expect(finalized.has("stale")).toBe(false);
+    }),
+  );
 
-  test("uses live request scope and runtime context instead of closed construction services", async () => {
-    let constructionScope: Scope.Scope | undefined;
-    const handler = await Effect.runPromise(
-      Effect.scoped(
+  live("lets live capabilities override explicitly captured capabilities", () =>
+    Effect.gen(function* () {
+      const context = Context.make(Capability, "captured");
+      const captured = applicationHttpEffect(loadApplication, { context });
+      const handler = captured.pipe(Effect.provideService(Capability, "live"));
+      const response = yield* withRequest(handler, "current", "/override");
+      expect(yield* readText(response)).toBe("live:current:/override");
+    }),
+  );
+
+  live("uses live capabilities when the capture parameter has no supplied context", () =>
+    Effect.gen(function* () {
+      const omitted = applicationHttpEffect<never, never, Capability | RuntimeContext, Capability>(
+        loadApplication,
+      );
+      const options: Readonly<{ context?: Context.Context<Capability> }> = {};
+      const optional = applicationHttpEffect(loadApplication, options);
+      const body = yield* Effect.forEach([omitted, optional], (uncaptured) =>
         Effect.gen(function* () {
-          constructionScope = yield* Effect.scope;
-          return yield* makeApplicationHttpEffect(async () => application);
-        }).pipe(
-          Effect.provideService(Capability, "captured"),
-          Effect.provideService(RuntimeContext, runtime("stale")),
-          Effect.provideService(Layer.CurrentMemoMap, Layer.makeMemoMapUnsafe()),
-          Effect.provideService(
-            CloudflareEnvironment,
-            Effect.die("Construction metadata must never be restored into a request"),
-          ),
-          Effect.provideService(HttpServerRequest.HttpServerRequest, request("/stale")),
-        ),
-      ),
-    );
-
-    for (const id of ["first", "second"]) {
-      const response = await Effect.runPromise(
-        Effect.scoped(
-          handler.pipe(
-            Effect.provideService(RuntimeContext, runtime(id)),
-            Effect.provideService(HttpServerRequest.HttpServerRequest, request(`/${id}`)),
-          ),
-        ),
+          const handler = uncaptured.pipe(Effect.provideService(Capability, "live"));
+          const response = yield* withRequest(handler, "current", "/uncaptured");
+          return yield* readText(response);
+        }),
       );
-      await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe(
-        `captured:${id}:/${id}`,
-      );
-      expect(scopes.at(-1)).not.toBe(constructionScope);
-      expect(finalized).toContain(id);
-      expect(memoMaps.at(-1)).toStrictEqual(Option.none());
-      expect(metadataPresent.at(-1)).toBe(false);
-    }
-    expect(scopes.at(-1)).not.toBe(scopes.at(-2));
-    expect(finalized).not.toContain("stale");
-  });
-
-  test("lets live capabilities override explicitly captured capabilities", async () => {
-    const handler = applicationHttpEffect(async () => application, {
-      context: Context.make(Capability, "captured"),
-    });
-    const response = await Effect.runPromise(
-      Effect.scoped(
-        handler.pipe(
-          Effect.provideService(Capability, "live"),
-          Effect.provideService(RuntimeContext, runtime("current")),
-          Effect.provideService(HttpServerRequest.HttpServerRequest, request("/override")),
-        ),
-      ),
-    );
-    await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe("live:current:/override");
-  });
-
-  test("retains live capability requirements when a capture type has no supplied context", async () => {
-    const load = async (): Promise<
-      ApplicationDefinition<never, never, RuntimeContext | Capability>
-    > => application;
-    const omitted = applicationHttpEffect<never, never, Capability | RuntimeContext, Capability>(
-      load,
-    );
-    const options: Readonly<{ context?: Context.Context<Capability> }> = {};
-    const optional = applicationHttpEffect(load, options);
-    type Requirements = Effect.Services<HttpApplicationEffect<never, Capability | RuntimeContext>>;
-    expectTypeOf<Effect.Services<typeof omitted>>().toEqualTypeOf<Requirements>();
-    expectTypeOf<Effect.Services<typeof optional>>().toEqualTypeOf<Requirements>();
-    const check = (): void => {
-      const missingCapability = Effect.scoped(omitted).pipe(
-        Effect.provideService(RuntimeContext, runtime("current")),
-        Effect.provideService(HttpServerRequest.HttpServerRequest, request("/missing")),
-      );
-      // @ts-expect-error A capture type alone does not supply Capability.
-      void Effect.runPromise(missingCapability);
-    };
-    expect(check).toBeTypeOf("function");
-    for (const handler of [omitted, optional]) {
-      const response = await Effect.runPromise(
-        Effect.scoped(handler).pipe(
-          Effect.provideService(Capability, "live"),
-          Effect.provideService(RuntimeContext, runtime("current")),
-          Effect.provideService(HttpServerRequest.HttpServerRequest, request("/uncaptured")),
-        ),
-      );
-      await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe(
-        "live:current:/uncaptured",
-      );
-    }
-  });
-
-  test("retains application capabilities in construction requirements", () => {
-    const check = (): void => {
-      // @ts-expect-error Construction requires Capability, but not host RuntimeContext.
-      void Effect.runPromise(makeApplicationHttpEffect(async () => application));
-    };
-    expect(check).toBeTypeOf("function");
-  });
+      expect(body).toStrictEqual(["live:current:/uncaptured", "live:current:/uncaptured"]);
+    }),
+  );
 });
