@@ -94,13 +94,13 @@ describe("documentation catalog", () => {
       const slug = `/${locale}/advanced/client-navigation`;
       const html = await render(slug);
       const content = await text(slug);
-      for (const example of [
+      [
         "viewTransition: false",
         "layer: Layer.succeed(PageViewTransition, { enabled: false })",
         "viewTransition: { enabled: true }",
-      ]) {
+      ].forEach((example) => {
         expect(content).toContain(example);
-      }
+      });
       expect(html.match(/data-alert="note"/gu)).toHaveLength(3);
       expect(content).not.toContain("[!NOTE]");
       expect(html).toContain(`href="/${locale}/api-reference/components#view-transition"`);
@@ -228,13 +228,13 @@ describe("documentation catalog", () => {
           expect(html).toContain(`id="${id}"`);
         }
       }
-      for (const retired of ["/advanced", "/guide/testing"]) {
+      ["/advanced", "/guide/testing"].forEach((retired) => {
         expect(items.map((item) => item.slug)).not.toContain(localizedPath(retired, locale));
         expect(() => getPage(localizedPath(retired, locale))).toThrow(
           "Documentation route is missing content",
         );
         expect(() => getPage(retired)).toThrow("Documentation route is missing content");
-      }
+      });
     },
   );
 
@@ -245,7 +245,7 @@ describe("documentation catalog", () => {
       const content = (await text(`/${locale}/best-practices/testing`))
         .replaceAll("&quot;", '"')
         .replaceAll("&#x27;", "'");
-      for (const contract of [
+      [
         "@playwright/test",
         'request.get("/not-a-route")',
         "missing.status()).toBe(404)",
@@ -254,17 +254,17 @@ describe("documentation catalog", () => {
         'getByTestId("action-greeting")',
         "Hello from Alchemy KV, Ada!",
         "TypeError",
-      ]) {
+      ].forEach((contract) => {
         expect(content).toContain(contract);
-      }
-      for (const path of [
+      });
+      [
         "tree/main/examples/basic",
         "tree/main/tests/e2e-alchemy",
         "blob/main/tests/e2e-alchemy/playwright.config.ts",
         "blob/main/docs/TESTING.md#native-alchemy-integration",
-      ]) {
+      ].forEach((path) => {
         expect(html).toContain(`href="https://github.com/totto2727-org/effront/${path}"`);
-      }
+      });
       expect(content).toContain(
         locale === "en"
           ? "does not provide a public Vitest harness"
@@ -291,18 +291,18 @@ describe("documentation catalog", () => {
       articleCatalog.map((page) => page.slug).toSorted(),
     );
     expect(englishArticleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
-    for (const locale of ["ja", "en"] as const) {
+    (["ja", "en"] as const).forEach((locale) => {
       expect(() => getPage(`/${locale}/index`)).toThrow("Documentation route is missing content");
-    }
+    });
   });
 
   test("registers the Server Function error-handling page at every published locale URL", async () => {
     const entry = await readFile(new URL("../entry.effront.tsx", import.meta.url), "utf8");
     const source = "/best-practices/server-function-error-handling";
-    for (const prefix of ["", "/ja", "/en"]) {
+    ["", "/ja", "/en"].forEach((prefix) => {
       const slug = `${prefix}${source}`;
       expect(entry).toContain(`.page(\n      "${slug}",\n      documentPage("${slug}"),\n    )`);
-    }
+    });
   });
 
   test.each(["ja", "en"] as const)(
@@ -322,11 +322,11 @@ describe("documentation catalog", () => {
       expect(
         items.filter((item) => documentPath(item.slug).startsWith("/architecture/implementation/")),
       ).toHaveLength(7);
-      for (const retired of ["/advanced", "/advanced/production-startup", "/guide/testing"]) {
+      ["/advanced", "/advanced/production-startup", "/guide/testing"].forEach((retired) => {
         expect(() => getPage(localizedPath(retired, locale))).toThrow(
           "Documentation route is missing content",
         );
-      }
+      });
     },
   );
 
@@ -355,7 +355,7 @@ describe("documentation catalog", () => {
       await expect(text(slug)).resolves.not.toMatch(/Cloudflare|Workers|Wrangler|workerd|Vercel/u);
     }
     const start = await text("/guide/getting-started");
-    for (const required of [
+    [
       "vp create effront -- my-app --platform node",
       "cd my-app",
       "vp install",
@@ -366,17 +366,17 @@ describe("documentation catalog", () => {
       "src/entry.server.ts",
       "vite.config.ts",
       "package.json",
-    ]) {
+    ].forEach((required) => {
       expect(start).toContain(required);
-    }
+    });
     expect(start).not.toContain("vp add");
     await expect(render("/guide/getting-started")).resolves.toContain(
       'href="https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx"',
     );
     const effect = await render("/guide/effect");
-    for (const contract of ["Context.Service", "Layer", "Application.effront"]) {
+    ["Context.Service", "Layer", "Application.effront"].forEach((contract) => {
       expect(effect.replace(/<[^>]*>/g, "")).toContain(contract);
-    }
+    });
     expect(effect).toContain('href="https://effect.website/');
   });
 
@@ -522,21 +522,21 @@ describe("documentation catalog", () => {
         );
       }
       const server = await text(`/${locale}/api-reference/server`);
-      for (const contract of ["effront({ rsc })", "effrontServer({ rsc })", "Effect Schema JIT"]) {
+      ["effront({ rsc })", "effrontServer({ rsc })", "Effect Schema JIT"].forEach((contract) => {
         expect(server).toContain(contract);
-      }
+      });
       expect(server).toContain(locale === "en" ? "pass the same path" : "同じパスを指定");
     },
   );
 
   test("describes implemented hosts and separates Bun production from Vite middleware", async () => {
     const platforms = await render("/platforms");
-    for (const host of ["cloudflare", "alchemy", "node", "bun"]) {
+    ["cloudflare", "alchemy", "node", "bun"].forEach((host) => {
       expect(platforms).toContain(`href="/platforms/${host}"`);
-    }
-    for (const adapter of ["@effront/cloudflare", "@effront/alchemy", "@effront/server"]) {
+    });
+    ["@effront/cloudflare", "@effront/alchemy", "@effront/server"].forEach((adapter) => {
       expect(platforms).toContain(adapter);
-    }
+    });
     for (const host of ["node", "bun"]) {
       const native = await text(`/platforms/${host}`);
       for (const required of [
@@ -553,9 +553,9 @@ describe("documentation catalog", () => {
       await expect(render(`/platforms/${host}`)).resolves.toContain('href="/api-reference/server"');
     }
     const bun = await text("/platforms/bun");
-    for (const required of ["Bun", "@effect/platform-node", "@effect/platform-bun"]) {
+    ["Bun", "@effect/platform-node", "@effect/platform-bun"].forEach((required) => {
       expect(bun).toContain(required);
-    }
+    });
     await expect(render("/platforms/bun")).resolves.toContain(
       'href="https://bun.sh/docs/installation"',
     );
@@ -563,14 +563,11 @@ describe("documentation catalog", () => {
     expect(alchemy).toContain("profile");
     expect(alchemy).toContain('href="https://alchemy.run/');
     const lifetime = await text("/advanced/request-runtime-and-lifetimes");
-    for (const contract of [
-      "Effect.acquireRelease",
-      "Layer.effect",
-      "Effect.scoped",
-      "Layer.succeed",
-    ]) {
-      expect(lifetime).toContain(contract);
-    }
+    ["Effect.acquireRelease", "Layer.effect", "Effect.scoped", "Layer.succeed"].forEach(
+      (contract) => {
+        expect(lifetime).toContain(contract);
+      },
+    );
     const lifetimeHtml = await render("/ja/advanced/request-runtime-and-lifetimes");
     expect(lifetimeHtml).toContain('href="/ja/api-reference/http#capture"');
     expect(lifetimeHtml).toContain('href="/ja/api-reference/http#handler"');
@@ -645,9 +642,9 @@ describe("documentation catalog", () => {
         ),
       ).toContain("makeApplicationHttpEffect");
       const chooser = await render(`/${locale}/platforms`);
-      for (const id of ["setup", "entries", "assets", "node", "bun"]) {
+      ["setup", "entries", "assets", "node", "bun"].forEach((id) => {
         expect(chooser).toContain(`id="${id}"`);
-      }
+      });
       expect(chooser).not.toContain("node-bun");
       expect(() => getPage(`/${locale}/platforms/node-bun`)).toThrow(
         "Documentation route is missing content",
@@ -821,9 +818,9 @@ describe("documentation catalog", () => {
   test("keeps the Markdown README as a canonical documentation entry point", async () => {
     const repository = new URL("../../../../", import.meta.url);
     const source = await readFile(new URL("packages/markdown/README.md", repository), "utf8");
-    for (const section of ["guide", "api-reference"]) {
+    ["guide", "api-reference"].forEach((section) => {
       expect(source).toContain(`https://effront.totto2727.dev/en/${section}/markdown`);
-    }
+    });
     await expect(
       access(new URL("packages/markdown/docs/GUIDE.md", repository)),
     ).rejects.toMatchObject({ code: "ENOENT" });
@@ -835,9 +832,9 @@ describe("documentation catalog", () => {
     expect(guide).toContain("base: &quot;./content&quot;");
     expect(guide).toContain("Tailwind Typography");
     const reference = await text(`/${locale}/api-reference/markdown`);
-    for (const contract of ["collection.get(&quot;/manual/start&quot;)", "undefined", "404"]) {
+    ["collection.get(&quot;/manual/start&quot;)", "undefined", "404"].forEach((contract) => {
       expect(reference).toContain(contract);
-    }
+    });
   });
 
   test.each(
@@ -851,13 +848,11 @@ describe("documentation catalog", () => {
     expect(prose).not.toMatch(
       /document\.meta\.components|MarkdownDocumentProps|remote font|リモートフォント/u,
     );
-    for (const contract of [
-      "@effront/markdown/document",
-      "@effront/markdown/styles.css",
-      "components",
-    ]) {
-      expect(prose).toContain(contract);
-    }
+    ["@effront/markdown/document", "@effront/markdown/styles.css", "components"].forEach(
+      (contract) => {
+        expect(prose).toContain(contract);
+      },
+    );
     if (slug.includes("/api-reference/")) {
       const html = await render(slug);
       const code = [...html.matchAll(/<pre\b[^>]*>([\s\S]*?)<\/pre>/g)]
@@ -942,14 +937,11 @@ describe("documentation catalog", () => {
   });
 
   test("rejects missing content instead of silently rendering another page", () => {
-    for (const slug of [
-      "/not-a-document",
-      "/en/not-a-document",
-      "/ja/not-a-document",
-      "/fr/guide/routes",
-    ]) {
-      expect(() => getPage(slug)).toThrow(`Documentation route is missing content: ${slug}`);
-    }
+    ["/not-a-document", "/en/not-a-document", "/ja/not-a-document", "/fr/guide/routes"].forEach(
+      (slug) => {
+        expect(() => getPage(slug)).toThrow(`Documentation route is missing content: ${slug}`);
+      },
+    );
   });
 
   test.each([...pages, ...localizedPages])(

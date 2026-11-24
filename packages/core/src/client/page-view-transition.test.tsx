@@ -5,11 +5,11 @@ import { PageViewTransitionBoundary } from "./page-view-transition.tsx";
 
 describe("PageViewTransitionBoundary SSR", () => {
   it("renders the same page HTML without adding wrapper elements", () => {
-    for (const config of [
+    [
       {},
       { enabled: false },
       { default: "page", share: { default: "fade", "navigation-back": "back" } },
-    ]) {
+    ].forEach((config) => {
       expect(
         renderToStaticMarkup(
           <PageViewTransitionBoundary config={config}>
@@ -18,7 +18,7 @@ describe("PageViewTransitionBoundary SSR", () => {
           </PageViewTransitionBoundary>,
         ),
       ).toBe("<h1>Page</h1><p>Content</p>");
-    }
+    });
   });
 
   it("supports empty pages without accessing browser APIs during SSR", () => {

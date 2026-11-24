@@ -98,9 +98,9 @@ describe("Alchemy Vite graph composition", () => {
     const contribution = Reflect.apply(configure, {}, [{}]) as {
       environments: Record<string, object>;
     };
-    for (const environment of Object.values(contribution.environments)) {
+    Object.values(contribution.environments).forEach((environment) => {
       expect(environment).not.toHaveProperty("optimizeDeps");
-    }
+    });
   });
 
   test("provides the bridge before the real Cloudflare host captures its entry", async () => {

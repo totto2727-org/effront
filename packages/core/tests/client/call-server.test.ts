@@ -101,7 +101,7 @@ const listen = Effect.fn(function* (
   yield* Effect.raceFirst(Deferred.await(installed), Fiber.join(running));
 });
 
-for (const outcome of ["Success", "TransportFailure", "EarlyStop"] as const) {
+(["Success", "TransportFailure", "EarlyStop"] as const).forEach((outcome) => {
   it.effect(`keeps a streaming query's Flight resource until ${outcome}`, () =>
     Effect.scoped(
       Effect.gen(function* () {
@@ -207,9 +207,9 @@ for (const outcome of ["Success", "TransportFailure", "EarlyStop"] as const) {
       ),
     ),
   );
-}
+});
 
-for (const outcome of ["Success", "LateTransportFailure"] as const) {
+(["Success", "LateTransportFailure"] as const).forEach((outcome) => {
   it.effect(`settles a value query only after full Flight ${outcome}`, () =>
     Effect.scoped(
       Effect.gen(function* () {
@@ -294,7 +294,7 @@ for (const outcome of ["Success", "LateTransportFailure"] as const) {
       ),
     ),
   );
-}
+});
 
 it.effect("aborts Server Function argument encoding when the invocation is cancelled", () =>
   Effect.gen(function* () {

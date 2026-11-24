@@ -79,7 +79,7 @@ describe("documentation hierarchy", () => {
       navigation: englishNavigation,
       headings: [{ id: "request-lifetime", title: "Request lifetime" }],
     });
-    for (const label of [
+    [
       "Skip to content",
       "Filter guides",
       'placeholder="Search guides"',
@@ -90,9 +90,9 @@ describe("documentation hierarchy", () => {
       "Previous page",
       "Next page",
       "effective-rsc website",
-    ]) {
+    ].forEach((label) => {
       expect(html).toContain(label);
-    }
+    });
     const sidebar = html.split('<header class="sticky')[0]!;
     expect(sidebar).toMatch(
       /<ul[^>]+aria-label="Architecture"><li[^>]*><span[^>]*>Implementation<\/span><ul/,

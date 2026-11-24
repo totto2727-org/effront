@@ -86,10 +86,10 @@ describe("default native React Compiler", () => {
     expect(serverRendered?.code).toContain("Count:");
     expect(serverReference?.code).toContain("registerClientReference");
     expect(serverApplication?.code).toContain("React Server Components on Workers");
-    for (const result of [serverRendered, serverReference, serverApplication]) {
+    [serverRendered, serverReference, serverApplication].forEach((result) => {
       expect(result?.code).not.toContain("compiler-runtime");
       expect(result?.code).not.toContain(memoSentinel);
-    }
+    });
   });
 
   test("resolves a linked React-dependent package through each runtime graph", async () => {

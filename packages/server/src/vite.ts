@@ -149,10 +149,10 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
       const nodeEnv =
         config.environments["client"]?.define?.["process.env.NODE_ENV"] ??
         JSON.stringify(config.isProduction ? "production" : "development");
-      for (const name of ["rsc", "ssr"]) {
+      ["rsc", "ssr"].forEach((name) => {
         const environment = config.environments[name];
         if (environment === undefined) {
-          continue;
+          return;
         }
         environment.define = {
           ...environment.define,
@@ -160,7 +160,7 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
           "global.process.env.NODE_ENV": nodeEnv,
           "globalThis.process.env.NODE_ENV": nodeEnv,
         };
-      }
+      });
     },
     async configureServer(server) {
       const environment = server.environments["rsc"];

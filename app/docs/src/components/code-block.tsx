@@ -1,3 +1,4 @@
+import { Function } from "effect";
 import { Fragment } from "react";
 import type { CSSProperties } from "react";
 import { createHighlighterCoreSync } from "shiki/core";
@@ -18,11 +19,11 @@ import type { TokenStyles } from "shiki/types";
 // local static imports: no bundle loader, network request, or Oniguruma/WASM asset.
 // https://shiki.style/guide/bundles#fine-grained-bundle
 // https://shiki.style/guide/regex-engines#javascript-regexp-engine
-const highlighter = createHighlighterCoreSync({
+const highlighterOptions = {
   engine: createJavaScriptRegexEngine(),
   langs: [bash, css, diff, javascript, json, jsonc, jsx, tsx, typescript],
   themes: [githubDark],
-});
+};
 
 const languages = {
   bash: "bash",
@@ -48,14 +49,19 @@ export interface CodeBlockProps {
   readonly language?: CodeLanguage;
 }
 
-const theme = highlighter.getTheme("github-dark");
-const rootStyle: CSSProperties = { color: theme.fg, backgroundColor: theme.bg };
+const highlighting = Function.memoize((options: typeof highlighterOptions) => {
+  // oxlint-disable-next-line node/no-sync -- The shared server component also renders through React's synchronous static renderer.
+  const highlighter = createHighlighterCoreSync(options);
+  const theme = highlighter.getTheme("github-dark");
+  const rootStyle: CSSProperties = { backgroundColor: theme.bg, color: theme.fg };
+  return { foreground: theme.fg, highlighter, rootStyle };
+});
 
-const tokenStyle = (token: TokenStyles): CSSProperties => {
+const tokenStyle = (token: TokenStyles, foreground: CSSProperties["color"]): CSSProperties => {
   // TextMate's fontStyle flags are italic=1, bold=2, underline=4.
   const flags = token.fontStyle ?? 0;
   return {
-    color: token.color ?? theme.fg,
+    color: token.color ?? foreground,
     ...(token.bgColor === undefined ? {} : { backgroundColor: token.bgColor }),
     ...(flags & 1 ? { fontStyle: "italic" } : {}),
     ...(flags & 2 ? { fontWeight: "bold" } : {}),
@@ -69,6 +75,7 @@ export function CodeBlock({ code, language = "text" }: CodeBlockProps) {
     throw new TypeError("CodeBlock received an unsupported language.");
   }
   const lang = languages[language];
+  const { foreground, highlighter, rootStyle } = highlighting(highlighterOptions);
   const lines = highlighter.codeToTokensBase(code, { lang, theme: "github-dark" });
   // Shiki omits line delimiters from tokens. Reinsert the original delimiters,
   // not an unconditional trailing newline or trimmed/normalized source string.
@@ -87,7 +94,7 @@ export function CodeBlock({ code, language = "text" }: CodeBlockProps) {
           <Fragment key={lineIndex}>
             <span className="line">
               {line.map((token, tokenIndex) => (
-                <span key={tokenIndex} style={tokenStyle(token)}>
+                <span key={tokenIndex} style={tokenStyle(token, foreground)}>
                   {token.content}
                 </span>
               ))}

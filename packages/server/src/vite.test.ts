@@ -49,9 +49,9 @@ describe("effrontServer configuration", () => {
     expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
       index: "./src/entry.rsc.ts",
     });
-    for (const name of ["rsc", "ssr"]) {
+    ["rsc", "ssr"].forEach((name) => {
       expect(config.environments[name]?.define?.["process.env.NODE_ENV"]).toBeUndefined();
-    }
+    });
   });
 
   test.each(["production", "development", "test"])(
@@ -66,7 +66,7 @@ describe("effrontServer configuration", () => {
         },
       });
       expect(config.isProduction).toBe(nodeEnv === "production");
-      for (const name of ["rsc", "ssr"]) {
+      ["rsc", "ssr"].forEach((name) => {
         const environment = config.environments[name];
         const expected = JSON.stringify(config.isProduction ? "production" : "development");
         expect(environment?.define?.["process.env.NODE_ENV"]).toBe(expected);
@@ -76,7 +76,7 @@ describe("effrontServer configuration", () => {
         expect(environment?.define?.["process.env"]).toBeUndefined();
         expect(environment?.define?.["process.env.PORT"]).toBeUndefined();
         expect(environment?.keepProcessEnv).toBe(true);
-      }
+      });
     },
   );
 
@@ -89,11 +89,11 @@ describe("effrontServer configuration", () => {
       },
     });
     expect(config.isProduction).toBe(true);
-    for (const name of ["rsc", "ssr"]) {
+    ["rsc", "ssr"].forEach((name) => {
       expect(config.environments[name]?.define?.["process.env.NODE_ENV"]).toBe(
         config.environments["client"]?.define?.["process.env.NODE_ENV"],
       );
-    }
+    });
   });
 
   test("uses final development mode when .env overrides the default production build", async () => {
@@ -107,9 +107,9 @@ describe("effrontServer configuration", () => {
       const config = await resolveServerConfig({ envDir });
       expect(config.mode).toBe("production");
       expect(config.isProduction).toBe(false);
-      for (const name of ["rsc", "ssr"]) {
+      ["rsc", "ssr"].forEach((name) => {
         expect(config.environments[name]?.define?.["process.env.NODE_ENV"]).toBe('"development"');
-      }
+      });
     } finally {
       await rm(envDir, { recursive: true, force: true });
     }
@@ -137,9 +137,9 @@ describe("effrontServer configuration", () => {
       index: "./custom/handler.ts",
       server: "./custom/main.ts",
     });
-    for (const name of ["rsc", "ssr", "client"]) {
+    ["rsc", "ssr", "client"].forEach((name) => {
       expect(config.environments[name]?.build.outDir).toBe(`${root}output/${name}`);
-    }
+    });
   });
 
   test("rejects missing or incorrectly ordered portable integration", async () => {

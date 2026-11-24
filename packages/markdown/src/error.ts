@@ -7,10 +7,4 @@ export class MarkdownError extends Data.TaggedError("MarkdownError")<
   }>
 > {}
 
-/** A Comark parser or plugin failure, with the original thrown value. */
-export class MarkdownParseError extends Data.TaggedError("MarkdownParseError")<
-  Readonly<{
-    message: string;
-    cause: unknown;
-  }>
-> {}
+export { MarkdownParseError } from "./parse-error.ts";

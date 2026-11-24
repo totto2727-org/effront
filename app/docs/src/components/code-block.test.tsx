@@ -3,6 +3,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import type { CodeLanguage } from "./code-block.tsx";
 
+vi.mock(import("shiki/core"), async (importOriginal) => {
+  const upstream = await importOriginal();
+  return { ...upstream, createHighlighterCoreSync: vi.fn(upstream.createHighlighterCoreSync) };
+});
+
 let CodeBlock: typeof import("./code-block").CodeBlock;
 let offlineMarkup: string;
 
@@ -47,12 +52,15 @@ beforeAll(async () => {
   });
   try {
     ({ CodeBlock } = await import("./code-block.tsx"));
+    const { createHighlighterCoreSync } = await import("shiki/core");
+    expect(createHighlighterCoreSync).not.toHaveBeenCalled();
     offlineMarkup = renderToStaticMarkup(
       CodeBlock({ code: 'const message = "日本語";\n', language: "typescript" }),
     );
     for (const [language, code] of fixtures) {
       expect(serializedCodeText(renderToStaticMarkup(CodeBlock({ code, language })))).toBe(code);
     }
+    expect(createHighlighterCoreSync).toHaveBeenCalledTimes(1);
     expect(fetch).not.toHaveBeenCalled();
     expect(instantiate).not.toHaveBeenCalled();
     expect(compile).not.toHaveBeenCalled();

@@ -65,9 +65,9 @@ describe("PageViewTransitionBoundary policy", () => {
     });
     const css = readFileSync(new URL("./page-view-transition.css", import.meta.url), "utf8");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
-    for (const pseudo of ["group", "image-pair", "old", "new"]) {
+    ["group", "image-pair", "old", "new"].forEach((pseudo) => {
       expect(css).toContain(`::view-transition-${pseudo}(root)`);
-    }
+    });
     expect(css).toContain("animation: none !important");
     expect(css).not.toContain("(*)");
   });

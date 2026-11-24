@@ -164,7 +164,7 @@ describe("injectFlightPayload", () => {
     }),
   );
 
-  for (const { name, prefix, suffix } of [
+  [
     { name: "double-quoted href", prefix: '<a href="/guide/', suffix: '日本語">日本語</a>' },
     { name: "single-quoted attribute", prefix: "<a title='日本", suffix: "語'>link</a>" },
     { name: "unquoted attribute", prefix: "<a href=/gui", suffix: "de>link</a>" },
@@ -182,7 +182,7 @@ describe("injectFlightPayload", () => {
     },
     { name: "textarea rawtext", prefix: "<textarea>日本", suffix: "語</textarea>" },
     { name: "character reference", prefix: "<p>&am", suffix: "p;日本語</p>" },
-  ]) {
+  ].forEach(({ name, prefix, suffix }) => {
     it.effect(`never inserts scheduled Flight inside a split ${name}`, () =>
       Effect.gen(function* () {
         const boundary = Promise.withResolvers<void>();
@@ -215,7 +215,7 @@ describe("injectFlightPayload", () => {
         );
       }),
     );
-  }
+  });
 
   it.effect("preserves every HTML byte with scheduled Flight between UTF-8 byte chunks", () =>
     Effect.gen(function* () {
