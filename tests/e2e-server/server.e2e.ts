@@ -27,7 +27,8 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
   const documentResponse = await page.goto("/");
   expect(documentResponse?.headers()["content-type"]).toContain("charset=utf-8");
   await page.waitForLoadState("networkidle");
-  expect(await page.evaluate(() => document.characterSet)).toBe("utf8");
+  // oxlint-disable-next-line unicorn/text-encoding-identifier-case -- Chromium exposes the canonical Encoding Standard label through document.characterSet.
+  expect(await page.evaluate(() => document.characterSet)).toBe("UTF-8");
   expect(errors).toEqual([]);
   await page.getByRole("button", { name: "Count: 0", exact: true }).click();
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
