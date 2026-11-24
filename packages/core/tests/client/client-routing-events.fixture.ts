@@ -26,7 +26,7 @@ export type TestNavigateEvent = Event &
     | "signal"
   >;
 
-type TestNavigateEventOverrides = Partial<
+export type TestNavigateEventOverrides = Partial<
   Pick<
     NavigateEvent,
     | "canIntercept"
