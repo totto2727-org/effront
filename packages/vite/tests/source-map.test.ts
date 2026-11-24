@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { effront } from "@effront/vite";
 import { createServer, type ViteDevServer } from "vite";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 const exampleRoot = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
@@ -42,16 +42,18 @@ describe("RSC development source maps", () => {
   }, 30_000);
 
   afterAll(async () => {
-    if (http)
+    if (http) {
       await new Promise<void>((resolve, reject) =>
         http.close((error) => (error ? reject(error) : resolve())),
       );
+    }
     await vite?.close();
-    if (directory)
+    if (directory) {
       await rm(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    }
   });
 
-  it.each([
+  test.each([
     { environment: "rsc", name: "Server", path: "/src/entry.effront.tsx" },
     { environment: "client", name: "Client", path: "/src/components/counter.tsx" },
   ])(

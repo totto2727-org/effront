@@ -7,7 +7,9 @@ const pages = [...articleCatalog, ...corePages];
 
 function articleMetadata(slug: string) {
   const article = pages.find((candidate) => candidate.slug === slug);
-  if (!article) throw new Error(`Missing browser-test article metadata: ${slug}`);
+  if (!article) {
+    throw new Error(`Missing browser-test article metadata: ${slug}`);
+  }
   return article;
 }
 

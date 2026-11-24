@@ -10,7 +10,9 @@ function QueryResult({ item }: { readonly item: number }) {
       // Only mounted by a browser event. This delay makes the real fetch easy to observe.
       await new Promise<void>((resolve) => window.setTimeout(resolve, 2_000));
       const response = await fetch(`/loading-query.txt?item=${item}`, { cache: "no-store" });
-      if (!response.ok) throw new Error(`取得失敗: HTTP ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`取得失敗: HTTP ${response.status}`);
+      }
       return response.text();
     },
   });

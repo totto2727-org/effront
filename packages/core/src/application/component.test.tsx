@@ -36,7 +36,7 @@ describe("EFFRONT.Component.make", () => {
         ),
       );
 
-      expect(rendered).toEqual(<p>Hello, Nikhil</p>);
+      expect(rendered).toStrictEqual(<p>Hello, Nikhil</p>);
     }).pipe(Effect.provideService(Greeting, { prefix: "Hello" })),
   );
 
@@ -83,7 +83,7 @@ describe("EFFRONT.Component.make", () => {
         getEFFRONTIdentity(EFFRONT).renderRuntime.bind(runtime, [], () => Component({})),
       );
 
-      expect(rendered).toEqual(<p>Rendered</p>);
+      expect(rendered).toStrictEqual(<p>Rendered</p>);
       expect(runtimeEntered).toBe(false);
     }),
   );

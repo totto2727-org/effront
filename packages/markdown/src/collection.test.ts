@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { MarkdownError } from "./error.ts";
 import type { MarkdownCollectionOptions } from "./collection.ts";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 import { createMarkdownCollection } from "./collection.ts";
 
 const create = (options: MarkdownCollectionOptions) =>
@@ -26,10 +26,12 @@ const collection = () =>
   });
 
 describe("createMarkdownCollection", () => {
-  it("maps nested documents to public routes by removing only the Markdown extension", () => {
+  test("maps nested documents to public routes by removing only the Markdown extension", () => {
     const markdown = collection();
 
-    expect(markdown.entries.map((entry) => [entry.source, entry.pathname, entry.url])).toEqual([
+    expect(
+      markdown.entries.map((entry) => [entry.source, entry.pathname, entry.url]),
+    ).toStrictEqual([
       [
         "./guides/$&+,=@.md",
         "/manual/guides/%24%26%2B%2C%3D%40",
@@ -57,7 +59,7 @@ describe("createMarkdownCollection", () => {
     expect(markdown.get("/outside")).toBeUndefined();
   });
 
-  it("uses the glob-base-relative hierarchy without stripping a source directory", () => {
+  test("uses the glob-base-relative hierarchy without stripping a source directory", () => {
     const markdown = create({
       basePath: "/manual",
       documents: {
@@ -76,7 +78,7 @@ describe("createMarkdownCollection", () => {
     );
   });
 
-  it("looks up URL-encoded filenames without interpreting them as route patterns", () => {
+  test("looks up URL-encoded filenames without interpreting them as route patterns", () => {
     const markdown = create({
       basePath: "/manual",
       documents: {
@@ -93,7 +95,7 @@ describe("createMarkdownCollection", () => {
     expect(markdown.get("/manual/%3Aname")?.content).toBe("# Colon");
   });
 
-  it.each([
+  test.each([
     "/manual/guides%2Fadvanced",
     "/manual/guides%2fadvanced",
     "/manual/guides%5Cadvanced",
@@ -114,7 +116,7 @@ describe("createMarkdownCollection", () => {
     expect(collection().get(pathname)).toBeUndefined();
   });
 
-  it.each(["/manual/index/", "/manual/guides/index/", "/manual/guides/advanced/"])(
+  test.each(["/manual/index/", "/manual/guides/index/", "/manual/guides/advanced/"])(
     "preserves a single trailing slash alias: %s",
     (pathname) => {
       const markdown = collection();
@@ -123,7 +125,7 @@ describe("createMarkdownCollection", () => {
     },
   );
 
-  it.each(["/index", "/index?mode=full#top"])(
+  test.each(["/index", "/index?mode=full#top"])(
     "looks up index.md at its explicit pathname: %s",
     (pathname) => {
       const markdown = create({
@@ -134,7 +136,7 @@ describe("createMarkdownCollection", () => {
     },
   );
 
-  it.each(["/", "/?mode=full#top", "//", "///", "/./", "/%2E/", "/%00", "/%2F"])(
+  test.each(["/", "/?mode=full#top", "//", "///", "/./", "/%2E/", "/%00", "/%2F"])(
     "does not alias root or unknown paths to index.md: %s",
     (pathname) => {
       const markdown = create({
@@ -145,7 +147,7 @@ describe("createMarkdownCollection", () => {
     },
   );
 
-  it.each(["%2F", "%5C", "%00", "%2E", "%", "%E0%A4"])(
+  test.each(["%2F", "%5C", "%00", "%2E", "%", "%E0%A4"])(
     "looks up a literal escape filename after decoding once: %s",
     (filename) => {
       const markdown = create({
@@ -158,7 +160,7 @@ describe("createMarkdownCollection", () => {
     },
   );
 
-  it("resolves document URLs, queries, fragments, and Vite asset URLs", () => {
+  test("resolves document URLs, queries, fragments, and Vite asset URLs", () => {
     const markdown = collection();
     const entry = markdown.get("/manual/guides/advanced")!;
     expect(Effect.runSync(entry.resolveLink("index.md?mode=full#top"))).toBe(
@@ -179,7 +181,7 @@ describe("createMarkdownCollection", () => {
     );
   });
 
-  it("leaves URL policy to Comark and the application", () => {
+  test("leaves URL policy to Comark and the application", () => {
     const entry = collection().get("/manual/guides/advanced")!;
     for (const href of [
       "https://example.com/?q=1#top",
@@ -193,7 +195,7 @@ describe("createMarkdownCollection", () => {
     }
   });
 
-  it("uses Vite's already-resolved asset URLs including inline assets", () => {
+  test("uses Vite's already-resolved asset URLs including inline assets", () => {
     const markdown = create({
       basePath: "/manual",
       documents: { "./index.md": "" },
@@ -204,7 +206,7 @@ describe("createMarkdownCollection", () => {
     );
   });
 
-  it.each([
+  test.each([
     { basePath: "/manual", documents: { "index.md": "" } },
     { basePath: "manual", documents: {} },
     { basePath: "/manual?query=1", documents: {} },
@@ -225,7 +227,7 @@ describe("createMarkdownCollection", () => {
     expect(error._tag).toBe("MarkdownError");
   });
 
-  it("returns missing and out-of-base references through the typed error channel", () => {
+  test("returns missing and out-of-base references through the typed error channel", () => {
     const entry = collection().get("/manual/guides/advanced")!;
     for (const operation of [
       entry.resolveLink("missing.md"),
@@ -237,7 +239,7 @@ describe("createMarkdownCollection", () => {
     }
   });
 
-  it("keeps file stems distinct from directories and supports an explicit manual page", () => {
+  test("keeps file stems distinct from directories and supports an explicit manual page", () => {
     const markdown = create({
       basePath: "/",
       documents: {
@@ -247,7 +249,7 @@ describe("createMarkdownCollection", () => {
         "./index.md": "# Index",
       },
     });
-    expect(markdown.entries.map((entry) => entry.url)).toEqual([
+    expect(markdown.entries.map((entry) => entry.url)).toStrictEqual([
       "/guide",
       "/guide/index",
       "/index",
@@ -258,7 +260,7 @@ describe("createMarkdownCollection", () => {
     expect(Effect.runSync(markdown.get("/guide/index")!.resolveLink("../guide.md"))).toBe("/guide");
   });
 
-  it("normalizes POSIX references while keeping URL-encoded separators and percents literal", () => {
+  test("normalizes POSIX references while keeping URL-encoded separators and percents literal", () => {
     const markdown = create({
       basePath: "/manual",
       documents: {
@@ -284,7 +286,7 @@ describe("createMarkdownCollection", () => {
     );
   });
 
-  it("constructs a fresh collection on each Effect execution", () => {
+  test("constructs a fresh collection on each Effect execution", () => {
     const effect = createMarkdownCollection({
       basePath: "/",
       documents: { "./index.md": "# Home" },

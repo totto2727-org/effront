@@ -28,12 +28,14 @@ describe("query", () => {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
       const serverFn = (...args: ReadonlyArray<unknown>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) observed.resolve(matched);
+        if (matched !== null) {
+          observed.resolve(matched);
+        }
         return Promise.resolve("done");
       };
       expect(yield* query(serverFn)("Ada")).toBe("done");
       const matched = yield* Effect.promise(() => observed.promise);
-      expect(matched.args).toEqual(["Ada"]);
+      expect(matched.args).toStrictEqual(["Ada"]);
       expect(matched.signal).toBeInstanceOf(AbortSignal);
     }),
   );
@@ -44,7 +46,7 @@ describe("query", () => {
         detail: { message: "invalid", name: "ParseError" },
       });
       const result = yield* Effect.flip(query(() => Promise.reject(failure))());
-      expect(result).toEqual(failure);
+      expect(result).toStrictEqual(failure);
     }),
   );
 
@@ -61,7 +63,9 @@ describe("query", () => {
       const observed = Promise.withResolvers<AbortSignal>();
       const fetch = query((...args: ReadonlyArray<unknown>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) observed.resolve(matched.signal);
+        if (matched !== null) {
+          observed.resolve(matched.signal);
+        }
         return new Promise<string>(() => undefined);
       });
       const fiber = yield* fetch().pipe(Effect.forkScoped({ startImmediately: true }));
@@ -77,7 +81,9 @@ describe("stream", () => {
     const calls: Array<NonNullable<ReturnType<typeof matchServerFnQuery>>> = [];
     const atom = streamAtom((...args: ReadonlyArray<unknown>) => {
       const matched = matchServerFnQuery(args);
-      if (matched !== null) calls.push(matched);
+      if (matched !== null) {
+        calls.push(matched);
+      }
       return Promise.resolve(
         new ReadableStream<string>({
           start(controller) {
@@ -100,7 +106,9 @@ describe("stream", () => {
       expect(calls[0]?.signal.aborted).toBe(true);
       expect(registry.get(atom).waiting).toBe(true);
       const second = calls[1];
-      if (second?._tag !== "Stream") throw new TypeError("Expected stream metadata.");
+      if (second?._tag !== "Stream") {
+        throw new TypeError("Expected stream metadata.");
+      }
       Deferred.doneUnsafe(second.completed, Effect.void);
       await vi.waitFor(() => expect(registry.get(atom).waiting).toBe(false));
       expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("second");
@@ -114,7 +122,9 @@ describe("stream", () => {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
       const read = stream((...args: ReadonlyArray<unknown>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) observed.resolve(matched);
+        if (matched !== null) {
+          observed.resolve(matched);
+        }
         return Promise.resolve(
           new ReadableStream<string>({
             start(controller) {
@@ -127,12 +137,14 @@ describe("stream", () => {
       const consumer = yield* Stream.runCollect(read()).pipe(Effect.forkScoped);
       const matched = yield* Effect.promise(() => observed.promise);
       expect(matched._tag).toBe("Stream");
-      if (matched._tag !== "Stream") return yield* Effect.die("Expected stream metadata.");
+      if (matched._tag !== "Stream") {
+        return yield* Effect.die("Expected stream metadata.");
+      }
       yield* Effect.yieldNow;
       expect(consumer.pollUnsafe()).toBeUndefined();
       expect(matched.signal.aborted).toBe(false);
       yield* Deferred.succeed(matched.completed, undefined);
-      expect(yield* Fiber.join(consumer)).toEqual(["card"]);
+      expect(yield* Fiber.join(consumer)).toStrictEqual(["card"]);
       expect(matched.signal.aborted).toBe(true);
     }),
   );
@@ -142,7 +154,9 @@ describe("stream", () => {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
       const read = stream((...args: ReadonlyArray<unknown>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) observed.resolve(matched);
+        if (matched !== null) {
+          observed.resolve(matched);
+        }
         return Promise.resolve(
           new ReadableStream<string>({
             start(controller) {
@@ -154,7 +168,9 @@ describe("stream", () => {
       });
       const consumer = yield* Stream.runCollect(read()).pipe(Effect.forkScoped);
       const matched = yield* Effect.promise(() => observed.promise);
-      if (matched._tag !== "Stream") return yield* Effect.die("Expected stream metadata.");
+      if (matched._tag !== "Stream") {
+        return yield* Effect.die("Expected stream metadata.");
+      }
       yield* Deferred.fail(
         matched.completed,
         new ServerFnTransportError({
@@ -172,7 +188,9 @@ describe("stream", () => {
       const observed = Promise.withResolvers<AbortSignal>();
       const read = stream((...args: ReadonlyArray<unknown>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) observed.resolve(matched.signal);
+        if (matched !== null) {
+          observed.resolve(matched.signal);
+        }
         return Promise.resolve(
           new ReadableStream<string>({
             start(controller) {

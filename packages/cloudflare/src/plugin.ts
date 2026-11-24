@@ -15,7 +15,9 @@ const ssrOutputNesting = (): Plugin => ({
   name: "effront:cloudflare-ssr-output",
   enforce: "pre",
   config: (config): UserConfig | void => {
-    if (config.environments?.["ssr"]?.build?.outDir !== undefined) return;
+    if (config.environments?.["ssr"]?.build?.outDir !== undefined) {
+      return;
+    }
 
     const rootOutput = config.build?.outDir ?? "dist";
     const rscOutput = config.environments?.["rsc"]?.build?.outDir ?? join(rootOutput, "rsc");

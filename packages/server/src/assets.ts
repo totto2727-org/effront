@@ -63,7 +63,9 @@ export const withAssets = <E, R>(
 
     return Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest;
-      if (request.method !== "GET" && request.method !== "HEAD") return yield* app;
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return yield* app;
+      }
       const pathname = request.url.split("?", 1)[0] ?? "";
       const isClient = pathname === prefix || pathname.startsWith(`${prefix}/`);
       const publicProtocol =
@@ -73,9 +75,13 @@ export const withAssets = <E, R>(
           ?.split(",")
           .some((value) => value.trim().split(";", 1)[0] === "text/x-component") ||
         request.headers["x-effront-server-fn"] !== undefined;
-      if (!isClient && (publicFiles === undefined || publicProtocol)) return yield* app;
+      if (!isClient && (publicFiles === undefined || publicProtocol)) {
+        return yield* app;
+      }
       const serve = isClient ? client : publicFiles;
-      if (serve === undefined) return yield* app;
+      if (serve === undefined) {
+        return yield* app;
+      }
       // make() resolves the whole URL. Remove only the dedicated prefix and leave
       // decoding, normalization and filesystem lookup to the standard server.
       return yield* serve.pipe(

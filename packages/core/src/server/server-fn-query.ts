@@ -49,7 +49,9 @@ export const prepareServerFnQuery = <Services>(
 ): Effect.Effect<PreparedServerFnQuery<Services>, ServerFnRequestError, Scope.Scope> =>
   prepareServerFnQueryRaw(request, identity).pipe(
     Effect.catchCause((cause) => {
-      if (Cause.hasInterrupts(cause)) return Effect.interrupt;
+      if (Cause.hasInterrupts(cause)) {
+        return Effect.interrupt;
+      }
       const failure = Option.getOrUndefined(Cause.findErrorOption(cause));
       return Effect.fail(
         failure instanceof ServerFnRequestError

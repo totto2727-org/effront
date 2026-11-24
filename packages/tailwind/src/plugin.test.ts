@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { normalizePath, resolveConfig } from "vite";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { effrontTailwind } from "./plugin.ts";
 
@@ -35,7 +35,7 @@ async function integration(stylesheet?: string) {
 }
 
 describe("Effront Tailwind", () => {
-  it("includes the official plugin and generates CSS without a disk stylesheet", async () => {
+  test("includes the official plugin and generates CSS without a disk stylesheet", async () => {
     const plugin = await integration();
     expect(plugin.config.plugins.map((entry) => entry.name)).toContain(
       "@tailwindcss/vite:generate:build",
@@ -53,7 +53,7 @@ describe("Effront Tailwind", () => {
     expect(plugin.resolve("/unrelated.css")).toBeUndefined();
   });
 
-  it.each(['"use client";', "'use client';", '/* boundary */\n"use client"\n'])(
+  test.each(['"use client";', "'use client';", '/* boundary */\n"use client"\n'])(
     "preserves the directive and original lines: %s",
     async (directive) => {
       const plugin = await integration();
@@ -64,7 +64,7 @@ describe("Effront Tailwind", () => {
     },
   );
 
-  it("imports an explicit CSS entry relative to the application root", async () => {
+  test("imports an explicit CSS entry relative to the application root", async () => {
     const plugin = await integration("./src/theme.css");
     const source = '"use client";\nexport function Shell() {}';
     expect(plugin.transform(source).code).toContain(
@@ -73,7 +73,7 @@ describe("Effront Tailwind", () => {
     expect(plugin.transform(source).code).not.toContain("virtual:effront/tailwind.css");
   });
 
-  it.each([
+  test.each([
     '"use server";\nexport const action = 1;',
     'export const text = "use client";',
     '/* "use client" */\nexport const data = 1;',
@@ -82,13 +82,13 @@ describe("Effront Tailwind", () => {
     expect(plugin.transform(source)).toBeUndefined();
   });
 
-  it("does not transform CSS or raw assets", async () => {
+  test("does not transform CSS or raw assets", async () => {
     const plugin = await integration();
     expect(plugin.transform('"use client";', "/app/style.css")).toBeUndefined();
     expect(plugin.transform('"use client";', "/app/client.tsx?raw")).toBeUndefined();
   });
 
-  it("rejects an empty explicit stylesheet path", () => {
+  test("rejects an empty explicit stylesheet path", () => {
     expect(() => effrontTailwind({ stylesheet: "" })).toThrow(TypeError);
   });
 });

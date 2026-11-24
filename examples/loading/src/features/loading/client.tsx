@@ -19,8 +19,11 @@ export function SuspensionDemo({ local }: { readonly local: boolean }) {
     const next = new Promise<string>((resolve) => {
       setTimeout(() => resolve(`更新 ${current} 完了（2秒）`), 2_000);
     });
-    if (transition) startTransition(() => setResult(next));
-    else setResult(next);
+    if (transition) {
+      startTransition(() => setResult(next));
+    } else {
+      setResult(next);
+    }
   }
 
   return (

@@ -19,8 +19,9 @@ const flightClientReferences = (body: string): FlightClientReference[] => {
   );
   return [...body.matchAll(/^[0-9a-f]+:I(\[.*\])$/gm)].flatMap((match) => {
     const value: unknown = JSON.parse(match[1]!);
-    if (!Array.isArray(value) || typeof value[0] !== "string" || typeof value[2] !== "string")
+    if (!Array.isArray(value) || typeof value[0] !== "string" || typeof value[2] !== "string") {
       return [];
+    }
     const exportName = value[2].startsWith("$")
       ? (strings.get(value[2].slice(1)) ?? value[2])
       : value[2];
@@ -30,7 +31,9 @@ const flightClientReferences = (body: string): FlightClientReference[] => {
 
 const test = base.extend({
   page: async ({ page, baseURL }, use) => {
-    if (!baseURL) throw new TypeError("Markdown acceptance requires a local host baseURL");
+    if (!baseURL) {
+      throw new TypeError("Markdown acceptance requires a local host baseURL");
+    }
     const errors: string[] = [];
     const remoteRequests: string[] = [];
     await page.route("**/*", (route) => {
@@ -73,7 +76,9 @@ test.describe("Markdown without JavaScript", () => {
     const footnote = page.locator('sup a[href^="#"]').first();
     await expect(footnote).toBeVisible();
     const footnoteHref = await footnote.getAttribute("href");
-    if (!footnoteHref) throw new Error("A footnote must link to its rendered definition");
+    if (!footnoteHref) {
+      throw new Error("A footnote must link to its rendered definition");
+    }
     await expect(page.locator(`[id=${JSON.stringify(footnoteHref.slice(1))}]`)).toContainText(
       "Footnote detail",
     );
@@ -148,7 +153,9 @@ test.describe("Markdown without JavaScript", () => {
     const image = page.getByRole("img", { name: "Markdown diagram", exact: true });
     await expect(image).toBeVisible();
     const src = await image.getAttribute("src");
-    if (!src) throw new Error("The Markdown image must resolve to a public asset URL");
+    if (!src) {
+      throw new Error("The Markdown image must resolve to a public asset URL");
+    }
     expect(src).not.toMatch(/^(?:data:|file:)/);
     const asset = await request.get(new URL(src, page.url()).href);
     expect(asset.status()).toBe(200);
@@ -169,8 +176,9 @@ test.describe("Markdown without JavaScript", () => {
       const response = await page.goto(destination.path);
       expect(response?.status()).toBe(200);
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(destination.title);
-      if (destination.hash)
+      if (destination.hash) {
         await expect(page.locator(`[id=${JSON.stringify(destination.hash)}]`)).toBeVisible();
+      }
       await expect(
         page.locator("main article").getByRole("link", { name: "Manual home", exact: true }),
       ).toHaveAttribute("href", "/manual");
@@ -403,8 +411,9 @@ test("hydrates and follows Markdown links with Flight while retaining shared lay
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
   const documentRequests: string[] = [];
   page.on("request", (request) => {
-    if (request.isNavigationRequest() && request.frame() === page.mainFrame())
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
       documentRequests.push(request.url());
+    }
   });
 
   for (const destination of destinations) {
@@ -413,7 +422,9 @@ test("hydrates and follows Markdown links with Flight while retaining shared lay
       const matches =
         new URL(response.url()).pathname === destination.path &&
         response.headers()["content-type"]?.includes("text/x-component") === true;
-      if (matches) flightContent = response.text();
+      if (matches) {
+        flightContent = response.text();
+      }
       return matches;
     });
     await page

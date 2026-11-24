@@ -91,10 +91,14 @@ export function makeCheckInStore() {
     const event = events.find(
       (candidate) => candidate.id === eventId && candidate.organizerId === organizerId,
     );
-    if (!event) return null;
+    if (!event) {
+      return null;
+    }
 
     const organizer = organizers.find((candidate) => candidate.id === organizerId);
-    if (!organizer) return null;
+    if (!organizer) {
+      return null;
+    }
 
     const eventTickets = tickets.filter((ticket) => ticket.eventId === event.id);
     return {
@@ -121,13 +125,19 @@ export function makeCheckInStore() {
 
   function checkIn(organizerId: string, ticketCode: string): CheckInResult {
     const code = ticketCode.trim().toUpperCase();
-    if (!/^[A-Z0-9]+-[A-Z0-9]+$/.test(code)) return { status: "invalid-ticket" };
+    if (!/^[A-Z0-9]+-[A-Z0-9]+$/.test(code)) {
+      return { status: "invalid-ticket" };
+    }
 
     const ticket = tickets.find((candidate) => candidate.code === code);
-    if (!ticket) return { status: "not-found" };
+    if (!ticket) {
+      return { status: "not-found" };
+    }
 
     const event = events.find((candidate) => candidate.id === ticket.eventId);
-    if (!event || event.organizerId !== organizerId) return { status: "forbidden" };
+    if (!event || event.organizerId !== organizerId) {
+      return { status: "forbidden" };
+    }
 
     if (ticket.checkedInAt !== null) {
       return {

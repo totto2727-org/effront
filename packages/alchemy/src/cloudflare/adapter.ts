@@ -122,7 +122,9 @@ export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect): App
       const application = yield* Effect.promise(load);
       return yield* toHttpEffect(application);
     });
-    if (options?.context === undefined) return handler;
+    if (options?.context === undefined) {
+      return handler;
+    }
     const captured = omitHostServices(options.context);
     return Effect.contextWith((live: Context.Context<never>) =>
       Effect.provideContext(handler, Context.merge(captured, live)),

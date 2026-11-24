@@ -16,9 +16,13 @@ const rawAssetUpdates = (): Plugin => {
     apply: "serve",
     applyToEnvironment: (environment) => environment.name === "rsc",
     transform(_code, id) {
-      if (this.environment.mode !== "dev") return;
+      if (this.environment.mode !== "dev") {
+        return;
+      }
       const module = this.environment.moduleGraph.getModuleById(id);
-      if (module) transformed.add(module);
+      if (module) {
+        transformed.add(module);
+      }
     },
     hotUpdate: {
       order: "pre",
@@ -32,9 +36,13 @@ const rawAssetUpdates = (): Plugin => {
           const updates = new Set(modules.filter((module) => module.file !== file));
           const invalidated = new Set<EnvironmentModuleNode>();
           for (const module of modules) {
-            if (module.file !== file) continue;
+            if (module.file !== file) {
+              continue;
+            }
             for (const importer of module.importers) {
-              if (importer.file !== file) updates.add(importer);
+              if (importer.file !== file) {
+                updates.add(importer);
+              }
             }
             this.environment.moduleGraph.invalidateModule(module, invalidated, timestamp, true);
           }
@@ -82,7 +90,9 @@ export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
       resolvedRscEntry = resolve(config.root, rscEntry);
     },
     transform(code, id) {
-      if (this.environment.name !== "rsc" || id.split("?", 1)[0] !== resolvedRscEntry) return;
+      if (this.environment.name !== "rsc" || id.split("?", 1)[0] !== resolvedRscEntry) {
+        return;
+      }
       // Register the compiler before the application module constructs or captures parsers.
       return `import "effect/schema/SchemaJITCompiler/enable";\n${code}`;
     },

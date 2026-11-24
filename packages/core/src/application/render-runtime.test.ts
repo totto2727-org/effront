@@ -40,7 +40,7 @@ describe("RenderRuntimeContext", () => {
       );
       const labels = yield* Effect.promise(() => Promise.all([first, second]));
 
-      expect(labels).toEqual(["first", "second"]);
+      expect(labels).toStrictEqual(["first", "second"]);
     }),
   );
 });

@@ -33,14 +33,19 @@ const observeAnimations = (page: Page) =>
     };
     const evidence = window.transitionEvidence;
     const observe = () => {
-      if (!evidence.running) return;
+      if (!evidence.running) {
+        return;
+      }
       evidence.frames++;
       for (const animation of document.getAnimations()) {
         const effect = animation.effect;
-        if (!(effect instanceof KeyframeEffect)) continue;
-        const name = animation instanceof CSSAnimation ? animation.animationName : animation.id;
-        if (!effect.pseudoElement?.includes("view-transition") && !name.startsWith("demo-"))
+        if (!(effect instanceof KeyframeEffect)) {
           continue;
+        }
+        const name = animation instanceof CSSAnimation ? animation.animationName : animation.id;
+        if (!effect.pseudoElement?.includes("view-transition") && !name.startsWith("demo-")) {
+          continue;
+        }
         evidence.samples.push({
           name,
           pseudoElement: effect.pseudoElement,
@@ -50,7 +55,9 @@ const observeAnimations = (page: Page) =>
           pageStyle: document.querySelector(".transition-card")?.getAttribute("style") ?? null,
         });
       }
-      if (evidence.running) requestAnimationFrame(observe);
+      if (evidence.running) {
+        requestAnimationFrame(observe);
+      }
     };
     requestAnimationFrame(observe);
   });

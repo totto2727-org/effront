@@ -100,9 +100,12 @@ function DocsNavigation({
               {filtered
                 .filter((item) => item.section === section)
                 .map((item, index, items) => {
-                  if (!item.group) return renderItem(item);
-                  if (items.findIndex((candidate) => candidate.group === item.group) !== index)
+                  if (!item.group) {
+                    return renderItem(item);
+                  }
+                  if (items.findIndex((candidate) => candidate.group === item.group) !== index) {
                     return null;
+                  }
                   return (
                     <SidebarMenuItem key={`group:${item.group}`}>
                       <span className="block px-2 py-1.5 text-xs font-medium text-sidebar-foreground/75">
@@ -151,7 +154,9 @@ function PreviousNext({
   const index = navigation.findIndex((item) => item.slug === current.slug);
   const previous = index > 0 ? navigation[index - 1] : undefined;
   const next = index >= 0 && index < navigation.length - 1 ? navigation[index + 1] : undefined;
-  if (!previous && !next) return null;
+  if (!previous && !next) {
+    return null;
+  }
   return (
     <nav
       aria-label={locale === "en" ? "Previous and next pages" : "前後のページ"}

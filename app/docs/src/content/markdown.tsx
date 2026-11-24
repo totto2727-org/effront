@@ -49,7 +49,9 @@ export const markdownPages: readonly RenderableDocPage[] = articleCatalog.map(
       Effect.gen(function* () {
         const collection = yield* articles;
         const entry = collection.get(source);
-        if (!entry) throw new TypeError(`Documentation article is missing: ${source}`);
+        if (!entry) {
+          throw new TypeError(`Documentation article is missing: ${source}`);
+        }
         const document = yield* parseMarkdown(entry);
         return (
           <MarkdownDocument
@@ -74,7 +76,9 @@ export function localizedMarkdownPages(locale: DocLocale): readonly RenderableDo
       Effect.gen(function* () {
         const collection = yield* locale === "en" ? englishArticles : articles;
         const entry = collection.get(`${locale === "en" ? "/en" : ""}${source}`);
-        if (!entry) throw new TypeError(`Documentation article is missing: ${locale}${source}`);
+        if (!entry) {
+          throw new TypeError(`Documentation article is missing: ${locale}${source}`);
+        }
         const document = yield* parseMarkdown(entry);
         return (
           <MarkdownDocument

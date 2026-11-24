@@ -40,12 +40,12 @@ it.effect("retains middleware resources through streaming response EOF", () =>
     const handler = yield* makeHandler(events, stream);
     const response = yield* Effect.promise(() => handler(new Request("http://localhost/")));
 
-    expect(events).toEqual(["acquired"]);
+    expect(events).toStrictEqual(["acquired"]);
     const body = response.text();
     yield* Deferred.succeed(finish, void 0);
     const responseBody = yield* Effect.promise(() => body);
     expect(responseBody).toBe("response");
-    expect(events).toEqual(["acquired", "released"]);
+    expect(events).toStrictEqual(["acquired", "released"]);
   }),
 );
 
@@ -61,8 +61,8 @@ it.effect("releases middleware resources when the response stream is canceled", 
     }
 
     yield* Effect.promise(() => reader.read());
-    expect(events).toEqual(["acquired"]);
+    expect(events).toStrictEqual(["acquired"]);
     yield* Effect.promise(() => reader.cancel());
-    expect(events).toEqual(["acquired", "released"]);
+    expect(events).toStrictEqual(["acquired", "released"]);
   }),
 );

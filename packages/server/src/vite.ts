@@ -92,7 +92,9 @@ const makeMiddleware = async (load: () => Promise<unknown>) => {
 export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
   const rsc = options.rsc ?? "./src/entry.rsc.ts";
   const serverEntry = options.server ?? "./src/entry.server.ts";
-  if (!rsc || !serverEntry) throw new TypeError("Effront server entries must not be empty.");
+  if (!rsc || !serverEntry) {
+    throw new TypeError("Effront server entries must not be empty.");
+  }
 
   const disposers = new Set<() => Promise<void>>();
   const retain = (instance: Awaited<ReturnType<typeof makeMiddleware>>) => {
@@ -135,7 +137,9 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
       if (portableIndex === -1 || portableIndex > hostIndex) {
         throw new TypeError("Register effront() before effrontServer().");
       }
-      if (config.command !== "build") return;
+      if (config.command !== "build") {
+        return;
+      }
 
       // Vite applies .env NODE_ENV overrides after config/configEnvironment.
       // Pin bundled React to the final client mode, not the startup shell's
@@ -145,7 +149,9 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
         JSON.stringify(config.isProduction ? "production" : "development");
       for (const name of ["rsc", "ssr"]) {
         const environment = config.environments[name];
-        if (environment === undefined) continue;
+        if (environment === undefined) {
+          continue;
+        }
         environment.define = {
           ...environment.define,
           "process.env.NODE_ENV": nodeEnv,
@@ -161,11 +167,15 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
       }
       const instance = await makeMiddleware(async () => {
         const resolved = await environment.pluginContainer.resolveId(rsc);
-        if (resolved === null) throw new TypeError(`Cannot resolve Effront RSC entry: ${rsc}`);
+        if (resolved === null) {
+          throw new TypeError(`Cannot resolve Effront RSC entry: ${rsc}`);
+        }
         try {
           return await environment.runner.import(resolved.id);
         } catch (error) {
-          if (error instanceof Error) server.ssrFixStacktrace(error);
+          if (error instanceof Error) {
+            server.ssrFixStacktrace(error);
+          }
           throw error;
         }
       });
@@ -179,7 +189,9 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
     },
     async configurePreviewServer(server) {
       const environment = server.config.environments["rsc"];
-      if (environment === undefined) throw new TypeError("Effront requires an RSC build.");
+      if (environment === undefined) {
+        throw new TypeError("Effront requires an RSC build.");
+      }
       const entry = pathToFileURL(
         resolve(server.config.root, environment.build.outDir, "index.js"),
       ).href;

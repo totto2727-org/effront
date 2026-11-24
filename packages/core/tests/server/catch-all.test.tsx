@@ -121,12 +121,12 @@ describe("catch-all public Fetch routing", () => {
               params: Record<string, string>;
             };
             const { "*": captured, ...named } = params;
-            expect(await response.json()).toEqual({
+            await expect(response.json()).resolves.toStrictEqual({
               pattern,
               params: pattern.endsWith("/*") ? { ...named, path: captured ?? "" } : params,
             });
           } else {
-            expect(await response.text()).toBe(await expected.text());
+            await expect(response.text()).resolves.toBe(await expected.text());
           }
         }
       }
@@ -143,7 +143,7 @@ describe("catch-all public Fetch routing", () => {
       {},
     );
     expect(head.status).toBe(200);
-    expect(await head.text()).toBe("");
+    await expect(head.text()).resolves.toBe("");
     for (const pathname of ["/manuals/a/b", "/_effront/assets/a", "/plain/unregistered"]) {
       const response = await handler(new Request(`https://routes.test${pathname}`), {}, {});
       expect(response.status).toBe(404);

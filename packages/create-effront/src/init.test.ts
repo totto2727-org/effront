@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { NodeServices } from "@effect/platform-node";
 import { Effect } from "effect";
 import { Command } from "effect/cli";
@@ -41,11 +41,11 @@ async function expectPnpmConfiguration(directory: string, platform?: string): Pr
   );
 }
 
-it("keeps required Vite+ overrides and lifecycle policy aligned with its installed toolchain", async () => {
+test("keeps required Vite+ overrides and lifecycle policy aligned with its installed toolchain", async () => {
   await expectPnpmConfiguration(fileURLToPath(new URL("../../../", import.meta.url)));
 });
 
-it("ships pnpm toolchain metadata through the published CLI for every platform", async () => {
+test("ships pnpm toolchain metadata through the published CLI for every platform", async () => {
   const root = fileURLToPath(new URL("../../../", import.meta.url));
   await mkdir(join(root, "tmp"), { recursive: true });
   const directory = await mkdtemp(join(root, "tmp", "create-effront-publication-"));
@@ -70,7 +70,7 @@ it("ships pnpm toolchain metadata through the published CLI for every platform",
       "--platform",
       platform,
     ]);
-    expect(await readdir(project)).not.toContain("bunfig.toml");
+    await expect(readdir(project)).resolves.not.toContain("bunfig.toml");
     const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
     expect(manifest.packageManager).toBe(workspace.packageManager);
     expect(manifest).not.toHaveProperty("overrides");
@@ -87,7 +87,7 @@ it("ships pnpm toolchain metadata through the published CLI for every platform",
 }, 30_000);
 
 for (const platform of platforms) {
-  it(`creates a ${platform} project with the shared application`, async () => {
+  test(`creates a ${platform} project with the shared application`, async () => {
     const directory = join(await temporaryDirectory(), "My App");
     await createProject(directory, platform);
     const manifest = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
@@ -99,9 +99,9 @@ for (const platform of platforms) {
     expect(manifest).not.toHaveProperty("overrides");
     expect(manifest).not.toHaveProperty("trustedDependencies");
     await expectPnpmConfiguration(directory, platform);
-    expect(await readdir(directory)).not.toContain("bunfig.toml");
+    await expect(readdir(directory)).resolves.not.toContain("bunfig.toml");
     if (platform === "alchemy-cloudflare") {
-      expect(manifest.scripts).toEqual({ dev: "alchemy dev" });
+      expect(manifest.scripts).toStrictEqual({ dev: "alchemy dev" });
     } else {
       expect(manifest.scripts).not.toHaveProperty("dev");
       expect(manifest.scripts).not.toHaveProperty("build");
@@ -138,12 +138,14 @@ for (const platform of platforms) {
       );
       expect(application).toBe(source);
     }
-    expect(await readdir(join(directory, "src"))).toContain("entry.effront.tsx");
-    expect(await readFile(join(directory, ".gitignore"), "utf8")).toContain("node_modules/");
+    await expect(readdir(join(directory, "src"))).resolves.toContain("entry.effront.tsx");
+    await expect(readFile(join(directory, ".gitignore"), "utf8")).resolves.toContain(
+      "node_modules/",
+    );
   });
 }
 
-it.each(platforms)(
+test.each(platforms)(
   "lints the generated %s project with application tracing",
   async (platform) => {
     const root = fileURLToPath(new URL("../../../", import.meta.url));
@@ -176,7 +178,7 @@ it.each(platforms)(
 );
 
 for (const platform of platforms) {
-  it(`keeps generated ${platform} host entries aligned with the runnable example`, async () => {
+  test(`keeps generated ${platform} host entries aligned with the runnable example`, async () => {
     const directory = join(await temporaryDirectory(), platform);
     await createProject(directory, platform);
     const hostFiles = [
@@ -211,7 +213,7 @@ for (const platform of platforms) {
   });
 }
 
-it("creates a standalone Cloudflare Worker without Alchemy or bindings", async () => {
+test("creates a standalone Cloudflare Worker without Alchemy or bindings", async () => {
   const directory = join(await temporaryDirectory(), "cloudflare");
   await createProject(directory, "cloudflare");
   const manifest = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
@@ -223,18 +225,18 @@ it("creates a standalone Cloudflare Worker without Alchemy or bindings", async (
   expect(manifest.dependencies).not.toHaveProperty("alchemy");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
   expect(manifest.devDependencies).toHaveProperty("wrangler", "^4.148.0");
-  expect(manifest.scripts).toEqual({ deploy: "wrangler deploy" });
+  expect(manifest.scripts).toStrictEqual({ deploy: "wrangler deploy" });
   expect(worker).toContain("createFetchHandler(application)");
   expect(config).toContain("effrontCloudflare()");
   expect(config).not.toContain("server:");
   expect(wrangler).toMatchObject({ name: "cloudflare", main: "src/entry.workers.ts" });
   expect(wrangler).not.toHaveProperty("vars");
   expect(wrangler).not.toHaveProperty("assets");
-  expect(await readdir(directory)).not.toContain("alchemy.run.ts");
-  expect(await readdir(join(directory, "src"))).not.toContain("entry.server.ts");
+  await expect(readdir(directory)).resolves.not.toContain("alchemy.run.ts");
+  await expect(readdir(join(directory, "src"))).resolves.not.toContain("entry.server.ts");
 });
 
-it("keeps standalone Cloudflare hosting out of the Alchemy project", async () => {
+test("keeps standalone Cloudflare hosting out of the Alchemy project", async () => {
   const directory = join(await temporaryDirectory(), "alchemy-cloudflare");
   await createProject(directory, "alchemy-cloudflare");
   const manifest = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
@@ -249,12 +251,12 @@ it("keeps standalone Cloudflare hosting out of the Alchemy project", async () =>
   expect(config).not.toContain("server:");
   expect(runner).toContain('"alchemy-cloudflare"');
   expect(worker).not.toContain("dev: { port:");
-  expect(await readdir(directory)).not.toContain("wrangler.json");
-  expect(await readdir(join(directory, "src"))).not.toContain("entry.server.ts");
+  await expect(readdir(directory)).resolves.not.toContain("wrangler.json");
+  await expect(readdir(join(directory, "src"))).resolves.not.toContain("entry.server.ts");
 });
 
 for (const platform of ["node", "bun"] as const) {
-  it(`uses Vite defaults and optional host environment settings for ${platform}`, async () => {
+  test(`uses Vite defaults and optional host environment settings for ${platform}`, async () => {
     const directory = join(await temporaryDirectory(), platform);
     await createProject(directory, platform);
     const config = await readFile(join(directory, "vite.config.ts"), "utf8");
@@ -270,7 +272,7 @@ for (const platform of ["node", "bun"] as const) {
 }
 
 for (const platform of platforms) {
-  it(`accepts the ${platform} flag forwarded by vp create`, async () => {
+  test(`accepts the ${platform} flag forwarded by vp create`, async () => {
     const directory = join(await temporaryDirectory(), `forwarded-${platform}`);
     const output = vi.spyOn(console, "log").mockImplementation(() => {});
     try {
@@ -287,7 +289,7 @@ for (const platform of platforms) {
   });
 }
 
-it("describes supported platforms in framework-generated help", async () => {
+test("describes supported platforms in framework-generated help", async () => {
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
     await Effect.runPromise(runCommand(["--help"]).pipe(Effect.provide(NodeServices.layer)));
@@ -298,7 +300,7 @@ it("describes supported platforms in framework-generated help", async () => {
   }
 });
 
-it("creates a project from forwarded VitePlus arguments and recommends vp commands", async () => {
+test("creates a project from forwarded VitePlus arguments and recommends vp commands", async () => {
   const directory = join(await temporaryDirectory(), "my-app");
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
@@ -317,15 +319,15 @@ it("creates a project from forwarded VitePlus arguments and recommends vp comman
   }
 });
 
-it("refuses to overwrite an existing project", async () => {
+test("refuses to overwrite an existing project", async () => {
   const directory = await temporaryDirectory();
   await writeFile(join(directory, "keep.txt"), "preserve me");
   await expect(createProject(directory, "node")).rejects.toThrow("not empty");
-  expect(await readFile(join(directory, "keep.txt"), "utf8")).toBe("preserve me");
-  expect(await readdir(directory)).toEqual(["keep.txt"]);
+  await expect(readFile(join(directory, "keep.txt"), "utf8")).resolves.toBe("preserve me");
+  await expect(readdir(directory)).resolves.toStrictEqual(["keep.txt"]);
 });
 
-it("rejects invalid platform and unexpected options without creating a project", async () => {
+test("rejects invalid platform and unexpected options without creating a project", async () => {
   const directory = join(await temporaryDirectory(), "invalid");
   await expect(
     Effect.runPromise(
@@ -352,13 +354,13 @@ it("rejects invalid platform and unexpected options without creating a project",
   await expect(readdir(directory)).rejects.toThrow();
 });
 
-it("rejects missing options without a terminal", async () => {
+test("rejects missing options without a terminal", async () => {
   await expect(
     Effect.runPromise(runCommand([]).pipe(Effect.provide(NodeServices.layer))),
   ).rejects.toThrow("Specify a directory and --platform in non-interactive mode.");
 });
 
-it("recommends Alchemy orchestration rather than a direct Vite dev command", async () => {
+test("recommends Alchemy orchestration rather than a direct Vite dev command", async () => {
   const directory = join(await temporaryDirectory(), "alchemy-app");
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {

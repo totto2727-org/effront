@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { isValidElement, ViewTransition, type ViewTransitionProps } from "react";
 
 import { PageViewTransitionBoundary } from "./page-view-transition.tsx";
@@ -16,7 +16,7 @@ afterEach(() => {
 });
 
 describe("PageViewTransitionBoundary policy", () => {
-  it("uses a stable shared page name and forwards React event classes", () => {
+  test("uses a stable shared page name and forwards React event classes", () => {
     const config = {
       default: "page",
       enter: "enter",
@@ -30,16 +30,20 @@ describe("PageViewTransitionBoundary policy", () => {
       throw new TypeError("Expected a ViewTransition element.");
     }
     expect(element.type).toBe(ViewTransition);
-    expect(element.props).toEqual({ ...config, name: "effront-page", children: "page content" });
+    expect(element.props).toStrictEqual({
+      ...config,
+      name: "effront-page",
+      children: "page content",
+    });
   });
 
-  it("omits the React boundary when disabled", () => {
+  test("omits the React boundary when disabled", () => {
     expect(
       PageViewTransitionBoundary({ config: { enabled: false }, children: "page content" }),
     ).toBe("page content");
   });
 
-  it("keeps the React boundary stable with animation classes disabled for reduced motion", () => {
+  test("keeps the React boundary stable with animation classes disabled for reduced motion", () => {
     media.reduced = true;
     const element = PageViewTransitionBoundary({
       config: { enabled: true, default: "custom", share: "custom-share" },
@@ -49,7 +53,7 @@ describe("PageViewTransitionBoundary policy", () => {
     if (!isValidElement<ViewTransitionProps>(element)) {
       throw new TypeError("Expected a ViewTransition element.");
     }
-    expect(element.props).toEqual({
+    expect(element.props).toStrictEqual({
       name: "effront-page",
       default: "none",
       enter: "none",

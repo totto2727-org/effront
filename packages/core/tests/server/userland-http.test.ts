@@ -1,7 +1,7 @@
 import { Context, Effect, Layer } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { createFetchHandler, createWorkersContextAccessors } from "@effront/core/workers";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 
 // oxlint-disable-next-line rules/consistent-import-extension -- Exercise the built JavaScript entry.
 import { Application } from "../../dist/core.js";
@@ -121,7 +121,7 @@ const makeApplication = () => {
 };
 
 describe("userland HTTP through createFetchHandler", () => {
-  it("does not map global response headers onto an unmatched route failure", async () => {
+  test("does not map global response headers onto an unmatched route failure", async () => {
     const { events, handler } = makeApplication();
     const response = await handler(
       new Request("https://workers.test/unknown"),
@@ -132,9 +132,9 @@ describe("userland HTTP through createFetchHandler", () => {
     expect(response.headers.get("x-content-type-options")).toBeNull();
     expect(response.headers.get("x-application-scoped")).toBeNull();
     await response.text();
-    expect(events).toEqual(["acquired:unknown", "released:unknown"]);
+    expect(events).toStrictEqual(["acquired:unknown", "released:unknown"]);
   });
-  it("executes the Guide's service-backed JSON route and releases completed non-stream responses", async () => {
+  test("executes the Guide's service-backed JSON route and releases completed non-stream responses", async () => {
     const { events, handler } = makeApplication();
     const response = await handler(
       new Request("https://workers.test/api/greeting"),
@@ -146,11 +146,11 @@ describe("userland HTTP through createFetchHandler", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("x-application-scoped")).toBeNull();
-    expect(await response.json()).toEqual({ message: "こんにちは、Ada さん。" });
+    await expect(response.json()).resolves.toStrictEqual({ message: "こんにちは、Ada さん。" });
     await expect.poll(() => events).toEqual(["acquired:one", "released:one"]);
   });
 
-  it("keeps application-layer environment services request-local and preserves JSON status", async () => {
+  test("keeps application-layer environment services request-local and preserves JSON status", async () => {
     const { events, handler } = makeApplication();
     const [first, second] = await Promise.all(
       ["one", "two"].map((requestId) =>
@@ -169,20 +169,20 @@ describe("userland HTTP through createFetchHandler", () => {
     ] as const) {
       expect(response.status).toBe(202);
       expect(response.headers.get("content-type")).toContain("application/json");
-      expect(await response.json()).toEqual({
+      await expect(response.json()).resolves.toStrictEqual({
         value: `env:${requestId}`,
         requestId,
         url: `https://workers.test/api/status?request=${requestId}`,
         method: "GET",
       });
     }
-    expect(events.filter((event) => event.startsWith("released:")).sort()).toEqual([
+    expect(events.filter((event) => event.startsWith("released:")).sort()).toStrictEqual([
       "released:one",
       "released:two",
     ]);
   });
 
-  it("applies global HTTP middleware to both route kinds but application middleware only to its scope", async () => {
+  test("applies global HTTP middleware to both route kinds but application middleware only to its scope", async () => {
     const { events, handler } = makeApplication();
     const api = await handler(
       new Request("https://workers.test/api/greeting"),
@@ -201,13 +201,18 @@ describe("userland HTTP through createFetchHandler", () => {
     expect(page.status).toBe(200);
     expect(page.headers.get("x-content-type-options")).toBe("nosniff");
     expect(page.headers.get("x-application-scoped")).toBe("yes");
-    expect(await page.json()).toEqual({
+    await expect(page.json()).resolves.toStrictEqual({
       message: "こんにちは、Ada さん。",
       value: "page",
       requestId: "page",
       url: "https://workers.test/page",
       scopedUrl: "/page",
     });
-    expect(events).toEqual(["acquired:api", "released:api", "acquired:page", "released:page"]);
+    expect(events).toStrictEqual([
+      "acquired:api",
+      "released:api",
+      "acquired:page",
+      "released:page",
+    ]);
   });
 });

@@ -11,10 +11,13 @@ const FindEntry = EFFRONT.Middleware.make<{ provides: CurrentEntry }>(
   Effect.fn(function* (httpEffect) {
     const request = yield* HttpServerRequest.HttpServerRequest;
     const collection = yield* Effect.result(manual);
-    if (Result.isFailure(collection))
+    if (Result.isFailure(collection)) {
       return HttpServerResponse.text("Invalid collection", { status: 500 });
+    }
     const entry = collection.success.get(request.url);
-    if (!entry) return HttpServerResponse.text("Not found", { status: 404 });
+    if (!entry) {
+      return HttpServerResponse.text("Not found", { status: 404 });
+    }
     return yield* httpEffect.pipe(Effect.provideService(CurrentEntry, entry));
   }),
 );

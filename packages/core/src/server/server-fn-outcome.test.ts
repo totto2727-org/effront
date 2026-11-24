@@ -17,7 +17,7 @@ describe("serverFnResponse", () => {
 
   it.effect("returns successful results without changing mutation response status", () =>
     Effect.gen(function* () {
-      expect(yield* serverFnOutcome(Effect.succeed("saved"))).toEqual({
+      expect(yield* serverFnOutcome(Effect.succeed("saved"))).toStrictEqual({
         serverFnResult: { _tag: "Success", value: "saved" },
         status: 200,
       });
@@ -43,9 +43,9 @@ describe("serverFnResponse", () => {
       expect((yield* Effect.promise(() => reader.read())).value).toBe("first");
       expect((yield* Effect.promise(() => reader.read())).value).toBe("second");
       expect((yield* Effect.promise(() => reader.read())).done).toBe(true);
-      expect(events).toEqual(["producer finalized"]);
+      expect(events).toStrictEqual(["producer finalized"]);
       yield* Scope.close(scope, Exit.void);
-      expect(events).toEqual(["producer finalized", "request released"]);
+      expect(events).toStrictEqual(["producer finalized", "request released"]);
     }),
   );
 
@@ -56,7 +56,7 @@ describe("serverFnResponse", () => {
           new ServerFnInputError({ detail: { message: "Invalid count", name: "ParseError" } }),
         ),
       );
-      expect(result).toEqual({
+      expect(result).toStrictEqual({
         _tag: "Failure",
         error: {
           _tag: "ServerFnInputError",

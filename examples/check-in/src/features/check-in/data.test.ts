@@ -1,22 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { makeCheckInStore } from "./data.ts";
 
 describe("makeCheckInStore", () => {
-  it("scopes previews to the authenticated organizer", () => {
+  test("scopes previews to the authenticated organizer", () => {
     const store = makeCheckInStore();
 
     expect(store.preview("organizer-ada", "event-summit")?.attendees).toHaveLength(2);
     expect(store.preview("organizer-ben", "event-summit")).toBeNull();
   });
 
-  it("rejects an organizer trying to check in another organizer's ticket", () => {
+  test("rejects an organizer trying to check in another organizer's ticket", () => {
     const store = makeCheckInStore();
 
-    expect(store.checkIn("organizer-ada", "PRIVATE-BEN")).toEqual({ status: "forbidden" });
+    expect(store.checkIn("organizer-ada", "PRIVATE-BEN")).toStrictEqual({ status: "forbidden" });
     expect(store.preview("organizer-ben", "event-private")?.audit).toHaveLength(0);
   });
 
-  it("creates one audit entry for repeated idempotent check-in requests", () => {
+  test("creates one audit entry for repeated idempotent check-in requests", () => {
     const store = makeCheckInStore();
 
     expect(store.checkIn("organizer-ada", "summit-ada")).toMatchObject({
@@ -30,7 +30,7 @@ describe("makeCheckInStore", () => {
 
     const preview = store.preview("organizer-ada");
     expect(preview?.checkedIn).toBe(1);
-    expect(preview?.audit).toEqual([
+    expect(preview?.audit).toStrictEqual([
       {
         ticketCode: "SUMMIT-ADA",
         actorId: "organizer-ada",
@@ -39,10 +39,10 @@ describe("makeCheckInStore", () => {
     ]);
   });
 
-  it("validates ticket input before changing state", () => {
+  test("validates ticket input before changing state", () => {
     const store = makeCheckInStore();
 
-    expect(store.checkIn("organizer-ada", "bad code")).toEqual({ status: "invalid-ticket" });
+    expect(store.checkIn("organizer-ada", "bad code")).toStrictEqual({ status: "invalid-ticket" });
     expect(store.preview("organizer-ada")?.audit).toHaveLength(0);
   });
 });

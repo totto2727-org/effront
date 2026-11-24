@@ -29,8 +29,11 @@ for (const locale of ["en", "ja"]) {
         expectPolicy(response.headers(), true);
         const body = await response.text();
         expect(body).toContain(`/${locale}/guide/markdown`);
-        if (contentType === "text/html") expect(body).toContain(`lang="${locale}"`);
-        else expect(body).not.toContain("<!DOCTYPE html>");
+        if (contentType === "text/html") {
+          expect(body).toContain(`lang="${locale}"`);
+        } else {
+          expect(body).not.toContain("<!DOCTYPE html>");
+        }
       });
     }
   }

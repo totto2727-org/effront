@@ -17,12 +17,16 @@ function StoryCard({ story }: { readonly story: Story }) {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!expanded || detail !== null) return;
+    if (!expanded || detail !== null) {
+      return;
+    }
     const controller = new AbortController();
     void Effect.runPromise(readNote({ id: story.id }), { signal: controller.signal })
       .then((value) => setDetail(value ?? "No note is available."))
       .catch(() => {
-        if (!controller.signal.aborted) setFailure(true);
+        if (!controller.signal.aborted) {
+          setFailure(true);
+        }
       });
     return () => controller.abort();
   }, [expanded, detail, story.id, attempt]);
@@ -74,7 +78,9 @@ export function Feed({ seed }: { readonly seed: ReadonlyArray<Story> }) {
   }, []);
 
   const loadMore = () => {
-    if (request.current || ended) return;
+    if (request.current || ended) {
+      return;
+    }
     const controller = new AbortController();
     request.current = controller;
     setPending(true);
@@ -86,10 +92,14 @@ export function Feed({ seed }: { readonly seed: ReadonlyArray<Story> }) {
       { signal: controller.signal },
     )
       .catch(() => {
-        if (!controller.signal.aborted) setFailure(true);
+        if (!controller.signal.aborted) {
+          setFailure(true);
+        }
       })
       .finally(() => {
-        if (request.current === controller) request.current = null;
+        if (request.current === controller) {
+          request.current = null;
+        }
         setPending(false);
       });
   };

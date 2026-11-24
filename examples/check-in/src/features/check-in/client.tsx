@@ -36,11 +36,15 @@ function CheckInContent() {
     queryPreview([]);
   }, [queryPreview]);
 
-  if (AsyncResult.isInitial(preview))
+  if (AsyncResult.isInitial(preview)) {
     return <p data-testid="preview-state">Loading authorized event preview…</p>;
-  if (AsyncResult.isFailure(preview)) return <p role="alert">The preview query failed.</p>;
-  if (preview.value === null)
+  }
+  if (AsyncResult.isFailure(preview)) {
+    return <p role="alert">The preview query failed.</p>;
+  }
+  if (preview.value === null) {
     return <p role="alert">This organizer is not authorized to view this event.</p>;
+  }
 
   const event = preview.value;
   return (

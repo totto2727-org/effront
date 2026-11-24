@@ -20,7 +20,9 @@ test.beforeAll(async () => {
     createMarkdownCollection({ basePath: "/", documents: { "./alerts.md": markdown } }),
   );
   const entry = collection.get("/alerts");
-  if (!entry) throw new TypeError("Alert fixture is missing");
+  if (!entry) {
+    throw new TypeError("Alert fixture is missing");
+  }
   const document = await Effect.runPromise(parseMarkdown(entry));
   // Playwright rewrites imported JSX for component tests. Vite's SSR loader
   // preserves ordinary React elements from the actual production component.
@@ -71,10 +73,14 @@ for (const theme of ["light", "dark"] as const) {
       const style = await alert.evaluate((element) => {
         const title = element.querySelector(".docs-alert-title");
         const body = element.querySelector(".docs-alert-body");
-        if (!title || !body) throw new TypeError("Alert fixture structure is missing");
+        if (!title || !body) {
+          throw new TypeError("Alert fixture structure is missing");
+        }
         const canvas = document.createElement("canvas");
         const context = canvas.getContext("2d");
-        if (!context) throw new TypeError("Canvas color conversion is unavailable");
+        if (!context) {
+          throw new TypeError("Canvas color conversion is unavailable");
+        }
         const luminance = (color: string) => {
           context.fillStyle = color;
           context.fillRect(0, 0, 1, 1);

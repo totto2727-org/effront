@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 import { DocsShell, type DocsShellProps } from "./docs-shell.tsx";
 import { localizedPath } from "../content/locale.ts";
 
@@ -38,7 +38,7 @@ function render(
 }
 
 describe("documentation hierarchy", () => {
-  it("nests metadata-defined chapters once under their group and marks the active link", () => {
+  test("nests metadata-defined chapters once under their group and marks the active link", () => {
     const html = render(chapter);
     const sidebar = html.split('<header class="sticky')[0]!;
     expect(sidebar).toMatch(
@@ -51,7 +51,7 @@ describe("documentation hierarchy", () => {
     expect(sidebar).toContain("h-auto");
   });
 
-  it("renders an ordered breadcrumb including only the current page's ancestors", () => {
+  test("renders an ordered breadcrumb including only the current page's ancestors", () => {
     const grouped = render(chapter).match(
       /<nav aria-label="パンくずリスト"[^>]*>(.*?)<\/nav>/,
     )?.[1];
@@ -63,7 +63,7 @@ describe("documentation hierarchy", () => {
     expect(ungrouped).not.toContain("実装解説");
   });
 
-  it("preserves no-JavaScript chapter links and the official upstream footer", () => {
+  test("preserves no-JavaScript chapter links and the official upstream footer", () => {
     const html = render(chapter);
     const fallback = html.match(/<noscript>(.*?)<\/noscript>/)?.[1];
     expect(fallback).toContain(`href="${chapter.slug}" aria-current="page"`);
@@ -72,7 +72,7 @@ describe("documentation hierarchy", () => {
     expect(html).not.toContain("github.com");
   });
 
-  it("renders English shell labels, grouped navigation, breadcrumbs, and table of contents", () => {
+  test("renders English shell labels, grouped navigation, breadcrumbs, and table of contents", () => {
     const html = render(englishChapter, {
       locale: "en",
       navigation: englishNavigation,
@@ -108,7 +108,7 @@ describe("documentation hierarchy", () => {
     expect(html).not.toContain("ガイドを検索");
   });
 
-  it("keeps English no-JavaScript and previous/next links in the same language", () => {
+  test("keeps English no-JavaScript and previous/next links in the same language", () => {
     const html = render(englishChapter, { locale: "en", navigation: englishNavigation });
     const fallback = html.match(/<noscript>(.*?)<\/noscript>/)?.[1];
     expect(fallback).toContain('aria-label="Documentation navigation"');
@@ -123,7 +123,7 @@ describe("documentation hierarchy", () => {
     expect(adjacent).not.toContain(`href="${englishChapter.slug}"`);
   });
 
-  it.each(["ja", "en"] as const)(
+  test.each(["ja", "en"] as const)(
     "switches the current %s article and homepage with accessible language links",
     (locale) => {
       for (const path of ["/", "/guide/routes", "/architecture/implementation/request"]) {
@@ -141,14 +141,17 @@ describe("documentation hierarchy", () => {
           expect(link).toContain(`lang="${language}"`);
           expect(link).toMatch(new RegExp(`\\bhreflang="${language}"`, "i"));
           expect(link).toContain(language === "en" ? ">English</a>" : ">日本語</a>");
-          if (language === locale) expect(link).toContain('aria-current="true"');
-          else expect(link).not.toContain("aria-current=");
+          if (language === locale) {
+            expect(link).toContain('aria-current="true"');
+          } else {
+            expect(link).not.toContain("aria-current=");
+          }
         }
       }
     },
   );
 
-  it("offers both explicit locale URLs from a legacy Japanese article", () => {
+  test("offers both explicit locale URLs from a legacy Japanese article", () => {
     const html = render(chapter);
     const switcher = html.match(/<nav aria-label="言語"[^>]*>(.*?)<\/nav>/)?.[1];
     expect(switcher).toContain(`href="/en${chapter.slug}"`);

@@ -3,14 +3,14 @@ import { fileURLToPath } from "node:url";
 
 import { effront } from "@effront/vite";
 import { normalizePath, resolveConfig } from "vite";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { effrontAlchemy } from "./vite.ts";
 
 const root = fileURLToPath(new URL("../../../../examples/basic/", import.meta.url));
 
 describe("Alchemy Vite graph composition", () => {
-  it("statically imports the configured application only in the RSC runtime environment", async () => {
+  test("statically imports the configured application only in the RSC runtime environment", async () => {
     const config = await resolveConfig(
       { configFile: false, root, plugins: [effront(), effrontAlchemy()] },
       "build",
@@ -33,7 +33,7 @@ describe("Alchemy Vite graph composition", () => {
     expect(Reflect.apply(load, {}, [resolve(root, "src/application-loader.ts")])).toBeUndefined();
   });
 
-  it("owns a native RSC bridge and runtime flag without installing a second host", async () => {
+  test("owns a native RSC bridge and runtime flag without installing a second host", async () => {
     const config = await resolveConfig(
       {
         configFile: false,
@@ -43,10 +43,10 @@ describe("Alchemy Vite graph composition", () => {
       "build",
     );
     expect(config.define?.["globalThis.__ALCHEMY_RUNTIME__"]).toBe("true");
-    expect(Object.keys(config.environments)).toEqual(
+    expect(Object.keys(config.environments)).toStrictEqual(
       expect.arrayContaining(["rsc", "ssr", "client"]),
     );
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
       index: "virtual:effront/alchemy/cloudflare/entry",
     });
     expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "dist/rsc/ssr"));
@@ -74,7 +74,7 @@ describe("Alchemy Vite graph composition", () => {
     expect(source).not.toContain("async fetch");
   });
 
-  it("leaves dependency optimization to the host and consumer", async () => {
+  test("leaves dependency optimization to the host and consumer", async () => {
     const config = await resolveConfig(
       {
         configFile: false,
@@ -103,7 +103,7 @@ describe("Alchemy Vite graph composition", () => {
     }
   });
 
-  it("provides the bridge before the real Cloudflare host captures its entry", async () => {
+  test("provides the bridge before the real Cloudflare host captures its entry", async () => {
     const config = await resolveConfig(
       {
         configFile: fileURLToPath(
@@ -117,7 +117,7 @@ describe("Alchemy Vite graph composition", () => {
     );
   });
 
-  it("keeps portable application configuration separate from the native worker", async () => {
+  test("keeps portable application configuration separate from the native worker", async () => {
     const config = await resolveConfig(
       {
         configFile: false,
@@ -143,7 +143,7 @@ describe("Alchemy Vite graph composition", () => {
     );
   });
 
-  it("does not register the portable React or RSC integrations by itself", async () => {
+  test("does not register the portable React or RSC integrations by itself", async () => {
     const config = await resolveConfig(
       { configFile: false, root, plugins: effrontAlchemy() },
       "build",
@@ -155,7 +155,7 @@ describe("Alchemy Vite graph composition", () => {
     );
   });
 
-  it.each(["portable-first", "adapter-first"] as const)(
+  test.each(["portable-first", "adapter-first"] as const)(
     "validates native bridge configuration in %s order",
     async (order) => {
       const portable = effront({ rsc: "./src/custom-fetch.ts" });
@@ -173,7 +173,7 @@ describe("Alchemy Vite graph composition", () => {
         return;
       }
       const config = await configuration;
-      expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+      expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
         index: "virtual:effront/alchemy/cloudflare/entry",
       });
       expect(
@@ -184,11 +184,11 @@ describe("Alchemy Vite graph composition", () => {
     },
   );
 
-  it("rejects an empty explicit worker entry", () => {
+  test("rejects an empty explicit worker entry", () => {
     expect(() => effrontAlchemy({ worker: "" })).toThrow(TypeError);
   });
 
-  it("nests SSR below an explicitly configured RSC output", async () => {
+  test("nests SSR below an explicitly configured RSC output", async () => {
     const config = await resolveConfig(
       {
         configFile: false,
@@ -201,7 +201,7 @@ describe("Alchemy Vite graph composition", () => {
     expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "custom/worker/ssr"));
   });
 
-  it("preserves an explicitly configured SSR output directory", async () => {
+  test("preserves an explicitly configured SSR output directory", async () => {
     const config = await resolveConfig(
       {
         configFile: false,

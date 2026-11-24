@@ -22,14 +22,17 @@ test("loading next page streams notes without navigation or discarding expanded 
   const requests: string[] = [];
   const documents: string[] = [];
   page.on("request", (request) => {
-    if (request.method() === "POST" && request.url().endsWith("/_effront/query"))
+    if (request.method() === "POST" && request.url().endsWith("/_effront/query")) {
       requests.push(request.url());
+    }
   });
 
   await page.goto("/");
   await expect(page.locator("[data-hydrated=true]")).toBeVisible();
   page.on("request", (request) => {
-    if (request.isNavigationRequest()) documents.push(request.url());
+    if (request.isNavigationRequest()) {
+      documents.push(request.url());
+    }
   });
   await page.locator('[data-story-id="1"]').getByRole("button", { name: "Read note" }).click();
   await expect(page.locator('[data-story-id="1"]')).toContainText("The full story for note 1");

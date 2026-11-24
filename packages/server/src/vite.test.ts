@@ -12,7 +12,7 @@ import {
   type UserConfig,
   type ViteDevServer,
 } from "vite";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { effrontServer } from "./vite.ts";
 
@@ -32,9 +32,9 @@ const resolveServerConfig = (config: UserConfig = {}, command: "serve" | "build"
   );
 
 describe("effrontServer configuration", () => {
-  it("builds separate native handler and startup entries without changing SSR conditions", async () => {
+  test("builds separate native handler and startup entries without changing SSR conditions", async () => {
     const config = await resolveServerConfig();
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
       index: "./src/entry.rsc.ts",
       server: "./src/entry.server.ts",
     });
@@ -50,9 +50,9 @@ describe("effrontServer configuration", () => {
     expect(config.plugins.filter((plugin) => plugin.name === "rsc")).toHaveLength(1);
   });
 
-  it("does not load the production startup entry during development", async () => {
+  test("does not load the production startup entry during development", async () => {
     const config = await resolveServerConfig({}, "serve");
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
       index: "./src/entry.rsc.ts",
     });
     for (const name of ["rsc", "ssr"]) {
@@ -60,7 +60,7 @@ describe("effrontServer configuration", () => {
     }
   });
 
-  it.each(["production", "development", "test"])(
+  test.each(["production", "development", "test"])(
     "pins bundled server React to the resolved %s build mode without replacing other env",
     async (nodeEnv) => {
       vi.stubEnv("NODE_ENV", nodeEnv);
@@ -86,7 +86,7 @@ describe("effrontServer configuration", () => {
     },
   );
 
-  it("honors an explicit client NODE_ENV define for both server graphs", async () => {
+  test("honors an explicit client NODE_ENV define for both server graphs", async () => {
     vi.stubEnv("NODE_ENV", "production");
     const config = await resolveServerConfig({
       environments: {
@@ -102,7 +102,7 @@ describe("effrontServer configuration", () => {
     }
   });
 
-  it("uses final development mode when .env overrides the default production build", async () => {
+  test("uses final development mode when .env overrides the default production build", async () => {
     vi.stubEnv("NODE_ENV", undefined);
     vi.stubEnv("VITE_USER_NODE_ENV", undefined);
     const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
@@ -121,7 +121,7 @@ describe("effrontServer configuration", () => {
     }
   });
 
-  it("preserves other entries and output directories with custom host entries", async () => {
+  test("preserves other entries and output directories with custom host entries", async () => {
     const config = await resolveServerConfig({
       plugins: [
         effront(),
@@ -138,7 +138,7 @@ describe("effrontServer configuration", () => {
         client: { build: { outDir: "output/client" } },
       },
     });
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
       other: "./custom/other.ts",
       index: "./custom/handler.ts",
       server: "./custom/main.ts",
@@ -148,7 +148,7 @@ describe("effrontServer configuration", () => {
     }
   });
 
-  it("rejects missing or incorrectly ordered portable integration", async () => {
+  test("rejects missing or incorrectly ordered portable integration", async () => {
     await expect(resolveServerConfig({ plugins: [effrontServer()] })).rejects.toThrow(
       "Register effront() before effrontServer()",
     );
@@ -157,7 +157,7 @@ describe("effrontServer configuration", () => {
     );
   });
 
-  it("rejects empty entry options", () => {
+  test("rejects empty entry options", () => {
     expect(() => effrontServer({ rsc: "" })).toThrow(TypeError);
     expect(() => effrontServer({ server: "" })).toThrow(TypeError);
   });
@@ -231,16 +231,18 @@ const setupServer = async (middlewareMode = false) => {
 const listen = async (server: ViteDevServer) => {
   await server.listen();
   const address = server.httpServer?.address();
-  if (!address || typeof address === "string") throw new Error("Missing HTTP server address");
+  if (!address || typeof address === "string") {
+    throw new Error("Missing HTTP server address");
+  }
   return `http://127.0.0.1:${address.port}`;
 };
 
 describe("effrontServer native middleware", () => {
-  it("uses Vite's one listener, native requests, and the current runner module after HMR", async () => {
+  test("uses Vite's one listener, native requests, and the current runner module after HMR", async () => {
     const { server, change } = await setupServer();
     const origin = await listen(server);
     expect(server.httpServer?.listenerCount("request")).toBe(1);
-    expect(await (await fetch(`${origin}/route?query=value`)).text()).toBe(
+    await expect((await fetch(`${origin}/route?query=value`)).text()).resolves.toBe(
       "first:GET:/route?query=value:IncomingMessage",
     );
     const viteClient = await fetch(`${origin}/@vite/client`);
@@ -252,7 +254,9 @@ describe("effrontServer native middleware", () => {
       throw new Error("Missing runnable RSC environment");
     }
     const module = environment.moduleGraph.getModuleById(resolvedEntry);
-    if (!module) throw new Error("RSC module was not loaded");
+    if (!module) {
+      throw new Error("RSC module was not loaded");
+    }
     change("second");
     await environment.reloadModule(module);
     await expect
@@ -260,7 +264,7 @@ describe("effrontServer native middleware", () => {
       .toBe("second:GET:/route:IncomingMessage");
   });
 
-  it("preserves custom status text, headers and cookies for success and failure responses", async () => {
+  test("preserves custom status text, headers and cookies for success and failure responses", async () => {
     const { server } = await setupServer();
     const origin = await listen(server);
     for (const [path, status, statusText] of [
@@ -273,25 +277,27 @@ describe("effrontServer native middleware", () => {
       expect(response.headers.get("content-type")).toContain("charset=utf-8");
       expect(response.headers.get("x-application")).toBe("retained");
       expect(response.headers.get("set-cookie")).toContain("session=retained");
-      expect(await response.text()).toBe("日本語の応答");
+      await expect(response.text()).resolves.toBe("日本語の応答");
     }
   });
 
-  it("retains request scope through streaming and releases it on client cancellation", async () => {
+  test("retains request scope through streaming and releases it on client cancellation", async () => {
     const events: string[] = [];
     vi.stubGlobal(eventsKey, events);
     const { server } = await setupServer();
     const origin = await listen(server);
     const response = await fetch(`${origin}/stream`);
     const reader = response.body?.getReader();
-    if (!reader) throw new Error("Missing streaming response body");
+    if (!reader) {
+      throw new Error("Missing streaming response body");
+    }
     expect(new TextDecoder().decode((await reader.read()).value)).toBe("streaming");
-    expect(events).toEqual(["acquired"]);
+    expect(events).toStrictEqual(["acquired"]);
     await reader.cancel();
     await expect.poll(() => events).toEqual(["acquired", "released"]);
   });
 
-  it("closes active request scopes when Vite closes in middleware mode", async () => {
+  test("closes active request scopes when Vite closes in middleware mode", async () => {
     const events: string[] = [];
     vi.stubGlobal(eventsKey, events);
     const { server } = await setupServer(true);
@@ -300,14 +306,18 @@ describe("effrontServer native middleware", () => {
     await new Promise<void>((resolve) => host.listen(0, "127.0.0.1", resolve));
     try {
       const address = host.address();
-      if (!address || typeof address === "string") throw new Error("Missing HTTP server address");
+      if (!address || typeof address === "string") {
+        throw new Error("Missing HTTP server address");
+      }
       const response = await fetch(`http://127.0.0.1:${address.port}/stream`);
       const reader = response.body?.getReader();
-      if (!reader) throw new Error("Missing streaming response body");
+      if (!reader) {
+        throw new Error("Missing streaming response body");
+      }
       await reader.read();
-      expect(events).toEqual(["acquired"]);
+      expect(events).toStrictEqual(["acquired"]);
       await server.close();
-      expect(events).toEqual(["acquired", "released"]);
+      expect(events).toStrictEqual(["acquired", "released"]);
       await reader.cancel();
     } finally {
       host.closeAllConnections();

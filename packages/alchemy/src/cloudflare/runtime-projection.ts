@@ -57,9 +57,13 @@ export const alchemyRuntimeProjection = (): Plugin => {
           name: "effront:alchemy-deployment-filter",
           resolveId: (id) => (id.startsWith(facadePrefix) ? id : undefined),
           async load(id) {
-            if (!id.startsWith(facadePrefix)) return;
+            if (!id.startsWith(facadePrefix)) {
+              return;
+            }
             const file = id.slice(facadePrefix.length);
-            if (excluded(file)) return "export {};";
+            if (excluded(file)) {
+              return "export {};";
+            }
             const original = readFileSync(file, "utf8");
             // Only actual infrastructure-provider factories are omitted. A runtime
             // ConfigProvider is not excluded just because its name ends in Provider.
@@ -82,8 +86,9 @@ export const alchemyRuntimeProjection = (): Plugin => {
               if (
                 node.type !== "ExportNamedDeclaration" ||
                 node.declaration?.type !== "VariableDeclaration"
-              )
+              ) {
                 continue;
+              }
               for (const declaration of node.declaration.declarations) {
                 const init = declaration.init;
                 const body = init?.type === "ArrowFunctionExpression" ? init.body : init;
@@ -93,15 +98,18 @@ export const alchemyRuntimeProjection = (): Plugin => {
                   body.callee.type === "MemberExpression" &&
                   body.callee.object.type === "Identifier" &&
                   providerNamespaces.has(body.callee.object.name)
-                )
+                ) {
                   providers.add(declaration.id.name);
+                }
               }
             }
             const lines: string[] = [];
             const target = async (source: string) => {
               if (!source.startsWith(".")) {
                 const resolved = await this.resolve(source, file);
-                if (!resolved) throw new TypeError(`Cannot resolve Alchemy re-export: ${source}`);
+                if (!resolved) {
+                  throw new TypeError(`Cannot resolve Alchemy re-export: ${source}`);
+                }
                 return resolved.id;
               }
               const path = resolve(dirname(file), source.replace(/\.js$/, ".ts"));
@@ -119,8 +127,9 @@ export const alchemyRuntimeProjection = (): Plugin => {
                   const names =
                     declaration.type === "VariableDeclaration"
                       ? declaration.declarations.map((value) => {
-                          if (value.id.type !== "Identifier")
+                          if (value.id.type !== "Identifier") {
                             throw new TypeError(`Unsupported Alchemy export pattern in ${file}`);
+                          }
                           return value.id.name;
                         })
                       : (declaration.type === "FunctionDeclaration" ||
@@ -129,8 +138,9 @@ export const alchemyRuntimeProjection = (): Plugin => {
                         ? [declaration.id.name]
                         : [];
                   const kept = names.filter((name) => !providers.has(name));
-                  if (kept.length)
+                  if (kept.length) {
                     lines.push(`export { ${kept.join(", ")} } from ${JSON.stringify(file)};`);
+                  }
                 } else {
                   const kept = node.specifiers.filter(
                     (value) =>
@@ -144,10 +154,11 @@ export const alchemyRuntimeProjection = (): Plugin => {
                     (value) =>
                       `${value.local.type === "Identifier" ? value.local.name : JSON.stringify(value.local.value)} as ${value.exported.type === "Identifier" ? value.exported.name : JSON.stringify(value.exported.value)}`,
                   );
-                  if (names.length)
+                  if (names.length) {
                     lines.push(
                       `export { ${names.join(", ")} } from ${JSON.stringify(node.source ? await target(String(node.source.value)) : file)};`,
                     );
+                  }
                 }
               } else if (node.type === "ExportDefaultDeclaration") {
                 lines.push(`export { default } from ${JSON.stringify(file)};`);
@@ -174,10 +185,14 @@ export const alchemyRuntimeProjection = (): Plugin => {
         },
       },
     });
-    if ("on" in result) throw new TypeError("Unexpected Alchemy runtime build watcher.");
+    if ("on" in result) {
+      throw new TypeError("Unexpected Alchemy runtime build watcher.");
+    }
     const output = Array.isArray(result) ? result.flatMap((value) => value.output) : result.output;
     const chunks = output.filter((value) => value.type === "chunk");
-    if (chunks.length !== 1) throw new TypeError("Expected one Alchemy runtime module.");
+    if (chunks.length !== 1) {
+      throw new TypeError("Expected one Alchemy runtime module.");
+    }
     return chunks[0]!.code;
   };
 
@@ -186,19 +201,28 @@ export const alchemyRuntimeProjection = (): Plugin => {
     enforce: "pre",
     applyToEnvironment: (environment) => environment.name === "rsc" || environment.name === "ssr",
     resolveId(id) {
-      if (id !== "alchemy/Cloudflare" && !id.startsWith("alchemy/Cloudflare/")) return;
+      if (id !== "alchemy/Cloudflare" && !id.startsWith("alchemy/Cloudflare/")) {
+        return;
+      }
       const resolved = fileURLToPath(import.meta.resolve(id));
       const source = resolved.replace(join(root, "lib"), join(root, "src")).replace(/\.js$/, ".ts");
-      if (!existsSync(source)) throw new TypeError(`Alchemy runtime module is missing: ${source}`);
-      if (excluded(source))
+      if (!existsSync(source)) {
+        throw new TypeError(`Alchemy runtime module is missing: ${source}`);
+      }
+      if (excluded(source)) {
         throw new TypeError(`Alchemy deployment-only module is unavailable in a Worker: ${id}`);
+      }
       return prefix + source;
     },
     load(id) {
-      if (!id.startsWith(prefix)) return;
+      if (!id.startsWith(prefix)) {
+        return;
+      }
       const entry = id.slice(prefix.length);
       let code = cache.get(entry);
-      if (!code) cache.set(entry, (code = compile(entry)));
+      if (!code) {
+        cache.set(entry, (code = compile(entry)));
+      }
       return code;
     },
   };

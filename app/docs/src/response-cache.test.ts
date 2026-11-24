@@ -1,6 +1,6 @@
 import { Effect, Stream } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { responseCache } from "./response-cache.ts";
 
@@ -34,11 +34,11 @@ const expectPolicy = (response: HttpServerResponse.HttpServerResponse, isPublic:
   expect(response.headers["cloudflare-cdn-cache-control"]).toBe(
     isPublic ? "public, max-age=31536000" : "private, no-store",
   );
-  expect(response.headers["vary"]?.split(", ")).toEqual(expect.arrayContaining(["accept"]));
+  expect(response.headers["vary"]?.split(", ")).toStrictEqual(expect.arrayContaining(["accept"]));
 };
 
 describe("docs cache middleware", () => {
-  it.each([
+  test.each([
     "text/html",
     "text/*",
     "*/*",
@@ -55,10 +55,10 @@ describe("docs cache middleware", () => {
     expectPolicy(response, true);
     expect(response.body).toBe(original.body);
     expect(original.headers["cache-control"]).toBe("private, no-store");
-    expect(await HttpServerResponse.toWeb(response).text()).toBe("rendered");
+    await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe("rendered");
   });
 
-  it.each([
+  test.each([
     "application/json",
     "",
     "text/x-component",
@@ -80,11 +80,11 @@ describe("docs cache middleware", () => {
     expectPolicy(await run(pageRequest({ accept })), false),
   );
 
-  it("does not opt requests without Accept into caching", async () => {
+  test("does not opt requests without Accept into caching", async () => {
     expectPolicy(await run(new Request("https://docs.example/guide")), false);
   });
 
-  it.each([
+  test.each([
     "text/html;q=1.1, */*",
     "text/html;q=2",
     "text/html;q=0.0001",
@@ -99,19 +99,19 @@ describe("docs cache middleware", () => {
     expectPolicy(await run(pageRequest({ accept })), true);
   });
 
-  it("uses negotiator for combined duplicate Accept header values", async () => {
+  test("uses negotiator for combined duplicate Accept header values", async () => {
     const request = pageRequest({ accept: "text/html;q=0" });
     request.headers.append("accept", "text/html");
     expectPolicy(await run(request), true);
   });
 
-  it.each(["POST", "PUT", "PATCH", "DELETE", "HEAD"])("does not cache %s", async (method) => {
+  test.each(["POST", "PUT", "PATCH", "DELETE", "HEAD"])("does not cache %s", async (method) => {
     for (const accept of ["text/html", "*/*"]) {
       expectPolicy(await run(pageRequest({ accept }, method)), false);
     }
   });
 
-  it.each([204, 206, 301, 302, 304, 404, 500])("does not cache status %s", async (status) => {
+  test.each([204, 206, 301, 302, 304, 404, 500])("does not cache status %s", async (status) => {
     const original = HttpServerResponse.setHeader(
       HttpServerResponse.empty({ status }),
       "content-type",
@@ -122,7 +122,7 @@ describe("docs cache middleware", () => {
     expectPolicy(response, false);
   });
 
-  it.each(["cookie", "authorization"])("ignores request %s for public docs", async (header) => {
+  test.each(["cookie", "authorization"])("ignores request %s for public docs", async (header) => {
     for (const value of ["one", "two", ""]) {
       const response = await run(pageRequest({ [header]: value }));
       expectPolicy(response, true);
@@ -130,7 +130,7 @@ describe("docs cache middleware", () => {
     }
   });
 
-  it("preserves Set-Cookie without changing the public policy", async () => {
+  test("preserves Set-Cookie without changing the public policy", async () => {
     const response = await run(
       pageRequest(),
       Effect.succeed(HttpServerResponse.setHeader(html(), "set-cookie", "session=private")),
@@ -139,7 +139,7 @@ describe("docs cache middleware", () => {
     expect(response.headers["set-cookie"]).toBe("session=private");
   });
 
-  it("preserves native Effect cookies without changing the public policy", async () => {
+  test("preserves native Effect cookies without changing the public policy", async () => {
     const original = HttpServerResponse.setCookieUnsafe(html(), "session", "private");
     const response = await run(pageRequest(), Effect.succeed(original));
     expectPolicy(response, true);
@@ -149,7 +149,7 @@ describe("docs cache middleware", () => {
     );
   });
 
-  it("preserves and deduplicates existing Vary dimensions", async () => {
+  test("preserves and deduplicates existing Vary dimensions", async () => {
     const response = await run(
       pageRequest(),
       Effect.succeed(HttpServerResponse.setHeader(html(), "vary", "Accept-Language, ACCEPT")),
@@ -158,7 +158,7 @@ describe("docs cache middleware", () => {
     expect(response.headers["vary"]).toBe("accept-language, accept");
   });
 
-  it.each([
+  test.each([
     ["text/x-component", true],
     ["text/x-component; charset=utf-8", false],
     ["text/x-component;q=0", false],
@@ -178,7 +178,7 @@ describe("docs cache middleware", () => {
     expect(response.body).toBe(original.body);
   });
 
-  it.each(["application/json", "text/html-extra", "application/xhtml+xml"])(
+  test.each(["application/json", "text/html-extra", "application/xhtml+xml"])(
     "does not cache actual response type %s for a wildcard request",
     async (contentType) => {
       const original = HttpServerResponse.text("not HTML", { contentType });
@@ -186,7 +186,7 @@ describe("docs cache middleware", () => {
     },
   );
 
-  it.each(["text/html", "text/x-component"])(
+  test.each(["text/html", "text/x-component"])(
     "matches Accept parameters against the actual %s response",
     async (mediaType) => {
       const original = HttpServerResponse.setHeader(
@@ -208,7 +208,7 @@ describe("docs cache middleware", () => {
     },
   );
 
-  it.each(
+  test.each(
     ["text/html", "text/x-component"].flatMap((contentType) => [
       { contentType, accept: "*/*", eligible: true },
       { contentType, accept: "text/*", eligible: true },
@@ -233,18 +233,18 @@ describe("docs cache middleware", () => {
       expect(response.body).toBe(original.body);
       expect(response.headers["content-type"]).toBe(original.headers["content-type"]);
       expect(response.headers["vary"]).toBe("accept-language, accept");
-      expect(await HttpServerResponse.toWeb(response).text()).toBe("rendered");
+      await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe("rendered");
     },
   );
 
-  it("does not cache a response without a media type", async () => {
+  test("does not cache a response without a media type", async () => {
     expectPolicy(
       await run(pageRequest({ accept: "*/*" }), Effect.succeed(HttpServerResponse.empty())),
       false,
     );
   });
 
-  it("recognizes HTML response media types with parameters and mixed case", async () => {
+  test("recognizes HTML response media types with parameters and mixed case", async () => {
     const original = HttpServerResponse.setHeader(
       html(),
       "content-type",
@@ -256,24 +256,24 @@ describe("docs cache middleware", () => {
     expect(response.body).toBe(original.body);
   });
 
-  it("leaves a pending response stream untouched", async () => {
+  test("leaves a pending response stream untouched", async () => {
     const original = HttpServerResponse.stream(Stream.never, { contentType: "text/html" });
     const response = await run(pageRequest(), Effect.succeed(original));
     expectPolicy(response, true);
     expect(response.body).toBe(original.body);
   });
 
-  it("preserves stream bytes", async () => {
+  test("preserves stream bytes", async () => {
     const original = HttpServerResponse.stream(
       Stream.fromIterable([new TextEncoder().encode("first"), new TextEncoder().encode("second")]),
       { contentType: "text/html" },
     );
     const response = await run(pageRequest(), Effect.succeed(original));
     expect(response.body).toBe(original.body);
-    expect(await HttpServerResponse.toWeb(response).text()).toBe("firstsecond");
+    await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe("firstsecond");
   });
 
-  it("preserves stream failures", async () => {
+  test("preserves stream failures", async () => {
     const original = HttpServerResponse.stream(Stream.fail(new Error("render failed")), {
       contentType: "text/html",
     });
@@ -282,7 +282,7 @@ describe("docs cache middleware", () => {
     await expect(HttpServerResponse.toWeb(response).text()).rejects.toThrow("render failed");
   });
 
-  it("propagates handler failures", async () => {
+  test("propagates handler failures", async () => {
     await expect(run(pageRequest(), Effect.fail(new Error("handler failed")))).rejects.toThrow(
       "handler failed",
     );

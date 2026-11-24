@@ -6,8 +6,12 @@ test("uses one root atom registry for scoped preview refreshes and idempotent ch
   const queries: string[] = [];
   const actions: string[] = [];
   page.on("request", (request) => {
-    if (request.url().includes("/_effront/query")) queries.push(request.url());
-    if (request.method() === "POST") actions.push(request.url());
+    if (request.url().includes("/_effront/query")) {
+      queries.push(request.url());
+    }
+    if (request.method() === "POST") {
+      actions.push(request.url());
+    }
   });
 
   await page.goto("/");

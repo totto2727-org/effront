@@ -2,13 +2,13 @@ import { execFileSync } from "node:child_process";
 import { architectureBaseline } from "./architecture-baseline.ts";
 import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 import { corePages, coreSources } from "./core.ts";
 import { coreRuntimeSources } from "./core-runtime.tsx";
 
 // Source is inspected only by tests. Production pages ship authored snippets, not filesystem reads.
 describe("current core learning material", () => {
-  it("records the version from the exact architecture baseline commit", () => {
+  test("records the version from the exact architecture baseline commit", () => {
     const manifest = execFileSync(
       "git",
       ["show", `${architectureBaseline.commit}:packages/core/package.json`],
@@ -23,19 +23,22 @@ describe("current core learning material", () => {
     });
     expect(architectureBaseline.commit).toMatch(/^[a-f0-9]{40}$/);
   });
-  it.each(coreSources)("keeps the $path excerpt identical to current implementation", (source) => {
-    expect(source.path).toMatch(/^packages\/core\/src\/[a-z0-9/.-]+\.tsx?$/);
-    expect(source.code.length).toBeGreaterThan(60);
-    const implementation = readFileSync(
-      new URL(`../../../../${source.path}`, import.meta.url),
-      "utf8",
-    );
-    expect(implementation).toContain(source.code);
-  });
+  test.each(coreSources)(
+    "keeps the $path excerpt identical to current implementation",
+    (source) => {
+      expect(source.path).toMatch(/^packages\/core\/src\/[a-z0-9/.-]+\.tsx?$/);
+      expect(source.code.length).toBeGreaterThan(60);
+      const implementation = readFileSync(
+        new URL(`../../../../${source.path}`, import.meta.url),
+        "utf8",
+      );
+      expect(implementation).toContain(source.code);
+    },
+  );
 
   // Historical excerpts remain in the recorded baseline. Flight error digests and Stream wire
   // values describe post-baseline code instead.
-  it.each(
+  test.each(
     coreSources.filter(
       (source) =>
         source !== coreRuntimeSources.flightRuntime &&
@@ -54,7 +57,7 @@ describe("current core learning material", () => {
     expect(baselineSource).toContain(source.code);
   });
 
-  it.each(corePages)("explains $slug with current source and navigable sections", (page) => {
+  test.each(corePages)("explains $slug with current source and navigable sections", (page) => {
     const html = renderToStaticMarkup(page.content());
     expect(html).toContain("data-core-source=");
     expect(html).not.toMatch(/data-reading-excerpt|data-baseline|data-comparison/);

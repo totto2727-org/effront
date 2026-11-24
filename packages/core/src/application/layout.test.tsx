@@ -75,7 +75,7 @@ describe("EFFRONT.Layout.make", () => {
         ),
       );
 
-      expect(rendered).toEqual(
+      expect(rendered).toStrictEqual(
         <html lang="en">
           <head>
             <title>Request title</title>

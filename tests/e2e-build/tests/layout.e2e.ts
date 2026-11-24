@@ -13,7 +13,9 @@ const routes = [
 // Client failures must fail acceptance even when the visible server-rendered article looks correct.
 const test = base.extend({
   page: async ({ page, baseURL }, use) => {
-    if (!baseURL) throw new TypeError("Docs acceptance requires a local host baseURL");
+    if (!baseURL) {
+      throw new TypeError("Docs acceptance requires a local host baseURL");
+    }
     const origin = new URL(baseURL).origin;
     const pageErrors: string[] = [];
     const hydrationErrors: string[] = [];
@@ -85,10 +87,11 @@ const expectUnclippedSidebarLabels = async (scope: Locator) => {
   for (const [index, label] of labels.entries()) {
     expect(label.clipped, `Sidebar label must fit its own link: ${label.title}`).toBe(false);
     const previous = labels[index - 1];
-    if (previous)
+    if (previous) {
       expect(label.top, `Sidebar links must not overlap: ${label.title}`).toBeGreaterThanOrEqual(
         previous.bottom - 1,
       );
+    }
   }
 };
 
@@ -114,7 +117,9 @@ test.describe("documentation shell without JavaScript", () => {
       expect(await toc.count()).toBeGreaterThan(0);
       for (const link of await toc.all()) {
         const href = await link.getAttribute("href");
-        if (!href) throw new Error("Expected a heading anchor");
+        if (!href) {
+          throw new Error("Expected a heading anchor");
+        }
         await expect(
           article.locator(`[id=${JSON.stringify(decodeURIComponent(href.slice(1)))}]`),
         ).toHaveCount(1);
@@ -154,7 +159,9 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
     const sidebar = document.querySelector('[data-sidebar="sidebar"]');
     const scroller = sidebar?.querySelector<HTMLElement>('[data-sidebar="content"]');
     const filter = sidebar?.querySelector("input");
-    if (!sidebar || !scroller || !filter) throw new Error("Expected rendered sidebar controls");
+    if (!sidebar || !scroller || !filter) {
+      throw new Error("Expected rendered sidebar controls");
+    }
     scroller.scrollTop = (scroller.scrollHeight - scroller.clientHeight) / 2;
     return { sidebar, scroller, filter, scrollTop: scroller.scrollTop };
   });
@@ -198,7 +205,9 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
     expect(await toc.count()).toBeGreaterThan(0);
     for (const link of await toc.all()) {
       const href = await link.getAttribute("href");
-      if (!href) throw new Error("Expected a heading anchor");
+      if (!href) {
+        throw new Error("Expected a heading anchor");
+      }
       await expect(
         article.locator(`[id=${JSON.stringify(decodeURIComponent(href.slice(1)))}]`),
       ).toHaveCount(1);
@@ -220,7 +229,9 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
         );
       },
     );
-    if (!link) throw new Error("Expected an already visible sidebar destination");
+    if (!link) {
+      throw new Error("Expected an already visible sidebar destination");
+    }
     return {
       path: link.pathname,
       x: link.getBoundingClientRect().x + 16,
@@ -246,9 +257,13 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
       const sidebar = document.querySelector('[data-sidebar="sidebar"]');
       for (const record of records) {
         const element = record.target;
-        if (!(element instanceof HTMLElement)) continue;
+        if (!(element instanceof HTMLElement)) {
+          continue;
+        }
         const styles = `${record.oldValue ?? ""};${element.getAttribute("style") ?? ""}`;
-        if (!/view-transition-name:\s*effront-page/.test(styles)) continue;
+        if (!/view-transition-name:\s*effront-page/.test(styles)) {
+          continue;
+        }
         evidence.targets.push({
           tag: element.tagName,
           page: element.getAttribute("data-doc-page"),
@@ -263,12 +278,18 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
       attributeFilter: ["style"],
     });
     const sample = () => {
-      if (!evidence.running) return;
+      if (!evidence.running) {
+        return;
+      }
       evidence.frames++;
       for (const animation of document.getAnimations()) {
         const effect = animation.effect;
-        if (!(effect instanceof KeyframeEffect) || !effect.pseudoElement?.includes("effront-page"))
+        if (
+          !(effect instanceof KeyframeEffect) ||
+          !effect.pseudoElement?.includes("effront-page")
+        ) {
           continue;
+        }
         const progress = effect.getComputedTiming().progress;
         if (
           animation.playState === "running" &&
@@ -317,7 +338,9 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
   // In-article links scroll the document to reach content, never the independent sidebar.
   const contentLink = page.locator('main article a[href^="/manual"]').first();
   const contentPath = await contentLink.getAttribute("href");
-  if (!contentPath) throw new Error("Expected a substantive in-article documentation link");
+  if (!contentPath) {
+    throw new Error("Expected a substantive in-article documentation link");
+  }
   await contentLink.click();
   await expectCurrentDocument(contentPath);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(1);
@@ -326,7 +349,9 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
     .getByRole("navigation", { name: "前後のページ" })
     .getByRole("link", { name: /次のページ/ });
   const nextPath = await nextLink.getAttribute("href");
-  if (!nextPath) throw new Error("Expected a next article link");
+  if (!nextPath) {
+    throw new Error("Expected a next article link");
+  }
   await nextLink.click();
   await expectCurrentDocument(nextPath);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(1);
@@ -360,7 +385,9 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
     .locator('a[href^="#"]')
     .last();
   const hash = await anchor.getAttribute("href");
-  if (!hash) throw new Error("Expected an article heading link");
+  if (!hash) {
+    throw new Error("Expected an article heading link");
+  }
   await anchor.click();
   await expect.poll(() => new URL(page.url()).hash).toBe(hash);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);

@@ -132,8 +132,8 @@ describe("ServerFn.make", () => {
         getEFFRONTIdentity(EFFRONT),
       );
       const tupleResult = yield* invocationEffect(tuple(["first", 2]), getEFFRONTIdentity(EFFRONT));
-      expect(arrayResult).toEqual(["first", "second"]);
-      expect(tupleResult).toEqual(["first", 2]);
+      expect(arrayResult).toStrictEqual(["first", "second"]);
+      expect(tupleResult).toStrictEqual(["first", 2]);
     }),
   );
 
@@ -168,10 +168,10 @@ describe("ServerFn.make", () => {
           }),
       });
       const invocation = action.bind(null, "bound")(2, "tail");
-      expect(values).toEqual([]);
+      expect(values).toStrictEqual([]);
       const result = yield* invocationEffect(invocation, getEFFRONTIdentity(EFFRONT));
       expect(result).toBe("bound:2:tail");
-      expect(values).toEqual(["bound:2:tail"]);
+      expect(values).toStrictEqual(["bound:2:tail"]);
     }),
   );
 
@@ -198,7 +198,7 @@ describe("ServerFn.make", () => {
       const invocation = action();
       expect(invoked).toBe(false);
       const result = yield* invocationEffect(invocation, getEFFRONTIdentity(EFFRONT));
-      expect(result).toEqual([]);
+      expect(result).toStrictEqual([]);
       expect(invoked).toBe(true);
     }),
   );
@@ -310,7 +310,7 @@ describe("ServerFn.make", () => {
 
     expect(match._tag).toBe("Match");
     if (match._tag === "Match") {
-      expect(match.middleware).toEqual([RequireScope]);
+      expect(match.middleware).toStrictEqual([RequireScope]);
     }
   });
 });

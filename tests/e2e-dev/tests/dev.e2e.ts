@@ -12,8 +12,9 @@ test("updates edited Markdown and discovers added and removed source pages in de
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
-    if (/hydrat|server rendered html|did not match/i.test(message.text()))
+    if (/hydrat|server rendered html|did not match/i.test(message.text())) {
       errors.push(message.text());
+    }
   });
   const appRoot = fileURLToPath(new URL("../fixture/", import.meta.url));
   const manualFile = join(appRoot, "content/manual.md");

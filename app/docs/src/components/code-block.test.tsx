@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from "vite-plus/test";
+import { beforeAll, describe, expect, test, vi } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import type { CodeLanguage } from "./code-block.tsx";
@@ -81,7 +81,7 @@ const fixtures = [
 ] as const satisfies readonly (readonly [CodeLanguage, string])[];
 
 describe("server CodeBlock", () => {
-  it("initializes and highlights offline with a dark palette and real tokens", () => {
+  test("initializes and highlights offline with a dark palette and real tokens", () => {
     expect(offlineMarkup).toContain('class="shiki github-dark"');
     expect(offlineMarkup).toContain('data-code-block=""');
     expect(offlineMarkup).toContain('data-language="typescript"');
@@ -94,14 +94,14 @@ describe("server CodeBlock", () => {
     expect(serializedCodeText(offlineMarkup)).toBe('const message = "日本語";\n');
   });
 
-  it.each(fixtures)("preserves exact source for the finite %s language", (language, code) => {
+  test.each(fixtures)("preserves exact source for the finite %s language", (language, code) => {
     const html = renderToStaticMarkup(CodeBlock({ code, language }));
     expect(serializedCodeText(html)).toBe(code);
     expect(html).toContain('class="line"');
     expect(html).not.toContain("<script");
   });
 
-  it.each([
+  test.each([
     "",
     "\n",
     "\n\n",
@@ -118,25 +118,25 @@ describe("server CodeBlock", () => {
     );
   });
 
-  it("escapes hostile markup as text instead of accepting HTML or event handlers", () => {
+  test("escapes hostile markup as text instead of accepting HTML or event handlers", () => {
     const code =
       '</code></pre><script>globalThis.pwned = true</script><img src=x onerror="boom()"> &amp; \' "';
     const html = renderToStaticMarkup(CodeBlock({ code, language: "tsx" }));
     expect(serializedCodeText(html)).toBe(code);
-    expect(new Set([...html.matchAll(/<\/?([a-z][a-z0-9]*)\b/g)].map((hit) => hit[1]))).toEqual(
-      new Set(["pre", "code", "span"]),
-    );
+    expect(
+      new Set([...html.matchAll(/<\/?([a-z][a-z0-9]*)\b/g)].map((hit) => hit[1])),
+    ).toStrictEqual(new Set(["pre", "code", "span"]));
     expect(html).not.toMatch(/<[^>]+\bonerror\s*=/);
   });
 
-  it("uses explicit text mode by default and does not silently fall back for bad wiring", () => {
+  test("uses explicit text mode by default and does not silently fall back for bad wiring", () => {
     expect(renderToStaticMarkup(CodeBlock({ code: "plain" }))).toContain('data-language="text"');
     expect(() =>
       CodeBlock({ code: "unknown", language: "not-registered" as CodeLanguage }),
     ).toThrow("unsupported language");
   });
 
-  it("does not leak previous grammar state between repeated renders", () => {
+  test("does not leak previous grammar state between repeated renders", () => {
     const code = "const number = 42;\n";
     const before = renderToStaticMarkup(CodeBlock({ code, language: "ts" }));
     CodeBlock({ code: "/* unfinished comment", language: "ts" });

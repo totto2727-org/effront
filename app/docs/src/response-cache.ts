@@ -5,9 +5,13 @@ import Negotiator from "negotiator";
 const privateCacheControl = "private, no-store";
 
 const acceptsRepresentation = (accept: string | undefined, contentType: string | undefined) => {
-  if (!accept || !contentType) return false;
+  if (!accept || !contentType) {
+    return false;
+  }
   const mediaType = contentType.split(";")[0]?.trim().toLowerCase();
-  if (mediaType !== "text/html" && mediaType !== "text/x-component") return false;
+  if (mediaType !== "text/html" && mediaType !== "text/x-component") {
+    return false;
+  }
 
   return new Negotiator({ headers: { accept } }).mediaType([contentType]) !== undefined;
 };

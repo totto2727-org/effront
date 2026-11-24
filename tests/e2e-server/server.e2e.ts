@@ -37,7 +37,9 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
         const observe = () => {
           for (const animation of document.getAnimations()) {
             const effect = animation.effect;
-            if (!(effect instanceof KeyframeEffect)) continue;
+            if (!(effect instanceof KeyframeEffect)) {
+              continue;
+            }
             const progress = effect.getComputedTiming().progress;
             if (
               effect.pseudoElement?.includes("effront-page") &&
@@ -50,8 +52,11 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
               return;
             }
           }
-          if (performance.now() >= deadline) resolve(false);
-          else requestAnimationFrame(observe);
+          if (performance.now() >= deadline) {
+            resolve(false);
+          } else {
+            requestAnimationFrame(observe);
+          }
         };
         requestAnimationFrame(observe);
       }),

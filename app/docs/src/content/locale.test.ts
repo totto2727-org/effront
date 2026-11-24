@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { describe, expect, it, vi } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { documentLocale, documentPath, localizedPath, localizeDocumentLink } from "./locale.ts";
 import { localizedMarkdownPages, markdownPages } from "./markdown.tsx";
 
@@ -16,7 +16,7 @@ vi.mock("./en/catalog", async (importOriginal) => {
 });
 
 describe("documentation locale paths", () => {
-  it.each([
+  test.each([
     ["/", "ja", "/"],
     ["/guide/routes", "ja", "/guide/routes"],
     ["/ja", "ja", "/"],
@@ -33,7 +33,7 @@ describe("documentation locale paths", () => {
     expect(documentPath(pathname)).toBe(path);
   });
 
-  it.each(["/", "/guide/routes", "/architecture/implementation/request"])(
+  test.each(["/", "/guide/routes", "/architecture/implementation/request"])(
     "%s switches languages without duplicating prefixes or losing the article path",
     (path) => {
       for (const locale of ["ja", "en"] as const) {
@@ -47,7 +47,7 @@ describe("documentation locale paths", () => {
     },
   );
 
-  it.each(["ja", "en"] as const)(
+  test.each(["ja", "en"] as const)(
     "localizes root-relative article links in %s while preserving queries and anchors",
     (locale) => {
       expect(localizeDocumentLink("/", locale)).toBe(`/${locale}`);
@@ -59,7 +59,7 @@ describe("documentation locale paths", () => {
     },
   );
 
-  it.each([
+  test.each([
     undefined,
     "",
     "#params",
@@ -79,14 +79,14 @@ describe("documentation locale paths", () => {
     expect(localizeDocumentLink(href, "en")).toBe(href);
   });
 
-  it("does not mistake a locale-like article name for an existing prefix", () => {
+  test("does not mistake a locale-like article name for an existing prefix", () => {
     expect(localizeDocumentLink("/english", "en")).toBe("/en/english");
     expect(localizeDocumentLink("/japanese", "ja")).toBe("/ja/japanese");
   });
 });
 
 describe("missing English article", () => {
-  it("fails instead of serving available Japanese content", async () => {
+  test("fails instead of serving available Japanese content", async () => {
     const legacy = markdownPages.find((page) => page.slug === "/guide/routes");
     const japanese = localizedMarkdownPages("ja").find((page) => page.slug === "/ja/guide/routes");
     const english = localizedMarkdownPages("en").find((page) => page.slug === "/en/guide/routes");

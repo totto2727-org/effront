@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { Effect } from "effect";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { getPage, localizedNavigation, localizedPages, navigation, pages } from "./pages.ts";
 import { articleCatalog } from "./catalog.ts";
@@ -66,19 +66,19 @@ const retainedUrls = [
 ];
 
 describe("documentation catalog", () => {
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "lists client navigation directly under Guides with its published URL and anchors in %s",
     (locale) => {
       const slug = `/${locale}/advanced/client-navigation`;
       const page = getPage(slug);
       expect(page.section).toBe("Guides");
       expect(page.group).toBeUndefined();
-      expect(localizedNavigation(locale).find((item) => item.slug === slug)).toEqual({
+      expect(localizedNavigation(locale).find((item) => item.slug === slug)).toStrictEqual({
         slug,
         title: page.title,
         section: "Guides",
       });
-      expect(page.headings.map((heading) => heading.id)).toEqual([
+      expect(page.headings.map((heading) => heading.id)).toStrictEqual([
         "native-navigation",
         "transition-scope",
         "global-config",
@@ -88,7 +88,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "renders concise Page and application examples with notes and reference links in %s",
     async (locale) => {
       const slug = `/${locale}/advanced/client-navigation`;
@@ -111,13 +111,13 @@ describe("documentation catalog", () => {
         "photo-fade",
       ]) {
         expect(content).not.toContain(referenceOnly);
-        expect(await text(`/${locale}/api-reference/components`)).toContain(referenceOnly);
+        await expect(text(`/${locale}/api-reference/components`)).resolves.toContain(referenceOnly);
       }
       expect(content).not.toMatch(/transition boundary|遷移境界|NavigationPrecommitController/);
     },
   );
 
-  it("keeps client navigation code examples identical in English and Japanese", () => {
+  test("keeps client navigation code examples identical in English and Japanese", () => {
     const examples = (directory: string) => {
       const source = readFileSync(
         new URL(`./${directory}/advanced/client-navigation.md`, import.meta.url),
@@ -126,14 +126,14 @@ describe("documentation catalog", () => {
       return [...source.matchAll(/```tsx\n([\s\S]*?)\n```/g)].map((match) => match[1]);
     };
     expect(examples("en/articles")).toHaveLength(4);
-    expect(examples("articles")).toEqual(examples("en/articles"));
+    expect(examples("articles")).toStrictEqual(examples("en/articles"));
   });
 
-  it("preserves published URLs and unique serializable navigation metadata", () => {
-    expect(pages.map((page) => page.slug).toSorted()).toEqual(retainedUrls.toSorted());
+  test("preserves published URLs and unique serializable navigation metadata", () => {
+    expect(pages.map((page) => page.slug).toSorted()).toStrictEqual(retainedUrls.toSorted());
     expect(new Set(pages.map((page) => page.slug)).size).toBe(pages.length);
-    expect(JSON.parse(JSON.stringify(navigation))).toEqual(navigation);
-    expect([...new Set(pages.map((page) => page.section))]).toEqual([
+    expect(JSON.parse(JSON.stringify(navigation))).toStrictEqual(navigation);
+    expect([...new Set(pages.map((page) => page.section))]).toStrictEqual([
       "Getting started",
       "Platforms",
       "Guides",
@@ -144,7 +144,7 @@ describe("documentation catalog", () => {
     for (const page of pages) {
       expect(page.slug).toMatch(/^\/(?:[a-z-]+(?:\/[a-z-]+)*)?$/);
       expect(getPage(page.slug)).toBe(page);
-      expect(navigation.find((item) => item.slug === page.slug)).toEqual({
+      expect(navigation.find((item) => item.slug === page.slug)).toStrictEqual({
         slug: page.slug,
         title: page.title,
         section: page.section,
@@ -153,14 +153,14 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("removes the retired startup article from the catalog and navigation", () => {
+  test("removes the retired startup article from the catalog and navigation", () => {
     const retired = "/advanced/production-startup";
     expect(pages.map((page) => page.slug)).not.toContain(retired);
     expect(navigation.map((page) => page.slug)).not.toContain(retired);
     expect(() => getPage(retired)).toThrow("Documentation route is missing content");
   });
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "classifies final guides and best practices without a runtime overview or subgroup in %s",
     async (locale) => {
       const items = localizedNavigation(locale);
@@ -168,7 +168,7 @@ describe("documentation catalog", () => {
         items
           .filter((item) => item.section === "Best practices")
           .map((item) => documentPath(item.slug)),
-      ).toEqual([
+      ).toStrictEqual([
         "/best-practices/authentication-and-authorization",
         "/best-practices/server-function-error-handling",
         "/advanced/request-runtime-and-lifetimes",
@@ -198,10 +198,10 @@ describe("documentation catalog", () => {
       ] as const;
       for (const [slug, ids] of expectedHeadings) {
         const page = getPage(localizedPath(slug, locale));
-        expect(page.headings.map((heading) => heading.id)).toEqual(ids);
+        expect(page.headings.map((heading) => heading.id)).toStrictEqual(ids);
         const directory = locale === "en" ? "en/articles" : "articles";
         const source = readFileSync(new URL(`./${directory}${slug}.md`, import.meta.url), "utf8");
-        expect(page.headings).toEqual(
+        expect(page.headings).toStrictEqual(
           [...source.matchAll(/^#{2,6} (.*?) \{#([^}]+)\}$/gm)].map((match) => ({
             id: match[2],
             title: match[1]?.replace(/`/g, ""),
@@ -223,7 +223,9 @@ describe("documentation catalog", () => {
         ["/advanced/server-function-execution-and-refresh", ["input-boundary"]],
       ] as const) {
         const html = await render(localizedPath(slug, locale));
-        for (const id of ids) expect(html).toContain(`id="${id}"`);
+        for (const id of ids) {
+          expect(html).toContain(`id="${id}"`);
+        }
       }
       for (const retired of ["/advanced", "/guide/testing"]) {
         expect(items.map((item) => item.slug)).not.toContain(localizedPath(retired, locale));
@@ -235,7 +237,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "documents runnable Route, Page, Layout and Server Function checks against the example in %s",
     async (locale) => {
       const html = await render(`/${locale}/best-practices/testing`);
@@ -251,15 +253,17 @@ describe("documentation catalog", () => {
         'getByTestId("action-greeting")',
         "Hello from Alchemy KV, Ada!",
         "TypeError",
-      ])
+      ]) {
         expect(content).toContain(contract);
+      }
       for (const path of [
         "tree/main/examples/basic",
         "tree/main/tests/e2e-alchemy",
         "blob/main/tests/e2e-alchemy/playwright.config.ts",
         "blob/main/docs/TESTING.md#native-alchemy-integration",
-      ])
+      ]) {
         expect(html).toContain(`href="https://github.com/totto2727-org/effront/${path}"`);
+      }
       expect(content).toContain(
         locale === "en"
           ? "does not provide a public Vitest harness"
@@ -271,9 +275,9 @@ describe("documentation catalog", () => {
     },
   );
 
-  it("keeps every Markdown document registered, including the explicit root alias", () => {
+  test("keeps every Markdown document registered, including the explicit root alias", () => {
     const sources = Object.keys(import.meta.glob("./articles/**/*.md"));
-    expect(articleCatalog.map((page) => `./articles${page.source}.md`).toSorted()).toEqual(
+    expect(articleCatalog.map((page) => `./articles${page.source}.md`).toSorted()).toStrictEqual(
       sources.toSorted(),
     );
     expect(articleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
@@ -281,8 +285,8 @@ describe("documentation catalog", () => {
     const englishSources = Object.keys(import.meta.glob("./en/articles/**/*.md"));
     expect(
       englishArticleCatalog.map((page) => `./en/articles${page.source}.md`).toSorted(),
-    ).toEqual(englishSources.toSorted());
-    expect(englishArticleCatalog.map((page) => page.slug).toSorted()).toEqual(
+    ).toStrictEqual(englishSources.toSorted());
+    expect(englishArticleCatalog.map((page) => page.slug).toSorted()).toStrictEqual(
       articleCatalog.map((page) => page.slug).toSorted(),
     );
     expect(englishArticleCatalog.find((page) => page.slug === "/")?.source).toBe("/index");
@@ -291,7 +295,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("registers the Server Function error-handling page at every published locale URL", () => {
+  test("registers the Server Function error-handling page at every published locale URL", () => {
     const entry = readFileSync(new URL("../entry.effront.tsx", import.meta.url), "utf8");
     const source = "/best-practices/server-function-error-handling";
     for (const prefix of ["", "/ja", "/en"]) {
@@ -300,16 +304,16 @@ describe("documentation catalog", () => {
     }
   });
 
-  it.each(["ja", "en"] as const)(
+  test.each(["ja", "en"] as const)(
     "registers every published page and serializable navigation item in %s",
     (locale) => {
       const items = localizedNavigation(locale);
       const expectedSlugs = retainedUrls.map((slug) => localizedPath(slug, locale));
-      expect(items.map((item) => item.slug).toSorted()).toEqual(expectedSlugs.toSorted());
-      expect(JSON.parse(JSON.stringify(items))).toEqual(items);
+      expect(items.map((item) => item.slug).toSorted()).toStrictEqual(expectedSlugs.toSorted());
+      expect(JSON.parse(JSON.stringify(items))).toStrictEqual(items);
       for (const item of items) {
         const { slug, title, section, group } = getPage(item.slug);
-        expect(item).toEqual({ slug, title, section, ...(group ? { group } : {}) });
+        expect(item).toStrictEqual({ slug, title, section, ...(group ? { group } : {}) });
         expect(title.trim()).not.toBe("");
         expect(section.trim()).not.toBe("");
         expect(getPage(item.slug).description.trim()).not.toBe("");
@@ -325,7 +329,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it("keeps localized pages unique and distinct from the legacy Japanese aliases", () => {
+  test("keeps localized pages unique and distinct from the legacy Japanese aliases", () => {
     expect(localizedPages).toHaveLength(retainedUrls.length * 2);
     const allPages = [...pages, ...localizedPages];
     expect(new Set(allPages.map((page) => page.slug)).size).toBe(allPages.length);
@@ -335,7 +339,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("keeps conceptual guides host-neutral and links the create-and-run quickstart", async () => {
+  test("keeps conceptual guides host-neutral and links the create-and-run quickstart", async () => {
     for (const slug of [
       "/guide/routes",
       "/guide/components",
@@ -347,7 +351,7 @@ describe("documentation catalog", () => {
       "/guide/middleware",
       "/guide/http",
     ]) {
-      expect(await text(slug)).not.toMatch(/Cloudflare|Workers|Wrangler|workerd|Vercel/);
+      await expect(text(slug)).resolves.not.toMatch(/Cloudflare|Workers|Wrangler|workerd|Vercel/);
     }
     const start = await text("/guide/getting-started");
     for (const required of [
@@ -365,7 +369,7 @@ describe("documentation catalog", () => {
       expect(start).toContain(required);
     }
     expect(start).not.toContain("vp add");
-    expect(await render("/guide/getting-started")).toContain(
+    await expect(render("/guide/getting-started")).resolves.toContain(
       'href="https://github.com/totto2727-org/effront/blob/main/examples/node/src/entry.effront.tsx"',
     );
     const effect = await render("/guide/effect");
@@ -375,7 +379,7 @@ describe("documentation catalog", () => {
     expect(effect).toContain('href="https://effect.website/');
   });
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "uses Vite+ startup without dependency builds or preview detours in %s examples",
     async (locale) => {
       const directory = locale === "en" ? "en/articles" : "articles";
@@ -397,7 +401,9 @@ describe("documentation catalog", () => {
         new URL(`./${directory}/guide/getting-started.md`, import.meta.url),
         "utf8",
       );
-      expect([...start.matchAll(/```bash\n([\s\S]*?)\n```/g)].map((match) => match[1])).toEqual([
+      expect(
+        [...start.matchAll(/```bash\n([\s\S]*?)\n```/g)].map((match) => match[1]),
+      ).toStrictEqual([
         "vp create effront -- my-app --platform node\ncd my-app\nvp install\nvp dev",
       ]);
       expect(start).toContain("```tsx\nconst HomePage = EFFRONT.Page.make({");
@@ -419,7 +425,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "renders reader cautions through Comark's default alerts in %s",
     async (locale) => {
       for (const [slug, type] of [
@@ -435,7 +441,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "keeps query and stream guides concise and documents shared Server Function failures in %s",
     async (locale) => {
       const queryGuide = await text(`/${locale}/guide/query-server-functions`);
@@ -456,7 +462,7 @@ describe("documentation catalog", () => {
       expect(failures).toContain("import { EFFRONT } from &quot;./effront&quot;");
       expect(failures).toContain("Effect.catchTags({");
       expect(failures).toContain("ServerFnTransportError");
-      expect(await render(`/${locale}/guide/query-server-functions`)).toContain(
+      await expect(render(`/${locale}/guide/query-server-functions`)).resolves.toContain(
         'href="https://github.com/Effect-TS/effect/blob/main/packages/atom/react/README.md#installation"',
       );
       const alchemy = await render(`/${locale}/api-reference/alchemy`);
@@ -474,7 +480,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["node", "bun"])(
+  test.each(["node", "bun"])(
     "%s keeps development separate from preparation and uses its native production listener",
     (example) => {
       const manifest = JSON.parse(
@@ -483,13 +489,13 @@ describe("documentation catalog", () => {
           "utf8",
         ),
       ) as { scripts: Record<string, string> };
-      expect(manifest.scripts).toEqual({
+      expect(manifest.scripts).toStrictEqual({
         start: `${example === "bun" ? "bun" : "node"} dist/rsc/server.js`,
       });
     },
   );
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "documents prerequisites, installation and native entry configuration in %s",
     async (locale) => {
       for (const slug of [
@@ -500,7 +506,7 @@ describe("documentation catalog", () => {
         "/platforms/alchemy",
       ]) {
         const path = `/${locale}${slug}`;
-        expect(await text(path)).toContain("vp install");
+        await expect(text(path)).resolves.toContain("vp install");
       }
       for (const host of ["node", "bun"]) {
         const content = await text(`/${locale}/platforms/${host}`);
@@ -519,7 +525,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it("describes implemented hosts and separates Bun production from Vite middleware", async () => {
+  test("describes implemented hosts and separates Bun production from Vite middleware", async () => {
     const platforms = await render("/platforms");
     for (const host of ["cloudflare", "alchemy", "node", "bun"]) {
       expect(platforms).toContain(`href="/platforms/${host}"`);
@@ -540,13 +546,15 @@ describe("documentation catalog", () => {
       ]) {
         expect(native).toContain(required);
       }
-      expect(await render(`/platforms/${host}`)).toContain('href="/api-reference/server"');
+      await expect(render(`/platforms/${host}`)).resolves.toContain('href="/api-reference/server"');
     }
     const bun = await text("/platforms/bun");
     for (const required of ["Bun", "@effect/platform-node", "@effect/platform-bun"]) {
       expect(bun).toContain(required);
     }
-    expect(await render("/platforms/bun")).toContain('href="https://bun.sh/docs/installation"');
+    await expect(render("/platforms/bun")).resolves.toContain(
+      'href="https://bun.sh/docs/installation"',
+    );
     const alchemy = await render("/platforms/alchemy");
     expect(alchemy).toContain("profile");
     expect(alchemy).toContain('href="https://alchemy.run/');
@@ -564,7 +572,7 @@ describe("documentation catalog", () => {
     expect(lifetimeHtml).toContain('href="/ja/api-reference/http#handler"');
   });
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "checks generated platform guides without fixing Vite development ports in %s",
     async (locale) => {
       const viteReference = await render(`/${locale}/api-reference/vite`);
@@ -615,11 +623,11 @@ describe("documentation catalog", () => {
       expect(alchemy).toContain(
         'href="https://github.com/totto2727-org/effront/tree/main/examples/basic"',
       );
-      expect(await text(`/${locale}/platforms/alchemy`)).toContain("Hello, world");
-      expect(await text(`/${locale}/platforms/alchemy`)).toContain(
+      await expect(text(`/${locale}/platforms/alchemy`)).resolves.toContain("Hello, world");
+      await expect(text(`/${locale}/platforms/alchemy`)).resolves.toContain(
         "vp create effront -- my-app --platform alchemy-cloudflare\ncd my-app\nvp install",
       );
-      expect(await text(`/${locale}/platforms/alchemy`)).not.toContain("git clone");
+      await expect(text(`/${locale}/platforms/alchemy`)).resolves.not.toContain("git clone");
       expect(
         readFileSync(
           new URL("examples/alchemy-cloudflare/src/entry.effront.tsx", repository),
@@ -643,7 +651,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "introduces Layout, Page, Routes, then the complete entry in %s",
     (locale) => {
       const directory = locale === "en" ? "en/articles" : "articles";
@@ -652,12 +660,9 @@ describe("documentation catalog", () => {
         "utf8",
       );
       const sections = source.split(/^## /m).slice(1);
-      expect(sections.slice(0, 4).map((section) => section.match(/\{#([^}]+)\}/)?.[1])).toEqual([
-        "layouts",
-        "pages",
-        "routes",
-        "application",
-      ]);
+      expect(
+        sections.slice(0, 4).map((section) => section.match(/\{#([^}]+)\}/)?.[1]),
+      ).toStrictEqual(["layouts", "pages", "routes", "application"]);
       const code = (section: string) => section.match(/```tsx\n([\s\S]*?)\n```/)?.[1] ?? "";
       expect(code(sections[0]!)).toContain("EFFRONT.Layout.make");
       expect(code(sections[0]!)).not.toContain("EFFRONT.Page.make");
@@ -671,7 +676,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["en", "ja"] as const)(
+  test.each(["en", "ja"] as const)(
     "keeps guide URL instructions concise and host-neutral in %s",
     async (locale) => {
       for (const guide of [
@@ -695,7 +700,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
+  test.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
     "%s indexes every public code export without duplicating release versions",
     async (slug) => {
       const html = await render(slug);
@@ -721,7 +726,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it("keeps ordinary installation examples unversioned in both locales and READMEs", () => {
+  test("keeps ordinary installation examples unversioned in both locales and READMEs", () => {
     const sources = ["articles", "en/articles"].flatMap((directory) =>
       readdirSync(new URL(`./${directory}/`, import.meta.url), {
         recursive: true,
@@ -748,7 +753,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it.each(["en", "ja"])(
+  test.each(["en", "ja"])(
     "%s explains the selected Markdown collection and ordinary index paths",
     async (locale) => {
       const html = await render(`/${locale}/guide/markdown`);
@@ -776,7 +781,7 @@ describe("documentation catalog", () => {
     },
   );
 
-  it.each([
+  test.each([
     "README.md",
     "docs/INDEX.md",
     "examples/AGENTS.md",
@@ -804,7 +809,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("keeps the Markdown README as a canonical documentation entry point", () => {
+  test("keeps the Markdown README as a canonical documentation entry point", () => {
     const repository = new URL("../../../../", import.meta.url);
     const source = readFileSync(new URL("packages/markdown/README.md", repository), "utf8");
     for (const section of ["guide", "api-reference"]) {
@@ -813,7 +818,7 @@ describe("documentation catalog", () => {
     expect(existsSync(new URL("packages/markdown/docs/GUIDE.md", repository))).toBe(false);
   });
 
-  it.each(["en", "ja"])("%s explains Markdown article lookup and asset usage", async (locale) => {
+  test.each(["en", "ja"])("%s explains Markdown article lookup and asset usage", async (locale) => {
     const guide = await text(`/${locale}/guide/markdown`);
     expect(guide).toContain("query: &quot;?url&quot;");
     expect(guide).toContain("base: &quot;./content&quot;");
@@ -824,7 +829,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it.each(
+  test.each(
     ["en", "ja"].flatMap((locale) => [
       `/${locale}/guide/markdown`,
       `/${locale}/api-reference/markdown`,
@@ -865,10 +870,10 @@ describe("documentation catalog", () => {
     expect(prose).toContain(
       slug.startsWith("/en") ? "replacements that can render on the server" : "独自に実装",
     );
-    expect(await render(slug)).toContain('href="https://comark.dev/rendering/react"');
+    await expect(render(slug)).resolves.toContain('href="https://comark.dev/rendering/react"');
   });
 
-  it("keeps Markdown caveats and server-only highlighting visible", async () => {
+  test("keeps Markdown caveats and server-only highlighting visible", async () => {
     const html = await render("/guide/markdown");
     expect(html).toContain('href="/guide/getting-started#application"');
     expect(html).toContain('data-code-block=""');
@@ -892,7 +897,7 @@ describe("documentation catalog", () => {
     expect(englishReference).toContain("implement replacements that can render on the server");
   });
 
-  it("retains all seven authored architecture chapters under their implementation group", async () => {
+  test("retains all seven authored architecture chapters under their implementation group", async () => {
     const architecture = pages.filter((page) => page.section === "アーキテクチャ");
     expect(architecture).toHaveLength(7);
     for (const page of architecture) {
@@ -901,7 +906,7 @@ describe("documentation catalog", () => {
     }
     expect(pages.some((page) => page.slug.startsWith("/reading/"))).toBe(false);
     for (const locale of ["en", "ja"] as const) {
-      expect(await text(`/${locale}`)).toContain(
+      await expect(text(`/${locale}`)).resolves.toContain(
         locale === "en"
           ? "For advanced consumers and Effront developers"
           : "高度な使い方をする利用者や Effront の開発者",
@@ -909,7 +914,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it.each(
+  test.each(
     localizedPages.filter((page) => page.slug.startsWith("/en/architecture/implementation/")),
   )("$slug labels every source excerpt in English", async (page) => {
     const html = await render(page.slug);
@@ -925,7 +930,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it("rejects missing content instead of silently rendering another page", () => {
+  test("rejects missing content instead of silently rendering another page", () => {
     for (const slug of [
       "/not-a-document",
       "/en/not-a-document",
@@ -936,7 +941,7 @@ describe("documentation catalog", () => {
     }
   });
 
-  it.each([...pages, ...localizedPages])(
+  test.each([...pages, ...localizedPages])(
     "$slug renders every table-of-contents target and valid internal links",
     async (page) => {
       const html = await render(page.slug);
@@ -946,13 +951,15 @@ describe("documentation catalog", () => {
       const headingIds = [...html.matchAll(/<h[2-6]\b[^>]*\bid="([^"]+)"/g)].map(
         (match) => match[1],
       );
-      expect(headingIds).toEqual(page.headings.map((heading) => heading.id));
+      expect(headingIds).toStrictEqual(page.headings.map((heading) => heading.id));
       for (const heading of page.headings) {
         expect(heading.id).toMatch(/^[a-z][a-z0-9-]*$/);
         expect(ids).toContain(heading.id);
       }
       for (const [, href] of html.matchAll(/href="([^"]+)"/g)) {
-        if (!href || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href)) continue;
+        if (!href || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href)) {
+          continue;
+        }
         const url = new URL(href, `https://docs.example${page.slug}`);
         const target = getPage(url.pathname);
         if (/^\/(en|ja)(?:\/|$)/.test(page.slug)) {

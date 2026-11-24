@@ -7,7 +7,7 @@ import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { Context, Effect, Exit, FileSystem, Result, Stream } from "effect";
 import { systemError } from "effect/PlatformError";
 import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { type AssetOptions, withAssets } from "./assets.ts";
 
@@ -107,31 +107,31 @@ const rawGet = (origin: string, path: string): Promise<{ status: number; body: s
   });
 
 describe("native static assets", () => {
-  it("serves client/public bytes, MIME and distinct cache policies", () =>
+  test("serves client/public bytes, MIME and distinct cache policies", () =>
     withServer(async (origin) => {
       const client = await fetch(`${origin}/assets/app-a1b2.js?version=1`);
       expect(client.status).toBe(200);
       expect(client.headers.get("content-type")).toBe("text/javascript; charset=utf-8");
       expect(client.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
       expect(client.headers.get("content-length")).toBe("10");
-      expect(await client.text()).toBe("0123456789");
+      await expect(client.text()).resolves.toBe("0123456789");
       const publicFile = await fetch(`${origin}/icon.svg`);
       expect(publicFile.headers.get("content-type")).toBe("image/svg+xml; charset=utf-8");
       expect(publicFile.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
-      expect(await publicFile.text()).toBe("<svg/>");
+      await expect(publicFile.text()).resolves.toBe("<svg/>");
       const unknown = await fetch(`${origin}/unknown.extension`);
       expect(unknown.headers.get("content-type")).toBe("application/octet-stream");
-      expect(await unknown.text()).toBe("unknown");
+      await expect(unknown.text()).resolves.toBe("unknown");
     }));
 
-  it("does not acquire streams for HEAD or conditional 304 responses", () =>
+  test("does not acquire streams for HEAD or conditional 304 responses", () =>
     withServer(async (origin, opened) => {
       const url = `${origin}/assets/app-a1b2.js`;
       const head = await fetch(url, { method: "HEAD" });
       expect(head.status).toBe(200);
       expect(head.headers.get("content-length")).toBe("10");
       expect(head.headers.get("content-range")).toBeNull();
-      expect(await head.text()).toBe("");
+      await expect(head.text()).resolves.toBe("");
       expect(opened).toHaveLength(0);
       const etag = head.headers.get("etag") ?? "";
       const modified = head.headers.get("last-modified") ?? "";
@@ -148,7 +148,7 @@ describe("native static assets", () => {
         expect(response.status).toBe(304);
         expect(response.headers.get("etag")).toBe(etag);
         expect(response.headers.get("cache-control")).toBe(head.headers.get("cache-control"));
-        expect(await response.text()).toBe("");
+        await expect(response.text()).resolves.toBe("");
       }
       expect(opened).toHaveLength(0);
       const response = await fetch(url, {
@@ -156,11 +156,11 @@ describe("native static assets", () => {
       });
       expect(response.status).toBe(200);
       expect(response.headers.get("etag")).toBe(etag);
-      expect(await response.text()).toBe("0123456789");
+      await expect(response.text()).resolves.toBe("0123456789");
       expect(opened).toHaveLength(1);
     }));
 
-  it.each([
+  test.each([
     ["bytes=2-4", "234", "bytes 2-4/10"],
     ["bytes=8-", "89", "bytes 8-9/10"],
     ["bytes=-3", "789", "bytes 7-9/10"],
@@ -172,12 +172,12 @@ describe("native static assets", () => {
       expect(response.status).toBe(206);
       expect(response.headers.get("content-range")).toBe(contentRange);
       expect(response.headers.get("content-length")).toBe(String(body.length));
-      expect(await response.text()).toBe(body);
+      await expect(response.text()).resolves.toBe(body);
       expect(opened).toHaveLength(1);
     }),
   );
 
-  it.each(["bytes=10-", "bytes=9-2", "bytes=-0"])(
+  test.each(["bytes=10-", "bytes=9-2", "bytes=-0"])(
     "rejects unsatisfiable %s without opening a body",
     (range) =>
       withServer(async (origin, opened) => {
@@ -186,28 +186,28 @@ describe("native static assets", () => {
         expect(response.headers.get("content-range")).toBe("bytes */10");
         expect(response.headers.get("cache-control")).toBeNull();
         expect(response.headers.get("etag")).toBeNull();
-        expect(await response.text()).toBe("");
+        await expect(response.text()).resolves.toBe("");
         expect(opened).toHaveLength(0);
       }),
   );
 
-  it.each(["bytes=0-1,4-5", "items=0-1", "bytes=wat", "bytes=-"])(
+  test.each(["bytes=0-1,4-5", "items=0-1", "bytes=wat", "bytes=-"])(
     "ignores unsupported or malformed %s",
     (range) =>
       withServer(async (origin) => {
         const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
         expect(response.status).toBe(200);
-        expect(await response.text()).toBe("0123456789");
+        await expect(response.text()).resolves.toBe("0123456789");
       }),
   );
 
-  it("handles arbitrarily large decimal byte positions without numeric precision loss", () =>
+  test("handles arbitrarily large decimal byte positions without numeric precision loss", () =>
     withServer(async (origin, opened) => {
       const url = `${origin}/assets/app-a1b2.js`;
       const beyondEnd = await fetch(url, { headers: { range: "bytes=999999999999999999999-" } });
       expect(beyondEnd.status).toBe(416);
       expect(beyondEnd.headers.get("content-range")).toBe("bytes */10");
-      expect(await beyondEnd.text()).toBe("");
+      await expect(beyondEnd.text()).resolves.toBe("");
       expect(opened).toHaveLength(0);
 
       const clampedEnd = await fetch(url, {
@@ -216,24 +216,24 @@ describe("native static assets", () => {
       expect(clampedEnd.status).toBe(206);
       expect(clampedEnd.headers.get("content-range")).toBe("bytes 8-9/10");
       expect(clampedEnd.headers.get("content-length")).toBe("2");
-      expect(await clampedEnd.text()).toBe("89");
+      await expect(clampedEnd.text()).resolves.toBe("89");
       expect(opened).toHaveLength(1);
     }));
 
-  it("handles empty files and their unsatisfiable ranges", () =>
+  test("handles empty files and their unsatisfiable ranges", () =>
     withServer(async (origin, opened) => {
       const url = `${origin}/assets/empty.txt`;
       const response = await fetch(url);
       expect(response.status).toBe(200);
-      expect(await response.text()).toBe("");
+      await expect(response.text()).resolves.toBe("");
       const range = await fetch(url, { headers: { range: "bytes=0-" } });
       expect(range.status).toBe(416);
       expect(range.headers.get("content-range")).toBe("bytes */0");
-      expect(await range.text()).toBe("");
+      await expect(range.text()).resolves.toBe("");
       expect(opened).toHaveLength(1);
     }));
 
-  it("ignores Range on HEAD and serves the full body for nonmatching If-Range", () =>
+  test("ignores Range on HEAD and serves the full body for nonmatching If-Range", () =>
     withServer(async (origin, opened) => {
       const url = `${origin}/assets/app-a1b2.js`;
       // RFC 9110 section 14.2 only defines Range for GET. Effect v4 ignores it on HEAD.
@@ -241,12 +241,12 @@ describe("native static assets", () => {
       expect(head.status).toBe(200);
       expect(head.headers.get("content-length")).toBe("10");
       expect(head.headers.get("content-range")).toBeNull();
-      expect(await head.text()).toBe("");
+      await expect(head.text()).resolves.toBe("");
       const invalidHead = await fetch(url, { method: "HEAD", headers: { range: "bytes=10-" } });
       expect(invalidHead.status).toBe(200);
       expect(invalidHead.headers.get("content-length")).toBe("10");
       expect(invalidHead.headers.get("content-range")).toBeNull();
-      expect(await invalidHead.text()).toBe("");
+      await expect(invalidHead.text()).resolves.toBe("");
       expect(opened).toHaveLength(0);
       // The default ETag is weak, and Effect requires a matching strong tag.
       for (const ifRange of [
@@ -260,12 +260,12 @@ describe("native static assets", () => {
         expect(response.status).toBe(200);
         expect(response.headers.get("content-range")).toBeNull();
         expect(response.headers.get("content-length")).toBe("10");
-        expect(await response.text()).toBe("0123456789");
+        await expect(response.text()).resolves.toBe("0123456789");
       }
       expect(opened).toHaveLength(3);
     }));
 
-  it("does not install SPA/directory fallback, steal protocol requests, or handle POST", () =>
+  test("does not install SPA/directory fallback, steal protocol requests, or handle POST", () =>
     withServer(async (origin) => {
       for (const path of [
         "/",
@@ -277,7 +277,7 @@ describe("native static assets", () => {
       ]) {
         const response = await fetch(`${origin}${path}`);
         expect(response.status).toBe(202);
-        expect(await response.text()).toBe("application");
+        await expect(response.text()).resolves.toBe("application");
       }
       for (const init of [
         { method: "POST" },
@@ -286,16 +286,16 @@ describe("native static assets", () => {
       ]) {
         const response = await fetch(`${origin}/robots.txt`, init);
         expect(response.status).toBe(202);
-        expect(await response.text()).toBe("application");
+        await expect(response.text()).resolves.toBe("application");
       }
       for (const path of ["/assets", "/assets/", "/assets/missing.js"]) {
         const response = await fetch(`${origin}${path}`);
         expect(response.status).toBe(404);
-        expect(await response.text()).toBe("");
+        await expect(response.text()).resolves.toBe("");
       }
     }));
 
-  it("delegates raw/encoded traversal and invalid URL rejection to the standard server", () =>
+  test("delegates raw/encoded traversal and invalid URL rejection to the standard server", () =>
     withServer(async (origin, opened) => {
       for (const path of [
         "/assets/../secret.txt",
@@ -311,7 +311,7 @@ describe("native static assets", () => {
       expect(opened).toHaveLength(0);
     }));
 
-  it("delegates in-root dot-segment normalization to the standard server", () =>
+  test("delegates in-root dot-segment normalization to the standard server", () =>
     withServer(async (origin) => {
       for (const pathname of ["/assets/./app-a1b2.js", "/assets/sub/../app-a1b2.js"]) {
         const response = await rawGet(origin, pathname);
@@ -320,18 +320,18 @@ describe("native static assets", () => {
       }
     }));
 
-  it("preserves errors raised by the standard static handler rather than falling through", () =>
+  test("preserves errors raised by the standard static handler rather than falling through", () =>
     withServer(
       async (origin, opened) => {
         const response = await fetch(`${origin}/robots.txt`);
         expect(response.status).toBe(500);
-        expect(await response.text()).toBe("");
+        await expect(response.text()).resolves.toBe("");
         expect(opened).toHaveLength(0);
       },
       { deniedStatPath: join(root, "public", "robots.txt") },
     ));
 
-  it("rewrites nested prefixes and encoded filenames exactly once", async () => {
+  test("rewrites nested prefixes and encoded filenames exactly once", async () => {
     options = { ...options, client: { ...options.client, prefix: "/nested/assets/" } };
     const filename = "literal%2e%2e?# 日本語.txt";
     await writeFile(join(root, "client", filename), "encoded filename");
@@ -340,14 +340,14 @@ describe("native static assets", () => {
         `${origin}/nested/assets/${encodeURIComponent(filename)}?version=1`,
       );
       expect(response.status).toBe(200);
-      expect(await response.text()).toBe("encoded filename");
+      await expect(response.text()).resolves.toBe("encoded filename");
       const missing = await fetch(`${origin}/nested/assets/missing`);
       expect(missing.status).toBe(404);
-      expect(await missing.text()).toBe("");
+      await expect(missing.text()).resolves.toBe("");
     });
   });
 
-  it("defers missing root handling to standard request-time lookup", async () => {
+  test("defers missing root handling to standard request-time lookup", async () => {
     options = {
       client: { ...options.client, root: join(root, "missing-client") },
       public: { root: join(root, "missing-public") },
@@ -355,15 +355,15 @@ describe("native static assets", () => {
     await withServer(async (origin, opened) => {
       const client = await fetch(`${origin}/assets/missing.txt`);
       expect(client.status).toBe(404);
-      expect(await client.text()).toBe("");
+      await expect(client.text()).resolves.toBe("");
       const publicFile = await fetch(`${origin}/missing.txt`);
       expect(publicFile.status).toBe(202);
-      expect(await publicFile.text()).toBe("application");
+      await expect(publicFile.text()).resolves.toBe("application");
       expect(opened).toHaveLength(0);
     });
   });
 
-  it("finalizes the standard filesystem stream when the client cancels a download", async () => {
+  test("finalizes the standard filesystem stream when the client cancels a download", async () => {
     const file = join(root, "client", "large.bin");
     await writeFile(file, "");
     await truncate(file, 64 * 1024 * 1024);
@@ -383,14 +383,14 @@ describe("native static assets", () => {
           request.once("error", reject);
           request.end();
         });
-        expect(await closed.promise).toBe(false);
-        expect(opened).toEqual([file]);
+        await expect(closed.promise).resolves.toBe(false);
+        expect(opened).toStrictEqual([file]);
       },
       { onStreamExit: closed.resolve },
     );
   });
 
-  it("preserves external application services and typed failures without construction capture", async () => {
+  test("preserves external application services and typed failures without construction capture", async () => {
     class External extends Context.Service<External, string>()(
       "@effront/server/test/assets/External",
     ) {}
@@ -409,7 +409,7 @@ describe("native static assets", () => {
         Effect.provideService(HttpServerRequest.HttpServerRequest, request),
       ),
     );
-    expect(await HttpServerResponse.toWeb(response).text()).toBe("request-service");
+    await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe("request-service");
     const result = await Effect.runPromise(
       handler.pipe(
         Effect.provideService(External, "fail"),

@@ -17,12 +17,12 @@ describe("makeInitialFlightStream", () => {
         }).getReader();
 
         const initialText = yield* Effect.promise(() => reader.read());
-        expect(initialText).toEqual({
+        expect(initialText).toStrictEqual({
           done: false,
           value: new TextEncoder().encode("initial"),
         });
         const initialBinary = yield* Effect.promise(() => reader.read());
-        expect(initialBinary).toEqual({
+        expect(initialBinary).toStrictEqual({
           done: false,
           value: new Uint8Array([0, 255]),
         });
@@ -30,14 +30,14 @@ describe("makeInitialFlightStream", () => {
 
         queue.push("later");
         const later = yield* Effect.promise(() => reader.read());
-        expect(later).toEqual({
+        expect(later).toStrictEqual({
           done: false,
           value: new TextEncoder().encode("later"),
         });
 
         markReady?.();
         const done = yield* Effect.promise(() => reader.read());
-        expect(done).toEqual({
+        expect(done).toStrictEqual({
           done: true,
           value: undefined,
         });

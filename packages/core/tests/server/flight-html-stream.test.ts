@@ -95,7 +95,9 @@ describe("injectFlightPayload", () => {
           'Uint8Array.from(atob("AQIDBAXiKKE="),character=>character.codePointAt(0)))</script>',
       );
       const reconstructed = yield* reconstructFlight(result);
-      expect(reconstructed).toEqual(new Uint8Array([...Encoder.encode("foo bar"), ...binary]));
+      expect(reconstructed).toStrictEqual(
+        new Uint8Array([...Encoder.encode("foo bar"), ...binary]),
+      );
     }),
   );
 
@@ -229,7 +231,7 @@ describe("injectFlightPayload", () => {
         streamFrom(chunks).pipeThrough(injectFlightPayload(flight)),
       );
 
-      expect(result).toEqual(
+      expect(result).toStrictEqual(
         Encoder.encode(`${body}${flightScript("scheduled Flight")}</body></html>`),
       );
     }),
@@ -250,7 +252,7 @@ describe("injectFlightPayload", () => {
           ),
         );
         const reconstructed = yield* reconstructFlight(result);
-        expect(reconstructed, `Flight byte split ${split}`).toEqual(bytes);
+        expect(reconstructed, `Flight byte split ${split}`).toStrictEqual(bytes);
       }
     }),
   );
@@ -269,7 +271,7 @@ describe("injectFlightPayload", () => {
         ),
       );
       const reconstructed = yield* reconstructFlight(result);
-      expect(reconstructed).toEqual(new Uint8Array(chunks.flatMap((chunk) => [...chunk])));
+      expect(reconstructed).toStrictEqual(new Uint8Array(chunks.flatMap((chunk) => [...chunk])));
     }),
   );
 
@@ -291,10 +293,10 @@ describe("injectFlightPayload", () => {
       const reader = html.pipeThrough(injectFlightPayload(flight)).getReader();
 
       const shell = yield* Effect.promise(() => reader.read());
-      expect(shell.value).toEqual(Encoder.encode("<html><body><p>streamed shell</p>"));
+      expect(shell.value).toStrictEqual(Encoder.encode("<html><body><p>streamed shell</p>"));
       htmlReady.resolve();
       const content = yield* Effect.promise(() => reader.read());
-      expect(content.value).toEqual(Encoder.encode("<p>resolved content</p>"));
+      expect(content.value).toStrictEqual(Encoder.encode("<p>resolved content</p>"));
       let settled = false;
       const payload = reader.read().then((value) => {
         settled = true;
@@ -304,10 +306,10 @@ describe("injectFlightPayload", () => {
       expect(settled).toBe(false);
       flightReady.resolve();
       const result = yield* Effect.promise(() => payload);
-      expect(result.value).toEqual(Encoder.encode(flightScript("late Flight")));
+      expect(result.value).toStrictEqual(Encoder.encode(flightScript("late Flight")));
       yield* Effect.promise(() => flightRead.promise);
       const trailer = yield* Effect.promise(() => reader.read());
-      expect(trailer.value).toEqual(Encoder.encode("</body></html>"));
+      expect(trailer.value).toStrictEqual(Encoder.encode("</body></html>"));
       const end = yield* Effect.promise(() => reader.read());
       expect(end.done).toBe(true);
       expect(flight.locked).toBe(false);
@@ -350,7 +352,7 @@ describe("injectFlightPayload", () => {
             "</body></html>",
         );
         const reconstructed = yield* reconstructFlight(result);
-        expect(reconstructed).toEqual(Encoder.encode("firstsecondthird"));
+        expect(reconstructed).toStrictEqual(Encoder.encode("firstsecondthird"));
       }),
   );
 
@@ -366,7 +368,7 @@ describe("injectFlightPayload", () => {
         .pipeThrough(injectFlightPayload(flight))
         .getReader();
       const shell = yield* Effect.promise(() => reader.read());
-      expect(shell.value).toEqual(Encoder.encode("<html><body>shell"));
+      expect(shell.value).toStrictEqual(Encoder.encode("<html><body>shell"));
       yield* Effect.promise(() => expect(reader.read()).rejects.toBe(failure));
       expect(flight.locked).toBe(false);
     }),
@@ -419,7 +421,7 @@ describe("injectFlightPayload", () => {
       yield* Effect.promise(() => reader.cancel("response cancelled"));
       const result = yield* Effect.promise(() => pending);
       expect(result.done).toBe(true);
-      expect(cancelled).toEqual(["response cancelled"]);
+      expect(cancelled).toStrictEqual(["response cancelled"]);
       expect(flight.locked).toBe(false);
     }),
   );
@@ -442,7 +444,7 @@ describe("injectFlightPayload", () => {
       yield* Effect.promise(() => sleep(0));
 
       yield* Effect.promise(() => reader.cancel("response cancelled"));
-      expect(cancelled).toEqual([]);
+      expect(cancelled).toStrictEqual([]);
       expect(browserFlight.locked).toBe(false);
       const result = yield* Effect.promise(() => pending);
       expect(result.done).toBe(true);
@@ -451,7 +453,7 @@ describe("injectFlightPayload", () => {
       yield* Effect.promise(() => ssrReader.cancel("request scope released"));
       const ssrResult = yield* Effect.promise(() => ssrPending);
       expect(ssrResult.done).toBe(true);
-      expect(cancelled).toEqual([["request scope released", "response cancelled"]]);
+      expect(cancelled).toStrictEqual([["request scope released", "response cancelled"]]);
       ssrReader.releaseLock();
     }),
   );
@@ -476,7 +478,7 @@ describe("injectFlightPayload", () => {
       yield* Effect.promise(() => reader.read());
       yield* Effect.promise(() => reader.cancel("response cancelled"));
       yield* Effect.promise(() => sleep(0));
-      expect(cancelled).toEqual([
+      expect(cancelled).toStrictEqual([
         ["flight", "response cancelled"],
         ["html", "response cancelled"],
       ]);
@@ -501,7 +503,7 @@ describe("injectFlightPayload", () => {
       const reader = html.pipeThrough(injectFlightPayload(flight)).getReader();
 
       yield* Effect.promise(() => expect(reader.read()).rejects.toBe(failure));
-      expect(cancelled).toEqual([failure]);
+      expect(cancelled).toStrictEqual([failure]);
       expect(flight.locked).toBe(false);
     }),
   );

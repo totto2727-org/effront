@@ -11,7 +11,7 @@ import {
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { expect, it } from "vite-plus/test";
+import { expect, test } from "vite-plus/test";
 
 const repository = fileURLToPath(new URL("../../../../", import.meta.url));
 const owner = join(repository, "packages/alchemy");
@@ -20,7 +20,7 @@ const compiler = join(
   "bin/tsc",
 );
 
-it("packed default and react-server declarations preserve application capabilities through public Alchemy exports", () => {
+test("packed default and react-server declarations preserve application capabilities through public Alchemy exports", () => {
   mkdirSync(join(repository, "tmp"), { recursive: true });
   const workspace = mkdtempSync(join(repository, "tmp/alchemy-declarations-"));
   try {
@@ -29,7 +29,9 @@ it("packed default and react-server declarations preserve application capabiliti
       encoding: "utf8",
     });
     const archive = readdirSync(workspace).find((file) => file.endsWith(".tgz"));
-    if (!archive) throw new Error("pnpm pack did not produce a package archive");
+    if (!archive) {
+      throw new Error("pnpm pack did not produce a package archive");
+    }
     const contents = execFileSync("tar", ["-tzf", join(workspace, archive)], { encoding: "utf8" });
     expect(contents).not.toMatch(/\.(?:test|e2e)\.[cm]?[jt]sx?$/m);
     execFileSync("tar", ["-xzf", join(workspace, archive), "-C", workspace]);
@@ -115,13 +117,17 @@ it("packed default and react-server declarations preserve application capabiliti
     // skipLibCheck alone would silently turn an unresolvable declaration import into an error-any.
     const specifiers = new Set<string>();
     for (const file of readdirSync(join(packed, "dist/cloudflare"))) {
-      if (!file.endsWith(".d.ts")) continue;
+      if (!file.endsWith(".d.ts")) {
+        continue;
+      }
       const declaration = readFileSync(join(packed, "dist/cloudflare", file), "utf8");
       const references = [
         ...declaration.matchAll(/(?:from\s*|import\()(["'])(alchemy(?:\/[^"']*)?)\1/g),
       ];
       for (const match of references) {
-        if (match[2]) specifiers.add(match[2]);
+        if (match[2]) {
+          specifiers.add(match[2]);
+        }
       }
     }
     const probes = [...specifiers].map(

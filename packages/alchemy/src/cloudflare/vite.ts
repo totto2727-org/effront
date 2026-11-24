@@ -24,7 +24,9 @@ export type EffrontAlchemyOptions = {
  */
 export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOption[] => {
   const workerEntry = options.worker ?? "./src/entry.workers.ts";
-  if (!workerEntry) throw new TypeError("Effront Alchemy requires a nonempty Worker module.");
+  if (!workerEntry) {
+    throw new TypeError("Effront Alchemy requires a nonempty Worker module.");
+  }
   let worker = workerEntry;
   const ssrOutput: Plugin = {
     name: "effront:alchemy-cloudflare-ssr-output",
@@ -32,7 +34,9 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
       // Set the host default before RSC supplies its generic SSR output directory.
       order: "pre",
       handler: (config) => {
-        if (config.environments?.["ssr"]?.build?.outDir !== undefined) return;
+        if (config.environments?.["ssr"]?.build?.outDir !== undefined) {
+          return;
+        }
         const rscOutput =
           config.environments?.["rsc"]?.build?.outDir ??
           join(config.build?.outDir ?? "dist", "rsc");
@@ -44,7 +48,9 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
     name: "effront:alchemy-application-loader",
     applyToEnvironment: (environment) => environment.name === "rsc",
     load(id) {
-      if (id !== `${applicationLoader}.js` && id !== `${applicationLoader}.ts`) return;
+      if (id !== `${applicationLoader}.js` && id !== `${applicationLoader}.ts`) {
+        return;
+      }
       return [
         'import application from "@effront/core/application-entry";',
         "export const loadConfiguredApplication = () => Promise.resolve(application);",
@@ -73,7 +79,9 @@ export const effrontAlchemy = (options: EffrontAlchemyOptions = {}): PluginOptio
     },
     resolveId: (id) => (id === entryId ? resolvedEntryId : undefined),
     load: (id) => {
-      if (id !== resolvedEntryId) return;
+      if (id !== resolvedEntryId) {
+        return;
+      }
       return [
         'import { env, WorkerEntrypoint } from "cloudflare:workers";',
         'import { makeWorkerBridge } from "alchemy/Cloudflare/Workers";',

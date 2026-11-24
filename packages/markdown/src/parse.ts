@@ -33,7 +33,9 @@ export const parseMarkdown = (
     });
     const visit = (node: Node): Effect.Effect<void, MarkdownError> =>
       Effect.gen(function* () {
-        if (typeof node === "string" || node[0] === null) return;
+        if (typeof node === "string" || node[0] === null) {
+          return;
+        }
         const [tag, attributes, ...children] = node;
         if (tag === "a" && typeof attributes["href"] === "string") {
           attributes["href"] = yield* entry.resolveLink(attributes["href"]);
@@ -41,8 +43,12 @@ export const parseMarkdown = (
         if (tag === "img" && typeof attributes["src"] === "string") {
           attributes["src"] = yield* entry.resolveImage(attributes["src"]);
         }
-        for (const child of children) yield* visit(child);
+        for (const child of children) {
+          yield* visit(child);
+        }
       });
-    for (const node of document.nodes) yield* visit(node);
+    for (const node of document.nodes) {
+      yield* visit(node);
+    }
     return document;
   });

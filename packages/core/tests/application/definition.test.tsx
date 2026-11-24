@@ -118,7 +118,7 @@ describe("EFFRONT.make", () => {
     expect(root.type).toBe(RootLayout);
     expect(asElement(root.props.children).type).toBe(RouteOutlet);
     expect(pageContent(pageNode).type).toBe(pageComponent(HomePage));
-    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toEqual(["/"]);
+    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toStrictEqual(["/"]);
     expect(Object.getOwnPropertyDescriptor(App, "routes")).toMatchObject({
       configurable: false,
       writable: false,
@@ -146,10 +146,13 @@ describe("EFFRONT.make", () => {
     );
     const saturdayElement = pageContent(saturdayPage);
 
-    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toEqual(["/schedule/:day"]);
+    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toStrictEqual(["/schedule/:day"]);
     expect(saturdayPage.id).not.toBe(sundayPage.id);
     expect(saturdayElement.type).toBe(pageComponent(DayPage));
-    expect(saturdayElement.props.params).toEqual({ _tag: "Encoded", value: { day: "saturday" } });
+    expect(saturdayElement.props.params).toStrictEqual({
+      _tag: "Encoded",
+      value: { day: "saturday" },
+    });
   });
 
   it("preserves Layout ancestry and places Loading below its owning Layout", () => {
@@ -176,7 +179,7 @@ describe("EFFRONT.make", () => {
       readonly fallback: ReactNode;
     }>(loadingNode.content);
 
-    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toEqual([
+    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toStrictEqual([
       "/",
       "/schedule",
       "/schedule/day-two",
@@ -235,7 +238,7 @@ describe("EFFRONT.make", () => {
       renderApplicationRoute(applicationRoutes(App), "/sunday/day-two"),
     );
 
-    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toEqual([
+    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toStrictEqual([
       "/",
       "/saturday",
       "/saturday/day-two",
@@ -253,7 +256,7 @@ describe("EFFRONT.make", () => {
         .mount("/schedule", EFFRONT.Routes.make().page("/", SaturdayPage)),
     });
 
-    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toEqual(["/", "/schedule"]);
+    expect(applicationRoutes(App).map(({ pattern }) => pattern)).toStrictEqual(["/", "/schedule"]);
     expect(applicationRoutes(App)[0]?.page.component).toBe(pageComponent(HomePage));
     expect(applicationRoutes(App)[1]?.page.component).toBe(pageComponent(SaturdayPage));
   });
@@ -270,8 +273,8 @@ describe("EFFRONT.make", () => {
     });
     const [home, schedule] = applicationRoutes(App);
 
-    expect(home?.middleware).toEqual([RootMiddleware]);
-    expect(schedule?.middleware).toEqual([RootMiddleware, NestedMiddleware]);
+    expect(home?.middleware).toStrictEqual([RootMiddleware]);
+    expect(schedule?.middleware).toStrictEqual([RootMiddleware, NestedMiddleware]);
     expect(schedule?.scopes).toHaveLength(1);
     expect(Object.isFrozen(schedule?.middleware)).toBe(true);
   });
@@ -285,7 +288,7 @@ describe("EFFRONT.make", () => {
     );
     const App = EFFRONT.make({ routes });
 
-    expect(applicationRoutes(App)[0]?.middleware).toEqual([RequireUser]);
+    expect(applicationRoutes(App)[0]?.middleware).toStrictEqual([RequireUser]);
   });
 
   it("rejects repeated middleware in a divergent mounted scope without Pages", () => {

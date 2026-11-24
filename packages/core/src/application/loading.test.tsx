@@ -9,6 +9,6 @@ describe("EFFRONT.Loading.make", () => {
     const render = () => <p>Loading...</p>;
     const RootLoading = EFFRONT.Loading.make({ render });
 
-    expect(RootLoading()).toEqual(<p>Loading...</p>);
+    expect(RootLoading()).toStrictEqual(<p>Loading...</p>);
   });
 });

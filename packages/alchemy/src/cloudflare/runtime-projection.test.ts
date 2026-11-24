@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import * as Cloudflare from "alchemy/Cloudflare";
 import { build } from "vite";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { alchemyRuntimeProjection } from "./runtime-projection.ts";
 
@@ -22,7 +22,9 @@ const hooks = () => {
 
 const exportsOf = (code: string) => {
   const clause = code.match(/export \{([^}]+)\};\s*$/)?.[1];
-  if (!clause) throw new TypeError("Expected an ES module export clause.");
+  if (!clause) {
+    throw new TypeError("Expected an ES module export clause.");
+  }
   return clause.split(",").map((entry) =>
     entry
       .trim()
@@ -32,19 +34,19 @@ const exportsOf = (code: string) => {
 };
 
 describe("subtractive Alchemy runtime compatibility", () => {
-  it("leaves deployment exports available to the real Node tooling", () => {
+  test("leaves deployment exports available to the real Node tooling", () => {
     expect(Cloudflare.providers).toBeTypeOf("function");
     expect(Cloudflare.KV.NamespaceProvider).toBeTypeOf("function");
   });
 
-  it("keeps non-KV capabilities and runtime providers while removing deployment code", async () => {
+  test("keeps non-KV capabilities and runtime providers while removing deployment code", async () => {
     const { resolve, load } = hooks();
     const id = resolve("alchemy/Cloudflare")!;
     const first = load(id)!;
     expect(load(id)).toBe(first);
     const code = await first;
     const names = exportsOf(code);
-    expect(names).toEqual(
+    expect(names).toStrictEqual(
       expect.arrayContaining([
         "Worker",
         "KV",
@@ -65,11 +67,11 @@ describe("subtractive Alchemy runtime compatibility", () => {
     expect(code).not.toContain("import.meta.resolve");
   }, 30000);
 
-  it("preserves R2 runtime and HTTP APIs without enumerating allowed capabilities", async () => {
+  test("preserves R2 runtime and HTTP APIs without enumerating allowed capabilities", async () => {
     const { resolve, load } = hooks();
     const code = await load(resolve("alchemy/Cloudflare/R2")!)!;
     const names = exportsOf(code);
-    expect(names).toEqual(
+    expect(names).toStrictEqual(
       expect.arrayContaining([
         "Bucket",
         "ReadWriteBucket",
@@ -81,7 +83,7 @@ describe("subtractive Alchemy runtime compatibility", () => {
     expect(names).not.toContain("ProviderLocal");
   }, 30000);
 
-  it("builds the native Worker graph without bundling deployment tooling", async () => {
+  test("builds the native Worker graph without bundling deployment tooling", async () => {
     const entry = "\0effront-test:alchemy-worker";
     const result = await build({
       root: fileURLToPath(new URL("../../", import.meta.url)),
@@ -112,11 +114,13 @@ describe("subtractive Alchemy runtime compatibility", () => {
         },
       },
     });
-    if ("on" in result) throw new TypeError("Unexpected test build watcher.");
+    if ("on" in result) {
+      throw new TypeError("Unexpected test build watcher.");
+    }
     const output = Array.isArray(result) ? result.flatMap((value) => value.output) : result.output;
     const chunks = output.filter((value) => value.type === "chunk");
     const code = chunks.map((value) => value.code).join("\n");
-    expect(exportsOf(chunks.find((value) => value.isEntry)!.code)).toEqual(
+    expect(exportsOf(chunks.find((value) => value.isEntry)!.code)).toStrictEqual(
       expect.arrayContaining(["Worker", "makeWorkerBridge", "WorkerConfigProvider"]),
     );
     expect(code).not.toContain("downloadedBinPath");
@@ -124,7 +128,7 @@ describe("subtractive Alchemy runtime compatibility", () => {
     expect(code).not.toContain("createViteServer");
   }, 30000);
 
-  it("runs only in server graphs in both serve and build without optimizer configuration", () => {
+  test("runs only in server graphs in both serve and build without optimizer configuration", () => {
     const { plugin, resolve, load } = hooks();
     expect(plugin.apply).toBeUndefined();
     expect(plugin.config).toBeUndefined();

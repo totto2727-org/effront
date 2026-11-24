@@ -1,16 +1,16 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveConfig } from "vite";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { effront } from "./plugin.ts";
 
 const root = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 
 describe("Effront entry conventions", () => {
-  it("uses entry.workers.ts and entry.effront.tsx without consumer configuration", async () => {
+  test("uses entry.workers.ts and entry.effront.tsx without consumer configuration", async () => {
     const config = await resolveConfig({ configFile: false, root, plugins: effront() }, "build");
 
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
       index: "./src/entry.workers.ts",
     });
     expect(config.resolve.alias).toContainEqual({
@@ -19,7 +19,7 @@ describe("Effront entry conventions", () => {
     });
   });
 
-  it("preserves explicit host and application entry overrides relative to the consumer root", async () => {
+  test("preserves explicit host and application entry overrides relative to the consumer root", async () => {
     const config = await resolveConfig(
       {
         configFile: false,
@@ -29,7 +29,7 @@ describe("Effront entry conventions", () => {
       "build",
     );
 
-    expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
+    expect(config.environments["rsc"]?.build.rollupOptions.input).toStrictEqual({
       index: "./custom/host.ts",
     });
     expect(config.resolve.alias).toContainEqual({
@@ -38,7 +38,7 @@ describe("Effront entry conventions", () => {
     });
   });
 
-  it("registers Schema JIT before the RSC host entry without rewriting SSR or other modules", async () => {
+  test("registers Schema JIT before the RSC host entry without rewriting SSR or other modules", async () => {
     const config = await resolveConfig({ configFile: false, root, plugins: effront() }, "build");
     const plugin = config.plugins.find((entry) => entry.name === "effront:schema-jit")!;
     const transform = plugin.transform!;

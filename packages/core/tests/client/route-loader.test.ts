@@ -150,7 +150,7 @@ it.effect("does not let initial Flight completion overwrite a refreshed cache ge
       if (resource._tag === "Route") {
         expect(resource.routeTree.id).toBe("refreshed");
       }
-      expect(requestedUrls).toEqual([]);
+      expect(requestedUrls).toStrictEqual([]);
     }).pipe(Effect.provideService(HttpClient.HttpClient, makeHttpClient(requestedUrls))),
   );
 });
@@ -178,7 +178,7 @@ it.effect("invalidates cached history entries before a development refresh", () 
       const resource = yield* load(routeLoader, initialEntry, "traverse");
 
       expect(resource._tag === "Route" && resource.routeTree.id).toBe("reloaded");
-      expect(requestedUrls).toEqual([initialEntry.url]);
+      expect(requestedUrls).toStrictEqual([initialEntry.url]);
     }).pipe(Effect.provideService(HttpClient.HttpClient, makeHttpClient(requestedUrls))),
   );
 });
@@ -213,7 +213,7 @@ it.effect("fences an in-flight navigation cache write when a refresh invalidates
       if (cached._tag === "Route") {
         expect(cached.routeTree.id).toBe("refreshed");
       }
-      expect(requestedUrls).toEqual([initialEntry.url]);
+      expect(requestedUrls).toStrictEqual([initialEntry.url]);
     }).pipe(Effect.provideService(HttpClient.HttpClient, makeHttpClient(requestedUrls))),
   );
 });
@@ -242,7 +242,7 @@ it.effect("attributes a refresh to the history entry where it started", () => {
       const firstCached = yield* load(routeLoader, firstEntry, "traverse");
 
       expect(firstCached._tag === "Route" && firstCached.routeTree.id).toBe("refreshed");
-      expect(requestedUrls).toEqual([]);
+      expect(requestedUrls).toStrictEqual([]);
     }).pipe(Effect.provideService(HttpClient.HttpClient, makeHttpClient(requestedUrls))),
   );
 });
@@ -290,7 +290,7 @@ it.effect("caches the supplied entry and evicts it on disposal", () => {
       const reloaded = yield* load(routeLoader, secondEntry, "traverse");
 
       expect(reloaded._tag === "Route" && reloaded.routeTree.id).toBe("second-reloaded");
-      expect(requestedUrls).toEqual([secondEntry.url, secondEntry.url]);
+      expect(requestedUrls).toStrictEqual([secondEntry.url, secondEntry.url]);
     }).pipe(Effect.provideService(HttpClient.HttpClient, makeHttpClient(requestedUrls))),
   );
 });

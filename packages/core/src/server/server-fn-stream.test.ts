@@ -19,14 +19,17 @@ it.effect("preserves stream values and finishes its producer before request scop
       yield* Effect.promise(() => reader.read()),
       yield* Effect.promise(() => reader.read()),
     ];
-    expect(values).toEqual([
+    expect(values).toStrictEqual([
       { done: false, value: "one" },
       { done: false, value: "two" },
     ]);
-    expect(yield* Effect.promise(() => reader.read())).toEqual({ done: true, value: undefined });
-    expect(events).toEqual(["producer finalized"]);
+    expect(yield* Effect.promise(() => reader.read())).toStrictEqual({
+      done: true,
+      value: undefined,
+    });
+    expect(events).toStrictEqual(["producer finalized"]);
     yield* Scope.close(scope, Exit.void);
-    expect(events).toEqual(["producer finalized", "request released"]);
+    expect(events).toStrictEqual(["producer finalized", "request released"]);
   }),
 );
 
@@ -70,7 +73,7 @@ it.effect.each(["unlocked", "locked", "canceling"] as const)(
         Fiber.join(closing).pipe(Effect.as("request released")),
       );
       expect(first).toBe("producer finalizing");
-      expect(events).toEqual(["producer finalizing"]);
+      expect(events).toStrictEqual(["producer finalizing"]);
       yield* Deferred.succeed(finishFinalizer, undefined);
       yield* Effect.promise(() =>
         (reader === null ? readable.cancel() : reader.cancel()).catch(() => undefined),
@@ -79,7 +82,11 @@ it.effect.each(["unlocked", "locked", "canceling"] as const)(
       if (canceling !== null) {
         yield* Fiber.join(canceling);
       }
-      expect(events).toEqual(["producer finalizing", "producer finalized", "request released"]);
+      expect(events).toStrictEqual([
+        "producer finalizing",
+        "producer finalized",
+        "request released",
+      ]);
     }),
 );
 
@@ -99,7 +106,7 @@ it.effect.each(["empty", "defect"] as const)(
       yield* Scope.close(scope, Exit.void);
       expect(finalizations).toBe(1);
       if (outcome === "empty") {
-        expect(first).toEqual(Exit.succeed({ done: true, value: undefined }));
+        expect(first).toStrictEqual(Exit.succeed({ done: true, value: undefined }));
       } else if (Exit.isFailure(first)) {
         expect(Cause.squash(first.cause)).toBe(defect);
       } else {

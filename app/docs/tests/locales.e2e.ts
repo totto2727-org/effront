@@ -62,7 +62,9 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
   const slugs = pages.map((article) => localizedUrl(article.slug));
   const metadata = (slug: string) => {
     const article = pages.find((candidate) => candidate.slug === slug);
-    if (!article) throw new Error(`Missing ${locale} browser-test article metadata: ${slug}`);
+    if (!article) {
+      throw new Error(`Missing ${locale} browser-test article metadata: ${slug}`);
+    }
     return article;
   };
 
@@ -161,9 +163,13 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
           .locator("article a[href]")
           .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
         for (const href of hrefs) {
-          if (!href) continue;
+          if (!href) {
+            continue;
+          }
           const target = new URL(href, page.url());
-          if (target.origin !== new URL(page.url()).origin) continue;
+          if (target.origin !== new URL(page.url()).origin) {
+            continue;
+          }
           expect(slugs, `${slug} links to ${href}`).toContain(target.pathname);
           if (target.hash) {
             const targetArticle = pages.find(
@@ -213,7 +219,9 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
           "data-doc-page",
           localizedUrl(canonical),
         );
-        if (fragment) await expect(page.locator(`article ${fragment}`)).toBeInViewport();
+        if (fragment) {
+          await expect(page.locator(`article ${fragment}`)).toBeInViewport();
+        }
       });
     }
   });
@@ -248,7 +256,9 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
     await expect(page.locator("article #parse")).toBeInViewport();
     const index = pages.findIndex((article) => article.slug === "/api-reference/markdown");
     const nextSlug = slugs[index + 1];
-    if (!nextSlug) throw new Error(`Missing ${locale} next-page metadata`);
+    if (!nextSlug) {
+      throw new Error(`Missing ${locale} next-page metadata`);
+    }
     const adjacent = page.getByRole("navigation", { name: labels.previousNext });
     await adjacent.getByRole("link").last().click();
     await expect(page).toHaveURL(nextSlug);
@@ -286,7 +296,9 @@ for (const { locale, articles, core, contentDirectory, labels } of locales) {
           ? [...englishArticleCatalog, ...englishCorePages]
           : [...articleCatalog, ...corePages];
       const destinationArticle = otherPages.find((article) => article.slug === slug);
-      if (!destinationArticle) throw new Error(`Missing translated article: ${destination}`);
+      if (!destinationArticle) {
+        throw new Error(`Missing translated article: ${destination}`);
+      }
       await expect(page.locator("article h1")).toHaveText(destinationArticle.title);
       const sidebarLinks = page.locator('[data-slot="sidebar-content"]').getByRole("link");
       await expect(sidebarLinks).toHaveCount(otherPages.length);

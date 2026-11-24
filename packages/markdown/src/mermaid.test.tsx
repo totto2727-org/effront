@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { renderToReadableStream } from "react-dom/server.edge";
-import { afterAll, describe, expect, it, vi } from "vite-plus/test";
+import { afterAll, describe, expect, test, vi } from "vite-plus/test";
 import { Math } from "@effront/markdown/math";
 import { Math as ComarkMath } from "@comark/react/components/Math";
 
@@ -21,11 +21,11 @@ const { Mermaid } = await import("@effront/markdown/mermaid");
 afterAll(() => vi.unstubAllEnvs());
 
 describe("public rich components", () => {
-  it("exports Math as the unchanged upstream component", () => {
+  test("exports Math as the unchanged upstream component", () => {
     expect(Math).toBe(ComarkMath);
   });
 
-  it.each([
+  test.each([
     { content: "flowchart LR\n A --> B" },
     {
       content: "flowchart LR\n A --> B",
@@ -48,7 +48,7 @@ describe("public rich components", () => {
       const stream = await renderToReadableStream(<Mermaid {...props} />);
       await new Response(stream).text();
       expect(upstreamMermaid).toHaveBeenCalled();
-      expect(upstreamMermaid.mock.lastCall?.[0]).toEqual(props);
+      expect(upstreamMermaid.mock.lastCall?.[0]).toStrictEqual(props);
     },
   );
 });

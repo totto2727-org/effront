@@ -4,7 +4,7 @@ import { CloudflareEnvironment } from "alchemy/Cloudflare";
 import { RuntimeContext } from "alchemy/RuntimeContext";
 import { Context, Effect, Layer, Option, Scope } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
-import { describe, expect, expectTypeOf, it, vi } from "vite-plus/test";
+import { describe, expect, expectTypeOf, test, vi } from "vite-plus/test";
 
 import * as deployment from "./deployment.ts";
 import { applicationHttpEffect, makeApplicationHttpEffect } from "./runtime.ts";
@@ -46,7 +46,7 @@ const request = (path: string) =>
   HttpServerRequest.fromWeb(new Request(`https://example.test${path}`));
 
 describe("Alchemy native application effects", () => {
-  it("keeps the deployment and RSC APIs type-identical and construction-safe", async () => {
+  test("keeps the deployment and RSC APIs type-identical and construction-safe", async () => {
     expectTypeOf(deployment.makeApplicationHttpEffect).toEqualTypeOf(makeApplicationHttpEffect);
     expectTypeOf(deployment.applicationHttpEffect).toEqualTypeOf(applicationHttpEffect);
     expectTypeOf(configuredDeployment.makeApplicationHttpEffect).toEqualTypeOf(
@@ -60,7 +60,7 @@ describe("Alchemy native application effects", () => {
     expect(Effect.isEffect(handler)).toBe(true);
   });
 
-  it("captures configured application capabilities without loading the application during construction", async () => {
+  test("captures configured application capabilities without loading the application during construction", async () => {
     type ApplicationFailure = { readonly _tag: "ApplicationFailure" };
     type RouteFailure = { readonly _tag: "RouteFailure" };
     type Definition = ApplicationDefinition<
@@ -84,7 +84,7 @@ describe("Alchemy native application effects", () => {
     expect(handler).toBeDefined();
   });
 
-  it("reports a missing Vite integration only when the configured handler executes", async () => {
+  test("reports a missing Vite integration only when the configured handler executes", async () => {
     const handler = await Effect.runPromise(
       makeConfiguredApplicationHttpEffect<typeof application>().pipe(
         Effect.provideService(Capability, "constructed"),
@@ -104,7 +104,7 @@ describe("Alchemy native application effects", () => {
     );
   });
 
-  it("does not erase missing capabilities or accept non-application types", () => {
+  test("does not erase missing capabilities or accept non-application types", () => {
     const check = () => {
       // @ts-expect-error The configured application still requires Capability.
       void Effect.runPromise(makeConfiguredApplicationHttpEffect<typeof application>());
@@ -118,7 +118,7 @@ describe("Alchemy native application effects", () => {
     expect(check).toBeTypeOf("function");
   });
 
-  it("normalizes native router requirement and error markers before construction capture", async () => {
+  test("normalizes native router requirement and error markers before construction capture", async () => {
     type RouteFailure = { readonly _tag: "RouteFailure" };
     type GlobalFailure = { readonly _tag: "GlobalFailure" };
     type Requirements =
@@ -140,7 +140,7 @@ describe("Alchemy native application effects", () => {
     >().toEqualTypeOf<RouteFailure | GlobalFailure>();
   });
 
-  it("captures constructed capabilities without importing the application or requiring runtime services", async () => {
+  test("captures constructed capabilities without importing the application or requiring runtime services", async () => {
     const load = vi.fn(async () => application);
     const handler = await Effect.runPromise(
       makeApplicationHttpEffect(load).pipe(Effect.provideService(Capability, "constructed")),
@@ -156,10 +156,12 @@ describe("Alchemy native application effects", () => {
       ),
     );
     expect(load).toHaveBeenCalledOnce();
-    expect(await HttpServerResponse.toWeb(response).text()).toBe("constructed:request:/lazy");
+    await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe(
+      "constructed:request:/lazy",
+    );
   });
 
-  it("uses live request scope and runtime context instead of closed construction services", async () => {
+  test("uses live request scope and runtime context instead of closed construction services", async () => {
     let constructionScope: Scope.Scope | undefined;
     const handler = await Effect.runPromise(
       Effect.scoped(
@@ -188,17 +190,19 @@ describe("Alchemy native application effects", () => {
           ),
         ),
       );
-      expect(await HttpServerResponse.toWeb(response).text()).toBe(`captured:${id}:/${id}`);
+      await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe(
+        `captured:${id}:/${id}`,
+      );
       expect(scopes.at(-1)).not.toBe(constructionScope);
       expect(finalized).toContain(id);
-      expect(memoMaps.at(-1)).toEqual(Option.none());
+      expect(memoMaps.at(-1)).toStrictEqual(Option.none());
       expect(metadataPresent.at(-1)).toBe(false);
     }
     expect(scopes.at(-1)).not.toBe(scopes.at(-2));
     expect(finalized).not.toContain("stale");
   });
 
-  it("lets live capabilities override explicitly captured capabilities", async () => {
+  test("lets live capabilities override explicitly captured capabilities", async () => {
     const handler = applicationHttpEffect(async () => application, {
       context: Context.make(Capability, "captured"),
     });
@@ -211,10 +215,10 @@ describe("Alchemy native application effects", () => {
         ),
       ),
     );
-    expect(await HttpServerResponse.toWeb(response).text()).toBe("live:current:/override");
+    await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe("live:current:/override");
   });
 
-  it("retains live capability requirements when a capture type has no supplied context", async () => {
+  test("retains live capability requirements when a capture type has no supplied context", async () => {
     const load = async () => application;
     const omitted = applicationHttpEffect<never, never, Capability | RuntimeContext, Capability>(
       load,
@@ -241,11 +245,13 @@ describe("Alchemy native application effects", () => {
           Effect.provideService(HttpServerRequest.HttpServerRequest, request("/uncaptured")),
         ),
       );
-      expect(await HttpServerResponse.toWeb(response).text()).toBe("live:current:/uncaptured");
+      await expect(HttpServerResponse.toWeb(response).text()).resolves.toBe(
+        "live:current:/uncaptured",
+      );
     }
   });
 
-  it("retains application capabilities in construction requirements", () => {
+  test("retains application capabilities in construction requirements", () => {
     const check = () => {
       // @ts-expect-error Construction requires Capability, but not host RuntimeContext.
       void Effect.runPromise(makeApplicationHttpEffect(async () => application));

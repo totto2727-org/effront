@@ -248,7 +248,9 @@ for (const reader of locales) {
       .locator("article h2")
       .evaluateAll((headings) => headings.map((heading) => heading.id));
     expect(ids.slice(0, 4)).toEqual(["layouts", "pages", "routes", "application"]);
-    for (const id of ids.slice(0, 4)) await followHeading(page, reader, id);
+    for (const id of ids.slice(0, 4)) {
+      await followHeading(page, reader, id);
+    }
     const complete = page
       .locator("article pre code")
       .filter({ hasText: "export default EFFRONT.make({ routes })" });

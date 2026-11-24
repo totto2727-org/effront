@@ -175,7 +175,7 @@ for (const outcome of ["Success", "TransportFailure", "EarlyStop"] as const) {
           outcome === "EarlyStop" ? source.pipe(Stream.take(1)) : source,
         ).pipe(Effect.forkScoped);
         yield* Deferred.await(received);
-        expect(values).toEqual(["card"]);
+        expect(values).toStrictEqual(["card"]);
         if (outcome === "EarlyStop") {
           yield* Fiber.join(consumer);
         } else {
@@ -530,7 +530,7 @@ const staleResponseScenario = (
       const value = yield* Effect.promise(() => result);
       expect(value).toBe("first result");
       yield* Deferred.await(currentRouteRefresh);
-      expect(refreshTransitionTypes).toEqual(["server-function"]);
+      expect(refreshTransitionTypes).toStrictEqual(["server-function"]);
       expect(released).toHaveBeenCalledOnce();
       expect(rendered).not.toHaveBeenCalled();
     }).pipe(
@@ -654,7 +654,7 @@ it.effect("does not let an older invocation response overwrite a newer response"
       expect(secondValue).toBe("second result");
       yield* Effect.promise(() => directRefreshCommitted.promise);
       expect(interruptedCurrentRouteRefresh).toHaveBeenCalledOnce();
-      expect(reactClient.transitionTypes).toEqual(["server-function"]);
+      expect(reactClient.transitionTypes).toStrictEqual(["server-function"]);
       yield* Deferred.succeed(
         firstResponse,
         makeFlight("older", "first result", Effect.sync(firstReleased)),
@@ -663,8 +663,8 @@ it.effect("does not let an older invocation response overwrite a newer response"
       const firstValue = yield* Effect.promise(() => firstResult);
       expect(firstValue).toBe("first result");
       yield* Deferred.await(currentRouteRefresh);
-      expect(refreshTransitionTypes).toEqual(["server-function"]);
-      expect(rendered).toEqual(["newer"]);
+      expect(refreshTransitionTypes).toStrictEqual(["server-function"]);
+      expect(rendered).toStrictEqual(["newer"]);
       expect(firstReleased).toHaveBeenCalledOnce();
     }).pipe(
       Effect.provideService(

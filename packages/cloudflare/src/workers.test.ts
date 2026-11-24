@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect";
 import { WorkersRequestContext } from "@effront/core/workers";
-import { describe, expect, expectTypeOf, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, test, vi } from "vitest";
 import {
   type CloudflareExecutionContext,
   createWorkersContextAccessors,
@@ -11,7 +11,7 @@ import {
 type Env = { readonly label: string };
 
 describe("Cloudflare Workers context accessors", () => {
-  it("fixes ExecutionContext while allowing application-specific Env", () => {
+  test("fixes ExecutionContext while allowing application-specific Env", () => {
     const accessors = createWorkersContextAccessors<Env>();
     expectTypeOf(accessors.getWorkersEnv()).toEqualTypeOf<Effect.Effect<Env>>();
     expectTypeOf(accessors.getWorkersRequestContext()).toEqualTypeOf<
@@ -28,7 +28,7 @@ describe("Cloudflare Workers context accessors", () => {
     createWorkersContextAccessors<Env, { readonly requestId: string }>();
   });
 
-  it("uses the core Layer and invokes the host's original waitUntil", async () => {
+  test("uses the core Layer and invokes the host's original waitUntil", async () => {
     const waitUntil = vi.fn<(promise: Promise<unknown>) => void>();
     const context = {
       env: { label: "cloudflare" },

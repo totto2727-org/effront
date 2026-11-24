@@ -49,8 +49,9 @@ test("child-owned query shows initial and urgent fallbacks, retains transition a
   const requests: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("request", (request) => {
-    if (request.url().includes("/loading-query.txt"))
+    if (request.url().includes("/loading-query.txt")) {
       requests.push(new URL(request.url()).searchParams.get("item") ?? "");
+    }
   });
   await page.getByRole("button", { name: "Count: 0", exact: true }).click();
   await page.getByRole("button", { name: "開始（ブラウザーで取得）" }).click();

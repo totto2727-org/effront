@@ -43,7 +43,7 @@ const renderBoundary = (override?: false | PageViewTransitionConfig, parameteriz
 describe("PageViewTransition settings", () => {
   it.effect("enables page transitions without requiring a service Layer", () =>
     Effect.gen(function* () {
-      expect((yield* PageViewTransition).default).toEqual({
+      expect((yield* PageViewTransition).default).toStrictEqual({
         default: "auto",
         "hmr-refresh": "none",
         "navigation-ua-visual-transition": "none",
@@ -63,7 +63,7 @@ describe("PageViewTransition settings", () => {
   it.effect("allows static and parameterized pages to disable or re-enable transitions", () =>
     Effect.gen(function* () {
       for (const parameterized of [false, true]) {
-        expect(yield* renderBoundary(false, parameterized)).toEqual({ enabled: false });
+        expect(yield* renderBoundary(false, parameterized)).toStrictEqual({ enabled: false });
         expect(
           yield* renderBoundary({ enabled: true, share: "page-share" }, parameterized),
         ).toMatchObject({
@@ -87,8 +87,8 @@ describe("PageViewTransition settings", () => {
         ),
         { concurrency: "unbounded" },
       );
-      expect(results.map((result) => result.default)).toEqual(["first", "second"]);
-      expect((yield* renderBoundary()).default).toEqual((yield* PageViewTransition).default);
+      expect(results.map((result) => result.default)).toStrictEqual(["first", "second"]);
+      expect((yield* renderBoundary()).default).toStrictEqual((yield* PageViewTransition).default);
     }),
   );
 
@@ -111,7 +111,7 @@ describe("PageViewTransition settings", () => {
       share: { default: "fade", "navigation-back": "back" },
       privateValue: "not-flight",
     };
-    expect(resolvePageViewTransition(defaults, { share: { default: "page" } })).toEqual({
+    expect(resolvePageViewTransition(defaults, { share: { default: "page" } })).toStrictEqual({
       enabled: undefined,
       default: "global",
       enter: undefined,

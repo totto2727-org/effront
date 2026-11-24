@@ -50,7 +50,7 @@ describe("Routes", () => {
     const FirstScope = EFFRONT.withMiddleware(First);
     const SecondScope = FirstScope.withMiddleware(Second);
     const routes = SecondScope.Routes.make();
-    expect(getRoutesState(routes).middleware).toEqual([First, Second]);
+    expect(getRoutesState(routes).middleware).toStrictEqual([First, Second]);
     expect(Object.isFrozen(First)).toBe(true);
     expect(Object.isFrozen(getRoutesState(routes).middleware)).toBe(true);
     expect(() => FirstScope.withMiddleware(First)).toThrow("cannot appear twice in the same scope");
@@ -65,9 +65,9 @@ describe("Routes", () => {
     const empty = EFFRONT.Routes.make({ layout: Shell, loading: LoadingPage });
     const notesRoutes = EFFRONT.Routes.make().page("/", HomePage).page("/history", HistoryPage);
     const routes = empty.mount("/notes", notesRoutes);
-    expect(getRoutesState(empty).paths).toEqual([]);
-    expect(getRoutesState(notesRoutes).paths).toEqual(["/", "/history"]);
-    expect(getRoutesState(routes).paths).toEqual(["/notes", "/notes/history"]);
+    expect(getRoutesState(empty).paths).toStrictEqual([]);
+    expect(getRoutesState(notesRoutes).paths).toStrictEqual(["/", "/history"]);
+    expect(getRoutesState(routes).paths).toStrictEqual(["/notes", "/notes/history"]);
     expect(Object.isFrozen(routes)).toBe(true);
     expect(Object.isFrozen(getRoutesState(routes).paths)).toBe(true);
     expect(Object.isFrozen(getRoutesState(notesRoutes).pages[0])).toBe(true);
@@ -76,7 +76,7 @@ describe("Routes", () => {
 
   it("infers dynamic path params from Page schemas", () => {
     const routes = EFFRONT.Routes.make().page("/schedule/:day", DayPage);
-    expect(getRoutesState(routes).paths).toEqual(["/schedule/:day"]);
+    expect(getRoutesState(routes).paths).toStrictEqual(["/schedule/:day"]);
     expect(() =>
       // @ts-expect-error Exercise runtime validation for a parameter-free Page.
       EFFRONT.Routes.make().page("/schedule/:day", HomePage),
@@ -89,12 +89,12 @@ describe("Routes", () => {
 
   it("infers every parameter across a nested route pattern", () => {
     const routes = EFFRONT.Routes.make().page("/a/:b/c/:d", NestedParamsPage);
-    expect(getRoutesState(routes).paths).toEqual(["/a/:b/c/:d"]);
+    expect(getRoutesState(routes).paths).toStrictEqual(["/a/:b/c/:d"]);
   });
 
   it("matches route names against the encoded Schema while rendering its decoded type", () => {
     const routes = EFFRONT.Routes.make().page("/:slug", RenamedParamsPage);
-    expect(getRoutesState(routes).paths).toEqual(["/:slug"]);
+    expect(getRoutesState(routes).paths).toStrictEqual(["/:slug"]);
   });
 
   it("requires a finite, non-empty Schema of string-encoded path parameters", () => {
@@ -103,7 +103,7 @@ describe("Routes", () => {
       render: ({ params }) => Effect.succeed(<h1>{typeof params.value}</h1>),
     });
     const routes = EFFRONT.Routes.make().page("/:value", unknownInputPage);
-    expect(getRoutesState(routes).paths).toEqual(["/:value"]);
+    expect(getRoutesState(routes).paths).toStrictEqual(["/:value"]);
   });
 
   it("rejects invalid and reserved route paths at the type and runtime boundaries", () => {
@@ -197,7 +197,7 @@ describe("named catch-all routes", () => {
   it("infers the terminal capture and mounts beneath a static prefix", () => {
     const child = EFFRONT.Routes.make().page("/*path", PathPage);
     const routes = EFFRONT.Routes.make({ layout: Shell }).mount("/manual", child);
-    expect(getRoutesState(routes).paths).toEqual(["/manual/*path"]);
+    expect(getRoutesState(routes).paths).toStrictEqual(["/manual/*path"]);
     expect(() => EFFRONT.make({ routes })).not.toThrow();
     expect(analyzeRoutePath("/manual/*path")).toMatchObject({
       catchAll: "path",
@@ -206,7 +206,7 @@ describe("named catch-all routes", () => {
       parameterNames: ["path"],
     });
     const nested = EFFRONT.Routes.make().page("/a/:b/*d", NestedParamsPage);
-    expect(getRoutesState(nested).paths).toEqual(["/a/:b/*d"]);
+    expect(getRoutesState(nested).paths).toStrictEqual(["/a/:b/*d"]);
   });
 
   it("requires the catch-all schema key and keeps static mount constraints", () => {

@@ -1,6 +1,6 @@
 import { renderToReadableStream } from "react-dom/server.edge";
 import { Effect } from "effect";
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { createMarkdownCollection } from "./collection.ts";
 import { MarkdownDocument, type MarkdownDocumentProps } from "./document.tsx";
@@ -29,7 +29,7 @@ const render = async (
 };
 
 describe("MarkdownDocument", () => {
-  it("streams parsed documents with scoped and no-JavaScript rich-content placeholders", async () => {
+  test("streams parsed documents with scoped and no-JavaScript rich-content placeholders", async () => {
     const html = await render("Inline $x$.\n\n```mermaid\nflowchart LR\n  A --> B\n```");
     expect(html).toContain('class="comark-content effront-markdown"');
     expect(html).toContain('<span class="math inline">...</span>');
@@ -38,7 +38,7 @@ describe("MarkdownDocument", () => {
     expect(html).not.toContain('class="katex');
   });
 
-  it.each(["Math", "math", "ProseMath"])(
+  test.each(["Math", "math", "ProseMath"])(
     "appends the caller class and preserves the %s component override",
     async (name) => {
       const html = await render("$x$", "article-prose", {
@@ -52,7 +52,7 @@ describe("MarkdownDocument", () => {
     },
   );
 
-  it.each(["Mermaid", "mermaid", "ProseMermaid"])(
+  test.each(["Mermaid", "mermaid", "ProseMermaid"])(
     "preserves the %s component override instead of the default diagram leaf",
     async (name) => {
       const html = await render("```mermaid\nflowchart LR\n  A --> B\n```", undefined, {
@@ -63,7 +63,7 @@ describe("MarkdownDocument", () => {
     },
   );
 
-  it("renders entirely server-side rich-component replacements without configured leaves", async () => {
+  test("renders entirely server-side rich-component replacements without configured leaves", async () => {
     const html = await render("$x$\n\n```mermaid\nflowchart LR\n  A --> B\n```", undefined, {
       ProseMath: ({ content }: { content: string }) => (
         <output data-server-math="">{content}</output>

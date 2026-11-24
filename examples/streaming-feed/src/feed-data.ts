@@ -9,7 +9,9 @@ export type Story = {
 };
 
 export function storyById(id: number): Story | null {
-  if (!Number.isSafeInteger(id) || id < 1 || id > storyCount) return null;
+  if (!Number.isSafeInteger(id) || id < 1 || id > storyCount) {
+    return null;
+  }
   return {
     id,
     title: `Field note ${id}`,

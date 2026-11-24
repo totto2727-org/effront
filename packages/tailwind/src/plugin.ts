@@ -15,7 +15,9 @@ export type EffrontTailwindOptions = {
 
 /** Includes @tailwindcss/vite and loads one stylesheet through React client boundaries. */
 export const effrontTailwind = (options: EffrontTailwindOptions = {}): PluginOption[] => {
-  if (options.stylesheet === "") throw new TypeError("A stylesheet path must not be empty.");
+  if (options.stylesheet === "") {
+    throw new TypeError("A stylesheet path must not be empty.");
+  }
   let stylesheet: string;
   let generatedStyle: string;
   const integration: Plugin = {
@@ -31,7 +33,9 @@ export const effrontTailwind = (options: EffrontTailwindOptions = {}): PluginOpt
           : normalizePath(resolve(config.root, options.stylesheet));
     },
     resolveId(id) {
-      if (id === virtualStyle) return generatedStyle;
+      if (id === virtualStyle) {
+        return generatedStyle;
+      }
       const [file, query = ""] = id.split("?", 2);
       if (file === "/style.css" && new URLSearchParams(query).has("effront-tailwind")) {
         return `${generatedStyle.split("?", 1)[0]}?${query}`;
@@ -43,14 +47,19 @@ export const effrontTailwind = (options: EffrontTailwindOptions = {}): PluginOpt
       if (
         file !== generatedStyle.split("?", 1)[0] ||
         !new URLSearchParams(query).has("effront-tailwind")
-      )
+      ) {
         return;
+      }
       const tailwind = normalizePath(fileURLToPath(import.meta.resolve("tailwindcss/index.css")));
       return `@import ${JSON.stringify(tailwind)};`;
     },
     transform(code, id) {
-      if (/[?&](?:raw|url|worker|sharedworker)(?:[=&]|$)/.test(id)) return;
-      if (!/\.[cm]?[jt]sx?(?:\?|$)/.test(id) || !clientDirective.test(code)) return;
+      if (/[?&](?:raw|url|worker|sharedworker)(?:[=&]|$)/.test(id)) {
+        return;
+      }
+      if (!/\.[cm]?[jt]sx?(?:\?|$)/.test(id) || !clientDirective.test(code)) {
+        return;
+      }
       // Keep the directive prologue intact. RSC collects the CSS from rendered client boundaries
       // for initial HTML as well as hydration; repeated imports share the same CSS module.
       return { code: `${code}\nimport ${JSON.stringify(stylesheet)};\n`, map: null };

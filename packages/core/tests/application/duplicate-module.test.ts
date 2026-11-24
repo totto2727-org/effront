@@ -23,7 +23,7 @@ it.effect("composes values loaded from a duplicated framework module instance", 
     const App = EFFRONT.make({ routes: Routes });
 
     expect(getPageState(Page).decodeParams).toBeNull();
-    expect(getRoutesState(Routes).paths).toEqual(["/"]);
+    expect(getRoutesState(Routes).paths).toStrictEqual(["/"]);
     expect(getApplicationState(App).routes).toHaveLength(1);
 
     const invocation = ServerFn("hello");

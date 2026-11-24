@@ -135,7 +135,7 @@ describe("createFetchHandler", () => {
           ),
         );
         expect(empty.body).toBeNull();
-        expect(events).toEqual(["acquired", "released"]);
+        expect(events).toStrictEqual(["acquired", "released"]);
 
         const streaming = yield* Effect.promise(() =>
           handler(
@@ -146,7 +146,7 @@ describe("createFetchHandler", () => {
         );
         expect(streaming.body).not.toBeNull();
         yield* Effect.promise(() => streaming.body!.cancel());
-        expect(events).toEqual(["acquired", "released", "acquired", "released"]);
+        expect(events).toStrictEqual(["acquired", "released", "acquired", "released"]);
 
         const failing = yield* Effect.promise(() =>
           handler(

@@ -31,7 +31,9 @@ const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);
-  if (!context) throw new Error("useSidebar must be used within a SidebarProvider.");
+  if (!context) {
+    throw new Error("useSidebar must be used within a SidebarProvider.");
+  }
   return context;
 }
 
@@ -66,8 +68,11 @@ function SidebarProvider({
     [open, setOpenProp],
   );
   const toggleSidebar = React.useCallback(() => {
-    if (isMobile) setOpenMobile(!openMobile);
-    else setOpen((value) => !value);
+    if (isMobile) {
+      setOpenMobile(!openMobile);
+    } else {
+      setOpen((value) => !value);
+    }
   }, [isMobile, openMobile, setOpen]);
   React.useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -125,7 +130,7 @@ function Sidebar({
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
   const { isMobile, state, openMobile, setOpenMobile, triggerRef } = useSidebar();
-  if (collapsible === "none")
+  if (collapsible === "none") {
     return (
       <div
         data-slot="sidebar"
@@ -138,7 +143,8 @@ function Sidebar({
         {children}
       </div>
     );
-  if (isMobile)
+  }
+  if (isMobile) {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile}>
         <SheetContent
@@ -160,6 +166,7 @@ function Sidebar({
         </SheetContent>
       </Sheet>
     );
+  }
   return (
     <div
       className="group peer hidden text-sidebar-foreground md:block"

@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, test } from "vite-plus/test";
 
 const cwd = fileURLToPath(new URL("../../", import.meta.url));
 const entries = [
@@ -21,7 +21,7 @@ const entries = [
 ];
 
 describe("published Alchemy execution graph entries", () => {
-  it.each(entries)("constructs $specifier without resolving core runtime modules", (entry) => {
+  test.each(entries)("constructs $specifier without resolving core runtime modules", (entry) => {
     const output = execFileSync(
       process.execPath,
       [
@@ -54,7 +54,7 @@ describe("published Alchemy execution graph entries", () => {
     );
   });
 
-  it.each(entries)("selects the static RSC entry for $specifier under react-server", (entry) => {
+  test.each(entries)("selects the static RSC entry for $specifier under react-server", (entry) => {
     const output = execFileSync(
       process.execPath,
       [

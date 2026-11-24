@@ -94,7 +94,7 @@ describe("native HTTP effects", () => {
               memoMap,
               yield* Effect.scope,
             );
-            expect(acquisitions.map((value) => value.label)).toEqual(["host:construction"]);
+            expect(acquisitions.map((value) => value.label)).toStrictEqual(["host:construction"]);
             const httpEffect =
               mode === "captured" ? yield* makeHttpEffect(application) : toHttpEffect(application);
             const handler = HttpEffect.toWebHandlerWith<never, Effect.Services<typeof httpEffect>>(
@@ -107,15 +107,15 @@ describe("native HTTP effects", () => {
             const second = yield* Effect.promise(() => handler(request("two"), live));
             expect(first.status).toBe(200);
             expect(second.status).toBe(200);
-            expect(acquisitions.map((value) => value.label)).toEqual([
+            expect(acquisitions.map((value) => value.label)).toStrictEqual([
               "host:construction",
               "host:one",
               "host:two",
             ]);
             yield* Effect.promise(() => first.body!.cancel());
-            expect(acquisitions.map((value) => value.released)).toEqual([0, 1, 0]);
+            expect(acquisitions.map((value) => value.released)).toStrictEqual([0, 1, 0]);
             yield* Effect.promise(() => second.body!.cancel());
-            expect(acquisitions.map((value) => value.released)).toEqual([0, 1, 1]);
+            expect(acquisitions.map((value) => value.released)).toStrictEqual([0, 1, 1]);
           }).pipe(
             Effect.provideService(External, { label: "host" }),
             Effect.provideService(
@@ -126,7 +126,7 @@ describe("native HTTP effects", () => {
           ),
         ),
       );
-      expect(acquisitions.map((value) => value.released)).toEqual([1, 1, 1]);
+      expect(acquisitions.map((value) => value.released)).toStrictEqual([1, 1, 1]);
     },
   );
 
@@ -148,7 +148,7 @@ describe("native HTTP effects", () => {
   it("captures external services without building request layers or retaining a closed construction scope", async () => {
     const acquisitions: Array<Acquisition> = [];
     const handler = HttpEffect.toWebHandler(await capture(makeProbeApplication(acquisitions)));
-    expect(acquisitions).toEqual([]);
+    expect(acquisitions).toStrictEqual([]);
     const response = await handler(request("first"));
     const acquisition = acquisitions[0]!;
     expect(acquisition.label).toBe("captured:first");
@@ -167,12 +167,12 @@ describe("native HTTP effects", () => {
       handler(request("one"), Context.make(External, { label: "A" })),
       handler(request("two"), Context.make(External, { label: "B" })),
     ]);
-    expect(acquisitions.map((value) => value.label).sort()).toEqual(["A:one", "B:two"]);
+    expect(acquisitions.map((value) => value.label).sort()).toStrictEqual(["A:one", "B:two"]);
     expect(acquisitions[0]!.scope).not.toBe(acquisitions[1]!.scope);
-    expect(acquisitions.map((value) => value.released)).toEqual([0, 0]);
+    expect(acquisitions.map((value) => value.released)).toStrictEqual([0, 0]);
     await first.body!.cancel();
     await second.body!.cancel();
-    expect(acquisitions.map((value) => value.released)).toEqual([1, 1]);
+    expect(acquisitions.map((value) => value.released)).toStrictEqual([1, 1]);
   });
 
   it("lets live external services override captured service references", async () => {
@@ -198,7 +198,7 @@ describe("native HTTP effects", () => {
       ),
     );
     const response = await HttpEffect.toWebHandler(await capture(app))(request("eof"));
-    expect(await response.text()).toBe("captured:eof");
+    await expect(response.text()).resolves.toBe("captured:eof");
     expect(acquisitions[0]!.released).toBe(1);
   });
 
@@ -233,7 +233,7 @@ describe("native HTTP effects", () => {
       request("oversize", { headers: { "content-length": String(10 * 1024 * 1024 + 1) } }),
     );
     expect(response.status).toBe(413);
-    expect(acquisitions).toEqual([]);
+    expect(acquisitions).toStrictEqual([]);
   });
 
   it("does not dispose host-owned external services when a request finishes", async () => {
@@ -330,7 +330,7 @@ describe("native HTTP effects", () => {
       makeHttpEffect(app).pipe(Effect.provideService(External, external)),
     );
     const response = await HttpEffect.toWebHandler(httpEffect)(request("forwarded"));
-    expect(await response.text()).toBe("direct");
+    await expect(response.text()).resolves.toBe("direct");
   });
 
   it("preserves typed acquisition failures and finalizes partially acquired application layers", async () => {

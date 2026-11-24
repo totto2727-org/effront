@@ -51,7 +51,7 @@ it.effect("waits for retirement when a navigation is discarded after commit", ()
     const retirement = navigation.discard();
     void retirement.then(discarded);
     expect(navigation.discard()).toBe(retirement);
-    expect(renders).toEqual([]);
+    expect(renders).toStrictEqual([]);
 
     renderer.navigate(makeRouteTree("successor"));
     const successor = nextRender(renders);
@@ -86,7 +86,7 @@ it.effect("retires a navigation only after its successor becomes visible", () =>
       firstRetirementObserved = true;
     });
 
-    expect(renders).toEqual([]);
+    expect(renders).toStrictEqual([]);
     yield* Effect.promise(() => Promise.resolve());
     expect(firstRetirementObserved).toBe(false);
 
@@ -94,7 +94,7 @@ it.effect("retires a navigation only after its successor becomes visible", () =>
     yield* Effect.promise(() => first.retired);
 
     expect(firstRetirementObserved).toBe(true);
-    expect(renders).toEqual([]);
+    expect(renders).toStrictEqual([]);
   }).pipe(Effect.provide(BrowserRenderer.layer)),
 );
 
@@ -165,7 +165,7 @@ it.effect("discards a scheduled navigation without replacing the visible navigat
     expect(candidateRetired).toBe(true);
     expect(visibleRetired).toBe(false);
     expect(candidate.discard()).toBe(discarded);
-    expect(renders).toEqual([]);
+    expect(renders).toStrictEqual([]);
   }).pipe(Effect.provide(BrowserRenderer.layer)),
 );
 
@@ -331,7 +331,7 @@ it.effect(
       yield* Effect.promise(() => refresh.committed);
 
       expect(navigation.discard()).toBe(navigation.retired);
-      expect(renders).toEqual([]);
+      expect(renders).toStrictEqual([]);
     }).pipe(Effect.provide(BrowserRenderer.layer)),
 );
 

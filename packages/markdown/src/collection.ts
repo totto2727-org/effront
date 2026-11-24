@@ -91,7 +91,9 @@ export const createMarkdownCollection = (
           return reference;
         }
         const [path, suffix] = splitReference(reference);
-        if (String.isEmpty(path)) return `${entry.url}${suffix}`;
+        if (String.isEmpty(path)) {
+          return `${entry.url}${suffix}`;
+        }
         // Encode each decoded URL segment before POSIX normalization so %2F stays
         // a filename character rather than becoming another path separator.
         const encodedReference = path
@@ -156,7 +158,9 @@ export const createMarkdownCollection = (
       ),
       get: (pathname) => {
         const [path] = splitReference(pathname);
-        if (!path.startsWith("/")) return undefined;
+        if (!path.startsWith("/")) {
+          return undefined;
+        }
         const parts = path
           .replace(/([^/])\/$/u, "$1")
           .slice(1)

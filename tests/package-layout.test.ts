@@ -3,13 +3,13 @@ import { globSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { expect, it } from "vite-plus/test";
+import { expect, test } from "vite-plus/test";
 import core from "../packages/core/package.json" with { type: "json" };
 
 const repository = fileURLToPath(new URL("../", import.meta.url));
 const packages = globSync("packages/*/package.json", { cwd: repository });
 
-it("uses responsibility-named TypeScript modules instead of implicit index entries", () => {
+test("uses responsibility-named TypeScript modules instead of implicit index entries", () => {
   const entries = globSync("{packages,app,examples,tests}/**/index.{ts,tsx}", {
     cwd: repository,
     exclude: [
@@ -22,16 +22,20 @@ it("uses responsibility-named TypeScript modules instead of implicit index entri
       "**/playwright-report/**",
     ],
   });
-  expect(entries).toEqual([]);
+  expect(entries).toStrictEqual([]);
 });
 
 function targets(value: unknown): string[] {
-  if (typeof value === "string") return [value];
-  if (typeof value !== "object" || value === null) return [];
+  if (typeof value === "string") {
+    return [value];
+  }
+  if (typeof value !== "object" || value === null) {
+    return [];
+  }
   return Object.values(value).flatMap(targets);
 }
 
-it.each(packages)(
+test.each(packages)(
   "packs every public export of %s at the synchronized release",
   (manifest) => {
     mkdirSync(join(repository, "tmp"), { recursive: true });
@@ -56,7 +60,7 @@ it.each(packages)(
         expect(files, target).toContain(`package/${target.replace(/^\.\//, "")}`);
         expect(basename(target)).not.toMatch(/^index\.(?:js|d\.ts)$/);
       }
-      expect(files.filter((file) => /\.(?:test|e2e)\.[cm]?[jt]sx?$/.test(file))).toEqual([]);
+      expect(files.filter((file) => /\.(?:test|e2e)\.[cm]?[jt]sx?$/.test(file))).toStrictEqual([]);
     } finally {
       rmSync(temporary, { recursive: true, force: true });
     }

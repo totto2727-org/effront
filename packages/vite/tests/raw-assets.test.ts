@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { effront } from "@effront/vite";
 import { createServer, type ViteDevServer } from "vite";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 const exampleRoot = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
@@ -17,15 +17,18 @@ describe("raw asset development updates", () => {
 
   afterEach(async () => {
     await server?.close();
-    if (directory)
+    if (directory) {
       await rm(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    }
     vi.restoreAllMocks();
   });
 
   const serve = async (files: Readonly<Record<string, string>>) => {
     await mkdir(temporaryRoot, { recursive: true });
     const root = (directory = await mkdtemp(join(temporaryRoot, "raw-assets-test-")));
-    for (const [name, content] of Object.entries(files)) await writeFile(join(root, name), content);
+    for (const [name, content] of Object.entries(files)) {
+      await writeFile(join(root, name), content);
+    }
     const development = (server = await createServer({
       configFile: false,
       root: exampleRoot,
@@ -50,7 +53,7 @@ describe("raw asset development updates", () => {
     };
   };
 
-  it.each(["document.md", "template.txt"])(
+  test.each(["document.md", "template.txt"])(
     "updates %s imported as raw text without parsing its queryless watch dependency",
     async (name) => {
       const fixture = await serve({
@@ -61,7 +64,7 @@ describe("raw asset development updates", () => {
       await fixture.rsc.transformRequest(`${fixture.url(name)}?raw`);
       const bare = fixture.rsc.moduleGraph.getModuleById(fixture.file(name));
       expect(bare?.type).toBe("js");
-      expect([...bare!.importers].map(({ id }) => id)).toEqual([`${fixture.file(name)}?raw`]);
+      expect([...bare!.importers].map(({ id }) => id)).toStrictEqual([`${fixture.file(name)}?raw`]);
       const send = vi.spyOn(fixture.client.hot, "send");
       await fixture.edit(name, "# Updated text\n\nFresh raw contents.\n");
       await expect
@@ -80,7 +83,7 @@ describe("raw asset development updates", () => {
     },
   );
 
-  it("removes a deleted raw glob entry without loading the missing file", async () => {
+  test("removes a deleted raw glob entry without loading the missing file", async () => {
     const fixture = await serve({
       "kept.md": "# Kept page\n",
       "deleted.md": "# Deleted page\n",
@@ -110,7 +113,7 @@ describe("raw asset development updates", () => {
     expect(updated?.code).not.toContain("deleted.md");
   });
 
-  it("still transforms an independently loaded JavaScript module also imported as raw text", async () => {
+  test("still transforms an independently loaded JavaScript module also imported as raw text", async () => {
     const fixture = await serve({
       "module.js": 'export const value = "initial";\n',
       "entry.ts": 'export { default } from "./module.js?raw";\n',
@@ -133,7 +136,7 @@ describe("raw asset development updates", () => {
     expect(updated?.code).toContain('"updated"');
   });
 
-  it("preserves syntax-error reporting for a real module that is also imported as raw text", async () => {
+  test("preserves syntax-error reporting for a real module that is also imported as raw text", async () => {
     const fixture = await serve({
       "module.js": 'export const value = "initial";\n',
       "entry.ts": 'export { default } from "./module.js?raw";\n',
@@ -148,7 +151,7 @@ describe("raw asset development updates", () => {
       .toContainEqual(expect.objectContaining({ type: "error" }));
   });
 
-  it("preserves ordinary client CSS hot updates", async () => {
+  test("preserves ordinary client CSS hot updates", async () => {
     const fixture = await serve({
       "style.css": ".example { color: red; }\n",
       "entry.ts": 'import "./style.css";\n',
@@ -169,7 +172,7 @@ describe("raw asset development updates", () => {
     expect(updated?.code).toContain("color: blue");
   });
 
-  it("preserves ordinary image URL hot updates and serves changed asset bytes", async () => {
+  test("preserves ordinary image URL hot updates and serves changed asset bytes", async () => {
     const fixture = await serve({
       "diagram.svg": '<svg xmlns="http://www.w3.org/2000/svg"><rect fill="red"/></svg>',
       "entry.ts":
@@ -191,6 +194,6 @@ describe("raw asset development updates", () => {
     const origin = fixture.server.resolvedUrls!.local[0]!;
     const response = await fetch(new URL(fixture.url("diagram.svg"), origin));
     expect(response.status).toBe(200);
-    expect(await response.text()).toBe(changed);
+    await expect(response.text()).resolves.toBe(changed);
   });
 });

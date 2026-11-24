@@ -124,7 +124,9 @@ const FindEntry = EFFRONT.Middleware.make<{ provides: CurrentEntry }>(
       return HttpServerResponse.text("Unable to load Markdown collection", { status: 500 });
     }
     const entry = collection.success.get(request.url);
-    if (!entry) return HttpServerResponse.text("Not found", { status: 404 });
+    if (!entry) {
+      return HttpServerResponse.text("Not found", { status: 404 });
+    }
     return yield* httpEffect.pipe(Effect.provideService(CurrentEntry, entry));
   }),
 );
@@ -162,7 +164,9 @@ const ServerOverridesPage = EFFRONT.Page.make({
   render: Effect.fn(function* () {
     const collection = yield* manual;
     const entry = collection.get("/manual");
-    if (!entry) throw new TypeError("The server-only Markdown fixture requires /manual content");
+    if (!entry) {
+      throw new TypeError("The server-only Markdown fixture requires /manual content");
+    }
     const document = yield* parseMarkdown(entry);
     return (
       <article data-testid="server-only-markdown">

@@ -1,5 +1,5 @@
 import { Effect, Layer } from "effect";
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import {
   createWorkersContextAccessors,
   getWorkersEnv,
@@ -13,7 +13,7 @@ type ExecutionContext = { readonly requestId: string };
 const accessors = createWorkersContextAccessors<Env, ExecutionContext>();
 
 describe("createWorkersContextAccessors", () => {
-  it("binds both types once and preserves generic default accessors", () => {
+  test("binds both types once and preserves generic default accessors", () => {
     expectTypeOf(accessors.getWorkersEnv()).toEqualTypeOf<Effect.Effect<Env>>();
     expectTypeOf(accessors.getWorkersRequestContext()).toEqualTypeOf<
       Effect.Effect<WorkersRequestContext<Env, ExecutionContext>>
@@ -28,7 +28,7 @@ describe("createWorkersContextAccessors", () => {
     >();
   });
 
-  it("reads the identical objects from one Layer through independently typed factories", async () => {
+  test("reads the identical objects from one Layer through independently typed factories", async () => {
     const context = {
       env: { label: "first", count: 1 },
       executionContext: { requestId: "request-1" },
@@ -51,7 +51,7 @@ describe("createWorkersContextAccessors", () => {
     expect(observed[4]).toBe(context);
   });
 
-  it("keeps pre-created reads request-local under concurrent contexts", async () => {
+  test("keeps pre-created reads request-local under concurrent contexts", async () => {
     const read = accessors.getWorkersRequestContext();
     const contexts = ["one", "two"].map((label) => ({
       env: { label },
@@ -68,7 +68,7 @@ describe("createWorkersContextAccessors", () => {
     }
   });
 
-  it("rejects reads outside a Fetch request instead of retaining the previous context", async () => {
+  test("rejects reads outside a Fetch request instead of retaining the previous context", async () => {
     await expect(Effect.runPromise(accessors.getWorkersEnv())).rejects.toThrow(
       "Workers request context is only available while handling a Fetch request.",
     );

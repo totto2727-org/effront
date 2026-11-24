@@ -446,14 +446,14 @@ it.effect("splits a cancelable navigation between React commit and Flight comple
         }
         yield* Effect.promise(() => invokeNavigationHandler(handler));
 
-        expect(requestedUrls).toEqual(["https://effront.test/schedule/day-two"]);
+        expect(requestedUrls).toStrictEqual(["https://effront.test/schedule/day-two"]);
         expect(renders).toHaveLength(1);
         const render = renders[0];
         if (render?._tag !== "Navigation") {
           return yield* Effect.die("Expected a navigation render.");
         }
         expect(render.routeTree.id).toBe("root");
-        expect(react.transitionTypes).toEqual([
+        expect(react.transitionTypes).toStrictEqual([
           "navigation",
           "navigation-push",
           "navigation-ua-visual-transition",
@@ -475,14 +475,14 @@ it.effect("snapshots link types before loading and keeps them local to the navig
       const pending = makeNavigationEvent({ sourceElement: anchor });
       navigation.dispatch(pending.event);
       anchor.dataset["effrontTransitionTypes"] = "docs-next";
-      expect(react.transitionTypes).toEqual([]);
+      expect(react.transitionTypes).toStrictEqual([]);
 
       const handler = pending.interception()?.precommitHandler;
       if (handler === undefined) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
-      expect(react.transitionTypes).toEqual([
+      expect(react.transitionTypes).toStrictEqual([
         "navigation",
         "navigation-push",
         "navigation-forward",
@@ -492,7 +492,7 @@ it.effect("snapshots link types before loading and keeps them local to the navig
 
       react.transitionTypes.length = 0;
       yield* prepareNavigation(navigation, "https://effront.test/schedule/day-two");
-      expect(react.transitionTypes).toEqual([
+      expect(react.transitionTypes).toStrictEqual([
         "navigation",
         "navigation-push",
         "navigation-forward",
@@ -539,7 +539,7 @@ it.effect("reserves only EFFRONT-owned types and preserves application tokens un
       }
       yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
       expect(renders).toHaveLength(1);
-      expect(react.transitionTypes).toEqual([
+      expect(react.transitionTypes).toStrictEqual([
         "navigation",
         "navigation-replace",
         ...applicationTypes,
@@ -569,7 +569,7 @@ it.effect("does not read link types for a history traversal", () =>
       }
       yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
       expect(readTypes).not.toHaveBeenCalled();
-      expect(react.transitionTypes).toEqual([
+      expect(react.transitionTypes).toStrictEqual([
         "navigation",
         "navigation-traverse",
         "navigation-backward",
@@ -662,7 +662,7 @@ it.effect("uses a post-commit handler for a non-cancelable traversal", () =>
 
       yield* Effect.promise(() => invokeNavigationHandler(handler));
 
-      expect(requestedUrls).toEqual(["https://effront.test/schedule/day-two"]);
+      expect(requestedUrls).toStrictEqual(["https://effront.test/schedule/day-two"]);
     }),
   ),
 );
@@ -774,23 +774,23 @@ it.effect("coordinates cache identity across Flight and history commit ordering"
       const dayTwoHistory = yield* prepareNavigation(navigation, dayTwoUrl);
       yield* Deferred.succeed(dayTwo.completed, undefined);
       yield* Effect.promise(() => dayTwo.released.promise);
-      expect(dayTwo.cachedEntries).toEqual([]);
+      expect(dayTwo.cachedEntries).toStrictEqual([]);
 
       const dayTwoEntry = makeNavigationEntry("day-two", dayTwoUrl);
       navigation.currentEntry = dayTwoEntry;
       yield* Effect.promise(() => invokeNavigationHandler(dayTwoHistory));
-      expect(dayTwo.cachedEntries).toEqual([dayTwoEntry]);
+      expect(dayTwo.cachedEntries).toStrictEqual([dayTwoEntry]);
 
       const dayThreeHistory = yield* prepareNavigation(navigation, dayThreeUrl);
       const dayThreeEntry = makeNavigationEntry("day-three", dayThreeUrl);
       navigation.currentEntry = dayThreeEntry;
       yield* Effect.promise(() => invokeNavigationHandler(dayThreeHistory));
-      expect(dayThree.cachedEntries).toEqual([]);
+      expect(dayThree.cachedEntries).toStrictEqual([]);
 
       navigation.currentEntry = makeNavigationEntry("unrelated", dayFiveUrl);
       yield* Deferred.succeed(dayThree.completed, undefined);
       yield* Effect.promise(() => dayThree.released.promise);
-      expect(dayThree.cachedEntries).toEqual([dayThreeEntry]);
+      expect(dayThree.cachedEntries).toStrictEqual([dayThreeEntry]);
 
       const dayFourHistory = yield* prepareNavigation(navigation, dayFourUrl);
       const dayFourEntry = makeNavigationEntry("day-four", dayFourUrl);
@@ -801,7 +801,7 @@ it.effect("coordinates cache identity across Flight and history commit ordering"
       yield* Effect.promise(() => dayFour.released.promise);
       yield* Deferred.succeed(dayFour.completed, undefined);
       yield* Effect.yieldNow;
-      expect(dayFour.cachedEntries).toEqual([]);
+      expect(dayFour.cachedEntries).toStrictEqual([]);
     }),
   ),
 );
@@ -874,8 +874,12 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       }
       yield* Effect.promise(() => invokeNavigationHandler(forwardHandler));
 
-      expect(requestedUrls).toEqual(["https://effront.test/schedule/day-two"]);
-      expect(renders.map((render) => render.routeTree.id)).toEqual(["root", "day-one", "root"]);
+      expect(requestedUrls).toStrictEqual(["https://effront.test/schedule/day-two"]);
+      expect(renders.map((render) => render.routeTree.id)).toStrictEqual([
+        "root",
+        "day-one",
+        "root",
+      ]);
     }),
   ),
 );
@@ -898,7 +902,7 @@ it.effect("promotes a non-Flight response to native document navigation", () =>
         invokePrecommitHandler(precommitHandler, makePrecommitController()),
       );
 
-      expect(navigation.nativeNavigations).toEqual([
+      expect(navigation.nativeNavigations).toStrictEqual([
         {
           options: { history: "push", info: "effront-native-document" },
           url: "https://effront.test/schedule/day-two",
@@ -934,7 +938,7 @@ it.effect("redirects a cancelable navigation before committing its Flight tree",
         invokePrecommitHandler(precommitHandler, makePrecommitController(redirects, handlers)),
       );
 
-      expect(redirects).toEqual([
+      expect(redirects).toStrictEqual([
         {
           options: { history: "auto" },
           url: "https://effront.test/schedule/day-two",
@@ -967,7 +971,7 @@ it.effect("falls back to document replacement for a redirected traversal", () =>
       }
       yield* Effect.promise(() => invokeNavigationHandler(handler));
 
-      expect(documentReplacements).toEqual(["https://effront.test/schedule/day-two"]);
+      expect(documentReplacements).toStrictEqual(["https://effront.test/schedule/day-two"]);
     }),
   ),
 );
@@ -1113,7 +1117,7 @@ it.effect("interrupts a pending Flight load when a newer navigation starts", () 
       yield* Effect.promise(() => firstNavigationFinished);
 
       expect(navigationAbort.signal.aborted).toBe(false);
-      expect(renders).toEqual([]);
+      expect(renders).toStrictEqual([]);
     }),
   );
 });
@@ -1351,7 +1355,7 @@ it.effect("leaves navigations outside the router boundary to the browser", () =>
         navigation.dispatch(navigationEvent.event);
         expect(navigationEvent.interception()).toBeNull();
       }
-      expect(requestedUrls).toEqual([]);
+      expect(requestedUrls).toStrictEqual([]);
     }),
   ),
 );

@@ -209,16 +209,16 @@ it.effect("applies the HMR transition type after the active navigation settles",
         yield* refresh("hmr-refresh");
         yield* Effect.yieldNow;
         expect(Deferred.isDoneUnsafe(loaded)).toBe(false);
-        expect(react.transitionTypes).toEqual([]);
+        expect(react.transitionTypes).toStrictEqual([]);
 
         navigation.transition = null;
         transition.resolve();
         const nextRouteTree = yield* Effect.promise(() => rendered.promise);
 
         expect(nextRouteTree.id).toBe("refreshed");
-        expect(react.transitionTypes).toEqual(["hmr-refresh"]);
+        expect(react.transitionTypes).toStrictEqual(["hmr-refresh"]);
         // Returning an async Action here would make React wait for its own UI commit.
-        expect(react.transitionResults).toEqual([undefined]);
+        expect(react.transitionResults).toStrictEqual([undefined]);
         expect(invalidated).toHaveBeenCalledOnce();
         expect(navigation.navigate).not.toHaveBeenCalled();
         yield* Effect.yieldNow;

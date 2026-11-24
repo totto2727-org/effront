@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { expect, it } from "vitest";
+import { expect, test } from "vitest";
 
 const repository = fileURLToPath(new URL("../../../../", import.meta.url));
 const compiler = join(
@@ -12,7 +12,7 @@ const compiler = join(
   "bin/tsc",
 );
 
-it("quadrupling a route chain uses less than six times the type instantiations", () => {
+test("quadrupling a route chain uses less than six times the type instantiations", () => {
   const workspace = mkdtempSync(join(repository, "tmp", "effront-route-scaling-"));
   try {
     writeFileSync(

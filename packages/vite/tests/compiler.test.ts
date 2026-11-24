@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { effront } from "@effront/vite";
 import { createServer, type ViteDevServer } from "vite";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 const exampleRoot = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));
 const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
@@ -46,11 +46,12 @@ describe("default native React Compiler", () => {
 
   afterAll(async () => {
     await Promise.all([compiled?.close(), uncompiled?.close()]);
-    if (directory)
+    if (directory) {
       await rm(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    }
   });
 
-  it("memoizes the real example Counter by default, unlike a compiler-disabled control", async () => {
+  test("memoizes the real example Counter by default, unlike a compiler-disabled control", async () => {
     const enabled = await compiled.environments["client"]!.transformRequest(
       "/src/components/counter.tsx",
     );
@@ -66,7 +67,7 @@ describe("default native React Compiler", () => {
     expect(disabled?.code).not.toContain(memoSentinel);
   });
 
-  it("keeps SSR and RSC outside client memoization and preserves React graph conditions", async () => {
+  test("keeps SSR and RSC outside client memoization and preserves React graph conditions", async () => {
     const client = compiled.environments["client"]!;
     expect(compiled.config.plugins.some(({ name }) => name.includes("cloudflare"))).toBe(false);
     const ssr = compiled.environments["ssr"]!;
@@ -90,7 +91,7 @@ describe("default native React Compiler", () => {
     }
   });
 
-  it("resolves a linked React-dependent package through each runtime graph", async () => {
+  test("resolves a linked React-dependent package through each runtime graph", async () => {
     const importer = fileURLToPath(
       new URL("../../core/src/application/definition.tsx", import.meta.url),
     );
