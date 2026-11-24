@@ -5,7 +5,7 @@ import { serverFnStream } from "./server-fn-stream.ts";
 
 it.effect("preserves stream values and finishes its producer before request scope release", () =>
   Effect.gen(function* () {
-    const events: Array<string> = [];
+    const events: string[] = [];
     const scope = yield* Scope.fork(yield* Effect.scope);
     yield* Effect.addFinalizer(() => Effect.sync(() => events.push("request released"))).pipe(
       Scope.provide(scope),
@@ -37,7 +37,7 @@ it.effect.each(["unlocked", "locked", "canceling"] as const)(
   "waits for a %s reader's producer finalizer before releasing request services",
   (readerState) =>
     Effect.gen(function* () {
-      const events: Array<string> = [];
+      const events: string[] = [];
       const started = yield* Deferred.make<void>();
       const finalizing = yield* Deferred.make<void>();
       const finishFinalizer = yield* Deferred.make<void>();

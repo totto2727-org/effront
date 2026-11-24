@@ -32,7 +32,7 @@ class RequestInfo extends Context.Service<RequestInfo, Readonly<{ url: string }>
 ) {}
 
 const makeApplication = () => {
-  const events: Array<string> = [];
+  const events: string[] = [];
   const RequestEnvironmentLayer = Layer.effect(
     RequestEnvironment,
     Effect.acquireRelease(

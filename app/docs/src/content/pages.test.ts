@@ -118,7 +118,7 @@ describe("documentation catalog", () => {
   );
 
   test("keeps client navigation code examples identical in English and Japanese", async () => {
-    const examples = async (directory: string): Promise<ReadonlyArray<string | undefined>> => {
+    const examples = async (directory: string): Promise<Readonly<(string | undefined)[]>> => {
       const source = await readFile(
         new URL(`./${directory}/advanced/client-navigation.md`, import.meta.url),
         "utf8",

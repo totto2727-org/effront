@@ -14,10 +14,10 @@ import { makeApplicationHttpEffect as makeConfiguredApplicationHttpEffect } from
 
 class Capability extends Context.Service<Capability, string>()("effront/test/alchemy/Capability") {}
 
-const scopes: Array<Scope.Scope> = [];
-const finalized: Array<string> = [];
-const memoMaps: Array<Option.Option<Layer.MemoMap>> = [];
-const metadataPresent: Array<boolean> = [];
+const scopes: Scope.Scope[] = [];
+const finalized: string[] = [];
+const memoMaps: Option.Option<Layer.MemoMap>[] = [];
+const metadataPresent: boolean[] = [];
 
 // This unit boundary isolates capability capture from the core renderer. Real
 // Worker/RSC execution belongs to the local workerd acceptance fixture.

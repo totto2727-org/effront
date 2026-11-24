@@ -5,7 +5,7 @@ import { Context, Effect, Layer } from "effect";
 const Encoder = new TextEncoder();
 
 export type EmbeddedFlightChunk = string | Uint8Array;
-type EmbeddedFlightQueue = Array<EmbeddedFlightChunk>;
+type EmbeddedFlightQueue = EmbeddedFlightChunk[];
 type FlightWindow = Window & { __FLIGHT_DATA?: EmbeddedFlightQueue };
 
 export const makeInitialFlightStream = (

@@ -26,7 +26,7 @@ describe("serverFnResponse", () => {
 
   it.effect("returns a top-level Stream as a live Flight ReadableStream", () =>
     Effect.gen(function* () {
-      const events: Array<string> = [];
+      const events: string[] = [];
       const scope = yield* Scope.fork(yield* Effect.scope);
       yield* Effect.addFinalizer(() => Effect.sync(() => events.push("request released"))).pipe(
         Scope.provide(scope),

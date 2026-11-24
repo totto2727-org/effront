@@ -157,7 +157,7 @@ describe("ServerFn.make", () => {
 
   it.effect("retains lazy execution and positional order after binding arguments", () =>
     Effect.gen(function* () {
-      const values: Array<string> = [];
+      const values: string[] = [];
       const EFFRONT = Application.effront();
       const action = EFFRONT.ServerFn.make({
         input: [Schema.String, Schema.Finite, Schema.String],

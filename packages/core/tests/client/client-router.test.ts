@@ -4,7 +4,7 @@ import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 import { vi } from "vitest";
 
 const react = vi.hoisted(() => ({
-  transitionTypes: [] as Array<string>,
+  transitionTypes: [] as string[],
 }));
 
 vi.mock("react", (importOriginal) =>
@@ -85,12 +85,13 @@ class TestNavigationApi {
   private listener: EventListener | null = null;
   readonly initialEntry = makeNavigationEntry("day-one", "https://effront.test/schedule/day-one");
   currentEntry = this.initialEntry;
-  readonly nativeNavigations: Array<
-    Readonly<{
-      options: Readonly<{ history: "push" | "replace"; info: unknown }>;
-      url: string;
-    }>
-  > = [];
+  readonly nativeNavigations: Readonly<{
+    options: Readonly<{
+      history: "push" | "replace";
+      info: unknown;
+    }>;
+    url: string;
+  }>[] = [];
 
   addEventListener(_type: "navigate", listener: EventListener): void {
     this.listener = listener;
@@ -196,7 +197,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 const makeHttpClient = (
-  requestedUrls: Array<string> = [],
+  requestedUrls: string[] = [],
   contentType = "text/x-component",
 ): HttpClient.HttpClient =>
   HttpClient.make((request) =>
@@ -230,7 +231,7 @@ const makeInvalidFlightClient = (): HttpClient.HttpClient =>
   );
 
 const makeStreamingHttpClient = () => {
-  const responseSignals: Array<AbortSignal> = [];
+  const responseSignals: AbortSignal[] = [];
   const httpClient = HttpClient.make((request, _url, signal) =>
     Effect.sync(() => {
       responseSignals.push(signal);
@@ -268,7 +269,7 @@ const initialRouteTree: RouteTreeModel = {
   id: "day-one",
 };
 
-const makeBrowserRenderer = (renders: Array<BrowserRenderRequest> = []) => {
+const makeBrowserRenderer = (renders: BrowserRenderRequest[] = []) => {
   let visibleNavigation: PromiseWithResolvers<void> | null = null;
   return BrowserRenderer.of({
     commit: () => undefined,
@@ -297,13 +298,11 @@ const makeBrowserRenderer = (renders: Array<BrowserRenderRequest> = []) => {
 };
 
 const makePrecommitController = (
-  redirects: Array<
-    Readonly<{
-      options: NavigationNavigateOptions | undefined;
-      url: string;
-    }>
-  > = [],
-  handlers: Array<NavigationInterceptHandler> = [],
+  redirects: Readonly<{
+    options: NavigationNavigateOptions | undefined;
+    url: string;
+  }>[] = [],
+  handlers: NavigationInterceptHandler[] = [],
 ): NavigationPrecommitController => ({
   addHandler: (handler) => handlers.push(handler),
   redirect: (url, options) => redirects.push({ options, url: url.toString() }),
@@ -324,7 +323,7 @@ const prepareNavigation = Effect.fn(function* (navigation: TestNavigationApi, ur
   if (precommitHandler === undefined) {
     return yield* Effect.die("Expected a precommit handler.");
   }
-  const handlers: Array<NavigationInterceptHandler> = [];
+  const handlers: NavigationInterceptHandler[] = [];
   yield* Effect.promise(() =>
     invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
   );
@@ -338,7 +337,7 @@ const prepareNavigation = Effect.fn(function* (navigation: TestNavigationApi, ur
 const makeControlledRoute = Effect.fn(function* (url: string) {
   const completed = yield* Deferred.make<void>();
   const released = Promise.withResolvers<void>();
-  const cachedEntries: Array<NavigationHistoryEntry> = [];
+  const cachedEntries: NavigationHistoryEntry[] = [];
   return {
     cachedEntries,
     completed,
@@ -356,7 +355,7 @@ const makeControlledRoute = Effect.fn(function* (url: string) {
 
 const makeNavigationApiLayer = (
   navigation: TestNavigationApi,
-  documentReplacements: Array<string> = [],
+  documentReplacements: string[] = [],
   reloadDocument: () => void = () => undefined,
 ): Layer.Layer<NavigationApi> =>
   NavigationApi.layerTest({
@@ -376,7 +375,7 @@ const listen = (
   navigation: TestNavigationApi,
   browserRenderer: BrowserRenderer["Service"] = makeBrowserRenderer(),
   httpClient = makeHttpClient(),
-  documentReplacements: Array<string> = [],
+  documentReplacements: string[] = [],
   reloadDocument: () => void = () => undefined,
 ) =>
   Effect.gen(function* () {
@@ -429,8 +428,8 @@ const listen = (
 it.effect("splits a cancelable navigation between React commit and Flight completion", () =>
   Effect.gen(function* () {
     const navigation = new TestNavigationApi();
-    const requestedUrls: Array<string> = [];
-    const renders: Array<BrowserRenderRequest> = [];
+    const requestedUrls: string[] = [];
+    const renders: BrowserRenderRequest[] = [];
     yield* Effect.scoped(
       Effect.gen(function* () {
         yield* listen(navigation, makeBrowserRenderer(renders), makeHttpClient(requestedUrls));
@@ -446,7 +445,7 @@ it.effect("splits a cancelable navigation between React commit and Flight comple
           return yield* Effect.die("Expected a precommit handler.");
         }
 
-        const handlers: Array<NavigationInterceptHandler> = [];
+        const handlers: NavigationInterceptHandler[] = [];
         yield* Effect.promise(() =>
           invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
         );
@@ -516,7 +515,7 @@ it.effect("reserves only EFFRONT-owned types and preserves application tokens un
   Effect.scoped(
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
-      const renders: Array<BrowserRenderRequest> = [];
+      const renders: BrowserRenderRequest[] = [];
       yield* listen(navigation, makeBrowserRenderer(renders));
       const applicationTypes = [
         "docs-jump",
@@ -625,7 +624,7 @@ it.effect("settles the post-commit handler before the Flight stream reaches EOF"
         return yield* Effect.die("Expected a precommit handler.");
       }
 
-      const handlers: Array<NavigationInterceptHandler> = [];
+      const handlers: NavigationInterceptHandler[] = [];
       yield* Effect.promise(() =>
         invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
       );
@@ -654,7 +653,7 @@ it.effect("uses a post-commit handler for a non-cancelable traversal", () =>
   Effect.scoped(
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
-      const requestedUrls: Array<string> = [];
+      const requestedUrls: string[] = [];
       yield* listen(navigation, makeBrowserRenderer(), makeHttpClient(requestedUrls));
       const pendingNavigation = makeNavigationEvent({
         cancelable: false,
@@ -823,8 +822,8 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       const navigation = new TestNavigationApi();
       const dayOneEntry = navigation.currentEntry;
       const dayTwoEntry = makeNavigationEntry("day-two", "https://effront.test/schedule/day-two");
-      const requestedUrls: Array<string> = [];
-      const renders: Array<BrowserRenderRequest> = [];
+      const requestedUrls: string[] = [];
+      const renders: BrowserRenderRequest[] = [];
       yield* listen(navigation, makeBrowserRenderer(renders), makeHttpClient(requestedUrls));
       yield* Effect.yieldNow;
 
@@ -834,7 +833,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       if (pushPrecommit === undefined) {
         return yield* Effect.die("Expected a push precommit handler.");
       }
-      const pushHandlers: Array<NavigationInterceptHandler> = [];
+      const pushHandlers: NavigationInterceptHandler[] = [];
       yield* Effect.promise(() =>
         invokePrecommitHandler(pushPrecommit, makePrecommitController([], pushHandlers)),
       );
@@ -854,7 +853,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       if (backPrecommit === undefined) {
         return yield* Effect.die("Expected a back precommit handler.");
       }
-      const backHandlers: Array<NavigationInterceptHandler> = [];
+      const backHandlers: NavigationInterceptHandler[] = [];
       yield* Effect.promise(() =>
         invokePrecommitHandler(backPrecommit, makePrecommitController([], backHandlers)),
       );
@@ -874,7 +873,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       if (forwardPrecommit === undefined) {
         return yield* Effect.die("Expected a forward precommit handler.");
       }
-      const forwardHandlers: Array<NavigationInterceptHandler> = [];
+      const forwardHandlers: NavigationInterceptHandler[] = [];
       yield* Effect.promise(() =>
         invokePrecommitHandler(forwardPrecommit, makePrecommitController([], forwardHandlers)),
       );
@@ -927,14 +926,12 @@ it.effect("redirects a cancelable navigation before committing its Flight tree",
   Effect.scoped(
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
-      const redirects: Array<
-        Readonly<{
-          options: NavigationNavigateOptions | undefined;
-          url: string;
-        }>
-      > = [];
-      const handlers: Array<NavigationInterceptHandler> = [];
-      const renders: Array<BrowserRenderRequest> = [];
+      const redirects: Readonly<{
+        options: NavigationNavigateOptions | undefined;
+        url: string;
+      }>[] = [];
+      const handlers: NavigationInterceptHandler[] = [];
+      const renders: BrowserRenderRequest[] = [];
       yield* listen(navigation, makeBrowserRenderer(renders));
       const pendingNavigation = makeNavigationEvent({
         destination: { url: "https://effront.test/schedule/day-one" },
@@ -967,7 +964,7 @@ it.effect("falls back to document replacement for a redirected traversal", () =>
   Effect.scoped(
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
-      const documentReplacements: Array<string> = [];
+      const documentReplacements: string[] = [];
       yield* listen(navigation, makeBrowserRenderer(), makeHttpClient(), documentReplacements);
       const pendingNavigation = makeNavigationEvent({
         cancelable: false,
@@ -1078,7 +1075,7 @@ it.effect("interrupts a pending Flight load when a newer navigation starts", () 
       const navigation = new TestNavigationApi();
       const requestStarted = Promise.withResolvers<void>();
       const responseAborted = Promise.withResolvers<void>();
-      const renders: Array<BrowserRenderRequest> = [];
+      const renders: BrowserRenderRequest[] = [];
       const httpClient = HttpClient.make((request, _url, signal) =>
         Effect.sync(() =>
           HttpClientResponse.fromWeb(
@@ -1302,7 +1299,7 @@ it.effect("retains a committed Flight response until its render retires", () => 
       if (precommitHandler === undefined) {
         return yield* Effect.die("Expected a precommit handler.");
       }
-      const handlers: Array<NavigationInterceptHandler> = [];
+      const handlers: NavigationInterceptHandler[] = [];
       yield* Effect.promise(() =>
         invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
       );
@@ -1352,7 +1349,7 @@ it.effect("leaves navigations outside the router boundary to the browser", () =>
   Effect.scoped(
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
-      const requestedUrls: Array<string> = [];
+      const requestedUrls: string[] = [];
       yield* listen(navigation, makeBrowserRenderer(), makeHttpClient(requestedUrls));
       const nativeNavigations = [
         makeNavigationEvent({ canIntercept: false }),

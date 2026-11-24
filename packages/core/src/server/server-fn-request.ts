@@ -82,7 +82,7 @@ const readBodyBytes = Effect.fnUntraced(function* (request: Request) {
   }
 
   const reader = request.body.getReader();
-  const chunks: Array<Uint8Array> = [];
+  const chunks: Uint8Array[] = [];
   let length = 0;
   try {
     while (true) {

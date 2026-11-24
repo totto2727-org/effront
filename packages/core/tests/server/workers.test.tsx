@@ -13,10 +13,9 @@ class RequestEnvironment extends Context.Service<RequestEnvironment, Readonly<{ 
   "effront/tests/workers/RequestEnvironment",
 ) {}
 
-class RequestLifetime extends Context.Service<
-  RequestLifetime,
-  Readonly<{ events: Array<string> }>
->()("effront/tests/workers/RequestLifetime") {}
+class RequestLifetime extends Context.Service<RequestLifetime, Readonly<{ events: string[] }>>()(
+  "effront/tests/workers/RequestLifetime",
+) {}
 
 type TestEnv = Readonly<{ mode?: "empty" | "failure" | "stream"; value: string }>;
 
@@ -28,7 +27,7 @@ describe("createFetchHandler", () => {
     "builds application services from each request environment and releases at response EOF",
     () =>
       Effect.gen(function* () {
-        const events: Array<string> = [];
+        const events: string[] = [];
         const EFFRONT = Application.effront<RequestEnvironment | RequestLifetime>();
         const Respond = EFFRONT.Middleware.make(() =>
           Effect.gen(function* () {

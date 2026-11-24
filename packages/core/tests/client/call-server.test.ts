@@ -20,7 +20,7 @@ type ServerCallback = (id: string, args: Readonly<unknown[]>) => Promise<unknown
 
 const reactClient = vi.hoisted(() => ({
   serverCallback: undefined as ServerCallback | undefined,
-  transitionTypes: [] as Array<string>,
+  transitionTypes: [] as string[],
 }));
 
 vi.mock("react", (importOriginal) =>
@@ -163,7 +163,7 @@ const listen = Effect.fn(function* (
           (...args: Readonly<unknown[]>) =>
             invokeServerFn("stream", args) as Promise<ReadableStream<string>>,
         );
-        const values: Array<string> = [];
+        const values: string[] = [];
         const source = read("input").pipe(
           Stream.tap((item) =>
             Effect.sync(() => {
@@ -457,7 +457,7 @@ const staleResponseScenario = (
       const response = yield* Deferred.make<ReturnType<typeof makeFlight>>();
       const requestStarted = yield* Deferred.make<void>();
       const currentRouteRefresh = yield* Deferred.make<void>();
-      const refreshTransitionTypes: Array<string> = [];
+      const refreshTransitionTypes: string[] = [];
       const released = vi.fn();
       const rendered = vi.fn(() => {
         throw new TypeError("Unexpected response render.");
@@ -572,11 +572,11 @@ it.effect("does not let an older invocation response overwrite a newer response"
       const firstStarted = yield* Deferred.make<void>();
       const secondStarted = yield* Deferred.make<void>();
       const currentRouteRefresh = yield* Deferred.make<void>();
-      const refreshTransitionTypes: Array<string> = [];
+      const refreshTransitionTypes: string[] = [];
       const directRefreshCommitted = Promise.withResolvers<void>();
       const firstReleased = vi.fn();
       const interruptedCurrentRouteRefresh = vi.fn();
-      const rendered: Array<string> = [];
+      const rendered: string[] = [];
       const navigationApiLayer = NavigationApi.layerTest({
         getCurrentEntry: () => firstEntry,
         getCurrentUrl: () => firstEntry.url,

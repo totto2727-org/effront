@@ -6,13 +6,11 @@ import { vi } from "vitest";
 import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
 const decodedFlights = vi.hoisted<
-  Array<
-    Readonly<{
-      formState: null;
-      routeTree: RouteTreeModel;
-      serverFnResult: null;
-    }>
-  >
+  Readonly<{
+    formState: null;
+    routeTree: RouteTreeModel;
+    serverFnResult: null;
+  }>[]
 >(() => []);
 
 vi.mock("@vitejs/plugin-rsc/browser", () => ({
@@ -51,7 +49,7 @@ class TestNavigationHistory {
   }
 }
 
-const makeHttpClient = (requestedUrls: Array<string>): HttpClient.HttpClient =>
+const makeHttpClient = (requestedUrls: string[]): HttpClient.HttpClient =>
   HttpClient.make((request) =>
     Effect.sync(() => {
       requestedUrls.push(request.url);
@@ -128,7 +126,7 @@ const load = (
 it.effect("does not let initial Flight completion overwrite a refreshed cache generation", () => {
   decodedFlights.length = 0;
   const initialFlight = Promise.withResolvers<void>();
-  const requestedUrls: Array<string> = [];
+  const requestedUrls: string[] = [];
   return Effect.scoped(
     Effect.gen(function* () {
       const initialEntry = makeNavigationEntry(
@@ -161,7 +159,7 @@ it.effect("does not let initial Flight completion overwrite a refreshed cache ge
 
 it.effect("invalidates cached history entries before a development refresh", () => {
   decodedFlights.length = 0;
-  const requestedUrls: Array<string> = [];
+  const requestedUrls: string[] = [];
   return Effect.scoped(
     Effect.gen(function* () {
       const initialEntry = makeNavigationEntry(
@@ -189,7 +187,7 @@ it.effect("invalidates cached history entries before a development refresh", () 
 
 it.effect("fences an in-flight navigation cache write when a refresh invalidates it", () => {
   decodedFlights.length = 0;
-  const requestedUrls: Array<string> = [];
+  const requestedUrls: string[] = [];
   return Effect.scoped(
     Effect.gen(function* () {
       const initialEntry = makeNavigationEntry(
@@ -224,7 +222,7 @@ it.effect("fences an in-flight navigation cache write when a refresh invalidates
 
 it.effect("attributes a refresh to the history entry where it started", () => {
   decodedFlights.length = 0;
-  const requestedUrls: Array<string> = [];
+  const requestedUrls: string[] = [];
   return Effect.scoped(
     Effect.gen(function* () {
       const firstEntry = makeNavigationEntry(
@@ -253,7 +251,7 @@ it.effect("attributes a refresh to the history entry where it started", () => {
 
 it.effect("caches the supplied entry and evicts it on disposal", () => {
   decodedFlights.length = 0;
-  const requestedUrls: Array<string> = [];
+  const requestedUrls: string[] = [];
   return Effect.scoped(
     Effect.gen(function* () {
       const firstEntry = makeNavigationEntry(

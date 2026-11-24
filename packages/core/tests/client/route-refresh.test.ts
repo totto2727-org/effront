@@ -8,8 +8,8 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
 }));
 
 const react = vi.hoisted(() => ({
-  transitionResults: [] as Array<unknown>,
-  transitionTypes: [] as Array<string>,
+  transitionResults: [] as unknown[],
+  transitionTypes: [] as string[],
 }));
 
 vi.mock("react", (importOriginal) =>

@@ -8,7 +8,7 @@ import type { RouteTreeModel } from "../rsc/route-tree.ts";
 
 const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
 
-const nextRender = (renders: Array<BrowserRender>): BrowserRender => {
+const nextRender = (renders: BrowserRender[]): BrowserRender => {
   const render = renders.shift();
   if (render === undefined) {
     throw new Error("Expected the browser renderer to publish an update.");
@@ -37,7 +37,7 @@ it.effect("initializes once for a React root", () =>
 
 it.effect("waits for retirement when a navigation is discarded after commit", () =>
   Effect.gen(function* () {
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     const renderer = yield* BrowserRenderer;
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const navigation = renderer.navigate(makeRouteTree("destination"));
@@ -67,7 +67,7 @@ it.effect("waits for retirement when a navigation is discarded after commit", ()
 
 it.effect("retires a navigation only after its successor becomes visible", () =>
   Effect.gen(function* () {
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     const renderer = yield* BrowserRenderer;
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const first = renderer.navigate(makeRouteTree("first"));
@@ -101,7 +101,7 @@ it.effect("retires a navigation only after its successor becomes visible", () =>
 
 it.effect("retires a visible navigation when a refresh commits", () =>
   Effect.gen(function* () {
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     const renderer = yield* BrowserRenderer;
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const navigation = renderer.navigate(makeRouteTree("destination"));
@@ -130,7 +130,7 @@ it.effect("retires a visible navigation when a refresh commits", () =>
 it.effect("discards a scheduled navigation without replacing the visible navigation", () =>
   Effect.gen(function* () {
     const visibleRouteTree = makeRouteTree("visible");
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     const renderer = yield* BrowserRenderer;
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const visibleNavigation = renderer.navigate(visibleRouteTree);
@@ -173,7 +173,7 @@ it.effect("discards a scheduled navigation without replacing the visible navigat
 it.effect("restores the last committed tree when discarding the next navigation", () =>
   Effect.gen(function* () {
     const firstRouteTree = makeRouteTree("first");
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     const renderer = yield* BrowserRenderer;
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     renderer.navigate(firstRouteTree);
@@ -203,7 +203,7 @@ it.effect("restores the last committed tree when discarding the next navigation"
 it.effect("uses a committed Server Function refresh as the next discard target", () =>
   Effect.gen(function* () {
     const refreshedRouteTree = makeRouteTree("refreshed");
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     const renderer = yield* BrowserRenderer;
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const refreshed = renderer.refresh(refreshedRouteTree);
@@ -234,7 +234,7 @@ it.effect("uses a committed Server Function refresh as the next discard target",
 it.effect("retires skipped refreshes only up to the render React commits", () =>
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer;
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const first = renderer.refresh(makeRouteTree("first"));
     nextRender(renders);
@@ -274,7 +274,7 @@ it.effect("retires skipped refreshes only up to the render React commits", () =>
 it.effect("acknowledges a discard that React skips when committing a replacement", () =>
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer;
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const first = renderer.refresh(makeRouteTree("first"));
     nextRender(renders);
@@ -295,7 +295,7 @@ it.effect("acknowledges a discard that React skips when committing a replacement
 it.effect("uses discard publication order when retiring skipped renders", () =>
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer;
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const first = renderer.refresh(makeRouteTree("first"));
     nextRender(renders);
@@ -323,7 +323,7 @@ it.effect(
   () =>
     Effect.gen(function* () {
       const renderer = yield* BrowserRenderer;
-      const renders: Array<BrowserRender> = [];
+      const renders: BrowserRender[] = [];
       renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
       const navigation = renderer.navigate(makeRouteTree("destination"));
       nextRender(renders);
@@ -339,7 +339,7 @@ it.effect(
 it.effect("keeps a tree alive while a queued discard can restore it", () =>
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer;
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const visible = renderer.refresh(makeRouteTree("visible"));
     renderer.commit(nextRender(renders));
@@ -371,7 +371,7 @@ it.effect("keeps a tree alive while a queued discard can restore it", () =>
 it.effect("releases a retained tree when React skips the discard that would restore it", () =>
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer;
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     const visible = renderer.refresh(makeRouteTree("visible"));
     renderer.commit(nextRender(renders));
@@ -400,8 +400,8 @@ it.effect("rejects another root's publication before changing the visible tree",
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer.make;
     const otherRenderer = yield* BrowserRenderer.make;
-    const renders: Array<BrowserRender> = [];
-    const otherRenders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
+    const otherRenders: BrowserRender[] = [];
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     otherRenderer.initialize(makeRouteTree("other"), (render) => otherRenders.push(render));
     const visibleTree = makeRouteTree("visible");
@@ -432,7 +432,7 @@ it.effect("rejects another root's publication before changing the visible tree",
 it.effect("rejects an older commit without retiring the current tree", () =>
   Effect.gen(function* () {
     const renderer = yield* BrowserRenderer;
-    const renders: Array<BrowserRender> = [];
+    const renders: BrowserRender[] = [];
     renderer.initialize(makeRouteTree("initial"), (render) => renders.push(render));
     renderer.refresh(makeRouteTree("skipped"));
     const skippedRender = nextRender(renders);

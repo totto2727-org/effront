@@ -5,7 +5,7 @@ import { HttpEffect, HttpRouter, HttpServerResponse } from "effect/http";
 import { Application } from "../../src/application/effront.ts";
 import { getScopedMiddlewareHandler } from "../../src/application/middleware.ts";
 
-const makeHandler = Effect.fn(function* (events: Array<string>, stream: Stream.Stream<Uint8Array>) {
+const makeHandler = Effect.fn(function* (events: string[], stream: Stream.Stream<Uint8Array>) {
   const EFFRONT = Application.effront();
   const Middleware = EFFRONT.Middleware.make((httpEffect) =>
     Effect.acquireRelease(
@@ -31,7 +31,7 @@ const makeHandler = Effect.fn(function* (events: Array<string>, stream: Stream.S
 
 it.effect("retains middleware resources through streaming response EOF", () =>
   Effect.gen(function* () {
-    const events: Array<string> = [];
+    const events: string[] = [];
     const finish = yield* Deferred.make<void>();
     const stream = Stream.concat(
       Stream.make("response").pipe(Stream.encodeText),
@@ -51,7 +51,7 @@ it.effect("retains middleware resources through streaming response EOF", () =>
 
 it.effect("releases middleware resources when the response stream is canceled", () =>
   Effect.gen(function* () {
-    const events: Array<string> = [];
+    const events: string[] = [];
     const stream = Stream.concat(Stream.make("response").pipe(Stream.encodeText), Stream.never);
     const handler = yield* makeHandler(events, stream);
     const response = yield* Effect.promise(() => handler(new Request("http://localhost/")));

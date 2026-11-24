@@ -52,7 +52,7 @@ const streamToText = (stream: ReadableStream<Uint8Array>): Effect.Effect<string>
 const embeddedFlightQueue = (html: string, nonce?: string) => {
   const nonceAttribute = nonce === undefined ? "" : ` nonce="${nonce}"`;
   const scripts = html.matchAll(new RegExp(`<script${nonceAttribute}>(.*?)<\\/script>`, "g"));
-  const self: { __FLIGHT_DATA?: Array<EmbeddedFlightChunk> } = {};
+  const self: { __FLIGHT_DATA?: EmbeddedFlightChunk[] } = {};
   const context = createContext({ atob, self, Uint8Array });
   for (const script of scripts) {
     runInContext(script[1] ?? "", context);

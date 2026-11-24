@@ -11,7 +11,7 @@ describe("makeInitialFlightStream", () => {
     "drains embedded chunks, accepts later scripts, and closes when the document is ready",
     () =>
       Effect.gen(function* () {
-        const queue: Array<EmbeddedFlightChunk> = ["initial", new Uint8Array([0, 255])];
+        const queue: EmbeddedFlightChunk[] = ["initial", new Uint8Array([0, 255])];
         let markReady: (() => void) | undefined;
         const reader = makeInitialFlightStream(queue, (close) => {
           markReady = close;

@@ -146,7 +146,7 @@ type RouteAnalysis = Readonly<{
       }>
     | Readonly<{
         _tag: "Parameterized";
-        parameterNames: Readonly<[string, ...Array<string>]>;
+        parameterNames: Readonly<[string, ...string[]]>;
         shape: string;
       }>
   );
@@ -166,7 +166,7 @@ export const analyzeRoutePath = (path: string): RouteAnalysis => {
   }
 
   const parameterNames = new Set<string>();
-  const shapeSegments: Array<string> = [];
+  const shapeSegments: string[] = [];
   let catchAll: string | null = null;
   for (const segment of segments) {
     if (!segment.includes(":") && !segment.includes("*")) {

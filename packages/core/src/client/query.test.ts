@@ -78,7 +78,7 @@ describe("query", () => {
 
 describe("stream", () => {
   it("keeps streamAtom waiting after the last item and interrupts a superseded Flight", async () => {
-    const calls: Array<NonNullable<ReturnType<typeof matchServerFnQuery>>> = [];
+    const calls: NonNullable<ReturnType<typeof matchServerFnQuery>>[] = [];
     const atom = streamAtom((...args: Readonly<unknown[]>) => {
       const matched = matchServerFnQuery(args);
       if (matched !== null) {
