@@ -1,5 +1,6 @@
 import { writeFile } from "node:fs/promises";
-import { expect, test as base, type Locator, type Page } from "@playwright/test";
+import { expect, test as base } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 
 // Content completeness and provenance belong to app/docs unit tests. These small
 // independent pages exercise the framework's persistent documentation-shell contract.

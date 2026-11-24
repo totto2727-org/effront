@@ -4,7 +4,8 @@ import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
 import { effront } from "@effront/vite";
-import { createServer, type ViteDevServer } from "vite";
+import { createServer } from "vite";
+import type { ViteDevServer } from "vite";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 const exampleRoot = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));

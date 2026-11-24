@@ -1,4 +1,5 @@
-import { Effect, type FileSystem, type Path, type PlatformError } from "effect";
+import { Effect } from "effect";
+import type { FileSystem, Path, PlatformError } from "effect";
 import {
   HttpPlatform,
   HttpServerError,

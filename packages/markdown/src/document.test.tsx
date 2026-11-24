@@ -3,7 +3,8 @@ import { Effect } from "effect";
 import { describe, expect, test } from "vite-plus/test";
 
 import { createMarkdownCollection } from "./collection.ts";
-import { MarkdownDocument, type MarkdownDocumentProps } from "./document.tsx";
+import { MarkdownDocument } from "./document.tsx";
+import type { MarkdownDocumentProps } from "./document.tsx";
 import { parseMarkdown } from "./parse.ts";
 
 const entry = (content: string) =>

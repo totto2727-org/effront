@@ -1,4 +1,5 @@
-import { CodeBlock, type CodeLanguage } from "../components/code-block.tsx";
+import { CodeBlock } from "../components/code-block.tsx";
+import type { CodeLanguage } from "../components/code-block.tsx";
 
 export interface CoreSource {
   readonly path: string;

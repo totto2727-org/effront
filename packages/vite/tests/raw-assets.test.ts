@@ -3,7 +3,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { effront } from "@effront/vite";
-import { createServer, type ViteDevServer } from "vite";
+import { createServer } from "vite";
+import type { ViteDevServer } from "vite";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 const exampleRoot = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));

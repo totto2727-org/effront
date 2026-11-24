@@ -1,5 +1,6 @@
 import { MarkdownDocument } from "@effront/markdown/document";
-import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
+import { parseMarkdown } from "@effront/markdown";
+import type { MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { Application } from "@effront/core";

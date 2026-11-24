@@ -3,7 +3,8 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 
-import { type EmbeddedFlightChunk, makeInitialFlightStream } from "./initial-flight-stream.ts";
+import { makeInitialFlightStream } from "./initial-flight-stream.ts";
+import type { EmbeddedFlightChunk } from "./initial-flight-stream.ts";
 
 describe("makeInitialFlightStream", () => {
   it.effect(

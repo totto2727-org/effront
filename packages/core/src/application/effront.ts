@@ -1,24 +1,23 @@
 import type { ComponentFactory } from "./component.ts";
 import { makeComponentFactory } from "./component.ts";
-import { type EFFRONTMake, makeApplication } from "./definition.tsx";
+import { makeApplication } from "./definition.tsx";
+import type { EFFRONTMake } from "./definition.tsx";
 import {
   attachEFFRONTMember,
-  type EFFRONTIdentity,
-  type EFFRONTMember,
   getEFFRONTIdentity,
   makeEFFRONTIdentity,
 } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
 import type { LayoutFactory } from "./layout.ts";
 import { makeLayoutFactory } from "./layout.ts";
 import type { LoadingFactory } from "./loading.ts";
 import { makeLoadingFactory } from "./loading.ts";
-import {
-  type AnyMiddleware,
-  getMiddlewareState,
-  type MiddlewareFactory,
-  type MiddlewareProvidedServices,
-  type MiddlewareRequiredServices,
-  makeMiddlewareFactory,
+import { getMiddlewareState, makeMiddlewareFactory } from "./middleware.ts";
+import type {
+  AnyMiddleware,
+  MiddlewareFactory,
+  MiddlewareProvidedServices,
+  MiddlewareRequiredServices,
 } from "./middleware.ts";
 import type { PageFactory } from "./page.ts";
 import { makePageFactory } from "./page.ts";

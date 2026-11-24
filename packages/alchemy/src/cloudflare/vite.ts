@@ -1,7 +1,8 @@
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { normalizePath, type Plugin, type PluginOption } from "vite";
+import { normalizePath } from "vite";
+import type { Plugin, PluginOption } from "vite";
 
 import { alchemyRuntimeProjection } from "./runtime-projection.ts";
 

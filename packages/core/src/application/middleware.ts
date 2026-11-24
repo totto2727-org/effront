@@ -1,14 +1,14 @@
-import { type Effect, type Types } from "effect";
-import { HttpRouter, type HttpServerResponse } from "effect/http";
+import type { Effect, Types } from "effect";
+import { HttpRouter } from "effect/http";
+import type { HttpServerResponse } from "effect/http";
 
 import {
-  type EFFRONTIdentity,
   EFFRONTIdentityTypeId,
   isEFFRONTMember,
   EFFRONTMemberKindTypeId,
-  type EFFRONTStatefulMember,
   EFFRONTStateTypeId,
 } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTStatefulMember } from "./effront-identity.ts";
 
 type MiddlewareConfig = Readonly<{
   provides?: unknown;

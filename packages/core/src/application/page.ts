@@ -1,21 +1,19 @@
-import { Effect, Schema, type Types } from "effect";
-import { createElement, type ReactNode } from "react";
+import { Effect, Schema } from "effect";
+import type { Types } from "effect";
+import { createElement } from "react";
+import type { ReactNode } from "react";
 
 import { PageViewTransitionBoundary } from "../client/page-view-transition.tsx";
-import {
-  PageViewTransition,
-  type PageViewTransitionConfig,
-  resolvePageViewTransition,
-} from "./page-view-transition.ts";
+import { PageViewTransition, resolvePageViewTransition } from "./page-view-transition.ts";
+import type { PageViewTransitionConfig } from "./page-view-transition.ts";
 
 import {
-  type EFFRONTIdentity,
   EFFRONTIdentityTypeId,
   isEFFRONTMember,
   EFFRONTMemberKindTypeId,
-  type EFFRONTStatefulMember,
   EFFRONTStateTypeId,
 } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTStatefulMember } from "./effront-identity.ts";
 import type { AnyMiddleware } from "./middleware.ts";
 import type { ValidRouteParamName } from "./route-path.ts";
 

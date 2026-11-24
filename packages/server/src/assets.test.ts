@@ -8,7 +8,8 @@ import { Context, Effect, Exit, FileSystem, PlatformError, Result, Stream } from
 import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import { type AssetOptions, withAssets } from "./assets.ts";
+import { withAssets } from "./assets.ts";
+import type { AssetOptions } from "./assets.ts";
 
 const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
 let root: string;

@@ -1,4 +1,5 @@
-import { Context, Effect, Layer, type PlatformError, Scope } from "effect";
+import { Context, Effect, Layer, Scope } from "effect";
+import type { PlatformError } from "effect";
 import type { HttpServerError } from "effect/http";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 

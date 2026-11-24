@@ -2,7 +2,8 @@
 
 import { Array } from "effect";
 import * as React from "react";
-import { localizedPath, type DocLocale } from "../content/locale.ts";
+import { localizedPath } from "../content/locale.ts";
+import type { DocLocale } from "../content/locale.ts";
 import { ArrowLeftIcon, ArrowRightIcon, ExternalLinkIcon, SearchIcon } from "lucide-react";
 import {
   Sidebar,

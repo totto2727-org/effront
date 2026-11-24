@@ -4,7 +4,8 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { purePlugin } from "alchemy/Bundle/PurePlugin";
-import { build, transformWithOxc, type Plugin } from "vite";
+import { build, transformWithOxc } from "vite";
+import type { Plugin } from "vite";
 
 // These modules start local hosts, build deployment artifacts, or manage stack state.
 // BrowserLocal and WorkerConfigProvider intentionally remain: they are runtime APIs.

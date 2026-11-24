@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vite-plus/test";
-import { DocsShell, type DocsShellProps } from "./docs-shell.tsx";
+import { DocsShell } from "./docs-shell.tsx";
+import type { DocsShellProps } from "./docs-shell.tsx";
 import { localizedPath } from "../content/locale.ts";
 
 const introduction = { slug: "/guide", title: "はじめに", section: "Guide" };

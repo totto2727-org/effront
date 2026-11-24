@@ -7,7 +7,8 @@ import type { MarkdownDocument, Node, ParserOptions } from "comark";
 import { Effect } from "effect";
 
 import type { MarkdownEntry } from "./collection.ts";
-import { type MarkdownError, MarkdownParseError } from "./error.ts";
+import { MarkdownParseError } from "./error.ts";
+import type { MarkdownError } from "./error.ts";
 
 const defaultPlugins = [
   footnotes(),

@@ -12,7 +12,8 @@ import { FlightClient } from "./flight-client.ts";
 import { NavigationApi } from "./navigation-api.ts";
 import { RouteLoader } from "./route-loader.ts";
 import { RouteRefresher } from "./route-refresh.ts";
-import { ServerFnQueryPath, type ServerFnResult } from "../rsc/flight.ts";
+import { ServerFnQueryPath } from "../rsc/flight.ts";
+import type { ServerFnResult } from "../rsc/flight.ts";
 import { ServerFnDefect, ServerFnInputError } from "../rsc/server-fn-error.ts";
 import { invocationError, matchServerFnQuery, transportError } from "./server-fn-protocol.ts";
 

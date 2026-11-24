@@ -1,15 +1,13 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Effect, FiberSet, Layer, Schema } from "effect";
-import { isValidElement, type ReactNode } from "react";
+import { isValidElement } from "react";
+import type { ReactNode } from "react";
 
 import { Application } from "./effront.ts";
 import { getEFFRONTIdentity } from "./effront-identity.ts";
 import { getPageState } from "./page.ts";
-import {
-  PageViewTransition,
-  type PageViewTransitionConfig,
-  resolvePageViewTransition,
-} from "./page-view-transition.ts";
+import { PageViewTransition, resolvePageViewTransition } from "./page-view-transition.ts";
+import type { PageViewTransitionConfig } from "./page-view-transition.ts";
 import { PageViewTransitionBoundary } from "../client/page-view-transition.tsx";
 
 const boundaryConfig = (node: ReactNode) => {

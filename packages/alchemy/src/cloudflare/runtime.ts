@@ -1,6 +1,7 @@
 import { toHttpEffect } from "@effront/core/http";
 
-import { type ApplicationAdapter, makeApplicationAdapter } from "./adapter.ts";
+import { makeApplicationAdapter } from "./adapter.ts";
+import type { ApplicationAdapter } from "./adapter.ts";
 
 export type { ApplicationLoader } from "./adapter.ts";
 

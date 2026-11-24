@@ -1,4 +1,5 @@
-import { Context, Effect, Layer, Schema, type Scope } from "effect";
+import { Context, Effect, Layer, Schema } from "effect";
+import type { Scope } from "effect";
 
 import type { FlightPayload } from "../rsc/flight.ts";
 import type { FlightRender } from "./flight-renderer.tsx";

@@ -2,7 +2,8 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
-import { normalizePath, type Plugin, type PluginOption } from "vite";
+import { normalizePath } from "vite";
+import type { Plugin, PluginOption } from "vite";
 
 const virtualStyle = "virtual:effront/tailwind.css";
 const clientDirective =

@@ -2,14 +2,16 @@ import { Effect, Exit, MutableRef } from "effect";
 import { addTransitionType, startTransition } from "react";
 
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
-import { BrowserRenderer, type BrowserRendererNavigation } from "./browser-renderer.ts";
+import { BrowserRenderer } from "./browser-renderer.ts";
+import type { BrowserRendererNavigation } from "./browser-renderer.ts";
 import { NavigationApi } from "./navigation-api.ts";
 import {
   isRoutedNavigation,
   NativeDocumentNavigationInfo,
   preserveRequestedHash,
 } from "./navigation-routing.ts";
-import { RouteLoader, type RouteLoad } from "./route-loader.ts";
+import { RouteLoader } from "./route-loader.ts";
+import type { RouteLoad } from "./route-loader.ts";
 
 type NavigationGeneration = symbol;
 type RouteResource = Extract<RouteLoad, Readonly<{ _tag: "Route" }>>;

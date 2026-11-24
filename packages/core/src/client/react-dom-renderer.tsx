@@ -1,18 +1,13 @@
 import { Context, Effect, Layer, Schema } from "effect";
-import {
-  Component,
-  type ErrorInfo,
-  type ReactNode,
-  StrictMode,
-  useLayoutEffect,
-  useState,
-} from "react";
+import { Component, StrictMode, useLayoutEffect, useState } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 import { hydrateRoot } from "react-dom/client";
 
 import type { FlightPayload } from "../rsc/flight.ts";
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
 import { BrowserRenderStatus } from "./browser-render-status.ts";
-import { type BrowserRender, BrowserRenderer } from "./browser-renderer.ts";
+import { BrowserRenderer } from "./browser-renderer.ts";
+import type { BrowserRender } from "./browser-renderer.ts";
 import { BrowserFailureScreen } from "./browser-screen.tsx";
 import { RouteTree } from "./route-tree.tsx";
 

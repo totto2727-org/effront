@@ -1,6 +1,7 @@
 "use client";
 
-import { useSyncExternalStore, ViewTransition, type ReactNode } from "react";
+import { useSyncExternalStore, ViewTransition } from "react";
+import type { ReactNode } from "react";
 
 import type { PageViewTransitionConfig } from "../application/page-view-transition.ts";
 

@@ -3,7 +3,8 @@ import type { RenderableDocPage } from "./types.ts";
 import { markdownPages, localizedMarkdownPages } from "./markdown.tsx";
 import { corePages } from "./core.ts";
 import { englishCorePages } from "./en/core.ts";
-import { localizedPath, type DocLocale } from "./locale.ts";
+import { localizedPath } from "./locale.ts";
+import type { DocLocale } from "./locale.ts";
 
 export const pages: Readonly<RenderableDocPage[]> = [
   ...markdownPages,

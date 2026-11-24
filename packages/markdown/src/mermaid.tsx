@@ -1,6 +1,7 @@
 "use client";
 
-import { type ComponentProps, lazy, Suspense, use } from "react";
+import { lazy, Suspense, use } from "react";
+import type { ComponentProps } from "react";
 import { browser } from "react-dom";
 
 type MermaidComponent = typeof import("@comark/react/components/Mermaid").Mermaid;

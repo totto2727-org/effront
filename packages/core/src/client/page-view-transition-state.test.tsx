@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { isValidElement, ViewTransition, type ViewTransitionProps } from "react";
+import { isValidElement, ViewTransition } from "react";
+import type { ViewTransitionProps } from "react";
 
 import { PageViewTransitionBoundary } from "./page-view-transition.tsx";
 

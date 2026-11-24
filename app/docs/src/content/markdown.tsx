@@ -4,7 +4,8 @@ import { createMarkdownCollection, parseMarkdown } from "@effront/markdown";
 import { Effect } from "effect";
 import { articleCatalog } from "./catalog.ts";
 import { englishArticleCatalog } from "./en/catalog.ts";
-import { localizedPath, localizeDocumentLink, type DocLocale } from "./locale.ts";
+import { localizedPath, localizeDocumentLink } from "./locale.ts";
+import type { DocLocale } from "./locale.ts";
 import type { RenderableDocPage } from "./types.ts";
 import { markdownAlertComponents } from "../components/markdown-alert.tsx";
 

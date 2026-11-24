@@ -1,5 +1,6 @@
 import { Context, Effect } from "effect";
-import { HttpEffect, type HttpRouter, type HttpServerRequest } from "effect/http";
+import { HttpEffect } from "effect/http";
+import type { HttpRouter, HttpServerRequest } from "effect/http";
 
 import type { ApplicationDefinition } from "./application/definition.tsx";
 import { toHttpEffect } from "./http.ts";

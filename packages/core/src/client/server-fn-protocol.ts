@@ -1,12 +1,12 @@
 import { Deferred, Effect, Predicate, Schema, Stream } from "effect";
 
 import {
-  type ServerFnError,
   serverFnErrorDetail,
   ServerFnDefect,
   ServerFnInputError,
   ServerFnTransportError,
 } from "../rsc/server-fn-error.ts";
+import type { ServerFnError } from "../rsc/server-fn-error.ts";
 
 const isServerFnError = Schema.is(
   Schema.Union([ServerFnDefect, ServerFnInputError, ServerFnTransportError]),

@@ -1,10 +1,12 @@
-import { createServer as createHttpServer, type Server } from "node:http";
+import { createServer as createHttpServer } from "node:http";
+import type { Server } from "node:http";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { effront } from "@effront/vite";
-import { createServer, type ViteDevServer } from "vite";
+import { createServer } from "vite";
+import type { ViteDevServer } from "vite";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 const exampleRoot = fileURLToPath(new URL("../../../examples/basic/", import.meta.url));

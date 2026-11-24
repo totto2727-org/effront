@@ -1,11 +1,8 @@
 import { Effect } from "effect";
 import type { ReactNode } from "react";
 
-import {
-  attachEFFRONTMember,
-  type EFFRONTIdentity,
-  type EFFRONTMember,
-} from "./effront-identity.ts";
+import { attachEFFRONTMember } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
 import type { AnyMiddleware } from "./middleware.ts";
 
 type LayoutProps = Readonly<{

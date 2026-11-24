@@ -3,7 +3,8 @@ import { Effect, Schema, SchemaTransformation } from "effect";
 
 import { Application } from "./effront.ts";
 import { getRoutesState } from "./routes.ts";
-import { analyzeRoutePath, type ValidRoutePath } from "./route-path.ts";
+import { analyzeRoutePath } from "./route-path.ts";
+import type { ValidRoutePath } from "./route-path.ts";
 
 const EFFRONT = Application.effront();
 const Shell = EFFRONT.Layout.make({

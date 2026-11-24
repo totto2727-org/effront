@@ -3,7 +3,8 @@ import { Effect, Fiber, Layer } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
 import { InitialFlightStream } from "./initial-flight-stream.ts";
-import { ServerFnIdHeader, type FlightPayload, type ServerFnResult } from "../rsc/flight.ts";
+import { ServerFnIdHeader } from "../rsc/flight.ts";
+import type { FlightPayload, ServerFnResult } from "../rsc/flight.ts";
 
 const decodedPayload = {
   formState: null,

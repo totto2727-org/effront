@@ -2,11 +2,11 @@ import { Effect, Layer } from "effect";
 import { WorkersRequestContext } from "@effront/core/workers";
 import { describe, expect, expectTypeOf, test, vi } from "vitest";
 import {
-  type CloudflareExecutionContext,
   createWorkersContextAccessors,
   getWorkersEnv,
   getWorkersRequestContext,
 } from "./workers.ts";
+import type { CloudflareExecutionContext } from "./workers.ts";
 
 type Env = Readonly<{ label: string }>;
 

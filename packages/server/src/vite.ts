@@ -4,8 +4,10 @@ import { pathToFileURL } from "node:url";
 
 import { NodeHttpServer } from "@effect/platform-node";
 import { Effect, Exit, Layer, Scope } from "effect";
-import { HttpEffect, type HttpServerRequest, HttpServerResponse } from "effect/http";
-import { isRunnableDevEnvironment, type Connect, type Plugin } from "vite";
+import { HttpEffect, HttpServerResponse } from "effect/http";
+import type { HttpServerRequest } from "effect/http";
+import { isRunnableDevEnvironment } from "vite";
+import type { Connect, Plugin } from "vite";
 
 export type EffrontServerOptions = Readonly<{
   /** RSC module with a named native Effect `handler` export. Defaults to `src/entry.rsc.ts`. */

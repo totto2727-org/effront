@@ -3,7 +3,8 @@ import { useActionState } from "react";
 import { expectTypeOf } from "vitest";
 
 import { Application } from "../../src/application/effront.ts";
-import { query, stream, streamAtom, type ServerFnError } from "../../src/query.ts";
+import { query, stream, streamAtom } from "../../src/query.ts";
+import type { ServerFnError } from "../../src/query.ts";
 
 const EFFRONT = Application.effront();
 const State = Schema.Struct({ count: Schema.Finite });

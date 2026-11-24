@@ -1,4 +1,5 @@
-import { Fragment, type CSSProperties } from "react";
+import { Fragment } from "react";
+import type { CSSProperties } from "react";
 import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import bash from "shiki/langs/bash.mjs";

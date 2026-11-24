@@ -1,17 +1,16 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Layer, Schema } from "effect";
-import { isValidElement, Suspense, type ReactElement, type ReactNode } from "react";
+import { isValidElement, Suspense } from "react";
+import type { ReactElement, ReactNode } from "react";
 
-import {
-  type ApplicationDefinition,
-  getApplicationState,
-} from "../../src/application/definition.tsx";
+import { getApplicationState } from "../../src/application/definition.tsx";
+import type { ApplicationDefinition } from "../../src/application/definition.tsx";
 import { Application } from "../../src/application/effront.ts";
-import {
-  type AnyPageDefinition,
-  getPageState,
-  type EncodedPageParams,
-  type PageRuntimeProps,
+import { getPageState } from "../../src/application/page.ts";
+import type {
+  AnyPageDefinition,
+  EncodedPageParams,
+  PageRuntimeProps,
 } from "../../src/application/page.ts";
 import type { CompiledDestination } from "../../src/application/route-graph.ts";
 import type { AbsolutePath } from "../../src/application/route-path.ts";

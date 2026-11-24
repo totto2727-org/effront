@@ -1,10 +1,7 @@
 import { Array, Effect, Predicate, Schema, Stream } from "effect";
 
-import {
-  attachEFFRONTMember,
-  type EFFRONTIdentity,
-  type EFFRONTMember,
-} from "./effront-identity.ts";
+import { attachEFFRONTMember } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
 import type { AnyMiddleware } from "./middleware.ts";
 import { ServerFnInputError } from "../rsc/server-fn-error.ts";
 

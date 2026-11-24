@@ -1,26 +1,26 @@
-import { Array, type Types } from "effect";
+import { Array } from "effect";
+import type { Types } from "effect";
 
 import {
-  type EFFRONTIdentity,
   EFFRONTIdentityTypeId,
   EFFRONTMemberKindTypeId,
-  type EFFRONTStatefulMember,
   EFFRONTStateTypeId,
   getEFFRONTIdentity,
   isEFFRONTMember,
 } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTStatefulMember } from "./effront-identity.ts";
 import type { LayoutComponent } from "./layout.ts";
 import type { LoadingComponent } from "./loading.ts";
 import type { AnyMiddleware } from "./middleware.ts";
-import { type AnyPageDefinition, getPageState, type PageConcern } from "./page.ts";
-import {
-  type AbsolutePath,
-  analyzeRoutePath,
-  joinRoutePaths,
-  type JoinPath,
-  type RouteParamNames,
-  type RouteShape,
-  type ValidRoutePath,
+import { getPageState } from "./page.ts";
+import type { AnyPageDefinition, PageConcern } from "./page.ts";
+import { analyzeRoutePath, joinRoutePaths } from "./route-path.ts";
+import type {
+  AbsolutePath,
+  JoinPath,
+  RouteParamNames,
+  RouteShape,
+  ValidRoutePath,
 } from "./route-path.ts";
 
 declare const RoutesContractTypeId: unique symbol;

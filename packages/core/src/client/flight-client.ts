@@ -3,12 +3,8 @@ import { Context, Deferred, Effect, Exit, Layer, Schema, Scope, Stream, String }
 import { HttpBody, HttpClient, HttpClientRequest } from "effect/http";
 import { createFromReadableStream, createTemporaryReferenceSet } from "@vitejs/plugin-rsc/browser";
 
-import {
-  FlightMediaType,
-  ServerFnIdHeader,
-  type FlightPayload,
-  type ServerFnResult,
-} from "../rsc/flight.ts";
+import { FlightMediaType, ServerFnIdHeader } from "../rsc/flight.ts";
+import type { FlightPayload, ServerFnResult } from "../rsc/flight.ts";
 import { InitialFlightStream } from "./initial-flight-stream.ts";
 
 export class FlightLoadError extends Schema.TaggedError<FlightLoadError>()("FlightLoadError", {

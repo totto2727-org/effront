@@ -4,14 +4,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { effront } from "@effront/vite";
-import {
-  createServer,
-  isRunnableDevEnvironment,
-  resolveConfig,
-  type Plugin,
-  type UserConfig,
-  type ViteDevServer,
-} from "vite";
+import { createServer, isRunnableDevEnvironment, resolveConfig } from "vite";
+import type { Plugin, UserConfig, ViteDevServer } from "vite";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { effrontServer } from "./vite.ts";

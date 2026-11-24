@@ -1,8 +1,10 @@
 import "effect/schema/SchemaJITCompiler/enable";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer } from "effect";
-import { HttpServer, type HttpServerResponse } from "effect/http";
-import { withAssets, type AssetOptions } from "./assets.ts";
+import { HttpServer } from "effect/http";
+import type { HttpServerResponse } from "effect/http";
+import { withAssets } from "./assets.ts";
+import type { AssetOptions } from "./assets.ts";
 
 export interface ServeOptions {
   readonly assets: AssetOptions;

@@ -5,7 +5,8 @@ import { vi } from "vitest";
 import { encodeReply } from "@vitejs/plugin-rsc/browser";
 
 import { BrowserEffectRunner } from "../../src/client/browser-effect-runner.ts";
-import { type BrowserRender, BrowserRenderer } from "../../src/client/browser-renderer.ts";
+import { BrowserRenderer } from "../../src/client/browser-renderer.ts";
+import type { BrowserRender } from "../../src/client/browser-renderer.ts";
 import { FlightClient, FlightLoadError } from "../../src/client/flight-client.ts";
 import { NavigationApi } from "../../src/client/navigation-api.ts";
 import { RouteLoader } from "../../src/client/route-loader.ts";
