@@ -9,10 +9,10 @@ export interface CoreSource {
 export function SourceExcerpt({
   source,
   locale = "ja",
-}: {
-  readonly source: CoreSource;
-  readonly locale?: "en" | "ja";
-}) {
+}: Readonly<{
+  source: CoreSource;
+  locale?: "en" | "ja";
+}>) {
   return (
     <figure data-core-source={source.path}>
       <figcaption>

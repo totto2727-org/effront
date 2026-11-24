@@ -7,7 +7,7 @@ import { page as rendering } from "./architecture/rendering.tsx";
 import { page as navigation } from "./architecture/navigation.tsx";
 import { page as serverFunctions } from "./architecture/server-functions.tsx";
 
-export const englishCorePages: readonly DocPage[] = [
+export const englishCorePages: Readonly<DocPage[]> = [
   overview,
   application,
   routing,

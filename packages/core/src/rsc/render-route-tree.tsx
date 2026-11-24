@@ -6,11 +6,11 @@ import type { AbsolutePath } from "../application/route-path.ts";
 import { RouteOutlet } from "../client/route-tree.tsx";
 import type { RouteTreeModel } from "./route-tree.ts";
 
-type RenderRouteTreeOptions<Services> = {
-  readonly destination: CompiledDestination<Services>;
-  readonly pathname: AbsolutePath;
-  readonly params: PageParams;
-};
+type RenderRouteTreeOptions<Services> = Readonly<{
+  destination: CompiledDestination<Services>;
+  pathname: AbsolutePath;
+  params: PageParams;
+}>;
 
 export const renderRouteTree = <Services,>({
   destination,

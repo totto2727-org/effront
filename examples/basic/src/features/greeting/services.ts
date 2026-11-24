@@ -9,10 +9,10 @@ export class CacheClient extends Context.Service<CacheClient, ReadWriteNamespace
 /** Application-facing data has no Cloudflare or Alchemy requirement. */
 export class Host extends Context.Service<
   Host,
-  {
-    readonly label: string;
-    readonly greeting: string;
-  }
+  Readonly<{
+    label: string;
+    greeting: string;
+  }>
 >()("examples/basic/Host") {}
 
 /** KV effects execute inside the live request, not during deployment or isolate startup. */

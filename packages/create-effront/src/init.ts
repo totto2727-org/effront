@@ -15,9 +15,11 @@ const ProjectName = Schema.String.check(Schema.isPattern(/^[a-z0-9]/u));
 const isProjectName = Schema.is(ProjectName);
 const isMissingPath = Schema.is(Schema.Struct({ code: Schema.Literal("ENOENT") }));
 
-class ProjectInitError extends Data.TaggedError("ProjectInitError")<{
-  readonly message: string;
-}> {}
+class ProjectInitError extends Data.TaggedError("ProjectInitError")<
+  Readonly<{
+    message: string;
+  }>
+> {}
 
 export function projectName(directory: string): string {
   const name = basename(resolve(directory))

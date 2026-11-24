@@ -28,8 +28,8 @@ type Heading = Readonly<{ id: string; title: string }>;
 export type DocsShellProps = Readonly<{
   locale?: DocLocale;
   current: NavigationItem;
-  navigation: readonly NavigationItem[];
-  headings: readonly Heading[];
+  navigation: Readonly<NavigationItem[]>;
+  headings: Readonly<Heading[]>;
   children: React.ReactNode;
 }>;
 

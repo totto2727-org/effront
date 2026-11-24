@@ -83,10 +83,12 @@ class TestNavigationApi {
   private listener: EventListener | null = null;
   readonly initialEntry = makeNavigationEntry("day-one", "https://effront.test/schedule/day-one");
   currentEntry = this.initialEntry;
-  readonly nativeNavigations: Array<{
-    readonly options: { readonly history: "push" | "replace"; readonly info: unknown };
-    readonly url: string;
-  }> = [];
+  readonly nativeNavigations: Array<
+    Readonly<{
+      options: Readonly<{ history: "push" | "replace"; info: unknown }>;
+      url: string;
+    }>
+  > = [];
 
   addEventListener(_type: "navigate", listener: EventListener) {
     this.listener = listener;
@@ -137,11 +139,12 @@ type TestNavigateEventOverrides = Partial<
     | "navigationType"
     | "signal"
   >
-> & {
-  readonly cancelable?: boolean;
-  readonly destination?: { readonly id?: string; readonly key?: string; readonly url: string };
-  readonly sourceElement?: Pick<HTMLAnchorElement, "dataset"> | null;
-};
+> &
+  Readonly<{
+    cancelable?: boolean;
+    destination?: Readonly<{ id?: string; key?: string; url: string }>;
+    sourceElement?: Pick<HTMLAnchorElement, "dataset"> | null;
+  }>;
 
 const makeNavigationEvent = (overrides: TestNavigateEventOverrides = {}) => {
   let interception: NavigationInterceptOptions | null = null;
@@ -249,10 +252,10 @@ const makeStreamingHttpClient = () => {
   return { httpClient, responseSignals };
 };
 
-type BrowserRenderRequest = {
-  readonly _tag: "Navigation" | "ServerFunction";
-  readonly routeTree: RouteTreeModel;
-};
+type BrowserRenderRequest = Readonly<{
+  _tag: "Navigation" | "ServerFunction";
+  routeTree: RouteTreeModel;
+}>;
 
 const initialRouteTree: RouteTreeModel = {
   child: null,
@@ -289,10 +292,12 @@ const makeBrowserRenderer = (renders: Array<BrowserRenderRequest> = []) => {
 };
 
 const makePrecommitController = (
-  redirects: Array<{
-    readonly options: NavigationNavigateOptions | undefined;
-    readonly url: string;
-  }> = [],
+  redirects: Array<
+    Readonly<{
+      options: NavigationNavigateOptions | undefined;
+      url: string;
+    }>
+  > = [],
   handlers: Array<NavigationInterceptHandler> = [],
 ): NavigationPrecommitController => ({
   addHandler: (handler) => handlers.push(handler),
@@ -916,10 +921,12 @@ it.effect("redirects a cancelable navigation before committing its Flight tree",
   Effect.scoped(
     Effect.gen(function* () {
       const navigation = new TestNavigationApi();
-      const redirects: Array<{
-        readonly options: NavigationNavigateOptions | undefined;
-        readonly url: string;
-      }> = [];
+      const redirects: Array<
+        Readonly<{
+          options: NavigationNavigateOptions | undefined;
+          url: string;
+        }>
+      > = [];
       const handlers: Array<NavigationInterceptHandler> = [];
       const renders: Array<BrowserRenderRequest> = [];
       yield* listen(navigation, makeBrowserRenderer(renders));

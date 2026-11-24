@@ -29,7 +29,7 @@ const asElement = <Props,>(node: ReactNode): ReactElement<Props> => {
 
 const pageContent = (node: RouteTreeModel) =>
   asElement<PageRuntimeProps>(
-    asElement<{ readonly children: ReactNode }>(node.content).props.children,
+    asElement<Readonly<{ children: ReactNode }>>(node.content).props.children,
   );
 
 const requiredChild = (node: RouteTreeModel) => {
@@ -40,7 +40,7 @@ const requiredChild = (node: RouteTreeModel) => {
 };
 
 const findDestination = <Services,>(
-  routes: ReadonlyArray<CompiledDestination<Services>>,
+  routes: Readonly<CompiledDestination<Services>[]>,
   pattern: AbsolutePath,
 ) => {
   const destination = routes.find((route) => route.pattern === pattern);
@@ -51,7 +51,7 @@ const findDestination = <Services,>(
 };
 
 const renderApplicationRoute = <Services,>(
-  routes: ReadonlyArray<CompiledDestination<Services>>,
+  routes: Readonly<CompiledDestination<Services>[]>,
   pattern: AbsolutePath,
   pathname: AbsolutePath = pattern,
   encodedParams: EncodedPageParams = {},
@@ -111,7 +111,7 @@ describe("EFFRONT.make", () => {
       routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage),
     });
     const rootNode = renderApplicationRoute(applicationRoutes(App), "/");
-    const root = asElement<{ readonly children: ReactNode }>(rootNode.content);
+    const root = asElement<Readonly<{ children: ReactNode }>>(rootNode.content);
     const pageNode = requiredChild(rootNode);
 
     expect(rootNode.id).not.toBe(pageNode.id);
@@ -174,10 +174,12 @@ describe("EFFRONT.make", () => {
     const loadingNode = requiredChild(scheduleLayoutNode);
     const saturdayLoadingNode = requiredChild(saturdayScheduleLayoutNode);
     const pageNode = requiredChild(loadingNode);
-    const loadingBoundary = asElement<{
-      readonly children: ReactNode;
-      readonly fallback: ReactNode;
-    }>(loadingNode.content);
+    const loadingBoundary = asElement<
+      Readonly<{
+        children: ReactNode;
+        fallback: ReactNode;
+      }>
+    >(loadingNode.content);
 
     expect(applicationRoutes(App).map(({ pattern }) => pattern)).toStrictEqual([
       "/",

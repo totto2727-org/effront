@@ -21,11 +21,12 @@ const QueryOptions = Schema.Union([
 ]);
 const isQueryOptions = Schema.is(QueryOptions);
 
-export type MatchedQuery = typeof QueryOptions.Type & {
-  readonly args: ReadonlyArray<unknown>;
-};
+export type MatchedQuery = typeof QueryOptions.Type &
+  Readonly<{
+    args: Readonly<unknown[]>;
+  }>;
 
-export const matchServerFnQuery = (args: ReadonlyArray<unknown>): MatchedQuery | null => {
+export const matchServerFnQuery = (args: Readonly<unknown[]>): MatchedQuery | null => {
   const last = args.at(-1);
   try {
     if (typeof last !== "object" || last === null || !(ServerFnQueryTypeId in last)) {
@@ -49,16 +50,16 @@ const streamError = (cause: unknown): ServerFnError =>
     ? new ServerFnDefect({ detail: serverFnErrorDetail(cause), digest: cause.digest })
     : transportError(cause);
 
-const invoke = <Args extends ReadonlyArray<unknown>>(
+const invoke = <Args extends Readonly<unknown[]>>(
   serverFn: (...args: Args) => Promise<unknown>,
   args: Args,
   options: typeof QueryOptions.Type,
 ) =>
-  (serverFn as (...args: ReadonlyArray<unknown>) => Promise<unknown>)(...args, {
+  (serverFn as (...args: Readonly<unknown[]>) => Promise<unknown>)(...args, {
     [ServerFnQueryTypeId]: options,
   });
 
-export const callQuery = <Args extends ReadonlyArray<unknown>, Output>(
+export const callQuery = <Args extends Readonly<unknown[]>, Output>(
   serverFn: (...args: Args) => Promise<Output>,
   args: Args,
 ): Effect.Effect<Output, ServerFnError> =>
@@ -67,7 +68,7 @@ export const callQuery = <Args extends ReadonlyArray<unknown>, Output>(
     catch: invocationError,
   });
 
-export const callQueryStream = Effect.fnUntraced(function* <Args extends ReadonlyArray<unknown>>(
+export const callQueryStream = Effect.fnUntraced(function* <Args extends Readonly<unknown[]>>(
   serverFn: (...args: Args) => Promise<unknown>,
   args: Args,
 ) {

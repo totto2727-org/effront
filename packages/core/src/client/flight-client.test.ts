@@ -17,7 +17,7 @@ const decodedPayload = {
 const decodeFlight = vi.fn(
   (
     _stream: ReadableStream<Uint8Array>,
-    _options?: { readonly startTime?: number; readonly temporaryReferences?: unknown },
+    _options?: Readonly<{ startTime?: number; temporaryReferences?: unknown }>,
   ): Promise<FlightPayload | ServerFnResult> => Promise.resolve(decodedPayload),
 );
 
@@ -33,7 +33,7 @@ const initialFlightStream = new ReadableStream<Uint8Array>({
 });
 
 const { FlightClient, FlightLoadError } = await import("./flight-client.ts");
-type FlightRequest = Exclude<import("./flight-client").FlightRequest, { readonly _tag: "Query" }>;
+type FlightRequest = Exclude<import("./flight-client").FlightRequest, Readonly<{ _tag: "Query" }>>;
 const FlightClientTestLayer = FlightClient.layer.pipe(
   Layer.provide(InitialFlightStream.layerTest({ stream: initialFlightStream })),
 );

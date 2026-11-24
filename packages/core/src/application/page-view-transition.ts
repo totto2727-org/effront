@@ -4,14 +4,15 @@ import type { ViewTransitionProps } from "react";
 /** Serializable React transition classes, optionally selected by transition type. */
 export type PageViewTransitionConfig = Readonly<
   Pick<ViewTransitionProps, "default" | "enter" | "exit" | "share" | "update">
-> & {
-  /**
-   * False removes the page transition boundary. Changing this setting on an
-   * already mounted page can reset its local state. Live reduced-motion
-   * preference changes preserve the boundary and page state instead.
-   */
-  readonly enabled?: boolean | undefined;
-};
+> &
+  Readonly<{
+    /**
+     * False removes the page transition boundary. Changing this setting on an
+     * already mounted page can reset its local state. Live reduced-motion
+     * preference changes preserve the boundary and page state instead.
+     */
+    enabled?: boolean | undefined;
+  }>;
 
 const builtInDefaults: PageViewTransitionConfig = Object.freeze({
   default: Object.freeze({

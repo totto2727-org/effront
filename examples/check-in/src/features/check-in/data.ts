@@ -1,36 +1,40 @@
-export type Organizer = {
-  readonly id: string;
-  readonly name: string;
-};
+export type Organizer = Readonly<{
+  id: string;
+  name: string;
+}>;
 
-export type EventPreview = {
-  readonly eventId: string;
-  readonly eventName: string;
-  readonly organizerName: string;
-  readonly checkedIn: number;
-  readonly total: number;
-  readonly attendees: ReadonlyArray<{
-    readonly ticketCode: string;
-    readonly attendeeName: string;
-    readonly status: "ready" | "checked-in";
-  }>;
-  readonly audit: ReadonlyArray<{
-    readonly ticketCode: string;
-    readonly actorId: string;
-    readonly occurredAt: string;
-  }>;
-};
+export type EventPreview = Readonly<{
+  eventId: string;
+  eventName: string;
+  organizerName: string;
+  checkedIn: number;
+  total: number;
+  attendees: Readonly<
+    Readonly<{
+      ticketCode: string;
+      attendeeName: string;
+      status: "ready" | "checked-in";
+    }>[]
+  >;
+  audit: Readonly<
+    Readonly<{
+      ticketCode: string;
+      actorId: string;
+      occurredAt: string;
+    }>[]
+  >;
+}>;
 
 export type CheckInResult =
-  | { readonly status: "checked-in"; readonly attendeeName: string; readonly occurredAt: string }
-  | {
-      readonly status: "already-checked-in";
-      readonly attendeeName: string;
-      readonly occurredAt: string;
-    }
-  | { readonly status: "invalid-ticket" }
-  | { readonly status: "not-found" }
-  | { readonly status: "forbidden" };
+  | Readonly<{ status: "checked-in"; attendeeName: string; occurredAt: string }>
+  | Readonly<{
+      status: "already-checked-in";
+      attendeeName: string;
+      occurredAt: string;
+    }>
+  | Readonly<{ status: "invalid-ticket" }>
+  | Readonly<{ status: "not-found" }>
+  | Readonly<{ status: "forbidden" }>;
 
 type Ticket = {
   readonly id: string;
@@ -40,11 +44,11 @@ type Ticket = {
   checkedInAt: string | null;
 };
 
-type AuditEntry = {
-  readonly ticketId: string;
-  readonly actorId: string;
-  readonly occurredAt: string;
-};
+type AuditEntry = Readonly<{
+  ticketId: string;
+  actorId: string;
+  occurredAt: string;
+}>;
 
 const fixedNow = "2026-09-24T03:00:00.000Z";
 
@@ -54,7 +58,7 @@ const fixedNow = "2026-09-24T03:00:00.000Z";
  * and must be replaced by a database transaction in a real service.
  */
 export function makeCheckInStore() {
-  const organizers: ReadonlyArray<Organizer> = [
+  const organizers: Readonly<Organizer[]> = [
     { id: "organizer-ada", name: "Ada Organizer" },
     { id: "organizer-ben", name: "Ben Organizer" },
   ];

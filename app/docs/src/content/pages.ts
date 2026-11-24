@@ -5,12 +5,12 @@ import { corePages } from "./core.ts";
 import { englishCorePages } from "./en/core.ts";
 import { localizedPath, type DocLocale } from "./locale.ts";
 
-export const pages: readonly RenderableDocPage[] = [
+export const pages: Readonly<RenderableDocPage[]> = [
   ...markdownPages,
   ...corePages.map(({ content, ...page }) => ({ ...page, content: () => Effect.sync(content) })),
 ];
 
-export const localizedPages: readonly RenderableDocPage[] = (["ja", "en"] as const).flatMap(
+export const localizedPages: Readonly<RenderableDocPage[]> = (["ja", "en"] as const).flatMap(
   (locale) => [
     ...localizedMarkdownPages(locale),
     ...(locale === "en" ? englishCorePages : corePages).map(({ content, ...page }) => ({
@@ -21,7 +21,7 @@ export const localizedPages: readonly RenderableDocPage[] = (["ja", "en"] as con
   ],
 );
 
-function pageNavigation(items: readonly RenderableDocPage[]) {
+function pageNavigation(items: Readonly<RenderableDocPage[]>) {
   return items.map(({ slug, title, section, group }) => ({
     slug,
     title,

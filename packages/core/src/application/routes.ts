@@ -29,11 +29,11 @@ type RoutesState<
   HasLayout extends boolean,
   Paths extends AbsolutePath,
   Shapes extends AbsolutePath,
-> = {
-  readonly hasLayout: Types.Covariant<HasLayout>;
-  readonly paths: Types.Covariant<Paths>;
-  readonly shapes: Types.Covariant<Shapes>;
-};
+> = Readonly<{
+  hasLayout: Types.Covariant<HasLayout>;
+  paths: Types.Covariant<Paths>;
+  shapes: Types.Covariant<Shapes>;
+}>;
 
 type MountedPaths<Prefix extends AbsolutePath, Child> =
   RoutesPaths<Child> extends infer Path extends AbsolutePath ? JoinPath<Prefix, Path> : never;
@@ -123,36 +123,37 @@ export type RoutesPaths<Definition> =
     ? Paths
     : never;
 
-type RoutesPage<Services> = {
-  readonly page: AnyPageDefinition<Services>;
-  readonly path: AbsolutePath;
-};
+type RoutesPage<Services> = Readonly<{
+  page: AnyPageDefinition<Services>;
+  path: AbsolutePath;
+}>;
 
-type RoutesMount<Services> = {
-  readonly path: AbsolutePath;
-  readonly routes: AnyRoutes<Services>;
-};
+type RoutesMount<Services> = Readonly<{
+  path: AbsolutePath;
+  routes: AnyRoutes<Services>;
+}>;
 
-export type RoutesImplementationState<Services> = {
-  readonly layout: LayoutComponent<Services> | null;
-  readonly loading: LoadingComponent<Services> | null;
-  readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-  readonly mounts: ReadonlyArray<RoutesMount<Services>>;
-  readonly pages: ReadonlyArray<RoutesPage<Services>>;
-  readonly paths: ReadonlyArray<AbsolutePath>;
-  readonly scopeId: number;
-};
+export type RoutesImplementationState<Services> = Readonly<{
+  layout: LayoutComponent<Services> | null;
+  loading: LoadingComponent<Services> | null;
+  middleware: Readonly<AnyMiddleware<Services>[]>;
+  mounts: Readonly<RoutesMount<Services>[]>;
+  pages: Readonly<RoutesPage<Services>[]>;
+  paths: Readonly<AbsolutePath[]>;
+  scopeId: number;
+}>;
 
-type RoutesOptions<Services> = {
-  readonly layout?: LayoutComponent<Services>;
-  readonly loading?: LoadingComponent<Services>;
-};
+type RoutesOptions<Services> = Readonly<{
+  layout?: LayoutComponent<Services>;
+  loading?: LoadingComponent<Services>;
+}>;
 
-type HasLayoutFromOptions<Options> = Options extends { readonly layout: unknown } ? true : false;
+type HasLayoutFromOptions<Options> = Options extends Readonly<{ layout: unknown }> ? true : false;
 
-type RuntimeRoutesOptions<Services> = RoutesImplementationState<Services> & {
-  readonly routeShapes: ReadonlySet<string>;
-};
+type RuntimeRoutesOptions<Services> = RoutesImplementationState<Services> &
+  Readonly<{
+    routeShapes: ReadonlySet<string>;
+  }>;
 
 class RoutesDefinitionImpl<
   Services,
@@ -169,10 +170,10 @@ class RoutesDefinitionImpl<
 
   readonly layout: LayoutComponent<Services> | null;
   readonly loading: LoadingComponent<Services> | null;
-  readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-  readonly mounts: ReadonlyArray<RoutesMount<Services>>;
-  readonly pages: ReadonlyArray<RoutesPage<Services>>;
-  readonly paths: ReadonlyArray<AbsolutePath>;
+  readonly middleware: Readonly<AnyMiddleware<Services>[]>;
+  readonly mounts: Readonly<RoutesMount<Services>[]>;
+  readonly pages: Readonly<RoutesPage<Services>[]>;
+  readonly paths: Readonly<AbsolutePath[]>;
   readonly scopeId: number;
   readonly #routeShapes: ReadonlySet<string>;
 
@@ -296,18 +297,18 @@ export const getRoutesState = <Services>(
   return routes[EFFRONTStateTypeId];
 };
 
-export type RoutesFactory<Services> = {
-  readonly make: {
+export type RoutesFactory<Services> = Readonly<{
+  make: {
     (): RoutesDefinition<Services, false, never>;
     <Options extends RoutesOptions<Services>>(
       options: Options,
     ): RoutesDefinition<Services, HasLayoutFromOptions<Options>, never>;
   };
-};
+}>;
 
 export const makeRoutesFactory = <Services>(
   identity: EFFRONTIdentity<Services>,
-  middleware: ReadonlyArray<AnyMiddleware<Services>>,
+  middleware: Readonly<AnyMiddleware<Services>[]>,
   allocateScopeId: () => number,
 ): RoutesFactory<Services> => {
   function make(): RoutesDefinition<Services, false, never>;

@@ -26,7 +26,7 @@ describe("query", () => {
   it.effect("matches a query marker without leaking it into encoded arguments", () =>
     Effect.gen(function* () {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
-      const serverFn = (...args: ReadonlyArray<unknown>) => {
+      const serverFn = (...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
         if (matched !== null) {
           observed.resolve(matched);
@@ -61,7 +61,7 @@ describe("query", () => {
   it.effect("interrupts the callback signal when the query fiber is cancelled", () =>
     Effect.gen(function* () {
       const observed = Promise.withResolvers<AbortSignal>();
-      const fetch = query((...args: ReadonlyArray<unknown>) => {
+      const fetch = query((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
         if (matched !== null) {
           observed.resolve(matched.signal);
@@ -79,7 +79,7 @@ describe("query", () => {
 describe("stream", () => {
   it("keeps streamAtom waiting after the last item and interrupts a superseded Flight", async () => {
     const calls: Array<NonNullable<ReturnType<typeof matchServerFnQuery>>> = [];
-    const atom = streamAtom((...args: ReadonlyArray<unknown>) => {
+    const atom = streamAtom((...args: Readonly<unknown[]>) => {
       const matched = matchServerFnQuery(args);
       if (matched !== null) {
         calls.push(matched);
@@ -120,7 +120,7 @@ describe("stream", () => {
   it.effect("waits for full Flight completion after the returned stream closes", () =>
     Effect.gen(function* () {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
-      const read = stream((...args: ReadonlyArray<unknown>) => {
+      const read = stream((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
         if (matched !== null) {
           observed.resolve(matched);
@@ -152,7 +152,7 @@ describe("stream", () => {
   it.effect("propagates transport failure after the final stream value", () =>
     Effect.gen(function* () {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
-      const read = stream((...args: ReadonlyArray<unknown>) => {
+      const read = stream((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
         if (matched !== null) {
           observed.resolve(matched);
@@ -186,7 +186,7 @@ describe("stream", () => {
   it.effect("aborts its request when the consumer stops after one item", () =>
     Effect.gen(function* () {
       const observed = Promise.withResolvers<AbortSignal>();
-      const read = stream((...args: ReadonlyArray<unknown>) => {
+      const read = stream((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
         if (matched !== null) {
           observed.resolve(matched.signal);
@@ -206,7 +206,7 @@ describe("stream", () => {
 
   it.effect("retains a Flight stream error digest", () =>
     Effect.gen(function* () {
-      const read = stream((...args: ReadonlyArray<unknown>) => {
+      const read = stream((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
         if (matched?._tag === "Stream") {
           Deferred.doneUnsafe(matched.completed, Effect.void);

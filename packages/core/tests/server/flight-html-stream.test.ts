@@ -15,7 +15,7 @@ const Encoder = new TextEncoder();
 
 type SourceChunk = string | Uint8Array | (() => void | Promise<void>);
 
-const streamFrom = (source: ReadonlyArray<SourceChunk>) => {
+const streamFrom = (source: Readonly<SourceChunk[]>) => {
   const chunks = [...source];
   return new ReadableStream<Uint8Array>({
     pull(controller) {

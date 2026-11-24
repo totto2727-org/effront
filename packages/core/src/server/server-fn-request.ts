@@ -44,23 +44,19 @@ const normalizeServerFnFailure = <Output, Error, Services>(
     ),
   );
 
-type ServerFnOperation<ApplicationServices> = {
-  readonly effect: Effect.Effect<
+type ServerFnOperation<ApplicationServices> = Readonly<{
+  effect: Effect.Effect<
     unknown,
     ServerFnExecutionError | ServerFnInputError | ServerFnOperationError,
     ApplicationServices
   >;
-  readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
-};
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>;
+}>;
 
-export type PreparedServerFnRequest<ApplicationServices> = {
-  readonly execute: Effect.Effect<
-    RequestOutcome,
-    ServerFnRequestError,
-    ApplicationServices | Scope.Scope
-  >;
-  readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
-};
+export type PreparedServerFnRequest<ApplicationServices> = Readonly<{
+  execute: Effect.Effect<RequestOutcome, ServerFnRequestError, ApplicationServices | Scope.Scope>;
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>;
+}>;
 
 export const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
   Effect.try({
@@ -135,8 +131,8 @@ const readBody = Effect.fnUntraced(function* (request: Request) {
 
 const prepareServerFnOperation = <ApplicationServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  action: (...args: ReadonlyArray<unknown>) => unknown,
-  args: ReadonlyArray<unknown>,
+  action: (...args: Readonly<unknown[]>) => unknown,
+  args: Readonly<unknown[]>,
 ) =>
   Effect.sync((): ServerFnOperation<ApplicationServices> => {
     const invocation = action(...args);
@@ -191,7 +187,7 @@ export const decodeServerFnCall = Effect.fnUntraced(function* <ApplicationServic
   });
   const operation = yield* prepareServerFnOperation(
     identity,
-    action as (...args: ReadonlyArray<unknown>) => unknown,
+    action as (...args: Readonly<unknown[]>) => unknown,
     args,
   );
 

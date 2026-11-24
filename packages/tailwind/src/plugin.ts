@@ -8,10 +8,10 @@ const virtualStyle = "virtual:effront/tailwind.css";
 const clientDirective =
   /^(?:\s|\/\/[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*(["'])use client\1(?:\s*;|\s*\n|$)/;
 
-export type EffrontTailwindOptions = {
+export type EffrontTailwindOptions = Readonly<{
   /** Optional CSS entry relative to the Vite root. Omit to generate Tailwind's default stylesheet. */
-  readonly stylesheet?: string;
-};
+  stylesheet?: string;
+}>;
 
 /** Includes @tailwindcss/vite and loads one stylesheet through React client boundaries. */
 export const effrontTailwind = (options: EffrontTailwindOptions = {}): PluginOption[] => {

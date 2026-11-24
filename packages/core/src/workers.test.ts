@@ -7,8 +7,8 @@ import {
   WorkersRequestContext,
 } from "./workers.ts";
 
-type Env = { readonly label: string };
-type ExecutionContext = { readonly requestId: string };
+type Env = Readonly<{ label: string }>;
+type ExecutionContext = Readonly<{ requestId: string }>;
 
 const accessors = createWorkersContextAccessors<Env, ExecutionContext>();
 
@@ -34,7 +34,7 @@ describe("createWorkersContextAccessors", () => {
       executionContext: { requestId: "request-1" },
       request: new Request("https://example.test/"),
     };
-    const counter = createWorkersContextAccessors<{ readonly count: number }>();
+    const counter = createWorkersContextAccessors<Readonly<{ count: number }>>();
     const observed = await Effect.runPromise(
       Effect.all([
         accessors.getWorkersEnv(),

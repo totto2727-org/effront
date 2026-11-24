@@ -15,7 +15,7 @@ export function PageNote() {
   );
 }
 
-export function ExampleShell({ children }: { readonly children: ReactNode }) {
+export function ExampleShell({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <>
       <nav>
@@ -27,7 +27,7 @@ export function ExampleShell({ children }: { readonly children: ReactNode }) {
   );
 }
 
-export function TransitionExampleLayout({ children }: { readonly children: ReactNode }) {
+export function TransitionExampleLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <>
       <aside aria-label="Persistent transition layout">

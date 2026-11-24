@@ -188,7 +188,7 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   },
 } satisfies Record<string, CoreSource>;
 
-export const coreRuntimePages: readonly DocPage[] = [
+export const coreRuntimePages: Readonly<DocPage[]> = [
   {
     slug: "/architecture/implementation/request",
     title: "04. リクエストのサービスとその寿命",

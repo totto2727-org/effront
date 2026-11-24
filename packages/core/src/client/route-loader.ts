@@ -4,11 +4,11 @@ import type { RouteTreeModel } from "../rsc/route-tree.ts";
 import { FlightClient, type FlightLoadError } from "./flight-client.ts";
 import { NavigationApi } from "./navigation-api.ts";
 
-type CachedRoute = {
-  readonly entry: CacheHistoryEntry;
-  readonly onDispose: () => void;
-  readonly routeTree: RouteTreeModel;
-};
+type CachedRoute = Readonly<{
+  entry: CacheHistoryEntry;
+  onDispose: () => void;
+  routeTree: RouteTreeModel;
+}>;
 
 type CacheHistoryEntry = Pick<
   NavigationHistoryEntry,
@@ -18,23 +18,23 @@ type CacheHistoryEntry = Pick<
 type RouteCache = Map<string, CachedRoute>;
 
 export type RouteLoad =
-  | {
-      readonly _tag: "Route";
-      readonly cache: (entry: NavigationHistoryEntry) => void;
-      readonly completed: Effect.Effect<void, FlightLoadError>;
-      readonly release: Effect.Effect<void>;
-      readonly resolvedUrl: URL;
-      readonly routeTree: RouteTreeModel;
-    }
-  | {
-      readonly _tag: "Document";
-      readonly release: Effect.Effect<void>;
-    };
+  | Readonly<{
+      _tag: "Route";
+      cache: (entry: NavigationHistoryEntry) => void;
+      completed: Effect.Effect<void, FlightLoadError>;
+      release: Effect.Effect<void>;
+      resolvedUrl: URL;
+      routeTree: RouteTreeModel;
+    }>
+  | Readonly<{
+      _tag: "Document";
+      release: Effect.Effect<void>;
+    }>;
 
-export type RouteLoadRequest = {
-  readonly destination: Pick<NavigationDestination, "id" | "url">;
-  readonly navigationType: NavigationType;
-};
+export type RouteLoadRequest = Readonly<{
+  destination: Pick<NavigationDestination, "id" | "url">;
+  navigationType: NavigationType;
+}>;
 
 export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/RouteLoader", {
   make: Effect.gen(function* () {

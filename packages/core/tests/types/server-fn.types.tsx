@@ -20,7 +20,7 @@ const action = EFFRONT.ServerFn.make({
     return Effect.succeed({ count: previousState.count + 1 });
   },
 });
-const result: Promise<{ readonly count: number }> = action({ count: 0 }, new FormData());
+const result: Promise<Readonly<{ count: number }>> = action({ count: 0 }, new FormData());
 void result;
 // @ts-expect-error The caller sends encoded FormData, not the decoded record.
 void action({ count: 0 }, { name: "Nikhil" });
@@ -74,7 +74,7 @@ EFFRONT.ServerFn.make({
 // @ts-expect-error An explicitly declared input schema must be provided at runtime.
 EFFRONT.ServerFn.make<typeof Schema.String, string>({ handler: (value) => Effect.succeed(value) });
 // @ts-expect-error An explicitly declared positional schema list must be provided at runtime.
-EFFRONT.ServerFn.make<readonly [typeof Schema.String], string>({
+EFFRONT.ServerFn.make<Readonly<[typeof Schema.String]>, string>({
   handler: (value) => Effect.succeed(value),
 });
 declare const optionalSchema: typeof Schema.String | undefined;

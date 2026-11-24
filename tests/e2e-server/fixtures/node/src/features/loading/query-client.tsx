@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider, useSuspenseQuery } from "@tanstack/react-query";
 import { Suspense, useState, useTransition } from "react";
 
-function QueryResult({ item }: { readonly item: number }) {
+function QueryResult({ item }: Readonly<{ item: number }>) {
   const { data, dataUpdatedAt, isFetching, error, refetch } = useSuspenseQuery({
     queryKey: ["loading-playground", item],
     queryFn: async () => {

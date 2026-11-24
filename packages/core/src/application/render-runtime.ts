@@ -8,23 +8,23 @@ export type RenderRuntime<Services> = <Output, Error>(
 
 type RenderConcern = "Component" | "Layout" | "Page";
 
-type BoundRenderRuntime = {
-  readonly activeMiddleware: ReadonlyArray<object>;
-  readonly run: RenderRuntime<any>;
-};
+type BoundRenderRuntime = Readonly<{
+  activeMiddleware: Readonly<object[]>;
+  run: RenderRuntime<any>;
+}>;
 
-export type RenderRuntimeContext = {
-  readonly bind: <Services, Output>(
+export type RenderRuntimeContext = Readonly<{
+  bind: <Services, Output>(
     runtime: RenderRuntime<Services>,
-    activeMiddleware: ReadonlyArray<object>,
+    activeMiddleware: Readonly<object[]>,
     evaluate: () => Output,
   ) => Output;
-  readonly run: <Output, Error, Services>(
+  run: <Output, Error, Services>(
     concern: RenderConcern,
     effect: Effect.Effect<Output, Error, Services>,
-    requiredMiddleware: ReadonlyArray<object>,
+    requiredMiddleware: Readonly<object[]>,
   ) => Promise<Output>;
-};
+}>;
 
 export const makeRenderRuntimeContext = (): RenderRuntimeContext => {
   const storage = new AsyncLocalStorage<BoundRenderRuntime>();

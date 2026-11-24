@@ -12,14 +12,14 @@ import {
 import { RouteLoader, type RouteLoad } from "./route-loader.ts";
 
 type NavigationGeneration = symbol;
-type RouteResource = Extract<RouteLoad, { readonly _tag: "Route" }>;
+type RouteResource = Extract<RouteLoad, Readonly<{ _tag: "Route" }>>;
 
 const reservedTransitionTypes = new Set(["navigation", "server-function", "hmr-refresh"]);
 
 const isApplicationTransitionType = (type: string) =>
   !reservedTransitionTypes.has(type) && !type.startsWith("navigation-");
 
-const getLinkTransitionTypes = (event: NavigateEvent): ReadonlyArray<string> => {
+const getLinkTransitionTypes = (event: NavigateEvent): Readonly<string[]> => {
   if (
     (event.navigationType !== "push" && event.navigationType !== "replace") ||
     !(event.sourceElement instanceof HTMLAnchorElement)
@@ -33,7 +33,7 @@ const getLinkTransitionTypes = (event: NavigateEvent): ReadonlyArray<string> => 
 const getNavigationTransitionTypes = (
   event: NavigateEvent,
   fromIndex: number | null,
-): ReadonlyArray<string> => {
+): Readonly<string[]> => {
   const types = [
     "navigation",
     `navigation-${event.navigationType}`,
@@ -56,110 +56,110 @@ const getNavigationTransitionTypes = (
 };
 
 type NavigationEntryState =
-  | { readonly _tag: "PendingCommit" }
-  | {
-      readonly _tag: "Committed";
-      readonly entry: NavigationHistoryEntry | null;
-    };
+  | Readonly<{ _tag: "PendingCommit" }>
+  | Readonly<{
+      _tag: "Committed";
+      entry: NavigationHistoryEntry | null;
+    }>;
 
 type NavigationFlightState =
-  | { readonly _tag: "Streaming"; readonly resource: RouteResource }
-  | { readonly _tag: "Completed"; readonly cache: RouteResource["cache"] };
+  | Readonly<{ _tag: "Streaming"; resource: RouteResource }>
+  | Readonly<{ _tag: "Completed"; cache: RouteResource["cache"] }>;
 
 type NavigationCandidate =
-  | {
-      readonly _tag: "Loading";
-      readonly generation: NavigationGeneration;
-      readonly lifetime: AbortController;
-    }
-  | {
-      readonly _tag: "Publishing";
-      readonly generation: NavigationGeneration;
-      readonly lifetime: AbortController;
-      readonly resource: RouteResource;
-    }
-  | {
-      readonly _tag: "Rendering";
-      readonly generation: NavigationGeneration;
-      readonly lifetime: AbortController;
-      readonly rendererNavigation: BrowserRendererNavigation;
-      readonly resource: RouteResource;
-    };
+  | Readonly<{
+      _tag: "Loading";
+      generation: NavigationGeneration;
+      lifetime: AbortController;
+    }>
+  | Readonly<{
+      _tag: "Publishing";
+      generation: NavigationGeneration;
+      lifetime: AbortController;
+      resource: RouteResource;
+    }>
+  | Readonly<{
+      _tag: "Rendering";
+      generation: NavigationGeneration;
+      lifetime: AbortController;
+      rendererNavigation: BrowserRendererNavigation;
+      resource: RouteResource;
+    }>;
 
 type VisibleNavigation =
-  | { readonly _tag: "Settled" }
-  | {
-      readonly _tag: "Navigation";
-      readonly entry: NavigationEntryState;
-      readonly flight: NavigationFlightState;
-      readonly generation: NavigationGeneration;
-    };
+  | Readonly<{ _tag: "Settled" }>
+  | Readonly<{
+      _tag: "Navigation";
+      entry: NavigationEntryState;
+      flight: NavigationFlightState;
+      generation: NavigationGeneration;
+    }>;
 
 type RouterState =
-  | { readonly _tag: "Ready"; readonly visible: VisibleNavigation }
-  | {
-      readonly _tag: "Navigating";
-      readonly candidate: NavigationCandidate;
-      readonly visible: VisibleNavigation;
-    };
+  | Readonly<{ _tag: "Ready"; visible: VisibleNavigation }>
+  | Readonly<{
+      _tag: "Navigating";
+      candidate: NavigationCandidate;
+      visible: VisibleNavigation;
+    }>;
 
 type RouterEvent =
-  | {
-      readonly _tag: "BeginNavigation";
-      readonly generation: NavigationGeneration;
-      readonly lifetime: AbortController;
-    }
-  | { readonly _tag: "DocumentLoaded"; readonly generation: NavigationGeneration }
-  | {
-      readonly _tag: "RouteLoaded";
-      readonly generation: NavigationGeneration;
-      readonly resource: RouteResource;
-    }
-  | {
-      readonly _tag: "RenderScheduled";
-      readonly generation: NavigationGeneration;
-      readonly rendererNavigation: BrowserRendererNavigation;
-      readonly resource: RouteResource;
-    }
-  | { readonly _tag: "RenderCommitted"; readonly generation: NavigationGeneration }
-  | { readonly _tag: "RenderRetired"; readonly generation: NavigationGeneration }
-  | {
-      readonly _tag: "HistoryCommitted";
-      readonly entry: NavigationHistoryEntry | null;
-      readonly generation: NavigationGeneration;
-    }
-  | { readonly _tag: "FlightCompleted"; readonly generation: NavigationGeneration }
-  | { readonly _tag: "FlightFailed"; readonly generation: NavigationGeneration }
-  | { readonly _tag: "NavigationAborted"; readonly generation: NavigationGeneration };
+  | Readonly<{
+      _tag: "BeginNavigation";
+      generation: NavigationGeneration;
+      lifetime: AbortController;
+    }>
+  | Readonly<{ _tag: "DocumentLoaded"; generation: NavigationGeneration }>
+  | Readonly<{
+      _tag: "RouteLoaded";
+      generation: NavigationGeneration;
+      resource: RouteResource;
+    }>
+  | Readonly<{
+      _tag: "RenderScheduled";
+      generation: NavigationGeneration;
+      rendererNavigation: BrowserRendererNavigation;
+      resource: RouteResource;
+    }>
+  | Readonly<{ _tag: "RenderCommitted"; generation: NavigationGeneration }>
+  | Readonly<{ _tag: "RenderRetired"; generation: NavigationGeneration }>
+  | Readonly<{
+      _tag: "HistoryCommitted";
+      entry: NavigationHistoryEntry | null;
+      generation: NavigationGeneration;
+    }>
+  | Readonly<{ _tag: "FlightCompleted"; generation: NavigationGeneration }>
+  | Readonly<{ _tag: "FlightFailed"; generation: NavigationGeneration }>
+  | Readonly<{ _tag: "NavigationAborted"; generation: NavigationGeneration }>;
 
 type RouterCommand =
-  | { readonly _tag: "SupersedeCandidate"; readonly candidate: NavigationCandidate }
-  | {
-      readonly _tag: "PublishRoute";
-      readonly generation: NavigationGeneration;
-      readonly resource: RouteResource;
-    }
-  | { readonly _tag: "ReleaseRoute"; readonly resource: RouteResource }
-  | {
-      readonly _tag: "CacheRoute";
-      readonly cache: RouteResource["cache"];
-      readonly entry: NavigationHistoryEntry;
-    }
-  | {
-      readonly _tag: "CacheAndReleaseRoute";
-      readonly entry: NavigationHistoryEntry;
-      readonly resource: RouteResource;
-    }
-  | {
-      readonly _tag: "DiscardRoute";
-      readonly rendererNavigation: BrowserRendererNavigation;
-      readonly resource: RouteResource;
-    };
+  | Readonly<{ _tag: "SupersedeCandidate"; candidate: NavigationCandidate }>
+  | Readonly<{
+      _tag: "PublishRoute";
+      generation: NavigationGeneration;
+      resource: RouteResource;
+    }>
+  | Readonly<{ _tag: "ReleaseRoute"; resource: RouteResource }>
+  | Readonly<{
+      _tag: "CacheRoute";
+      cache: RouteResource["cache"];
+      entry: NavigationHistoryEntry;
+    }>
+  | Readonly<{
+      _tag: "CacheAndReleaseRoute";
+      entry: NavigationHistoryEntry;
+      resource: RouteResource;
+    }>
+  | Readonly<{
+      _tag: "DiscardRoute";
+      rendererNavigation: BrowserRendererNavigation;
+      resource: RouteResource;
+    }>;
 
-type RouterTransition = {
-  readonly command: RouterCommand | null;
-  readonly state: RouterState;
-};
+type RouterTransition = Readonly<{
+  command: RouterCommand | null;
+  state: RouterState;
+}>;
 
 const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransition => {
   if (state.visible._tag === "Navigation" && state.visible.generation === event.generation) {
@@ -363,13 +363,13 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
 };
 
 type NavigationPreparation =
-  | { readonly _tag: "Handled" }
-  | {
-      readonly _tag: "Rendered";
-      readonly rendererNavigation: BrowserRendererNavigation;
-      readonly resolvedDestination: URL;
-      readonly resource: RouteResource;
-    };
+  | Readonly<{ _tag: "Handled" }>
+  | Readonly<{
+      _tag: "Rendered";
+      rendererNavigation: BrowserRendererNavigation;
+      resolvedDestination: URL;
+      resource: RouteResource;
+    }>;
 
 export const installClientRouter = Effect.gen(function* () {
   const browserRenderer = yield* BrowserRenderer;

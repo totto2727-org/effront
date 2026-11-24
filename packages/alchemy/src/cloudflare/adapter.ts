@@ -73,11 +73,11 @@ export interface ApplicationAdapter {
   readonly applicationHttpEffect: {
     <Services, ApplicationError, Requirements, Captured>(
       load: ApplicationLoader<Services, ApplicationError, Requirements>,
-      options: { readonly context: Context.Context<Captured> },
+      options: Readonly<{ context: Context.Context<Captured> }>,
     ): ApplicationHttpEffect<ApplicationError, Requirements, Captured>;
     <Services, ApplicationError, Requirements, Captured = never>(
       load: ApplicationLoader<Services, ApplicationError, Requirements>,
-      options?: { readonly context?: Context.Context<Captured> },
+      options?: Readonly<{ context?: Context.Context<Captured> }>,
     ): HttpApplicationEffect<ApplicationError, Requirements>;
   };
   readonly makeApplicationHttpEffect: <Services, ApplicationError, Requirements>(
@@ -108,15 +108,15 @@ export const makeApplicationAdapter = (toHttpEffect: typeof CoreHttpEffect): App
    */
   function applicationHttpEffect<Services, ApplicationError, Requirements, Captured>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
-    options: { readonly context: Context.Context<Captured> },
+    options: Readonly<{ context: Context.Context<Captured> }>,
   ): ApplicationHttpEffect<ApplicationError, Requirements, Captured>;
   function applicationHttpEffect<Services, ApplicationError, Requirements, Captured = never>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
-    options?: { readonly context?: Context.Context<Captured> },
+    options?: Readonly<{ context?: Context.Context<Captured> }>,
   ): HttpApplicationEffect<ApplicationError, Requirements>;
   function applicationHttpEffect<Services, ApplicationError, Requirements, Captured>(
     load: ApplicationLoader<Services, ApplicationError, Requirements>,
-    options?: { readonly context?: Context.Context<Captured> },
+    options?: Readonly<{ context?: Context.Context<Captured> }>,
   ) {
     const handler = Effect.gen(function* () {
       const application = yield* Effect.promise(load);

@@ -61,8 +61,8 @@ describe("Alchemy native application effects", () => {
   });
 
   test("captures configured application capabilities without loading the application during construction", async () => {
-    type ApplicationFailure = { readonly _tag: "ApplicationFailure" };
-    type RouteFailure = { readonly _tag: "RouteFailure" };
+    type ApplicationFailure = Readonly<{ _tag: "ApplicationFailure" }>;
+    type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
     type Definition = ApplicationDefinition<
       Capability,
       ApplicationFailure,
@@ -119,8 +119,8 @@ describe("Alchemy native application effects", () => {
   });
 
   test("normalizes native router requirement and error markers before construction capture", async () => {
-    type RouteFailure = { readonly _tag: "RouteFailure" };
-    type GlobalFailure = { readonly _tag: "GlobalFailure" };
+    type RouteFailure = Readonly<{ _tag: "RouteFailure" }>;
+    type GlobalFailure = Readonly<{ _tag: "GlobalFailure" }>;
     type Requirements =
       | HttpRouter.Request.From<"Requires", Capability>
       | HttpRouter.Request.From<"GlobalRequires", RuntimeContext>
@@ -223,7 +223,7 @@ describe("Alchemy native application effects", () => {
     const omitted = applicationHttpEffect<never, never, Capability | RuntimeContext, Capability>(
       load,
     );
-    const options: { readonly context?: Context.Context<Capability> } = {};
+    const options: Readonly<{ context?: Context.Context<Capability> }> = {};
     const optional = applicationHttpEffect(load, options);
     type Requirements = Effect.Services<HttpApplicationEffect<never, Capability | RuntimeContext>>;
     expectTypeOf<Effect.Services<typeof omitted>>().toEqualTypeOf<Requirements>();

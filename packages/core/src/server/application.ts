@@ -54,15 +54,16 @@ const acceptVaryPreResponseHandler: HttpEffect.PreResponseHandler = (_request, r
     HttpServerResponse.setHeader(response, "vary", appendAcceptVary(response.headers["vary"])),
   );
 
-type RenderOptions<Services> = RequestOutcome & {
-  readonly destination: CompiledDestination<Services>;
-  readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-  readonly request: HttpServerRequest.HttpServerRequest;
-};
+type RenderOptions<Services> = RequestOutcome &
+  Readonly<{
+    destination: CompiledDestination<Services>;
+    middleware: Readonly<AnyMiddleware<Services>[]>;
+    request: HttpServerRequest.HttpServerRequest;
+  }>;
 
 const fromWebStream = (
   stream: ReadableStream<Uint8Array>,
-  options?: { readonly releaseLockOnEnd?: boolean },
+  options?: Readonly<{ releaseLockOnEnd?: boolean }>,
 ) =>
   Stream.fromReadableStream({
     evaluate: () => stream,
@@ -71,7 +72,7 @@ const fromWebStream = (
   });
 
 const combinePageMiddleware = <Services>(
-  middleware: ReadonlyArray<AnyMiddleware<Services>>,
+  middleware: Readonly<AnyMiddleware<Services>[]>,
   last: AnyMiddleware<Services>,
 ) =>
   middleware

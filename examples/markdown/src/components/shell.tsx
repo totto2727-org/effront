@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 
-export function Shell({ children }: { readonly children: ReactNode }) {
+export function Shell({ children }: Readonly<{ children: ReactNode }>) {
   const [count, setCount] = useState(0);
   return (
     <>

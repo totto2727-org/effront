@@ -25,26 +25,26 @@ export interface ApplicationDefinition<
   "Application",
   ApplicationImplementationState<Services, ApplicationError, Requirements>
 > {
-  readonly [ApplicationContractTypeId]: {
-    readonly error: Types.Covariant<ApplicationError>;
-    readonly requirements: Types.Covariant<Requirements>;
-  };
+  readonly [ApplicationContractTypeId]: Readonly<{
+    error: Types.Covariant<ApplicationError>;
+    requirements: Types.Covariant<Requirements>;
+  }>;
 }
 
-export type ApplicationImplementationState<Services, ApplicationError, Requirements> = {
-  readonly layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
-  readonly routes: CompiledRouteGraph<Services>;
-};
+export type ApplicationImplementationState<Services, ApplicationError, Requirements> = Readonly<{
+  layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
+  routes: CompiledRouteGraph<Services>;
+}>;
 
 class ApplicationDefinitionImpl<
   Services,
   ApplicationError,
   Requirements,
 > implements ApplicationDefinition<Services, ApplicationError, Requirements> {
-  declare readonly [ApplicationContractTypeId]: {
-    readonly error: Types.Covariant<ApplicationError>;
-    readonly requirements: Types.Covariant<Requirements>;
-  };
+  declare readonly [ApplicationContractTypeId]: Readonly<{
+    error: Types.Covariant<ApplicationError>;
+    requirements: Types.Covariant<Requirements>;
+  }>;
   readonly [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
   readonly [EFFRONTMemberKindTypeId] = "Application" as const;
   get [EFFRONTStateTypeId](): ApplicationImplementationState<
@@ -112,25 +112,22 @@ type ValidRootRoutes<Services, Definition extends AnyRoutes<Services>> =
 type ReservedRoutes<Paths> = Paths extends AbsolutePath ? ReservedRoutePath<Paths> : never;
 
 type ApplicationLayerOptions<Services, ApplicationError, Requirements> = [Services] extends [never]
-  ? {
-      readonly layer?: Layer.Layer<
-        Services,
-        ApplicationError,
-        HttpRouter.HttpRouter | Requirements
-      >;
-    }
-  : {
-      readonly layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
-    };
+  ? Readonly<{
+      layer?: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
+    }>
+  : Readonly<{
+      layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
+    }>;
 
 export type EFFRONTApplicationOptions<
   Services,
   Definition extends AnyRoutes<Services>,
   ApplicationError,
   Requirements,
-> = {
-  readonly routes: Definition & ValidRootRoutes<Services, Definition>;
-} & ApplicationLayerOptions<Services, ApplicationError, Requirements>;
+> = Readonly<{
+  routes: Definition & ValidRootRoutes<Services, Definition>;
+}> &
+  ApplicationLayerOptions<Services, ApplicationError, Requirements>;
 
 export type EFFRONTMake<Services> = <
   Definition extends AnyRoutes<Services>,

@@ -48,10 +48,10 @@ const app = Effect.succeed(HttpServerResponse.text("application", { status: 202 
 
 const withServer = (
   run: (origin: string, opened: string[]) => Promise<void>,
-  settings: {
-    readonly deniedStatPath?: string;
-    readonly onStreamExit?: (completed: boolean) => void;
-  } = {},
+  settings: Readonly<{
+    deniedStatPath?: string;
+    onStreamExit?: (completed: boolean) => void;
+  }> = {},
 ) =>
   Effect.runPromise(
     Effect.scoped(

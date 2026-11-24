@@ -17,47 +17,48 @@ export class FlightLoadError extends Schema.TaggedError<FlightLoadError>()("Flig
 }) {}
 
 export type FlightRequest =
-  | {
-      readonly _tag: "Navigation";
-      readonly destination: URL;
-    }
-  | {
-      readonly _tag: "ServerFunction";
-      readonly body: BodyInit;
-      readonly destination: URL;
-      readonly id: string;
-      readonly temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
-    }
-  | {
-      readonly _tag: "Query";
-      readonly body: BodyInit;
-      readonly destination: URL;
-      readonly id: string;
-      readonly temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
-    };
+  | Readonly<{
+      _tag: "Navigation";
+      destination: URL;
+    }>
+  | Readonly<{
+      _tag: "ServerFunction";
+      body: BodyInit;
+      destination: URL;
+      id: string;
+      temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
+    }>
+  | Readonly<{
+      _tag: "Query";
+      body: BodyInit;
+      destination: URL;
+      id: string;
+      temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
+    }>;
 
-type DecodedFlight = {
-  readonly completed: Effect.Effect<void, FlightLoadError>;
-  readonly payload: FlightPayload;
-};
+type DecodedFlight = Readonly<{
+  completed: Effect.Effect<void, FlightLoadError>;
+  payload: FlightPayload;
+}>;
 
-type FlightResource = DecodedFlight & {
-  readonly _tag: "Flight";
-  readonly release: Effect.Effect<void>;
-  readonly resolvedUrl: URL;
-};
+type FlightResource = DecodedFlight &
+  Readonly<{
+    _tag: "Flight";
+    release: Effect.Effect<void>;
+    resolvedUrl: URL;
+  }>;
 
-type QueryResource = {
-  readonly _tag: "Query";
-  readonly completed: Effect.Effect<void, FlightLoadError>;
-  readonly payload: ServerFnResult;
-  readonly release: Effect.Effect<void>;
-};
+type QueryResource = Readonly<{
+  _tag: "Query";
+  completed: Effect.Effect<void, FlightLoadError>;
+  payload: ServerFnResult;
+  release: Effect.Effect<void>;
+}>;
 
-type DocumentResource = {
-  readonly _tag: "Document";
-  readonly release: Effect.Effect<void>;
-};
+type DocumentResource = Readonly<{
+  _tag: "Document";
+  release: Effect.Effect<void>;
+}>;
 
 export class FlightClient extends Context.Service<FlightClient>()("effront/client/FlightClient", {
   make: Effect.gen(function* () {
@@ -233,7 +234,7 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
       }).pipe(Effect.onError(() => release));
     });
 
-    const load = (request: Exclude<FlightRequest, { readonly _tag: "Query" }>) =>
+    const load = (request: Exclude<FlightRequest, Readonly<{ _tag: "Query" }>>) =>
       loadAny(request).pipe(
         Effect.map((resource) => {
           if (resource._tag === "Query") {
@@ -242,7 +243,7 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
           return resource;
         }),
       );
-    const loadQuery = (request: Extract<FlightRequest, { readonly _tag: "Query" }>) =>
+    const loadQuery = (request: Extract<FlightRequest, Readonly<{ _tag: "Query" }>>) =>
       loadAny(request).pipe(
         Effect.map((resource) => {
           if (resource._tag === "Flight") {

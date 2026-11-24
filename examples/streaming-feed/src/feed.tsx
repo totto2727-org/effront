@@ -10,7 +10,7 @@ import { getNote, streamFeed } from "./server-functions.ts";
 const readNote = query(getNote);
 const readPage = stream(streamFeed);
 
-function StoryCard({ story }: { readonly story: Story }) {
+function StoryCard({ story }: Readonly<{ story: Story }>) {
   const [expanded, setExpanded] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const [failure, setFailure] = useState(false);
@@ -63,7 +63,7 @@ function StoryCard({ story }: { readonly story: Story }) {
   );
 }
 
-export function Feed({ seed }: { readonly seed: ReadonlyArray<Story> }) {
+export function Feed({ seed }: Readonly<{ seed: Readonly<Story[]> }>) {
   const [stories, setStories] = useState(seed);
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState(false);

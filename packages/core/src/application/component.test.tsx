@@ -5,7 +5,7 @@ import { Application } from "./effront.ts";
 import { getEFFRONTIdentity } from "./effront-identity.ts";
 import type { RenderRuntime } from "./render-runtime.ts";
 
-class Greeting extends Context.Service<Greeting, { readonly prefix: string }>()(
+class Greeting extends Context.Service<Greeting, Readonly<{ prefix: string }>>()(
   "effront/tests/application/component/Greeting",
 ) {}
 
@@ -24,7 +24,7 @@ describe("EFFRONT.Component.make", () => {
       const EFFRONT = Application.effront<Greeting>();
       const runtime = yield* FiberSet.makeRuntimePromise<Greeting>();
       const GreetingComponent = EFFRONT.Component.make({
-        render: Effect.fn(function* ({ name }: { readonly name: string }) {
+        render: Effect.fn(function* ({ name }: Readonly<{ name: string }>) {
           const greeting = yield* Greeting;
           return <p>{`${greeting.prefix}, ${name}`}</p>;
         }),

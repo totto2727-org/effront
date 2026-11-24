@@ -9,18 +9,18 @@ import {
   getWorkersRequestContext,
 } from "../../src/workers.ts";
 
-class RequestEnvironment extends Context.Service<RequestEnvironment, { readonly value: string }>()(
+class RequestEnvironment extends Context.Service<RequestEnvironment, Readonly<{ value: string }>>()(
   "effront/tests/workers/RequestEnvironment",
 ) {}
 
 class RequestLifetime extends Context.Service<
   RequestLifetime,
-  { readonly events: Array<string> }
+  Readonly<{ events: Array<string> }>
 >()("effront/tests/workers/RequestLifetime") {}
 
-type TestEnv = { readonly mode?: "empty" | "failure" | "stream"; readonly value: string };
+type TestEnv = Readonly<{ mode?: "empty" | "failure" | "stream"; value: string }>;
 
-const accessors = createWorkersContextAccessors<TestEnv, { readonly requestId: string }>();
+const accessors = createWorkersContextAccessors<TestEnv, Readonly<{ requestId: string }>>();
 const encoder = new TextEncoder();
 
 describe("createFetchHandler", () => {

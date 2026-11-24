@@ -8,10 +8,10 @@ import { pages } from "./manual-pages.ts";
 export function ManualShell({
   children,
   pathname,
-}: {
-  readonly children: ReactNode;
-  readonly pathname: string;
-}) {
+}: Readonly<{
+  children: ReactNode;
+  pathname: string;
+}>) {
   const [query, setQuery] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);

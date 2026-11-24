@@ -7,12 +7,12 @@ import { Effect, Exit, Layer, Scope } from "effect";
 import { HttpEffect, type HttpServerRequest, HttpServerResponse } from "effect/http";
 import { isRunnableDevEnvironment, type Connect, type Plugin } from "vite";
 
-export type EffrontServerOptions = {
+export type EffrontServerOptions = Readonly<{
   /** RSC module with a named native Effect `handler` export. Defaults to `src/entry.rsc.ts`. */
-  readonly rsc?: string;
+  rsc?: string;
   /** Production startup module using Effect's HTTP server. Defaults to `src/entry.server.ts`. */
-  readonly server?: string;
-};
+  server?: string;
+}>;
 
 type NativeHandler = Effect.Effect<
   HttpServerResponse.HttpServerResponse,

@@ -1,9 +1,9 @@
 import { Context, Effect, Layer, SubscriptionRef } from "effect";
 
 type RenderStatus =
-  | { readonly _tag: "Waiting" }
-  | { readonly _tag: "Rendered" }
-  | { readonly _tag: "Failed"; readonly error: unknown; readonly componentStack: string | null };
+  | Readonly<{ _tag: "Waiting" }>
+  | Readonly<{ _tag: "Rendered" }>
+  | Readonly<{ _tag: "Failed"; error: unknown; componentStack: string | null }>;
 
 // Replay the latest status: diagnostics may start after hydration has already failed.
 export class BrowserRenderStatus extends Context.Service<BrowserRenderStatus>()(

@@ -9,10 +9,10 @@ const entryId = "virtual:effront/alchemy/cloudflare/entry";
 const resolvedEntryId = `\0${entryId}`;
 const applicationLoader = fileURLToPath(new URL("./application-loader", import.meta.url));
 
-export type EffrontAlchemyOptions = {
+export type EffrontAlchemyOptions = Readonly<{
   /** Module default-exporting the native Alchemy Worker construct. Relative to the Vite root. Defaults to `./src/entry.workers.ts`. */
-  readonly worker?: string;
-};
+  worker?: string;
+}>;
 
 /**
  * Configures Alchemy's native Worker bridge alongside the separate `effront()` integration.

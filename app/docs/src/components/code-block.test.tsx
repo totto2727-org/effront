@@ -78,7 +78,7 @@ const fixtures = [
   ["diff", '--- a/package.json\n+++ b/package.json\n@@ -1 +1 @@\n-"0.1.4"\n+"0.1.4-workers.0"\n'],
   ["css", ".code { color: #e1e4e8; }\n"],
   ["text", "├─ src/\n└─ 日本語の説明\n"],
-] as const satisfies readonly (readonly [CodeLanguage, string])[];
+] as const satisfies Readonly<Readonly<[CodeLanguage, string]>[]>;
 
 describe("server CodeBlock", () => {
   test("initializes and highlights offline with a dark palette and real tokens", () => {

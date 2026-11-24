@@ -23,7 +23,7 @@ export interface MarkdownEntry {
 }
 
 export interface MarkdownCollection {
-  readonly entries: readonly MarkdownEntry[];
+  readonly entries: Readonly<MarkdownEntry[]>;
   get(pathname: string): MarkdownEntry | undefined;
   resolveLink(entry: MarkdownEntry, href: string): Effect.Effect<string, MarkdownError>;
   resolveImage(entry: MarkdownEntry, source: string): Effect.Effect<string, MarkdownError>;
@@ -36,13 +36,13 @@ const decodeSegment = (segment: string): string => {
     return segment;
   }
 };
-const splitReference = (reference: string): readonly [string, string] => {
+const splitReference = (reference: string): Readonly<[string, string]> => {
   const index = reference.search(/[?#]/u);
   return index < 0 ? [reference, ""] : [reference.slice(0, index), reference.slice(index)];
 };
 const segments = (path: string): string[] =>
   path.split("/").filter((part) => String.isNonEmpty(part) && part !== ".");
-const encodedPathname = (parts: readonly string[]): string =>
+const encodedPathname = (parts: Readonly<string[]>): string =>
   `/${parts.map(encodeURIComponent).join("/")}`;
 const markdownExtension = /\.md$/iu;
 const markdownExtensionLength = ".md".length;

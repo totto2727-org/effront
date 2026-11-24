@@ -92,7 +92,7 @@ export type CompiledRouteGraph<Services> = readonly [
   },
 } satisfies Record<string, CoreSource>;
 
-export const coreModelPages: readonly DocPage[] = [
+export const coreModelPages: Readonly<DocPage[]> = [
   {
     slug: "/architecture/implementation/overview",
     title: "01. ページ表示をcoreの実装から追う",

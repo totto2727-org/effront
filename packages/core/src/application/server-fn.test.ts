@@ -5,7 +5,7 @@ import { Application } from "./effront.ts";
 import { type EFFRONTIdentity, getEFFRONTIdentity } from "./effront-identity.ts";
 import { matchServerFnInvocation } from "./server-fn.ts";
 
-class Greeting extends Context.Service<Greeting, { readonly prefix: string }>()(
+class Greeting extends Context.Service<Greeting, Readonly<{ prefix: string }>>()(
   "effront/tests/application/server-fn/Greeting",
 ) {}
 

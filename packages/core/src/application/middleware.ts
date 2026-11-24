@@ -10,15 +10,16 @@ import {
   EFFRONTStateTypeId,
 } from "./effront-identity.ts";
 
-type MiddlewareConfig = {
-  readonly provides?: unknown;
-};
+type MiddlewareConfig = Readonly<{
+  provides?: unknown;
+}>;
 
-type MiddlewareProvides<Config extends MiddlewareConfig> = Config extends {
-  readonly provides: infer Provides;
-}
-  ? Provides
-  : never;
+type MiddlewareProvides<Config extends MiddlewareConfig> =
+  Config extends Readonly<{
+    provides: infer Provides;
+  }>
+    ? Provides
+    : never;
 
 type MiddlewareHandler<AvailableServices, Provides> = <Error, RemainingServices>(
   httpEffect: Effect.Effect<
@@ -44,22 +45,24 @@ export interface Middleware<
 
 export type AnyMiddleware<ApplicationServices> = Middleware<ApplicationServices, unknown, unknown>;
 
-type HttpMiddleware<RequiredServices, ProvidedServices> = HttpRouter.Middleware<{
-  readonly error: never;
-  readonly handles: never;
-  readonly layerError: never;
-  readonly layerRequires: never;
-  readonly provides: ProvidedServices;
-  readonly requires: Exclude<RequiredServices, HttpRouter.Provided>;
-}>;
+type HttpMiddleware<RequiredServices, ProvidedServices> = HttpRouter.Middleware<
+  Readonly<{
+    error: never;
+    handles: never;
+    layerError: never;
+    layerRequires: never;
+    provides: ProvidedServices;
+    requires: Exclude<RequiredServices, HttpRouter.Provided>;
+  }>
+>;
 
-export type MiddlewareImplementationState<RequiredServices, ProvidedServices> = {
+export type MiddlewareImplementationState<RequiredServices, ProvidedServices> = Readonly<{
   // Page GET/HEAD composes the native descriptor so Effect HTTP retains routing semantics such as
   // HEAD fallback. Server Function POST keeps the handler because its scope is known only after
   // React decodes the invoked reference.
-  readonly handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
-  readonly httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
-};
+  handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
+  httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
+}>;
 
 class MiddlewareImpl<ApplicationServices, RequiredServices, ProvidedServices>
   implements
@@ -101,7 +104,7 @@ export const getScopedMiddlewareHandler = <ApplicationServices>(
   getMiddlewareState(middleware).handler;
 
 export const applyMiddleware = <ApplicationServices, Error, RemainingServices>(
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
   httpEffect: Effect.Effect<
     HttpServerResponse.HttpServerResponse,
     Error,
@@ -123,11 +126,11 @@ export function getScopedHttpMiddleware(middleware: AnyMiddleware<unknown>) {
   return getMiddlewareState(middleware).httpMiddleware;
 }
 
-export type MiddlewareFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <Config extends MiddlewareConfig = {}>(
+export type MiddlewareFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: <Config extends MiddlewareConfig = {}>(
     handler: MiddlewareHandler<AvailableServices, MiddlewareProvides<Config>>,
   ) => Middleware<ApplicationServices, AvailableServices, MiddlewareProvides<Config>>;
-};
+}>;
 
 export const makeMiddlewareFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,

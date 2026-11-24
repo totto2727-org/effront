@@ -36,23 +36,24 @@ type ApplicableMiddleware<AvailableServices, Value> = [
 export type EFFRONT<ApplicationServices, AvailableServices = ApplicationServices> = EFFRONTMember<
   ApplicationServices,
   "EFFRONT"
-> & {
-  readonly Component: ComponentFactory<ApplicationServices, AvailableServices>;
-  readonly Layout: LayoutFactory<ApplicationServices, AvailableServices>;
-  readonly Loading: LoadingFactory<ApplicationServices>;
-  readonly Middleware: MiddlewareFactory<ApplicationServices, AvailableServices>;
-  readonly Page: PageFactory<ApplicationServices, AvailableServices>;
-  readonly Routes: RoutesFactory<ApplicationServices>;
-  readonly ServerFn: ServerFnFactory<ApplicationServices, AvailableServices>;
-  readonly make: EFFRONTMake<ApplicationServices>;
-  readonly withMiddleware: <Value extends AnyMiddleware<ApplicationServices>>(
-    middleware: Value & ApplicableMiddleware<AvailableServices, Value>,
-  ) => EFFRONT<ApplicationServices, AvailableServices | MiddlewareProvidedServices<Value>>;
-};
+> &
+  Readonly<{
+    Component: ComponentFactory<ApplicationServices, AvailableServices>;
+    Layout: LayoutFactory<ApplicationServices, AvailableServices>;
+    Loading: LoadingFactory<ApplicationServices>;
+    Middleware: MiddlewareFactory<ApplicationServices, AvailableServices>;
+    Page: PageFactory<ApplicationServices, AvailableServices>;
+    Routes: RoutesFactory<ApplicationServices>;
+    ServerFn: ServerFnFactory<ApplicationServices, AvailableServices>;
+    make: EFFRONTMake<ApplicationServices>;
+    withMiddleware: <Value extends AnyMiddleware<ApplicationServices>>(
+      middleware: Value & ApplicableMiddleware<AvailableServices, Value>,
+    ) => EFFRONT<ApplicationServices, AvailableServices | MiddlewareProvidedServices<Value>>;
+  }>;
 
 const makeEFFRONT = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
   allocateRouteScopeId: () => number,
   make: EFFRONTMake<ApplicationServices>,
 ): EFFRONT<ApplicationServices, AvailableServices> => {

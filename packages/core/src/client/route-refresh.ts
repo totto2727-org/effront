@@ -8,10 +8,10 @@ import { RouteLoader } from "./route-loader.ts";
 
 export type RouteRefreshTransitionType = "hmr-refresh" | "server-function";
 
-type RouteRefreshImplementation = {
-  readonly interruptCurrentRouteRefresh: Effect.Effect<void>;
-  readonly refreshCurrentRoute: (transitionType: RouteRefreshTransitionType) => Effect.Effect<void>;
-};
+type RouteRefreshImplementation = Readonly<{
+  interruptCurrentRouteRefresh: Effect.Effect<void>;
+  refreshCurrentRoute: (transitionType: RouteRefreshTransitionType) => Effect.Effect<void>;
+}>;
 
 export class RouteRefresher extends Context.Service<RouteRefresher>()(
   "effront/client/RouteRefresher",

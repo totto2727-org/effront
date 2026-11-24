@@ -152,11 +152,11 @@ const ManualPage = Manual.Page.make({
   }),
 });
 
-const ServerMath = ({ content }: { readonly content: string }) => (
+const ServerMath = ({ content }: Readonly<{ content: string }>) => (
   <span data-testid="server-math">Server math: {content}</span>
 );
 
-const ServerMermaid = ({ content }: { readonly content: string }) => (
+const ServerMermaid = ({ content }: Readonly<{ content: string }>) => (
   <pre data-testid="server-mermaid">Server diagram: {content}</pre>
 );
 

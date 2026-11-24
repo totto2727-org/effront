@@ -6,11 +6,13 @@ import { vi } from "vitest";
 import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
 const decodedFlights = vi.hoisted<
-  Array<{
-    readonly formState: null;
-    readonly routeTree: RouteTreeModel;
-    readonly serverFnResult: null;
-  }>
+  Array<
+    Readonly<{
+      formState: null;
+      routeTree: RouteTreeModel;
+      serverFnResult: null;
+    }>
+  >
 >(() => []);
 
 vi.mock("@vitejs/plugin-rsc/browser", () => ({

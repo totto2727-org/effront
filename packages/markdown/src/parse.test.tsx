@@ -17,7 +17,7 @@ const entry = (content: string) =>
     }),
   ).get("/manual/index")!;
 
-class TestPluginError extends Data.TaggedError("TestPluginError")<{ readonly message: string }> {}
+class TestPluginError extends Data.TaggedError("TestPluginError")<Readonly<{ message: string }>> {}
 
 describe("parseMarkdown", () => {
   test("resolves nested links and images in the Comark AST before rendering", async () => {

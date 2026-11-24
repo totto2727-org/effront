@@ -22,13 +22,13 @@ class ServerFnCallError extends Schema.TaggedError<ServerFnCallError>()("ServerF
 }) {}
 
 type ServerFnInvocation =
-  | {
-      readonly _tag: "HistoryEntry";
-      readonly id: string;
-      readonly order: number;
-      readonly url: string;
-    }
-  | { readonly _tag: "CurrentUrl"; readonly order: number; readonly url: string };
+  | Readonly<{
+      _tag: "HistoryEntry";
+      id: string;
+      order: number;
+      url: string;
+    }>
+  | Readonly<{ _tag: "CurrentUrl"; order: number; url: string }>;
 
 type ServerFnRefreshSource = "Response" | "CurrentRoute";
 
@@ -167,7 +167,7 @@ export const installCallServer = Effect.gen(function* () {
 
   const callQuery = Effect.fnUntraced(function* (
     id: string,
-    args: ReadonlyArray<unknown>,
+    args: Readonly<unknown[]>,
     invocationResult: PromiseWithResolvers<unknown>,
     kind: "Query" | "Stream",
   ) {

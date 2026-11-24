@@ -455,4 +455,4 @@ export const articleCatalog = [
     ],
     source: "/api-reference/tailwind",
   },
-] as const satisfies readonly (Omit<DocPage, "content"> & { readonly source: string })[];
+] as const satisfies Readonly<(Omit<DocPage, "content"> & Readonly<{ source: string }>)[]>;

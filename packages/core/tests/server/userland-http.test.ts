@@ -10,7 +10,7 @@ import { Application } from "../../dist/core.js";
 // Import the built Application entry directly because ordinary Vitest does not select react-server.
 class Greeting extends Context.Service<
   Greeting,
-  { readonly message: (name: string) => Effect.Effect<string> }
+  Readonly<{ message: (name: string) => Effect.Effect<string> }>
 >()("effront/tests/userland-http/Greeting") {
   static readonly layer = Layer.succeed(Greeting, {
     message: (name) => Effect.succeed(`こんにちは、${name} さん。`),
@@ -18,16 +18,16 @@ class Greeting extends Context.Service<
 }
 
 const workers = createWorkersContextAccessors<
-  { readonly value: string },
-  { readonly requestId: string }
+  Readonly<{ value: string }>,
+  Readonly<{ requestId: string }>
 >();
 
 class RequestEnvironment extends Context.Service<
   RequestEnvironment,
-  { readonly value: string; readonly requestId: string; readonly url: string }
+  Readonly<{ value: string; requestId: string; url: string }>
 >()("effront/tests/userland-http/RequestEnvironment") {}
 
-class RequestInfo extends Context.Service<RequestInfo, { readonly url: string }>()(
+class RequestInfo extends Context.Service<RequestInfo, Readonly<{ url: string }>>()(
   "effront/tests/userland-http/RequestInfo",
 ) {}
 

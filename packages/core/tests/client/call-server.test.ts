@@ -15,7 +15,7 @@ import { ServerFnTransportError } from "../../src/rsc/server-fn-error.ts";
 import type { FlightPayload } from "../../src/rsc/flight.ts";
 import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
 
-type ServerCallback = (id: string, args: ReadonlyArray<unknown>) => Promise<unknown>;
+type ServerCallback = (id: string, args: Readonly<unknown[]>) => Promise<unknown>;
 
 const reactClient = vi.hoisted(() => ({
   serverCallback: undefined as ServerCallback | undefined,
@@ -69,7 +69,7 @@ const makeFlight = (id: string, value: unknown, release: Effect.Effect<void>) =>
   resolvedUrl: new URL(firstEntry.url),
 });
 
-const invokeServerFn = (id: string, args: ReadonlyArray<unknown> = []) => {
+const invokeServerFn = (id: string, args: Readonly<unknown[]> = []) => {
   if (reactClient.serverCallback === undefined) {
     throw new TypeError("Expected the React Server Function callback to be installed.");
   }
@@ -159,7 +159,7 @@ for (const outcome of ["Success", "TransportFailure", "EarlyStop"] as const) {
           ),
         );
         const read = stream(
-          (...args: ReadonlyArray<unknown>) =>
+          (...args: Readonly<unknown[]>) =>
             invokeServerFn("stream", args) as Promise<ReadableStream<string>>,
         );
         const values: Array<string> = [];
@@ -261,7 +261,7 @@ for (const outcome of ["Success", "LateTransportFailure"] as const) {
           ),
         );
         const read = query(
-          (...args: ReadonlyArray<unknown>) => invokeServerFn("value", args) as Promise<string>,
+          (...args: Readonly<unknown[]>) => invokeServerFn("value", args) as Promise<string>,
         );
         const consumer = yield* read().pipe(Effect.forkScoped);
         yield* Deferred.await(started);
@@ -442,10 +442,10 @@ it.effect("releases an incomplete Server Function response", () =>
   ),
 );
 
-type TestNavigationState = {
-  readonly currentEntry: MutableRef.MutableRef<NavigationHistoryEntry | null>;
-  readonly transition: MutableRef.MutableRef<NavigationTransition | null>;
-};
+type TestNavigationState = Readonly<{
+  currentEntry: MutableRef.MutableRef<NavigationHistoryEntry | null>;
+  transition: MutableRef.MutableRef<NavigationTransition | null>;
+}>;
 
 const staleResponseScenario = (
   changeNavigation: (state: TestNavigationState) => void,

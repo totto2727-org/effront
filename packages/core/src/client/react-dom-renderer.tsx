@@ -22,15 +22,15 @@ export class ReactDOMHydrationError extends Schema.TaggedError<ReactDOMHydration
 ) {}
 
 type BrowserErrorBoundaryState =
-  | { readonly _tag: "Uninitialized" }
-  | { readonly _tag: "Ready"; readonly render: BrowserRender }
-  | { readonly _tag: "Failed"; readonly render: BrowserRender };
-type BrowserErrorBoundaryProps = {
-  readonly children: ReactNode;
-  readonly onError: (error: unknown, info: ErrorInfo) => void;
-  readonly onRendered: () => void;
-  readonly render: BrowserRender;
-};
+  | Readonly<{ _tag: "Uninitialized" }>
+  | Readonly<{ _tag: "Ready"; render: BrowserRender }>
+  | Readonly<{ _tag: "Failed"; render: BrowserRender }>;
+type BrowserErrorBoundaryProps = Readonly<{
+  children: ReactNode;
+  onError: (error: unknown, info: ErrorInfo) => void;
+  onRendered: () => void;
+  render: BrowserRender;
+}>;
 
 class BrowserErrorBoundary extends Component<BrowserErrorBoundaryProps, BrowserErrorBoundaryState> {
   override readonly state: BrowserErrorBoundaryState = { _tag: "Uninitialized" };

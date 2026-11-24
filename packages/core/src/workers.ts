@@ -10,11 +10,11 @@ import { toHttpEffect } from "./http.ts";
  * Environment bindings intentionally stay in the Effect context. EFFRONT never adds
  * them to Flight or HTML payloads.
  */
-export type WorkersRequestContext<Env, ExecutionContext> = {
-  readonly env: Env;
-  readonly executionContext: ExecutionContext;
-  readonly request: Request;
-};
+export type WorkersRequestContext<Env, ExecutionContext> = Readonly<{
+  env: Env;
+  executionContext: ExecutionContext;
+  request: Request;
+}>;
 
 export const WorkersRequestContext = Context.Reference<WorkersRequestContext<unknown, unknown>>(
   "effront/workers/WorkersRequestContext",

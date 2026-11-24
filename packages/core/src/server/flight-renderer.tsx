@@ -9,20 +9,20 @@ import { nextErrorDigest } from "./error-digest.ts";
 
 type FlightStream = ReadableStream<Uint8Array>;
 
-export type FlightRender = {
-  readonly release: Effect.Effect<void>;
-  readonly signal: AbortSignal;
-  readonly stream: FlightStream;
-};
+export type FlightRender = Readonly<{
+  release: Effect.Effect<void>;
+  signal: AbortSignal;
+  stream: FlightStream;
+}>;
 
-export type FlightRenderOptions<Services> = {
-  readonly formState: FlightPayload["formState"];
-  readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-  readonly renderRuntime: RenderRuntimeContext;
-  readonly routeTree: RouteTreeModel;
-  readonly serverFnResult: ServerFnResult | null;
-  readonly temporaryReferences?: ReturnType<typeof createTemporaryReferenceSet>;
-};
+export type FlightRenderOptions<Services> = Readonly<{
+  formState: FlightPayload["formState"];
+  middleware: Readonly<AnyMiddleware<Services>[]>;
+  renderRuntime: RenderRuntimeContext;
+  routeTree: RouteTreeModel;
+  serverFnResult: ServerFnResult | null;
+  temporaryReferences?: ReturnType<typeof createTemporaryReferenceSet>;
+}>;
 
 export class FlightRenderer extends Context.Service<FlightRenderer>()(
   "effront/server/flight-renderer/FlightRenderer",
@@ -33,12 +33,12 @@ export class FlightRenderer extends Context.Service<FlightRenderer>()(
         renderRuntime,
         result,
         temporaryReferences,
-      }: {
-        readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-        readonly renderRuntime: RenderRuntimeContext;
-        readonly result: ServerFnResult;
-        readonly temporaryReferences?: ReturnType<typeof createTemporaryReferenceSet>;
-      }): Effect.fn.Return<FlightRender, never, Services | Scope.Scope> {
+      }: Readonly<{
+        middleware: Readonly<AnyMiddleware<Services>[]>;
+        renderRuntime: RenderRuntimeContext;
+        result: ServerFnResult;
+        temporaryReferences?: ReturnType<typeof createTemporaryReferenceSet>;
+      }>): Effect.fn.Return<FlightRender, never, Services | Scope.Scope> {
         const errorDigest = yield* nextErrorDigest;
         const parentScope = yield* Effect.scope;
         const renderScope = yield* Scope.fork(parentScope);

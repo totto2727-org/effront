@@ -15,19 +15,19 @@ export interface EffectComponent<Props, ApplicationServices> extends EFFRONTMemb
   (props: Props): Promise<Awaited<ReactNode>>;
 }
 
-type ComponentOptions<Props, Error, AvailableServices> = {
-  readonly render: (props: Props) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
-};
+type ComponentOptions<Props, Error, AvailableServices> = Readonly<{
+  render: (props: Props) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
+}>;
 
-export type ComponentFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <Props, Error>(
+export type ComponentFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: <Props, Error>(
     options: ComponentOptions<Props, Error, AvailableServices>,
   ) => EffectComponent<Props, ApplicationServices>;
-};
+}>;
 
 export const makeComponentFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): ComponentFactory<ApplicationServices, AvailableServices> => {
   const make = <Props, Error>({
     render,

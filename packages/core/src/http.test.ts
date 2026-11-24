@@ -7,10 +7,10 @@ import type { ApplicationRequirements, ApplicationServices } from "./application
 import { getApplicationState } from "./application/definition.tsx";
 import { makeHttpEffect, toHttpEffect } from "./http.ts";
 
-class External extends Context.Service<External, { readonly label: string }>()(
+class External extends Context.Service<External, Readonly<{ label: string }>>()(
   "effront/test/http/External",
 ) {}
-class RequestResource extends Context.Service<RequestResource, { readonly label: string }>()(
+class RequestResource extends Context.Service<RequestResource, Readonly<{ label: string }>>()(
   "effront/test/http/RequestResource",
 ) {}
 

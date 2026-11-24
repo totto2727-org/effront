@@ -8,7 +8,7 @@ import {
   getWorkersRequestContext,
 } from "./workers.ts";
 
-type Env = { readonly label: string };
+type Env = Readonly<{ label: string }>;
 
 describe("Cloudflare Workers context accessors", () => {
   test("fixes ExecutionContext while allowing application-specific Env", () => {
@@ -25,7 +25,7 @@ describe("Cloudflare Workers context accessors", () => {
       Effect.Effect<WorkersRequestContext<unknown, CloudflareExecutionContext>>
     >();
     // @ts-expect-error Cloudflare only accepts an Env type; use the core factory for another host context.
-    createWorkersContextAccessors<Env, { readonly requestId: string }>();
+    createWorkersContextAccessors<Env, Readonly<{ requestId: string }>>();
   });
 
   test("uses the core Layer and invokes the host's original waitUntil", async () => {

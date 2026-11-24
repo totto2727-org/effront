@@ -3,7 +3,7 @@ import { coreRuntimeSources } from "../../core-runtime.tsx";
 import type { CoreSource } from "../../core-source.tsx";
 import type { DocPage } from "../../types.ts";
 
-function SourceExcerpt({ source }: { readonly source: CoreSource }) {
+function SourceExcerpt({ source }: Readonly<{ source: CoreSource }>) {
   return (
     <figure data-core-source={source.path}>
       <figcaption>

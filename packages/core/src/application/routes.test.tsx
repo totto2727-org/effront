@@ -236,7 +236,7 @@ describe("named catch-all routes", () => {
       | "/manual/**path"
       | "/manual/*bad-name"
       | "/manual/:path/*path";
-    const invalid: ReadonlyArray<Invalid> = [
+    const invalid: Readonly<Invalid[]> = [
       "/manual/*",
       "/manual/*path/more",
       "/manual/prefix*path",

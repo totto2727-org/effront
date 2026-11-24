@@ -18,10 +18,10 @@ const getServerSnapshot = () => false;
 export function PageViewTransitionBoundary({
   children,
   config,
-}: {
-  readonly children?: ReactNode;
-  readonly config: PageViewTransitionConfig;
-}) {
+}: Readonly<{
+  children?: ReactNode;
+  config: PageViewTransitionConfig;
+}>) {
   const reducedMotion = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   if (config.enabled === false) {
     return children;

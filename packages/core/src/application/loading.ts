@@ -17,15 +17,15 @@ type NonEffectOutput<Output> = [Extract<Output, Effect.Effect<unknown, unknown, 
   ? unknown
   : never;
 
-type LoadingOptions<Output extends Awaited<ReactNode>> = {
-  readonly render: (() => Output) & NonEffectOutput<Output>;
-};
+type LoadingOptions<Output extends Awaited<ReactNode>> = Readonly<{
+  render: (() => Output) & NonEffectOutput<Output>;
+}>;
 
-export type LoadingFactory<Services> = {
-  readonly make: <Output extends Awaited<ReactNode>>(
+export type LoadingFactory<Services> = Readonly<{
+  make: <Output extends Awaited<ReactNode>>(
     options: LoadingOptions<Output>,
   ) => LoadingComponent<Services>;
-};
+}>;
 
 export const makeLoadingFactory = <Services>(
   identity: EFFRONTIdentity<Services>,

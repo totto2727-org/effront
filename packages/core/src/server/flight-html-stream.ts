@@ -9,9 +9,9 @@ const emptyBytes = new Uint8Array();
 
 type StreamController = TransformStreamDefaultController<Uint8Array>;
 
-export type FlightHtmlStreamOptions = {
-  readonly nonce?: string;
-};
+export type FlightHtmlStreamOptions = Readonly<{
+  nonce?: string;
+}>;
 
 const trailerPrefixLength = (bytes: Uint8Array) => {
   const maximumLength = Math.min(bytes.byteLength, htmlTrailer.byteLength);

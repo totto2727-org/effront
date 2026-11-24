@@ -42,7 +42,7 @@ function MarkdownPre({
   );
 }
 
-export const markdownPages: readonly RenderableDocPage[] = articleCatalog.map(
+export const markdownPages: Readonly<RenderableDocPage[]> = articleCatalog.map(
   ({ source, ...page }) => ({
     ...page,
     content: () =>
@@ -64,7 +64,7 @@ export const markdownPages: readonly RenderableDocPage[] = articleCatalog.map(
   }),
 );
 
-export function localizedMarkdownPages(locale: DocLocale): readonly RenderableDocPage[] {
+export function localizedMarkdownPages(locale: DocLocale): Readonly<RenderableDocPage[]> {
   const catalog = locale === "en" ? englishArticleCatalog : articleCatalog;
   function ArticleLink({ href, ...props }: ComponentProps<"a">) {
     return <a {...props} href={localizeDocumentLink(href, locale)} />;

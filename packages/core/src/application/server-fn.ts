@@ -15,37 +15,37 @@ export class ServerFnOperationError extends Schema.TaggedError<ServerFnOperation
   { cause: Schema.Defect() },
 ) {}
 
-type ServerFnInvocation<ApplicationServices> = {
-  readonly [ServerFnInvocationTypeId]: {
-    readonly effect: Effect.Effect<
+type ServerFnInvocation<ApplicationServices> = Readonly<{
+  [ServerFnInvocationTypeId]: Readonly<{
+    effect: Effect.Effect<
       unknown,
       ServerFnInputError | ServerFnOperationError,
       ApplicationServices
     >;
-    readonly identity: EFFRONTIdentity<ApplicationServices>;
-    readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
-  };
-};
+    identity: EFFRONTIdentity<ApplicationServices>;
+    middleware: Readonly<AnyMiddleware<ApplicationServices>[]>;
+  }>;
+}>;
 
 type ServerFnInvocationMatch<ApplicationServices> =
-  | { readonly _tag: "Native" }
-  | { readonly _tag: "IdentityMismatch" }
-  | {
-      readonly _tag: "Match";
-      readonly effect: Effect.Effect<
+  | Readonly<{ _tag: "Native" }>
+  | Readonly<{ _tag: "IdentityMismatch" }>
+  | Readonly<{
+      _tag: "Match";
+      effect: Effect.Effect<
         unknown,
         ServerFnInputError | ServerFnOperationError,
         ApplicationServices
       >;
-      readonly middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>;
-    };
+      middleware: Readonly<AnyMiddleware<ApplicationServices>[]>;
+    }>;
 
 type ServerFnInput<Services> =
   | Schema.ConstraintDecoder<unknown, Services>
-  | ReadonlyArray<Schema.ConstraintDecoder<unknown, Services>>;
+  | Readonly<Schema.ConstraintDecoder<unknown, Services>[]>;
 
 type ServerFnArguments<Input, Side extends "Type" | "Encoded"> =
-  Input extends ReadonlyArray<Schema.Constraint>
+  Input extends Readonly<Schema.Constraint[]>
     ? {
         -readonly [Key in keyof Input]: Input[Key] extends Schema.Constraint
           ? Input[Key][Side]
@@ -56,7 +56,7 @@ type ServerFnArguments<Input, Side extends "Type" | "Encoded"> =
       : never;
 
 interface ServerFunction<
-  Args extends ReadonlyArray<unknown>,
+  Args extends Readonly<unknown[]>,
   Output,
   ApplicationServices,
 > extends EFFRONTMember<ApplicationServices, "ServerFn"> {
@@ -75,28 +75,27 @@ type ValidateServerFnOutput<Output, Services> = [Output] extends [never]
     ? [Error] extends [never]
       ? [Requirements] extends [Services]
         ? unknown
-        : { readonly "A streaming Server Function must fit the application services": never }
-      : { readonly "A streaming Server Function must handle its Stream errors": never }
+        : Readonly<{ "A streaming Server Function must fit the application services": never }>
+      : Readonly<{ "A streaming Server Function must handle its Stream errors": never }>
     : [Extract<Output, Stream.Stream<unknown, unknown, unknown>>] extends [never]
       ? unknown
-      : { readonly "A Server Function cannot mix Stream and non-stream results": never };
+      : Readonly<{ "A Server Function cannot mix Stream and non-stream results": never }>;
 
-type ServerFnOptions<Input, Output, Error, Services> = {
-  readonly handler: (
-    ...args: ServerFnArguments<Input, "Type">
-  ) => Effect.Effect<Output, Error, Services>;
-} & ([Input] extends [readonly []] ? { readonly input?: Input } : { readonly input: Input });
+type ServerFnOptions<Input, Output, Error, Services> = Readonly<{
+  handler: (...args: ServerFnArguments<Input, "Type">) => Effect.Effect<Output, Error, Services>;
+}> &
+  ([Input] extends [Readonly<[]>] ? Readonly<{ input?: Input }> : Readonly<{ input: Input }>);
 
-export type ServerFnFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <
-    const Input extends ServerFnInput<AvailableServices> = readonly [],
+export type ServerFnFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: <
+    const Input extends ServerFnInput<AvailableServices> = Readonly<[]>,
     Output = never,
     Error = never,
   >(
     options: ServerFnOptions<Input, Output, Error, AvailableServices> &
       ValidateServerFnOutput<Output, AvailableServices>,
   ) => ServerFunction<ServerFnArguments<Input, "Encoded">, Output, ApplicationServices>;
-};
+}>;
 
 export const isServerFnStream = <Services>(
   value: unknown,
@@ -132,7 +131,7 @@ export const matchServerFnInvocation = <ApplicationServices>(
 
 export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): ServerFnFactory<ApplicationServices, AvailableServices> => ({
   make: ({ input = [], handler }) => {
     const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
@@ -145,7 +144,7 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
           (cause) =>
             new ServerFnInputError({ detail: { message: cause.message, name: cause.name } }),
         ),
-        Effect.flatMap((args: ReadonlyArray<unknown>) =>
+        Effect.flatMap((args: Readonly<unknown[]>) =>
           // Array.ensure widens the input schemas to an array, so Tuple decoding loses the
           // positional Type tuple. Successful decoding against those same schemas establishes
           // the handler's argument types, but TypeScript cannot recover that relationship here.

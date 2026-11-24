@@ -361,7 +361,7 @@ const NarrowPage = NarrowEFFRONT.Page.make({ render: () => Effect.succeed(null) 
 // @ts-expect-error An EFFRONT member belongs to one exact service universe.
 WideEFFRONT.Routes.make().page("/", NarrowPage);
 
-function ArbitraryLayout({ children }: { readonly children: ReactNode }) {
+function ArbitraryLayout({ children }: Readonly<{ children: ReactNode }>) {
   return <main>{children}</main>;
 }
 function ArbitraryLoading() {

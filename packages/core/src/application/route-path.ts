@@ -134,21 +134,22 @@ export type ReservedRoutePath<Path extends AbsolutePath> = Path extends `/${infe
 const InvalidRoutePath = /[?#%;\\]/u;
 const DynamicSegment = /^[:*]([^:*().-]+)$/u;
 
-type RouteAnalysis = {
-  readonly catchAll: string | null;
-  readonly matcher: AbsolutePath;
-  readonly shapes: ReadonlyArray<string>;
-} & (
-  | {
-      readonly _tag: "ParameterFree";
-      readonly shape: string;
-    }
-  | {
-      readonly _tag: "Parameterized";
-      readonly parameterNames: readonly [string, ...Array<string>];
-      readonly shape: string;
-    }
-);
+type RouteAnalysis = Readonly<{
+  catchAll: string | null;
+  matcher: AbsolutePath;
+  shapes: Readonly<string[]>;
+}> &
+  (
+    | Readonly<{
+        _tag: "ParameterFree";
+        shape: string;
+      }>
+    | Readonly<{
+        _tag: "Parameterized";
+        parameterNames: Readonly<[string, ...Array<string>]>;
+        shape: string;
+      }>
+  );
 
 export const analyzeRoutePath = (path: string): RouteAnalysis => {
   if (!path.startsWith("/") || InvalidRoutePath.test(path)) {

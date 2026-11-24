@@ -9,11 +9,11 @@ import { ServerFnIdHeader, type ServerFnResult } from "../rsc/flight.ts";
 import { serverFnResponse } from "./server-fn-outcome.ts";
 import { decodeServerFnCall, ServerFnRequestError, validateOrigin } from "./server-fn-request.ts";
 
-export type PreparedServerFnQuery<Services> = {
-  readonly execute: Effect.Effect<ServerFnResult, never, Services | Scope.Scope>;
-  readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-  readonly temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
-};
+export type PreparedServerFnQuery<Services> = Readonly<{
+  execute: Effect.Effect<ServerFnResult, never, Services | Scope.Scope>;
+  middleware: Readonly<AnyMiddleware<Services>[]>;
+  temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
+}>;
 
 const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
   request: HttpServerRequest.HttpServerRequest,

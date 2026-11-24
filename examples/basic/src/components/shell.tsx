@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-export function Shell({ children }: { readonly children: ReactNode }) {
+export function Shell({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <>
       <nav className="flex flex-wrap gap-4">

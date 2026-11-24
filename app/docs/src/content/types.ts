@@ -15,7 +15,7 @@ export interface DocPage {
     | "アーキテクチャ"
     | "Architecture";
   readonly group?: string;
-  readonly headings: readonly { readonly id: string; readonly title: string }[];
+  readonly headings: Readonly<Readonly<{ id: string; title: string }>[]>;
   readonly content: () => ReactNode;
 }
 

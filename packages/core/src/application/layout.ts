@@ -8,9 +8,9 @@ import {
 } from "./effront-identity.ts";
 import type { AnyMiddleware } from "./middleware.ts";
 
-type LayoutProps = {
-  readonly children: Awaited<ReactNode>;
-};
+type LayoutProps = Readonly<{
+  children: Awaited<ReactNode>;
+}>;
 
 export interface LayoutComponent<ApplicationServices> extends EFFRONTMember<
   ApplicationServices,
@@ -19,21 +19,19 @@ export interface LayoutComponent<ApplicationServices> extends EFFRONTMember<
   (props: LayoutProps): Promise<Awaited<ReactNode>>;
 }
 
-type LayoutOptions<Error, AvailableServices> = {
-  readonly render: (
-    props: LayoutProps,
-  ) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
-};
+type LayoutOptions<Error, AvailableServices> = Readonly<{
+  render: (props: LayoutProps) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
+}>;
 
-export type LayoutFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <Error>(
+export type LayoutFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: <Error>(
     options: LayoutOptions<Error, AvailableServices>,
   ) => LayoutComponent<ApplicationServices>;
-};
+}>;
 
 export const makeLayoutFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): LayoutFactory<ApplicationServices, AvailableServices> => ({
   make: ({ render }) => {
     const LayoutComponent = (props: LayoutProps) =>

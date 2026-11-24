@@ -11,10 +11,10 @@ declare global {
   }
 }
 
-export type HtmlRenderOptions = {
-  readonly formState: FlightPayload["formState"];
-  readonly signal: AbortSignal;
-};
+export type HtmlRenderOptions = Readonly<{
+  formState: FlightPayload["formState"];
+  signal: AbortSignal;
+}>;
 
 export type RenderHtml = (
   stream: ReadableStream<Uint8Array>,
@@ -32,10 +32,10 @@ export class HtmlRenderer extends Context.Service<HtmlRenderer>()(
       render: Effect.fnUntraced(function* ({
         flight,
         formState,
-      }: {
-        readonly flight: FlightRender;
-        readonly formState: FlightPayload["formState"];
-      }): Effect.fn.Return<ReadableStream<Uint8Array>, HtmlRenderError, Scope.Scope> {
+      }: Readonly<{
+        flight: FlightRender;
+        formState: FlightPayload["formState"];
+      }>): Effect.fn.Return<ReadableStream<Uint8Array>, HtmlRenderError, Scope.Scope> {
         const signal = yield* Effect.abortSignal;
         return yield* Effect.tryPromise({
           try: async () => {

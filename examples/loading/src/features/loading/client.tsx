@@ -2,12 +2,12 @@
 
 import { Suspense, use, useRef, useState, useTransition } from "react";
 
-function Result({ result }: { readonly result: Promise<string> | null }) {
+function Result({ result }: Readonly<{ result: Promise<string> | null }>) {
   const text = result === null ? "初期結果（待機なし）" : use(result);
   return <p className="my-3 rounded bg-emerald-100 p-3">{text}</p>;
 }
 
-export function SuspensionDemo({ local }: { readonly local: boolean }) {
+export function SuspensionDemo({ local }: Readonly<{ local: boolean }>) {
   const [result, setResult] = useState<Promise<string> | null>(null);
   const [isPending, startTransition] = useTransition();
   const attempt = useRef(0);

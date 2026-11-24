@@ -8,10 +8,10 @@ import { QueryDemo } from "./query-client.tsx";
 function Timing({
   startedAt,
   completedAt,
-}: {
-  readonly startedAt: number;
-  readonly completedAt: number;
-}) {
+}: Readonly<{
+  startedAt: number;
+  completedAt: number;
+}>) {
   return (
     <p className="mb-3 text-sm text-slate-600">
       サーバー UTC：開始 {new Date(startedAt).toISOString().slice(11, 23)} → 完了{" "}
@@ -112,10 +112,10 @@ const DelayedResult = EFFRONT.Component.make({
   render: Effect.fn("DelayedResult.render")(function* ({
     label,
     seconds,
-  }: {
-    readonly label: string;
-    readonly seconds: number;
-  }) {
+  }: Readonly<{
+    label: string;
+    seconds: number;
+  }>) {
     const startedAt = yield* Effect.sync(Date.now);
     yield* Effect.sleep(`${seconds} seconds`);
     const completedAt = yield* Effect.sync(Date.now);
@@ -137,9 +137,9 @@ const DelayedResult = EFFRONT.Component.make({
 const DependentChild = EFFRONT.Component.make({
   render: Effect.fn("DependentChild.render")(function* ({
     parentResult,
-  }: {
-    readonly parentResult: string;
-  }) {
+  }: Readonly<{
+    parentResult: string;
+  }>) {
     const startedAt = yield* Effect.sync(Date.now);
     yield* Effect.sleep("1.5 seconds");
     const completedAt = yield* Effect.sync(Date.now);

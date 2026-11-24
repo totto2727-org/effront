@@ -66,12 +66,12 @@ const rawAssetUpdates = (): Plugin => {
   };
 };
 
-export type EffrontViteOptions = {
+export type EffrontViteOptions = Readonly<{
   /** RSC environment entry exporting the runtime's `{ fetch }` handler; defaults to `src/entry.workers.ts`. */
-  readonly rsc?: string;
+  rsc?: string;
   /** Application definition export available as `@effront/core/application-entry`; defaults to `src/entry.effront.tsx`. */
-  readonly application?: string;
-};
+  application?: string;
+}>;
 
 /**
  * Configures EFFRONT's RSC, SSR, and browser environments.

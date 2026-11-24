@@ -16,7 +16,7 @@ import { Application } from "./effront.ts";
 import { getEFFRONTIdentity } from "./effront-identity.ts";
 import { getPageState } from "./page.ts";
 
-class Greeting extends Context.Service<Greeting, { readonly value: string }>()(
+class Greeting extends Context.Service<Greeting, Readonly<{ value: string }>>()(
   "effront/tests/application/page/Greeting",
 ) {}
 

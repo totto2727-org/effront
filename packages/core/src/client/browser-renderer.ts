@@ -2,41 +2,41 @@ import { Context, Effect, Layer, MutableRef } from "effect";
 
 import type { RouteTreeModel } from "../rsc/route-tree.ts";
 
-export type BrowserRendererNavigation = {
-  readonly committed: Promise<void>;
-  readonly discard: () => Promise<void>;
-  readonly retired: Promise<void>;
-};
+export type BrowserRendererNavigation = Readonly<{
+  committed: Promise<void>;
+  discard: () => Promise<void>;
+  retired: Promise<void>;
+}>;
 
-type InitialRender = {
-  readonly _tag: "Initial";
-  readonly routeTree: RouteTreeModel;
-};
+type InitialRender = Readonly<{
+  _tag: "Initial";
+  routeTree: RouteTreeModel;
+}>;
 
-type RouteRender = {
-  readonly _tag: "Navigation" | "Refresh";
-  readonly order: number;
-  readonly committed: PromiseWithResolvers<void>;
-  readonly retired: PromiseWithResolvers<void>;
-  readonly routeTree: RouteTreeModel;
-};
+type RouteRender = Readonly<{
+  _tag: "Navigation" | "Refresh";
+  order: number;
+  committed: PromiseWithResolvers<void>;
+  retired: PromiseWithResolvers<void>;
+  routeTree: RouteTreeModel;
+}>;
 
 export type BrowserRender =
   | InitialRender
   | RouteRender
-  | {
-      readonly _tag: "Discard";
-      readonly order: number;
-      readonly restore: InitialRender | RouteRender;
-    };
+  | Readonly<{
+      _tag: "Discard";
+      order: number;
+      restore: InitialRender | RouteRender;
+    }>;
 
-type LiveRender = {
-  readonly _tag: "Scheduled" | "DiscardRequested" | "Committed";
-  readonly lastPublicationOrder: number;
-};
+type LiveRender = Readonly<{
+  _tag: "Scheduled" | "DiscardRequested" | "Committed";
+  lastPublicationOrder: number;
+}>;
 
 type BrowserRendererState =
-  | { readonly _tag: "Uninitialized" }
+  | Readonly<{ _tag: "Uninitialized" }>
   | {
       readonly _tag: "Ready";
       current: BrowserRender;

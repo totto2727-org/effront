@@ -47,12 +47,13 @@ const activateBrowser = Effect.gen(function* () {
 
 const installViteHmr = Effect.gen(function* () {
   const hot = (
-    import.meta as ImportMeta & {
-      readonly hot?: {
-        on: (event: string, listener: () => void) => void;
-        off: (event: string, listener: () => void) => void;
-      };
-    }
+    import.meta as ImportMeta &
+      Readonly<{
+        hot?: {
+          on: (event: string, listener: () => void) => void;
+          off: (event: string, listener: () => void) => void;
+        };
+      }>
   ).hot;
   if (hot === undefined) {
     return;

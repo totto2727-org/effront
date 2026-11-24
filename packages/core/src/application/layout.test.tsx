@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { Application } from "./effront.ts";
 import { getEFFRONTIdentity } from "./effront-identity.ts";
 
-class ShellTitle extends Context.Service<ShellTitle, { readonly value: string }>()(
+class ShellTitle extends Context.Service<ShellTitle, Readonly<{ value: string }>>()(
   "effront/tests/application/layout/ShellTitle",
 ) {}
 

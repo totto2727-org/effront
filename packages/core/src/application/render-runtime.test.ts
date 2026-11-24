@@ -3,7 +3,7 @@ import { Context, Effect } from "effect";
 
 import { makeRenderRuntimeContext, type RenderRuntime } from "./render-runtime.ts";
 
-class RequestLabel extends Context.Service<RequestLabel, { readonly value: string }>()(
+class RequestLabel extends Context.Service<RequestLabel, Readonly<{ value: string }>>()(
   "effront/tests/application/render-runtime/RequestLabel",
 ) {}
 
