@@ -1,4 +1,4 @@
-import { assert, describe, expect, it } from "@effect/vitest";
+import { assert, describe, expect, it, test } from "@effect/vitest";
 import { Context, Effect, Exit, Predicate, Ref, Schema } from "effect";
 
 import { Application } from "./effront.ts";
@@ -22,7 +22,7 @@ const invocationEffect = <Output, Services>(
   return match.effect;
 };
 
-describe("ServerFn.make", () => {
+describe("serverFn.make", () => {
   it.effect("rejects direct invocation in the server graph", () =>
     Effect.gen(function* () {
       const EFFRONT = Application.effront();
@@ -286,7 +286,7 @@ describe("ServerFn.make", () => {
     }),
   );
 
-  it("rejects an invocation owned by another EFFRONT application", () => {
+  test("rejects an invocation owned by another EFFRONT application", () => {
     const First = Application.effront();
     const Second = Application.effront();
     const serverFn = First.ServerFn.make({
@@ -299,7 +299,7 @@ describe("ServerFn.make", () => {
     expect(Predicate.isTagged(match, "IdentityMismatch")).toBe(true);
   });
 
-  it("retains the middleware scope on the native invocation metadata", () => {
+  test("retains the middleware scope on the native invocation metadata", () => {
     const EFFRONT = Application.effront();
     const RequireScope = EFFRONT.Middleware.make((httpEffect) => httpEffect);
     const serverFn = EFFRONT.withMiddleware(RequireScope).ServerFn.make({

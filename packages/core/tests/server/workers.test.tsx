@@ -22,7 +22,7 @@ type TestEnv = Readonly<{ mode?: "empty" | "failure" | "stream"; value: string }
 const accessors = createWorkersContextAccessors<TestEnv, Readonly<{ requestId: string }>>();
 const encoder = new TextEncoder();
 
-describe("createFetchHandler", () => {
+describe(createFetchHandler, () => {
   it.effect(
     "builds application services from each request environment and releases at response EOF",
     () =>
@@ -156,7 +156,9 @@ describe("createFetchHandler", () => {
         );
         yield* Effect.promise(() =>
           failing.text().then(
-            () => Promise.reject(new Error("Expected stream failure.")),
+            () => {
+              throw new Error("Expected stream failure.");
+            },
             () => undefined,
           ),
         );

@@ -1,5 +1,6 @@
-import { describe, expect, it } from "@effect/vitest";
-import { Context, Effect, Layer, Scope, Stream } from "effect";
+import { describe, expect, test } from "@effect/vitest";
+import type { Scope } from "effect";
+import { Context, Effect, Layer, Stream } from "effect";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 import { Application } from "./application/effront.ts";
@@ -15,11 +16,11 @@ class RequestResource extends Context.Service<RequestResource, Readonly<{ label:
 ) {}
 
 const encoder = new TextEncoder();
-type Acquisition = {
+interface Acquisition {
   readonly label: string;
   readonly scope: Scope.Scope;
   released: number;
-};
+}
 
 const makeProbeApplication = (
   acquisitions: Acquisition[],
@@ -80,7 +81,7 @@ const capture = (application: ReturnType<typeof makeProbeApplication>) =>
   );
 
 describe("native HTTP effects", () => {
-  it.each(["captured", "ambient"] as const)(
+  test.each(["captured", "ambient"] as const)(
     "isolates request acquisition from a primed construction memo map (%s)",
     async (mode) => {
       const acquisitions: Acquisition[] = [];
@@ -130,7 +131,7 @@ describe("native HTTP effects", () => {
     },
   );
 
-  it("preserves application services and external requirements at the type boundary", () => {
+  test("preserves application services and external requirements at the type boundary", () => {
     const application = makeProbeApplication([]);
     const services: ApplicationServices<typeof application> = RequestResource;
     const external: ApplicationRequirements<typeof application> = External;
@@ -145,7 +146,7 @@ describe("native HTTP effects", () => {
     expect(checkTypes).toBeTypeOf("function");
   });
 
-  it("captures external services without building request layers or retaining a closed construction scope", async () => {
+  test("captures external services without building request layers or retaining a closed construction scope", async () => {
     const acquisitions: Acquisition[] = [];
     const handler = HttpEffect.toWebHandler(await capture(makeProbeApplication(acquisitions)));
     expect(acquisitions).toStrictEqual([]);
@@ -157,7 +158,7 @@ describe("native HTTP effects", () => {
     expect(acquisition.released).toBe(1);
   });
 
-  it("uses current external context with an ambient handler and isolates concurrent request scopes", async () => {
+  test("uses current external context with an ambient handler and isolates concurrent request scopes", async () => {
     const acquisitions: Acquisition[] = [];
     const httpEffect = toHttpEffect(makeProbeApplication(acquisitions));
     const handler = HttpEffect.toWebHandlerWith<never, Effect.Services<typeof httpEffect>>(
@@ -175,7 +176,7 @@ describe("native HTTP effects", () => {
     expect(acquisitions.map((value) => value.released)).toStrictEqual([1, 1]);
   });
 
-  it("lets live external services override captured service references", async () => {
+  test("lets live external services override captured service references", async () => {
     const acquisitions: Acquisition[] = [];
     const handler = HttpEffect.toWebHandler(await capture(makeProbeApplication(acquisitions)));
     const response = await handler(request("live"), Context.make(External, { label: "override" }));
@@ -183,7 +184,7 @@ describe("native HTTP effects", () => {
     await response.body!.cancel();
   });
 
-  it("keeps acquired resources alive while delayed stream chunks run and closes them at EOF", async () => {
+  test("keeps acquired resources alive while delayed stream chunks run and closes them at EOF", async () => {
     const acquisitions: Acquisition[] = [];
     const app = makeProbeApplication(acquisitions, (acquisition) =>
       Effect.succeed(
@@ -202,7 +203,7 @@ describe("native HTTP effects", () => {
     expect(acquisitions[0]!.released).toBe(1);
   });
 
-  it("closes request resources when the body stream fails", async () => {
+  test("closes request resources when the body stream fails", async () => {
     const acquisitions: Acquisition[] = [];
     const app = makeProbeApplication(acquisitions, () =>
       Effect.succeed(HttpServerResponse.stream(Stream.fail(new Error("body failed")))),
@@ -212,7 +213,7 @@ describe("native HTTP effects", () => {
     expect(acquisitions[0]!.released).toBe(1);
   });
 
-  it("closes request resources for HEAD and non-stream responses", async () => {
+  test("closes request resources for HEAD and non-stream responses", async () => {
     const acquisitions: Acquisition[] = [];
     const head = await HttpEffect.toWebHandler(await capture(makeProbeApplication(acquisitions)))(
       request("head", { method: "HEAD" }),
@@ -226,7 +227,7 @@ describe("native HTTP effects", () => {
     await expect.poll(() => acquisitions[1]!.released).toBe(1);
   });
 
-  it("rejects oversized requests before acquiring application services", async () => {
+  test("rejects oversized requests before acquiring application services", async () => {
     const acquisitions: Acquisition[] = [];
     const handler = HttpEffect.toWebHandler(await capture(makeProbeApplication(acquisitions)));
     const response = await handler(
@@ -236,7 +237,7 @@ describe("native HTTP effects", () => {
     expect(acquisitions).toStrictEqual([]);
   });
 
-  it("does not dispose host-owned external services when a request finishes", async () => {
+  test("does not dispose host-owned external services when a request finishes", async () => {
     let externalReleased = 0;
     await Effect.runPromise(
       Effect.scoped(
@@ -262,7 +263,7 @@ describe("native HTTP effects", () => {
     expect(externalReleased).toBe(1);
   });
 
-  it("interrupts pending request work and releases its application resources on client abort", async () => {
+  test("interrupts pending request work and releases its application resources on client abort", async () => {
     const acquisitions: Acquisition[] = [];
     let interrupted = false;
     const app = makeProbeApplication(acquisitions, () =>
@@ -285,7 +286,7 @@ describe("native HTTP effects", () => {
     expect(interrupted).toBe(true);
   });
 
-  it("preserves streamed GET metadata and releases the request scope for HEAD", async () => {
+  test("preserves streamed GET metadata and releases the request scope for HEAD", async () => {
     const acquisitions: Acquisition[] = [];
     const app = makeProbeApplication(acquisitions, () =>
       Effect.succeed(
@@ -308,7 +309,7 @@ describe("native HTTP effects", () => {
     await expect.poll(() => acquisitions[0]!.released).toBe(1);
   });
 
-  it("forwards an external service into application middleware without constructing another instance", async () => {
+  test("forwards an external service into application middleware without constructing another instance", async () => {
     const EFFRONT = Application.effront<External>();
     const shell = EFFRONT.Layout.make({ render: ({ children }) => Effect.succeed(children) });
     const page = EFFRONT.Page.make({ render: () => Effect.succeed(null) });
@@ -333,7 +334,7 @@ describe("native HTTP effects", () => {
     await expect(response.text()).resolves.toBe("direct");
   });
 
-  it("preserves typed acquisition failures and finalizes partially acquired application layers", async () => {
+  test("preserves typed acquisition failures and finalizes partially acquired application layers", async () => {
     let released = 0;
     const failure = new Error("acquisition failed");
     const EFFRONT = Application.effront<External>();

@@ -165,14 +165,15 @@ type RouterTransition = Readonly<{
 
 const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransition => {
   if (state.visible._tag === "Navigation" && state.visible.generation === event.generation) {
-    const visible = state.visible;
+    const { visible } = state;
     switch (event._tag) {
-      case "RenderRetired":
+      case "RenderRetired": {
         return {
           command: null,
           state: { ...state, visible: { _tag: "Settled" } },
         };
-      case "HistoryCommitted":
+      }
+      case "HistoryCommitted": {
         if (visible.entry._tag === "Committed") {
           throw new TypeError("A visible navigation history entry cannot commit twice.");
         }
@@ -195,7 +196,8 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
               : { _tag: "CacheRoute", cache: visible.flight.cache, entry: event.entry },
           state: { ...state, visible: { _tag: "Settled" } },
         };
-      case "FlightCompleted":
+      }
+      case "FlightCompleted": {
         if (visible.flight._tag === "Completed") {
           throw new TypeError("A visible navigation Flight stream cannot complete twice.");
         }
@@ -222,7 +224,8 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
                 },
           state: { ...state, visible: { _tag: "Settled" } },
         };
-      case "FlightFailed":
+      }
+      case "FlightFailed": {
         if (visible.flight._tag === "Completed") {
           throw new TypeError("A completed visible Flight stream cannot fail.");
         }
@@ -230,6 +233,7 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
           command: { _tag: "ReleaseRoute", resource: visible.flight.resource },
           state: { ...state, visible: { _tag: "Settled" } },
         };
+      }
     }
   }
 
@@ -262,9 +266,10 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
 
   if (state._tag === "Ready" || state.candidate.generation !== event.generation) {
     switch (event._tag) {
-      case "RouteLoaded":
+      case "RouteLoaded": {
         return { command: { _tag: "ReleaseRoute", resource: event.resource }, state };
-      case "RenderScheduled":
+      }
+      case "RenderScheduled": {
         return {
           command: {
             _tag: "DiscardRoute",
@@ -273,19 +278,22 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
           },
           state,
         };
-      default:
+      }
+      default: {
         return { command: null, state };
+      }
     }
   }
 
   switch (event._tag) {
     case "DocumentLoaded":
-    case "FlightFailed":
+    case "FlightFailed": {
       if (state.candidate._tag !== "Loading") {
         throw new TypeError(`${event._tag} cannot follow ${state.candidate._tag}.`);
       }
       return { command: null, state: { _tag: "Ready", visible: state.visible } };
-    case "RouteLoaded":
+    }
+    case "RouteLoaded": {
       if (state.candidate._tag !== "Loading") {
         throw new TypeError(`RouteLoaded cannot follow ${state.candidate._tag}.`);
       }
@@ -306,7 +314,8 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
           visible: state.visible,
         },
       };
-    case "RenderScheduled":
+    }
+    case "RenderScheduled": {
       if (state.candidate._tag !== "Publishing") {
         throw new TypeError(`RenderScheduled cannot follow ${state.candidate._tag}.`);
       }
@@ -327,7 +336,8 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
           visible: state.visible,
         },
       };
-    case "RenderCommitted":
+    }
+    case "RenderCommitted": {
       if (state.candidate._tag !== "Rendering") {
         throw new TypeError(`RenderCommitted cannot follow ${state.candidate._tag}.`);
       }
@@ -343,7 +353,8 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
           },
         },
       };
-    case "NavigationAborted":
+    }
+    case "NavigationAborted": {
       if (state.candidate._tag === "Loading") {
         return { command: null, state: { _tag: "Ready", visible: state.visible } };
       }
@@ -361,6 +372,7 @@ const reduceRouterState = (state: RouterState, event: RouterEvent): RouterTransi
         },
         state: { _tag: "Ready", visible: state.visible },
       };
+    }
   }
 };
 
@@ -395,8 +407,10 @@ export const installClientRouter = Effect.gen(function* () {
     }
     switch (command._tag) {
       case "SupersedeCandidate": {
-        const candidate = command.candidate;
-        yield* Effect.sync(() => candidate.lifetime.abort());
+        const { candidate } = command;
+        yield* Effect.sync(() => {
+          candidate.lifetime.abort();
+        });
         if (candidate._tag === "Loading") {
           break;
         }
@@ -409,23 +423,32 @@ export const installClientRouter = Effect.gen(function* () {
         );
         break;
       }
-      case "ReleaseRoute":
+      case "ReleaseRoute": {
         yield* command.resource.release;
         break;
-      case "CacheRoute":
-        yield* Effect.sync(() => command.cache(command.entry));
+      }
+      case "CacheRoute": {
+        yield* Effect.sync(() => {
+          command.cache(command.entry);
+        });
         break;
-      case "CacheAndReleaseRoute":
-        yield* Effect.sync(() => command.resource.cache(command.entry));
+      }
+      case "CacheAndReleaseRoute": {
+        yield* Effect.sync(() => {
+          command.resource.cache(command.entry);
+        });
         yield* command.resource.release;
         break;
-      case "DiscardRoute":
+      }
+      case "DiscardRoute": {
         yield* Effect.promise(() => command.rendererNavigation.discard()).pipe(
           Effect.ensuring(command.resource.release),
         );
         break;
-      default:
+      }
+      default: {
         throw new TypeError(`Cannot execute the ${command._tag} lifecycle command here.`);
+      }
     }
   });
 
@@ -500,7 +523,7 @@ export const installClientRouter = Effect.gen(function* () {
         }
 
         const transition = dispatch({ _tag: "RouteLoaded", generation, resource });
-        const command = transition.command;
+        const { command } = transition;
         if (command?._tag === "ReleaseRoute") {
           yield* command.resource.release;
           return { _tag: "Handled" } as const;
@@ -555,7 +578,7 @@ export const installClientRouter = Effect.gen(function* () {
         const transition = dispatch({ _tag: "NavigationAborted", generation });
         return executeRouterCommand(transition.command);
       });
-      const outcome = await preparation.promise.catch((cause) => {
+      const outcome = await preparation.promise.catch((error) => {
         if (navigationSignal.aborted) {
           return run(abortNavigation.pipe(Effect.as({ _tag: "Handled" } as NavigationPreparation)));
         }
@@ -563,7 +586,7 @@ export const installClientRouter = Effect.gen(function* () {
           navigationApi.reloadDocument();
           return { _tag: "Handled" } as NavigationPreparation;
         }
-        throw cause;
+        throw error;
       });
       if (outcome._tag === "Handled") {
         return;
@@ -586,11 +609,11 @@ export const installClientRouter = Effect.gen(function* () {
       );
       try {
         await run(waitForNavigationCommit, { signal: navigationSignal });
-      } catch (cause) {
+      } catch (error) {
         if (navigationSignal.aborted) {
           return;
         }
-        throw cause;
+        throw error;
       }
 
       const waitForRenderRetirement = Effect.gen(function* () {

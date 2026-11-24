@@ -6,7 +6,7 @@ import { Effect } from "effect";
 import { makeInitialFlightStream } from "./initial-flight-stream.ts";
 import type { EmbeddedFlightChunk } from "./initial-flight-stream.ts";
 
-describe("makeInitialFlightStream", () => {
+describe(makeInitialFlightStream, () => {
   it.effect(
     "drains embedded chunks, accepts later scripts, and closes when the document is ready",
     () =>

@@ -14,13 +14,17 @@ export function SuspensionDemo({ local }: Readonly<{ local: boolean }>) {
 
   function load(transition: boolean): void {
     attempt.current += 1;
-    const current = attempt.current;
+    const { current } = attempt;
     // An event owns each promise. Creating it during render would suspend again on retry.
     const next = new Promise<string>((resolve) => {
-      setTimeout(() => resolve(`更新 ${current} 完了（2秒）`), 2_000);
+      setTimeout(() => {
+        resolve(`更新 ${current} 完了（2秒）`);
+      }, 2000);
     });
     if (transition) {
-      startTransition(() => setResult(next));
+      startTransition(() => {
+        setResult(next);
+      });
     } else {
       setResult(next);
     }
@@ -43,14 +47,18 @@ export function SuspensionDemo({ local }: Readonly<{ local: boolean }>) {
         <button
           className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50"
           disabled={isPending}
-          onClick={() => load(false)}
+          onClick={() => {
+            load(false);
+          }}
         >
           通常更新（2秒）
         </button>
         <button
           className="rounded bg-slate-700 px-4 py-2 text-white disabled:opacity-50"
           disabled={isPending}
-          onClick={() => load(true)}
+          onClick={() => {
+            load(true);
+          }}
         >
           Transition 更新（2秒）
         </button>

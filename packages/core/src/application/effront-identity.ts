@@ -21,14 +21,14 @@ export type EFFRONTMemberKind =
   | "Routes"
   | "ServerFn";
 
-export type EFFRONTIdentity<Services> = {
+export interface EFFRONTIdentity<Services> {
   readonly [EFFRONTServicesTypeId]?: Types.Invariant<Services>;
   readonly renderRuntime: RenderRuntimeContext;
-};
+}
 
-type EFFRONTMemberKindMarker<Kind extends EFFRONTMemberKind> = {
+interface EFFRONTMemberKindMarker<Kind extends EFFRONTMemberKind> {
   readonly [EFFRONTMemberKindTypeId]: Kind;
-};
+}
 
 export type EFFRONTMember<
   Services,

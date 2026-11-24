@@ -18,7 +18,7 @@ const SIDEBAR_WIDTH = "17rem";
 const SIDEBAR_WIDTH_MOBILE = "19rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 
-type SidebarContextProps = {
+interface SidebarContextProps {
   state: "expanded" | "collapsed";
   open: boolean;
   setOpen: (value: boolean | ((value: boolean) => boolean)) => void;
@@ -27,7 +27,7 @@ type SidebarContextProps = {
   isMobile: boolean;
   toggleSidebar: () => void;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
-};
+}
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
 function useSidebar(): SidebarContextProps {
@@ -83,7 +83,9 @@ function SidebarProvider({
       }
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+    };
   }, [toggleSidebar]);
   const value = React.useMemo(
     () => ({

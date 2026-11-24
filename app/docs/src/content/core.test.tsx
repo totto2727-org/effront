@@ -9,7 +9,7 @@ import { coreRuntimeSources } from "./core-runtime.tsx";
 
 const exec = promisify(execFile);
 const repository = new URL("../../../../", import.meta.url);
-const gitTimeout = 4_000;
+const gitTimeout = 4000;
 
 const baselineSource = async (path: string): Promise<string> => {
   const { stdout } = await exec("git", ["show", `${architectureBaseline.commit}:${path}`], {
@@ -29,6 +29,7 @@ describe("current core learning material", () => {
     });
     expect(architectureBaseline.commit).toMatch(/^[a-f0-9]{40}$/u);
   });
+
   test.each(coreSources)(
     "keeps the $path excerpt identical to current implementation",
     async (source) => {

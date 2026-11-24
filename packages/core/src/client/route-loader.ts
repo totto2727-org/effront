@@ -59,7 +59,9 @@ export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/
       const cached = cache.get(entry.id);
       if (cached?.entry !== entry) {
         cached?.entry.removeEventListener("dispose", cached.onDispose);
-        const onDispose = (): void => remove(cache, entry);
+        const onDispose = (): void => {
+          remove(cache, entry);
+        };
         entry.addEventListener("dispose", onDispose, { once: true });
         cache.set(entry.id, { entry, onDispose, routeTree });
         return;
@@ -156,7 +158,11 @@ export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/
       return resource.payload;
     });
 
-    yield* Effect.addFinalizer(() => Effect.sync(() => clear(MutableRef.get(cacheRef))));
+    yield* Effect.addFinalizer(() =>
+      Effect.sync(() => {
+        clear(MutableRef.get(cacheRef));
+      }),
+    );
 
     return { invalidate, load, loadInitial, prepareRefresh };
   }),

@@ -7,7 +7,9 @@ export function Counter() {
   return (
     <button
       className="rounded border border-slate-400 bg-slate-100 px-4 py-2"
-      onClick={() => setCount((value) => value + 1)}
+      onClick={() => {
+        setCount((value) => value + 1);
+      }}
     >
       Count: {count}
     </button>

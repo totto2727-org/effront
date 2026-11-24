@@ -11,12 +11,18 @@ export class NavigationApi extends Context.Service<NavigationApi>()(
       getTransition: () => window.navigation?.transition ?? null,
       navigate: (url: string | URL, options?: NavigationNavigateOptions) =>
         window.navigation.navigate(url, options),
-      reloadDocument: () => window.location.reload(),
-      replaceDocument: (url: string) => window.location.replace(url),
+      reloadDocument: () => {
+        window.location.reload();
+      },
+      replaceDocument: (url: string) => {
+        window.location.replace(url);
+      },
       subscribe: (listener: NavigateListener) => {
-        const navigation = window.navigation;
+        const { navigation } = window;
         navigation?.addEventListener("navigate", listener);
-        return () => navigation?.removeEventListener("navigate", listener);
+        return () => {
+          navigation?.removeEventListener("navigate", listener);
+        };
       },
     }),
   },

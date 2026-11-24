@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, it, test } from "@effect/vitest";
 import { Context, Effect } from "effect";
 
 import { makeRenderRuntimeContext } from "./render-runtime.ts";
@@ -13,8 +13,8 @@ const runtimeWithLabel =
   (effect) =>
     Effect.runPromise(effect.pipe(Effect.provideService(RequestLabel, { value })));
 
-describe("RenderRuntimeContext", () => {
-  it("throws a programmer error when work runs outside a bound render runtime", () => {
+describe("renderRuntimeContext", () => {
+  test("throws a programmer error when work runs outside a bound render runtime", () => {
     const context = makeRenderRuntimeContext();
 
     expect(() => context.run("Component", Effect.void, [])).toThrow(
@@ -30,14 +30,18 @@ describe("RenderRuntimeContext", () => {
       const readLabel = Effect.map(RequestLabel, ({ value }) => value);
       const first = context.bind(runtimeWithLabel("first"), [], () =>
         Promise.resolve()
-          .then(() => firstReady.resolve())
+          .then(() => {
+            firstReady.resolve();
+          })
           .then(() => releaseFirst.promise)
           .then(() => context.run("Component", readLabel, [])),
       );
 
       yield* Effect.promise(() => firstReady.promise);
       const second = context.bind(runtimeWithLabel("second"), [], () =>
-        context.run("Component", readLabel, []).finally(() => releaseFirst.resolve()),
+        context.run("Component", readLabel, []).finally(() => {
+          releaseFirst.resolve();
+        }),
       );
       const labels = yield* Effect.promise(() => Promise.all([first, second]));
 

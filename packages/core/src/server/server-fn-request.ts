@@ -7,7 +7,7 @@ import type { AnyMiddleware } from "#core/application/middleware.ts";
 import { matchServerFnInvocation } from "#core/application/server-fn.ts";
 import type { ServerFnOperationError } from "#core/application/server-fn.ts";
 import { ServerFnIdHeader } from "#core/rsc/flight.ts";
-import { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
+import type { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
 import type { RequestOutcome } from "./request-outcome.ts";
 import { serverFnOutcome } from "./server-fn-outcome.ts";
 
@@ -64,7 +64,7 @@ export const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
   Effect.try({
     catch: (cause) => requestError("Rejected a cross-origin Server Function request.", 403, cause),
     try: () => {
-      const origin = request.headers["origin"];
+      const { origin } = request.headers;
       if (Predicate.isNullish(origin)) {
         throw new Error("The Origin header is missing.");
       }
@@ -143,23 +143,26 @@ const prepareServerFnOperation = <ApplicationServices>(
     const invocation = action(...args);
     const match = matchServerFnInvocation(invocation, identity);
     switch (match._tag) {
-      case "Match":
+      case "Match": {
         return {
           effect: match.effect,
           middleware: match.middleware,
         };
-      case "IdentityMismatch":
+      }
+      case "IdentityMismatch": {
         return {
           effect: Effect.die(
             new TypeError("Server Function was created by a different EFFRONT module."),
           ),
           middleware: NoMiddleware,
         };
-      case "Native":
+      }
+      case "Native": {
         return {
           effect: normalizeServerFnFailure(Effect.promise(() => Promise.resolve(invocation))),
           middleware: NoMiddleware,
         };
+      }
     }
   }).pipe(normalizeServerFnFailure);
 

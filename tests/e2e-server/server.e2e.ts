@@ -27,7 +27,7 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
   const documentResponse = await page.goto("/");
   expect(documentResponse?.headers()["content-type"]).toContain("charset=utf-8");
   await page.waitForLoadState("networkidle");
-  expect(await page.evaluate(() => document.characterSet)).toBe("UTF-8");
+  expect(await page.evaluate(() => document.characterSet)).toBe("utf8");
   expect(errors).toEqual([]);
   await page.getByRole("button", { name: "Count: 0", exact: true }).click();
   await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
@@ -37,14 +37,14 @@ test("native HTTP serves SSR, hydration, Server Functions and navigation", async
   const transition = page.evaluate(
     () =>
       new Promise<boolean>((resolve) => {
-        const deadline = performance.now() + 5_000;
+        const deadline = performance.now() + 5000;
         const observe = (): void => {
           for (const animation of document.getAnimations()) {
-            const effect = animation.effect;
+            const { effect } = animation;
             if (!(effect instanceof KeyframeEffect)) {
               continue;
             }
-            const progress = effect.getComputedTiming().progress;
+            const { progress } = effect.getComputedTiming();
             if (
               effect.pseudoElement?.includes("effront-page") &&
               animation.playState === "running" &&
@@ -119,7 +119,7 @@ test("production static policy never exposes server source or replaces missing a
     expect(response.status()).toBe(httpStatusNotFound);
   }
   const response = await request.get("/hello.txt");
-  const etag = response.headers()["etag"];
+  const { etag } = response.headers();
   expect(etag).toBeTruthy();
   const cached = await request.get("/hello.txt", { headers: { "If-None-Match": etag! } });
   expect(cached.status()).toBe(httpStatusNotModified);

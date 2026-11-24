@@ -76,9 +76,9 @@ describe("docs cache middleware", () => {
     "text/html;q=-1",
     "text/html;q = 0",
     "text/html;q=0=1",
-  ])("does not opt unsupported Accept %s into caching", async (accept) =>
-    expectPolicy(await run(pageRequest({ accept })), false),
-  );
+  ])("does not opt unsupported Accept %s into caching", async (accept) => {
+    expectPolicy(await run(pageRequest({ accept })), false);
+  });
 
   test("does not opt requests without Accept into caching", async () => {
     expectPolicy(await run(new Request("https://docs.example/guide")), false);

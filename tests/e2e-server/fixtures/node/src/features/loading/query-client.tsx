@@ -8,7 +8,7 @@ function QueryResult({ item }: Readonly<{ item: number }>) {
     queryKey: ["loading-playground", item],
     queryFn: async () => {
       // Only mounted by a browser event. This delay makes the real fetch easy to observe.
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 2_000));
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 2000));
       const response = await fetch(`/loading-query.txt?item=${item}`, { cache: "no-store" });
       if (!response.ok) {
         throw new Error(`取得失敗: HTTP ${response.status}`);
@@ -82,27 +82,24 @@ export function QueryDemo() {
         Infinity。再取得ボタンで明示的に更新し、完了時刻の変化を確認してください。
       </p>
       <QueryClientProvider client={client}>
-        {!started ? (
-          <button
-            className="rounded bg-blue-700 px-4 py-2 text-white"
-            onClick={() => setStarted(true)}
-          >
-            開始（ブラウザーで取得）
-          </button>
-        ) : (
+        {started ? (
           <>
             <div className="flex flex-wrap gap-3">
               <button
                 className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50"
                 disabled={isPending}
-                onClick={() => setItem((previous) => previous + 1)}
+                onClick={() => {
+                  setItem((previous) => previous + 1);
+                }}
               >
                 通常のキー変更（2秒）
               </button>
               <button
                 className="rounded bg-slate-700 px-4 py-2 text-white disabled:opacity-50"
                 disabled={isPending}
-                onClick={() => startTransition(() => setItem((previous) => previous + 1))}
+                onClick={() => {
+                  startTransition(() => setItem((previous) => previous + 1));
+                }}
               >
                 Transition のキー変更（2秒）
               </button>
@@ -124,6 +121,15 @@ export function QueryDemo() {
               <QueryResult item={item} />
             </Suspense>
           </>
+        ) : (
+          <button
+            className="rounded bg-blue-700 px-4 py-2 text-white"
+            onClick={() => {
+              setStarted(true);
+            }}
+          >
+            開始（ブラウザーで取得）
+          </button>
         )}
       </QueryClientProvider>
     </section>

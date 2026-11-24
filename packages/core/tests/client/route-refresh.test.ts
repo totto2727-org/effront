@@ -3,7 +3,7 @@ import { Deferred, Effect, Fiber, Layer } from "effect";
 import { HttpClient } from "effect/http";
 import { vi } from "vitest";
 
-vi.mock("@vitejs/plugin-rsc/browser", () => ({
+vi.mock(import("@vitejs/plugin-rsc/browser"), () => ({
   createFromReadableStream: vi.fn(),
 }));
 
@@ -15,12 +15,13 @@ const react = vi.hoisted(() => ({
 vi.mock("react", (importOriginal) =>
   importOriginal<typeof import("react")>().then((original) => ({
     ...original,
-    startTransition: (action: Parameters<typeof original.startTransition>[0]) =>
+    startTransition: (action: Parameters<typeof original.startTransition>[0]) => {
       original.startTransition(() => {
         const result = action();
         react.transitionResults.push(result);
         return result;
-      }),
+      });
+    },
     addTransitionType: (type: string) => {
       react.transitionTypes.push(type);
     },
@@ -91,7 +92,9 @@ const makeNavigationApiLayer = (navigation: TestNavigation): Layer.Layer<Navigat
     replaceDocument: vi.fn(),
     subscribe: (listener) => {
       navigation.addEventListener("navigate", listener as EventListener);
-      return () => navigation.removeEventListener("navigate", listener as EventListener);
+      return () => {
+        navigation.removeEventListener("navigate", listener as EventListener);
+      };
     },
   });
 
@@ -404,7 +407,9 @@ it.effect("releases a streaming refresh when its replacement becomes visible", (
     const navigation = new TestNavigation();
     const browserRenderer = yield* BrowserRenderer.make;
     let published = Promise.withResolvers<BrowserRender>();
-    browserRenderer.initialize(makeRouteTree("initial"), (render) => published.resolve(render));
+    browserRenderer.initialize(makeRouteTree("initial"), (render) => {
+      published.resolve(render);
+    });
     const { routeLoader, streamReleased, responseScopeClosed, releaseStream, cached } =
       yield* makeStreamingRefresh;
 
@@ -439,7 +444,9 @@ it.effect("discards an uncommitted refresh before releasing its response", () =>
     const browserRenderer = yield* BrowserRenderer.make;
     let published = Promise.withResolvers<BrowserRender>();
     const initialTree = makeRouteTree("initial");
-    browserRenderer.initialize(initialTree, (render) => published.resolve(render));
+    browserRenderer.initialize(initialTree, (render) => {
+      published.resolve(render);
+    });
     const { routeLoader, streamReleased, responseScopeClosed, releaseStream, cached } =
       yield* makeStreamingRefresh;
 

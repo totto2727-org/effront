@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 
-const fixtures = fileURLToPath(new URL("./fixtures/", import.meta.url));
+const fixtures = fileURLToPath(new URL("fixtures/", import.meta.url));
 // Playwright starts web servers in this order. Preview reuses the completed Node build.
 const hosts = [
   {

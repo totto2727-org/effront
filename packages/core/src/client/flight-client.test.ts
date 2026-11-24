@@ -60,7 +60,13 @@ const makePendingFlightResponse = (signal: AbortSignal): Response =>
   new Response(
     new ReadableStream<Uint8Array>({
       start(controller) {
-        signal.addEventListener("abort", () => controller.error(signal.reason), { once: true });
+        signal.addEventListener(
+          "abort",
+          () => {
+            controller.error(signal.reason);
+          },
+          { once: true },
+        );
       },
     }),
     {
@@ -146,7 +152,9 @@ it.effect("keeps streamed chunks cancellable after the root payload resolves", (
       void stream
         .getReader()
         .read()
-        .catch(() => responseConsumptionStopped.resolve());
+        .catch(() => {
+          responseConsumptionStopped.resolve();
+        });
       return Promise.resolve(decodedPayload);
     });
     const client = makeClient((_request, signal) => {
@@ -206,7 +214,9 @@ it.effect("cancels an unfinished decoded stream when the browser scope closes", 
       void stream
         .getReader()
         .read()
-        .catch(() => responseConsumptionStopped.resolve());
+        .catch(() => {
+          responseConsumptionStopped.resolve();
+        });
       return Promise.resolve(decodedPayload);
     });
     const client = makeClient((_request, signal) => {
@@ -417,9 +427,9 @@ it.effect("cancels Flight response consumption when loading is interrupted", () 
         .getReader()
         .read()
         .then(() => decodedPayload)
-        .catch((cause) => {
+        .catch((error) => {
           responseConsumptionStopped.resolve();
-          throw cause;
+          throw error;
         });
     });
     const client = makeClient((_request, signal) => {

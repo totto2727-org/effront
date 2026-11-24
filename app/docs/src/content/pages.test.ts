@@ -16,7 +16,8 @@ function render(slug: string): Promise<string> {
   }
   return html;
 }
-const text = async (slug: string): Promise<string> => (await render(slug)).replace(/<[^>]*>/g, "");
+const text = async (slug: string): Promise<string> =>
+  (await render(slug)).replaceAll(/<[^>]*>/g, "");
 
 // These are published URLs, not a count that can silently hide a removed article.
 const retainedUrls = [
@@ -205,7 +206,7 @@ describe("documentation catalog", () => {
         expect(page.headings).toStrictEqual(
           [...source.matchAll(/^#{2,6} (.*?) \{#([^}]+)\}$/gm)].map((match) => ({
             id: match[2],
-            title: match[1]?.replace(/`/gu, ""),
+            title: match[1]?.replaceAll("`", ""),
           })),
         );
       }
@@ -375,7 +376,7 @@ describe("documentation catalog", () => {
     );
     const effect = await render("/guide/effect");
     ["Context.Service", "Layer", "Application.effront"].forEach((contract) => {
-      expect(effect.replace(/<[^>]*>/g, "")).toContain(contract);
+      expect(effect.replaceAll(/<[^>]*>/g, "")).toContain(contract);
     });
     expect(effect).toContain('href="https://effect.website/');
   });
@@ -603,9 +604,9 @@ describe("documentation catalog", () => {
         }
         for (const file of ["src/entry.effront.tsx", "vite.config.ts", "package.json"]) {
           expect(prose).toContain(file);
-          expect(
-            await readFile(new URL(`examples/${example}/${file}`, repository), "utf8"),
-          ).not.toBe("");
+          await expect(
+            readFile(new URL(`examples/${example}/${file}`, repository), "utf8"),
+          ).resolves.not.toBe("");
         }
         const application = await readFile(
           new URL(`examples/${example}/src/entry.effront.tsx`, repository),
@@ -629,18 +630,12 @@ describe("documentation catalog", () => {
         "vp create effront -- my-app --platform alchemy-cloudflare\ncd my-app\nvp install",
       );
       await expect(text(`/${locale}/platforms/alchemy`)).resolves.not.toContain("git clone");
-      expect(
-        await readFile(
-          new URL("examples/alchemy-cloudflare/src/entry.effront.tsx", repository),
-          "utf8",
-        ),
-      ).toContain("<h1>Hello, world</h1>");
-      expect(
-        await readFile(
-          new URL("examples/alchemy-cloudflare/src/entry.workers.ts", repository),
-          "utf8",
-        ),
-      ).toContain("makeApplicationHttpEffect");
+      await expect(
+        readFile(new URL("examples/alchemy-cloudflare/src/entry.effront.tsx", repository), "utf8"),
+      ).resolves.toContain("<h1>Hello, world</h1>");
+      await expect(
+        readFile(new URL("examples/alchemy-cloudflare/src/entry.workers.ts", repository), "utf8"),
+      ).resolves.toContain("makeApplicationHttpEffect");
       const chooser = await render(`/${locale}/platforms`);
       ["setup", "entries", "assets", "node", "bun"].forEach((id) => {
         expect(chooser).toContain(`id="${id}"`);
@@ -662,9 +657,9 @@ describe("documentation catalog", () => {
       );
       const sections = source.split(/^## /mu).slice(1);
       expect(
-        sections.slice(0, 4).map((section) => section.match(/\{#([^}]+)\}/)?.[1]),
+        sections.slice(0, 4).map((section) => /\{#([^}]+)\}/.exec(section)?.[1]),
       ).toStrictEqual(["layouts", "pages", "routes", "application"]);
-      const code = (section: string): string => section.match(/```tsx\n([\s\S]*?)\n```/)?.[1] ?? "";
+      const code = (section: string): string => /```tsx\n([\s\S]*?)\n```/.exec(section)?.[1] ?? "";
       expect(code(sections[0]!)).toContain("EFFRONT.Layout.make");
       expect(code(sections[0]!)).not.toContain("EFFRONT.Page.make");
       expect(code(sections[1]!)).toContain("EFFRONT.Page.make");
@@ -856,7 +851,7 @@ describe("documentation catalog", () => {
     if (slug.includes("/api-reference/")) {
       const html = await render(slug);
       const code = [...html.matchAll(/<pre\b[^>]*>([\s\S]*?)<\/pre>/g)]
-        .map(([, block]) => block?.replace(/<[^>]*>/g, ""))
+        .map(([, block]) => block?.replaceAll(/<[^>]*>/g, ""))
         .join("\n");
       expect(code).toContain(
         "import { MarkdownDocument } from &quot;@effront/markdown/document&quot;",
@@ -931,7 +926,7 @@ describe("documentation catalog", () => {
     for (const [, path, figure] of excerpts) {
       const caption = figure?.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/)?.[1];
       expect([`Excerpt from ${path}`, `${path} excerpt`]).toContain(
-        caption?.replace(/<[^>]*>/g, "").trim(),
+        caption?.replaceAll(/<[^>]*>/g, "").trim(),
       );
     }
   });

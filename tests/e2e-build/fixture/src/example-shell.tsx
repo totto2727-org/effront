@@ -10,7 +10,13 @@ export function PageNote() {
   return (
     <p>
       <label>
-        Page note <input value={note} onChange={(event) => setNote(event.target.value)} />
+        Page note{" "}
+        <input
+          value={note}
+          onChange={(event) => {
+            setNote(event.target.value);
+          }}
+        />
       </label>
     </p>
   );

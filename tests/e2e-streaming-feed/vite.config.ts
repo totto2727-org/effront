@@ -22,7 +22,7 @@ export default defineConfig({
     effront(explicitLoader ? { application: "./src/unused-configured-application.tsx" } : {}),
     effrontAlchemy(
       explicitLoader
-        ? { worker: fileURLToPath(new URL("./entry.explicit-loader.ts", import.meta.url)) }
+        ? { worker: fileURLToPath(new URL("entry.explicit-loader.ts", import.meta.url)) }
         : {},
     ),
     cloudflare({

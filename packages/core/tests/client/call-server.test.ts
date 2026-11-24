@@ -680,7 +680,9 @@ it.effect("releases a visible Server Function refresh when its replacement commi
   Effect.gen(function* () {
     const browserRenderer = yield* BrowserRenderer.make;
     let published = Promise.withResolvers<BrowserRender>();
-    browserRenderer.initialize(makeRouteTree("initial"), (render) => published.resolve(render));
+    browserRenderer.initialize(makeRouteTree("initial"), (render) => {
+      published.resolve(render);
+    });
     const released = vi.fn();
     const cached = vi.fn();
     yield* listen(
@@ -740,7 +742,9 @@ it.effect("releases a never-committed Server Function refresh after its successo
   Effect.gen(function* () {
     const browserRenderer = yield* BrowserRenderer.make;
     let published = Promise.withResolvers<BrowserRender>();
-    browserRenderer.initialize(makeRouteTree("initial"), (render) => published.resolve(render));
+    browserRenderer.initialize(makeRouteTree("initial"), (render) => {
+      published.resolve(render);
+    });
     const released = vi.fn();
     const cached = vi.fn();
     yield* listen(

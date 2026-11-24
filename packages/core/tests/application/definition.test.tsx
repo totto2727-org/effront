@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, test } from "@effect/vitest";
 import { Predicate, Context, Effect, Layer, Schema } from "effect";
 import { isValidElement, Suspense } from "react";
 import type { ReactElement, ReactNode } from "react";
@@ -104,8 +104,8 @@ class NestedPageService extends Context.Service<NestedPageService, object>()(
   "effront/tests/application/NestedPageService",
 ) {}
 
-describe("EFFRONT.make", () => {
-  it("renders a root Layout around its exact Page", () => {
+describe("eFFRONT.make", () => {
+  test("renders a root Layout around its exact Page", () => {
     const App = EFFRONT.make({
       routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage),
     });
@@ -125,7 +125,7 @@ describe("EFFRONT.make", () => {
     expect(Object.isExtensible(App)).toBe(true);
   });
 
-  it("renders a dynamic route pattern with its concrete pathname and captured params", () => {
+  test("renders a dynamic route pattern with its concrete pathname and captured params", () => {
     const DayPage = EFFRONT.Page.make({
       params: Schema.Struct({ day: Schema.Literals(["saturday", "sunday"]) }),
       render: ({ params }) => Effect.succeed(<h1>{params.day}</h1>),
@@ -154,7 +154,7 @@ describe("EFFRONT.make", () => {
     });
   });
 
-  it("preserves Layout ancestry and places Loading below its owning Layout", () => {
+  test("preserves Layout ancestry and places Loading below its owning Layout", () => {
     const scheduleRoutes = EFFRONT.Routes.make({
       layout: ScheduleLayout,
       loading: ScheduleLoading,
@@ -196,7 +196,7 @@ describe("EFFRONT.make", () => {
     expect(pageContent(pageNode).type).toBe(pageComponent(SundayPage));
   });
 
-  it("lets layoutless Routes group paths without adding a rendered node", () => {
+  test("lets layoutless Routes group paths without adding a rendered node", () => {
     const groupedRoutes = EFFRONT.Routes.make()
       .page("/", SaturdayPage)
       .page("/day-two", SundayPage);
@@ -209,7 +209,7 @@ describe("EFFRONT.make", () => {
     expect(pageContent(pageNode).type).toBe(pageComponent(SundayPage));
   });
 
-  it("supports a Loading scope without requiring a nested Layout", () => {
+  test("supports a Loading scope without requiring a nested Layout", () => {
     const groupedRoutes = EFFRONT.Routes.make({ loading: ScheduleLoading }).page("/", SaturdayPage);
     const App = EFFRONT.make({
       routes: EFFRONT.Routes.make({ layout: RootLayout }).mount("/schedule", groupedRoutes),
@@ -222,7 +222,7 @@ describe("EFFRONT.make", () => {
     expect(pageContent(pageNode).type).toBe(pageComponent(SaturdayPage));
   });
 
-  it("compiles one Routes value mounted at more than one prefix", () => {
+  test("compiles one Routes value mounted at more than one prefix", () => {
     const sharedRoutes = EFFRONT.Routes.make({ layout: ScheduleLayout })
       .page("/", SaturdayPage)
       .page("/day-two", SundayPage);
@@ -250,7 +250,7 @@ describe("EFFRONT.make", () => {
     expect(requiredChild(saturdayLayoutNode).id).not.toBe(requiredChild(sundayLayoutNode).id);
   });
 
-  it("compiles Pages into matcher-neutral destinations", () => {
+  test("compiles Pages into matcher-neutral destinations", () => {
     const App = EFFRONT.make({
       routes: EFFRONT.Routes.make({ layout: RootLayout })
         .page("/", HomePage)
@@ -262,7 +262,7 @@ describe("EFFRONT.make", () => {
     expect(applicationRoutes(App)[1]?.page.component).toBe(pageComponent(SaturdayPage));
   });
 
-  it("compiles inherited middleware without adding React scopes", () => {
+  test("compiles inherited middleware without adding React scopes", () => {
     const RootMiddleware = EFFRONT.Middleware.make((httpEffect) => httpEffect);
     const NestedMiddleware = EFFRONT.Middleware.make((httpEffect) => httpEffect);
     const RootScope = EFFRONT.withMiddleware(RootMiddleware);
@@ -280,7 +280,7 @@ describe("EFFRONT.make", () => {
     expect(Object.isFrozen(schedule?.middleware)).toBe(true);
   });
 
-  it("does not duplicate inherited middleware across nested scopes", () => {
+  test("does not duplicate inherited middleware across nested scopes", () => {
     const RequireUser = EFFRONT.Middleware.make((httpEffect) => httpEffect);
     const Authenticated = EFFRONT.withMiddleware(RequireUser);
     const routes = Authenticated.Routes.make({ layout: RootLayout }).mount(
@@ -292,7 +292,7 @@ describe("EFFRONT.make", () => {
     expect(applicationRoutes(App)[0]?.middleware).toStrictEqual([RequireUser]);
   });
 
-  it("rejects repeated middleware in a divergent mounted scope without Pages", () => {
+  test("rejects repeated middleware in a divergent mounted scope without Pages", () => {
     const Shared = EFFRONT.Middleware.make((httpEffect) => httpEffect);
     const NestedOnly = EFFRONT.Middleware.make((httpEffect) => httpEffect);
     const ParentEFFRONT = EFFRONT.withMiddleware(Shared);
@@ -311,7 +311,7 @@ describe("EFFRONT.make", () => {
     );
   });
 
-  it("allocates route scope IDs across derived EFFRONT views", () => {
+  test("allocates route scope IDs across derived EFFRONT views", () => {
     const Middleware = EFFRONT.Middleware.make((httpEffect) => httpEffect);
     const ScopedEFFRONT = EFFRONT.withMiddleware(Middleware);
     const rootRoutes = EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage);
@@ -323,7 +323,7 @@ describe("EFFRONT.make", () => {
     expect(getRoutesState(rootRoutes).scopeId).not.toBe(getRoutesState(scopedRoutes).scopeId);
   });
 
-  it("declares service contracts once and chooses their implementations at application assembly", () => {
+  test("declares service contracts once and chooses their implementations at application assembly", () => {
     type AppServices = LayoutService | PageService | NestedPageService;
     const ServiceEFFRONT = Application.effront<AppServices>();
     const ServiceLayout = ServiceEFFRONT.Layout.make({
@@ -358,7 +358,7 @@ describe("EFFRONT.make", () => {
     expect(getApplicationState(App).layer).toBe(ApplicationLayer);
   });
 
-  it("requires a root Layout and a reachable Page at runtime", () => {
+  test("requires a root Layout and a reachable Page at runtime", () => {
     expect(() =>
       EFFRONT.make({
         // @ts-expect-error Exercise runtime validation for a root without a Layout.
@@ -373,7 +373,7 @@ describe("EFFRONT.make", () => {
     ).toThrow("must contain a Page");
   });
 
-  it("rejects route concerns created by a different EFFRONT module", () => {
+  test("rejects route concerns created by a different EFFRONT module", () => {
     const OtherEFFRONT = Application.effront();
     const OtherLayout = OtherEFFRONT.Layout.make({
       render: ({ children }) => Effect.succeed(children),
@@ -405,7 +405,7 @@ describe("EFFRONT.make", () => {
     );
   });
 
-  it("rejects same-EFFRONT members used as the wrong route concern", () => {
+  test("rejects same-EFFRONT members used as the wrong route concern", () => {
     const Leaf = EFFRONT.Component.make({ render: () => Effect.succeed(<p>Leaf</p>) });
 
     expect(() =>

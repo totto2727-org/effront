@@ -84,15 +84,20 @@ function CheckInContent() {
 
 function message(result: Exclude<ActionState, null>): string {
   switch (result.status) {
-    case "checked-in":
+    case "checked-in": {
       return `${result.attendeeName} checked in at ${result.occurredAt}.`;
-    case "already-checked-in":
+    }
+    case "already-checked-in": {
       return `${result.attendeeName} was already checked in at ${result.occurredAt}.`;
-    case "invalid-ticket":
+    }
+    case "invalid-ticket": {
       return "Enter a ticket code in the format EVENT-NAME.";
-    case "not-found":
+    }
+    case "not-found": {
       return "No ticket matches that code.";
-    case "forbidden":
+    }
+    case "forbidden": {
       return "This organizer cannot check in that ticket.";
+    }
   }
 }

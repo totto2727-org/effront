@@ -1,11 +1,11 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, test } from "@effect/vitest";
 
 import { Application } from "./effront.ts";
 
 const EFFRONT = Application.effront();
 
-describe("EFFRONT.Loading.make", () => {
-  it("runs the synchronous fallback renderer", () => {
+describe("eFFRONT.Loading.make", () => {
+  test("runs the synchronous fallback renderer", () => {
     const render = () => <p>Loading...</p>;
     const RootLoading = EFFRONT.Loading.make({ render });
 

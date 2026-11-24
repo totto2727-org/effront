@@ -19,7 +19,7 @@ const test = base.extend({
     if (!baseURL) {
       throw new TypeError("Docs acceptance requires a local host baseURL");
     }
-    const origin = new URL(baseURL).origin;
+    const { origin } = new URL(baseURL);
     const pageErrors: string[] = [];
     const hydrationErrors: string[] = [];
     const remoteRequests: string[] = [];
@@ -286,14 +286,14 @@ test("preserves sidebar DOM, scroll and search while only articles transition ac
       }
       evidence.frames++;
       for (const animation of document.getAnimations()) {
-        const effect = animation.effect;
+        const { effect } = animation;
         if (
           !(effect instanceof KeyframeEffect) ||
           !effect.pseudoElement?.includes("effront-page")
         ) {
           continue;
         }
-        const progress = effect.getComputedTiming().progress;
+        const { progress } = effect.getComputedTiming();
         if (
           animation.playState === "running" &&
           typeof progress === "number" &&

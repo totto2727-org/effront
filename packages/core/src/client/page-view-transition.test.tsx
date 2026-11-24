@@ -1,10 +1,10 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, test } from "@effect/vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { PageViewTransitionBoundary } from "./page-view-transition.tsx";
 
-describe("PageViewTransitionBoundary SSR", () => {
-  it("renders the same page HTML without adding wrapper elements", () => {
+describe("pageViewTransitionBoundary SSR", () => {
+  test("renders the same page HTML without adding wrapper elements", () => {
     [
       {},
       { enabled: false },
@@ -21,7 +21,7 @@ describe("PageViewTransitionBoundary SSR", () => {
     });
   });
 
-  it("supports empty pages without accessing browser APIs during SSR", () => {
+  test("supports empty pages without accessing browser APIs during SSR", () => {
     expect(
       renderToStaticMarkup(
         <PageViewTransitionBoundary config={{}}>{null}</PageViewTransitionBoundary>,

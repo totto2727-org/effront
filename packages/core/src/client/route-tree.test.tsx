@@ -1,11 +1,11 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, test } from "@effect/vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { RouteOutlet, RouteTree } from "./route-tree.tsx";
 import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
-describe("RouteTree", () => {
-  it("recursively renders a unary Layout ancestry", () => {
+describe(RouteTree, () => {
+  test("recursively renders a unary Layout ancestry", () => {
     const page: RouteTreeModel = {
       child: null,
       content: <h1>Schedule</h1>,
@@ -37,7 +37,7 @@ describe("RouteTree", () => {
     );
   });
 
-  it("renders an intentionally empty child as null", () => {
+  test("renders an intentionally empty child as null", () => {
     const root: RouteTreeModel = {
       child: null,
       content: (
@@ -51,8 +51,8 @@ describe("RouteTree", () => {
     expect(renderToStaticMarkup(<RouteTree root={root} />)).toBe("<main></main>");
   });
 
-  it("rejects an outlet rendered outside a route node", () => {
-    expect(() => renderToStaticMarkup(<RouteOutlet />)).toThrowError(
+  test("rejects an outlet rendered outside a route node", () => {
+    expect(() => renderToStaticMarkup(<RouteOutlet />)).toThrow(
       new TypeError("RouteOutlet rendered outside its route node."),
     );
   });

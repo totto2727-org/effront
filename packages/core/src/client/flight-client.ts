@@ -1,7 +1,8 @@
 // Vite replaces `import.meta.env.DEV` at compile time.
 import { Context, Deferred, Effect, Exit, Layer, Schema, Scope, Stream, String } from "effect";
 import { HttpBody, HttpClient, HttpClientRequest } from "effect/http";
-import { createFromReadableStream, createTemporaryReferenceSet } from "@vitejs/plugin-rsc/browser";
+import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/browser";
+import { createFromReadableStream } from "@vitejs/plugin-rsc/browser";
 
 import { FlightMediaType, ServerFnIdHeader } from "#core/rsc/flight.ts";
 import type { FlightPayload, ServerFnResult } from "#core/rsc/flight.ts";
@@ -65,8 +66,12 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
       const completed = Promise.withResolvers<void>();
       const stream = initialFlight.stream.pipeThrough(
         new TransformStream({
-          flush: () => completed.resolve(),
-          transform: (chunk, controller) => controller.enqueue(chunk),
+          flush: () => {
+            completed.resolve();
+          },
+          transform: (chunk, controller) => {
+            controller.enqueue(chunk);
+          },
         }),
       );
       const payload = yield* Effect.tryPromise({
@@ -178,18 +183,18 @@ export class FlightClient extends Context.Service<FlightClient>()("effront/clien
           ),
         );
         const decodeOptions =
-          flightRequest._tag !== "Navigation"
+          flightRequest._tag === "Navigation"
             ? import.meta.env.DEV
+              ? {
+                  startTime: requestStartTime,
+                }
+              : undefined
+            : import.meta.env.DEV
               ? {
                   startTime: requestStartTime,
                   temporaryReferences: flightRequest.temporaryReferences,
                 }
-              : { temporaryReferences: flightRequest.temporaryReferences }
-            : import.meta.env.DEV
-              ? {
-                  startTime: requestStartTime,
-                }
-              : undefined;
+              : { temporaryReferences: flightRequest.temporaryReferences };
         const payload = yield* Effect.tryPromise({
           catch: (cause) =>
             new FlightLoadError({

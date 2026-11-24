@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, it, test } from "@effect/vitest";
 import { Context, Deferred, Effect, Exit, FiberSet, Ref, Scope } from "effect";
 
 import { Application } from "./effront.ts";
@@ -9,8 +9,8 @@ class Greeting extends Context.Service<Greeting, Readonly<{ prefix: string }>>()
   "effront/tests/application/component/Greeting",
 ) {}
 
-describe("EFFRONT.Component.make", () => {
-  it("rejects rendering outside its application request runtime", () => {
+describe("eFFRONT.Component.make", () => {
+  test("rejects rendering outside its application request runtime", () => {
     const EFFRONT = Application.effront();
     const Component = EFFRONT.Component.make({ render: () => Effect.succeed(null) });
 
@@ -47,7 +47,7 @@ describe("EFFRONT.Component.make", () => {
       const ScopedEFFRONT = EFFRONT.withMiddleware(RequireScope);
       const Component = ScopedEFFRONT.Component.make({ render: () => Effect.succeed("scoped") });
       const runtime = yield* FiberSet.makeRuntimePromise<never>();
-      const renderRuntime = getEFFRONTIdentity(EFFRONT).renderRuntime;
+      const { renderRuntime } = getEFFRONTIdentity(EFFRONT);
 
       expect(() => renderRuntime.bind(runtime, [], () => Component({}))).toThrow(
         new TypeError(

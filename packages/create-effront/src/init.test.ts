@@ -264,7 +264,7 @@ describe("generated host parity", () => {
   );
 });
 
-describe("Worker starter templates", () => {
+describe("worker starter templates", () => {
   test("creates a standalone Cloudflare Worker without Alchemy or bindings", async () => {
     const directory = join(await temporaryDirectory(), "cloudflare");
     await createProject(directory, "cloudflare");
@@ -335,7 +335,10 @@ describe("command options and help", () => {
       await Effect.runPromise(
         runCommand([directory, "--platform", platform]).pipe(Effect.provide(NodeServices.layer)),
       );
-      expect(await readManifest(directory)).toHaveProperty("name", `forwarded-${platform}`);
+      await expect(readManifest(directory)).resolves.toHaveProperty(
+        "name",
+        `forwarded-${platform}`,
+      );
     } finally {
       output.mockRestore();
     }
@@ -364,7 +367,10 @@ describe("command options and help", () => {
       expect(output).toHaveBeenCalledWith(
         expect.stringContaining(`Next: cd ${directory} && vp install && vp dev`),
       );
-      expect(await readJson(join(directory, "wrangler.json"))).toHaveProperty("name", "my-app");
+      await expect(readJson(join(directory, "wrangler.json"))).resolves.toHaveProperty(
+        "name",
+        "my-app",
+      );
     } finally {
       output.mockRestore();
     }
@@ -386,7 +392,7 @@ describe("destination validation", () => {
     await expect(createProject(join(directory, "🧪"), "node")).rejects.toThrow(
       "Project directory must contain letters or numbers.",
     );
-    expect(await readdir(directory)).toStrictEqual([]);
+    await expect(readdir(directory)).resolves.toStrictEqual([]);
   });
 });
 

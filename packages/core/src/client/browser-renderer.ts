@@ -110,7 +110,7 @@ export class BrowserRenderer extends Context.Service<BrowserRenderer>()(
               _tag: "DiscardRequested",
               lastPublicationOrder: order,
             });
-            const current = ready.current;
+            const { current } = ready;
             const restore = current._tag === "Discard" ? current.restore : current;
             const discardOrder = ++ready.publicationOrder;
             if (restore._tag !== "Initial") {
@@ -140,7 +140,7 @@ export class BrowserRenderer extends Context.Service<BrowserRenderer>()(
         if (!publications.has(render)) {
           throw new TypeError("Browser render does not belong to this root.");
         }
-        const current = ready.current;
+        const { current } = ready;
         if (current._tag !== "Initial" && render.order < current.order) {
           throw new TypeError("Browser renders must commit in publication order.");
         }

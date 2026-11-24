@@ -241,9 +241,15 @@ const makeStreamingHttpClient = () => {
           new ReadableStream<Uint8Array>({
             start(controller) {
               controller.enqueue(new Uint8Array([1]));
-              signal.addEventListener("abort", () => controller.error(signal.reason), {
-                once: true,
-              });
+              signal.addEventListener(
+                "abort",
+                () => {
+                  controller.error(signal.reason);
+                },
+                {
+                  once: true,
+                },
+              );
             },
           }),
           {
@@ -367,7 +373,9 @@ const makeNavigationApiLayer = (
     replaceDocument: (url) => documentReplacements.push(url),
     subscribe: (listener) => {
       navigation.addEventListener("navigate", listener as EventListener);
-      return () => navigation.removeEventListener("navigate", listener as EventListener);
+      return () => {
+        navigation.removeEventListener("navigate", listener as EventListener);
+      };
     },
   });
 
@@ -1023,9 +1031,15 @@ it.effect("cancels a streaming Flight response abandoned before React commits", 
               new ReadableStream<Uint8Array>({
                 start(controller) {
                   controller.enqueue(new Uint8Array([1]));
-                  signal.addEventListener("abort", () => controller.error(signal.reason), {
-                    once: true,
-                  });
+                  signal.addEventListener(
+                    "abort",
+                    () => {
+                      controller.error(signal.reason);
+                    },
+                    {
+                      once: true,
+                    },
+                  );
                 },
               }),
               {
@@ -1392,7 +1406,9 @@ it.effect(
         const navigation = new TestNavigationApi();
         const renderer = yield* BrowserRenderer.make;
         let published = Promise.withResolvers<BrowserRender>();
-        renderer.initialize(initialRouteTree, (render) => published.resolve(render));
+        renderer.initialize(initialRouteTree, (render) => {
+          published.resolve(render);
+        });
         const { httpClient, responseSignals } = makeStreamingHttpClient();
         yield* listen(navigation, renderer, httpClient);
 
@@ -1435,7 +1451,9 @@ it.effect(
         const navigation = new TestNavigationApi();
         const renderer = yield* BrowserRenderer.make;
         let published = Promise.withResolvers<BrowserRender>();
-        renderer.initialize(initialRouteTree, (render) => published.resolve(render));
+        renderer.initialize(initialRouteTree, (render) => {
+          published.resolve(render);
+        });
         const { httpClient, responseSignals } = makeStreamingHttpClient();
         yield* listen(navigation, renderer, httpClient);
 
@@ -1456,7 +1474,9 @@ it.effect(
         });
         // A child layout effect can queue navigation before the root resolves committed.
         // That microtask then runs before the router processes the commit notification.
-        queueMicrotask(() => navigation.dispatch(successor.event));
+        queueMicrotask(() => {
+          navigation.dispatch(successor.event);
+        });
         renderer.commit(firstRender);
         yield* Fiber.join(firstPreparation);
         yield* Effect.yieldNow;
@@ -1490,7 +1510,9 @@ it.effect("keeps an older navigation stream while a queued discard can restore i
       const navigation = new TestNavigationApi();
       const renderer = yield* BrowserRenderer.make;
       let published = Promise.withResolvers<BrowserRender>();
-      renderer.initialize(initialRouteTree, (render) => published.resolve(render));
+      renderer.initialize(initialRouteTree, (render) => {
+        published.resolve(render);
+      });
       const { httpClient, responseSignals } = makeStreamingHttpClient();
       yield* listen(navigation, renderer, httpClient);
 

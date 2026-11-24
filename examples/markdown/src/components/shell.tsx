@@ -14,7 +14,9 @@ export function Shell({ children }: Readonly<{ children: ReactNode }>) {
         <button
           className="rounded border border-slate-600 bg-slate-800 px-4 py-2"
           type="button"
-          onClick={() => setCount((value) => value + 1)}
+          onClick={() => {
+            setCount((value) => value + 1);
+          }}
         >
           Count: {count}
         </button>

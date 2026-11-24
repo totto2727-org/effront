@@ -61,12 +61,16 @@ const embeddedFlightQueue = (html: string, nonce?: string) => {
 };
 
 const reconstructFlight = (html: string, nonce?: string): Effect.Effect<Uint8Array<ArrayBuffer>> =>
-  streamToBytes(makeInitialFlightStream(embeddedFlightQueue(html, nonce), (close) => close()));
+  streamToBytes(
+    makeInitialFlightStream(embeddedFlightQueue(html, nonce), (close) => {
+      close();
+    }),
+  );
 
 const flightScript = (text: string): string =>
   `<script>(self.__FLIGHT_DATA||=[]).push(${JSON.stringify(text)})</script>`;
 
-describe("injectFlightPayload", () => {
+describe(injectFlightPayload, () => {
   it.effect("embeds text chunks and reconstructs the original Flight bytes", () =>
     Effect.gen(function* () {
       const html = streamFrom(["<html><body><h1>Test</h1>", "<p>Hello world</p></body></html>"]);
@@ -75,9 +79,9 @@ describe("injectFlightPayload", () => {
       const result = yield* streamToText(html.pipeThrough(injectFlightPayload(flight)));
 
       expect(result).toBe(
-        "<html><body><h1>Test</h1><p>Hello world</p>" +
-          ["foo bar", "baz qux", "abcdef"].map(flightScript).join("") +
-          "</body></html>",
+        `<html><body><h1>Test</h1><p>Hello world</p>${["foo bar", "baz qux", "abcdef"]
+          .map(flightScript)
+          .join("")}</body></html>`,
       );
       const reconstructed = yield* reconstructFlight(result);
       expect(new TextDecoder().decode(reconstructed)).toBe("foo barbaz quxabcdef");
@@ -110,7 +114,9 @@ describe("injectFlightPayload", () => {
         "<html><body><h1>Test</h1>",
         () => sleep(3),
         "<p>Hello",
-        () => continueFlight.resolve(),
+        () => {
+          continueFlight.resolve();
+        },
         " world</p></body></html>",
       ]);
       const flight = streamFrom(["foo bar", () => continueFlight.promise, "baz qux", "abcdef"]);
@@ -118,9 +124,9 @@ describe("injectFlightPayload", () => {
       const result = yield* streamToText(html.pipeThrough(injectFlightPayload(flight)));
 
       expect(result).toBe(
-        "<html><body><h1>Test</h1><p>Hello world</p>" +
-          ["foo bar", "baz qux", "abcdef"].map(flightScript).join("") +
-          "</body></html>",
+        `<html><body><h1>Test</h1><p>Hello world</p>${["foo bar", "baz qux", "abcdef"]
+          .map(flightScript)
+          .join("")}</body></html>`,
       );
       expect(result.indexOf('push("foo bar")')).toBeLessThan(result.indexOf('push("baz qux")'));
       expect(result.indexOf('push("baz qux")')).toBeLessThan(result.indexOf('push("abcdef")'));
@@ -161,9 +167,7 @@ describe("injectFlightPayload", () => {
       const result = yield* streamToText(html.pipeThrough(injectFlightPayload(flight)));
 
       expect(result).toBe(
-        "<html><body><h1>Test</h1>🙂<p>Hello world</p>" +
-          flightScript("foo bar") +
-          "</body></html>",
+        `<html><body><h1>Test</h1>🙂<p>Hello world</p>${flightScript("foo bar")}</body></html>`,
       );
     }),
   );
@@ -212,10 +216,9 @@ describe("injectFlightPayload", () => {
         // Compare the complete output, not output with scripts stripped: stripping
         // would hide scripts injected into attributes, comments or rawtext.
         expect(result).toBe(
-          `<html><body>${prefix}${suffix}` +
-            flightScript("scheduled Flight") +
-            flightScript("later Flight") +
-            "</body></html>",
+          `<html><body>${prefix}${suffix}${flightScript("scheduled Flight")}${flightScript(
+            "later Flight",
+          )}</body></html>`,
         );
       }),
     );
@@ -290,7 +293,9 @@ describe("injectFlightPayload", () => {
       const flight = streamFrom([
         () => flightReady.promise,
         "late Flight",
-        () => flightRead.resolve(),
+        () => {
+          flightRead.resolve();
+        },
       ]);
       const reader = html.pipeThrough(injectFlightPayload(flight)).getReader();
 
@@ -349,9 +354,9 @@ describe("injectFlightPayload", () => {
         });
         const result = yield* streamToText(html.pipeThrough(injectFlightPayload(browserFlight)));
         expect(result).toBe(
-          "<html><body><p>first</p><p>second</p><p>third</p>" +
-            ["first", "second", "third"].map(flightScript).join("") +
-            "</body></html>",
+          `<html><body><p>first</p><p>second</p><p>third</p>${["first", "second", "third"]
+            .map(flightScript)
+            .join("")}</body></html>`,
         );
         const reconstructed = yield* reconstructFlight(result);
         expect(reconstructed).toStrictEqual(Encoder.encode("firstsecondthird"));
@@ -383,7 +388,7 @@ describe("injectFlightPayload", () => {
 
       const result = yield* streamToText(html.pipeThrough(injectFlightPayload(flight)));
 
-      expect(result).toContain("<\\!--</\\ScRiPt>");
+      expect(result).toContain(String.raw`<\!--</\ScRiPt>`);
       const reconstructed = yield* reconstructFlight(result);
       expect(new TextDecoder().decode(reconstructed)).toBe("<!--</ScRiPt>");
     }),

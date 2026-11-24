@@ -1,4 +1,4 @@
 import { Application } from "@effront/core";
-import { Host } from "./greeting-host.ts";
+import type { Host } from "./greeting-host.ts";
 
 export const EFFRONT = Application.effront<Host>();

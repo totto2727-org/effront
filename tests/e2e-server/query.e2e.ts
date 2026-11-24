@@ -20,7 +20,7 @@ test("query fetching is event-gated, not SSR or automatic on hydration", async (
   expect(html).not.toContain('data-testid="query-fallback"');
   await expect(page.getByRole("button", { name: "開始（ブラウザーで取得）" })).toBeVisible();
   // Waiting past the query delay would expose accidental post-hydration fetching.
-  await page.waitForTimeout(2_100);
+  await page.waitForTimeout(2100);
   expect(
     await page.evaluate(
       () =>

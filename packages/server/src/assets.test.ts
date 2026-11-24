@@ -103,7 +103,9 @@ const rawGet = (origin: string, path: string): Promise<{ status: number; body: s
       response.on("data", (chunk: string) => {
         body += chunk;
       });
-      response.on("end", () => resolve({ status: response.statusCode ?? 0, body }));
+      response.on("end", () => {
+        resolve({ status: response.statusCode ?? 0, body });
+      });
       response.on("error", reject);
     });
     request.on("error", reject);
@@ -143,7 +145,7 @@ describe("native static assets", () => {
       expect(modified).not.toBe("");
       for (const headers of [
         { "if-none-match": etag },
-        { "if-none-match": '"other", ' + etag },
+        { "if-none-match": `"other", ${etag}` },
         { "if-none-match": "*" },
         { "if-modified-since": modified },
         { "if-none-match": etag, range: "bytes=1-3" },

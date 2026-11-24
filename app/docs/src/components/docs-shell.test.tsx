@@ -53,12 +53,10 @@ describe("documentation hierarchy", () => {
   });
 
   test("renders an ordered breadcrumb including only the current page's ancestors", () => {
-    const grouped = render(chapter).match(
-      /<nav aria-label="パンくずリスト"[^>]*>(.*?)<\/nav>/,
-    )?.[1];
+    const grouped = /<nav aria-label="パンくずリスト"[^>]*>(.*?)<\/nav>/.exec(render(chapter))?.[1];
     expect(grouped).toMatch(/<ol.*アーキテクチャ.*実装解説.*aria-current="page".*ランタイム/);
-    const ungrouped = render(introduction).match(
-      /<nav aria-label="パンくずリスト"[^>]*>(.*?)<\/nav>/,
+    const ungrouped = /<nav aria-label="パンくずリスト"[^>]*>(.*?)<\/nav>/.exec(
+      render(introduction),
     )?.[1];
     expect(ungrouped).toContain("Guide");
     expect(ungrouped).not.toContain("実装解説");
@@ -66,7 +64,7 @@ describe("documentation hierarchy", () => {
 
   test("preserves no-JavaScript chapter links and the official upstream footer", () => {
     const html = render(chapter);
-    const fallback = html.match(/<noscript>(.*?)<\/noscript>/)?.[1];
+    const fallback = /<noscript>(.*?)<\/noscript>/.exec(html)?.[1];
     expect(fallback).toContain(`href="${chapter.slug}" aria-current="page"`);
     expect(fallback).toContain(`アーキテクチャ: 実装解説: ${chapter.title}`);
     expect(html).toContain('href="https://effective-rsc.nikhilsnayak.dev/"');
@@ -100,7 +98,7 @@ describe("documentation hierarchy", () => {
     expect(sidebar.match(/aria-label="Implementation"/gu)).toHaveLength(1);
     expect(sidebar).toContain(`href="${englishChapter.slug}" aria-current="page"`);
     expect(sidebar).toContain('href="/en"');
-    expect(html.match(/<nav aria-label="Breadcrumbs"[^>]*>(.*?)<\/nav>/)?.[1]).toMatch(
+    expect(/<nav aria-label="Breadcrumbs"[^>]*>(.*?)<\/nav>/.exec(html)?.[1]).toMatch(
       /<ol.*Architecture.*Implementation.*aria-current="page".*Runtime and request lifetime/,
     );
     expect(html).toContain('href="#request-lifetime"');
@@ -111,14 +109,14 @@ describe("documentation hierarchy", () => {
 
   test("keeps English no-JavaScript and previous/next links in the same language", () => {
     const html = render(englishChapter, { locale: "en", navigation: englishNavigation });
-    const fallback = html.match(/<noscript>(.*?)<\/noscript>/)?.[1];
+    const fallback = /<noscript>(.*?)<\/noscript>/.exec(html)?.[1];
     expect(fallback).toContain('aria-label="Documentation navigation"');
     expect(fallback).toContain(`href="${englishChapter.slug}" aria-current="page"`);
     expect(fallback).toContain(`Architecture: Implementation: ${englishChapter.title}`);
     for (const item of englishNavigation) {
       expect(fallback).toContain(`href="${item.slug}"`);
     }
-    const adjacent = html.match(/<nav aria-label="Previous and next pages"[^>]*>(.*?)<\/nav>/)?.[1];
+    const adjacent = /<nav aria-label="Previous and next pages"[^>]*>(.*?)<\/nav>/.exec(html)?.[1];
     expect(adjacent).toContain(`href="${englishIntroduction.slug}"`);
     expect(adjacent).toContain(`href="${englishNextChapter.slug}"`);
     expect(adjacent).not.toContain(`href="${englishChapter.slug}"`);
@@ -130,7 +128,7 @@ describe("documentation hierarchy", () => {
       for (const path of ["/", "/guide/routes", "/architecture/implementation/request"]) {
         const current = { ...englishChapter, slug: localizedPath(path, locale) };
         const html = render(current, { locale, navigation: [current] });
-        const switcher = html.match(/<nav aria-label="(?:Language|言語)"[^>]*>(.*?)<\/nav>/)?.[1];
+        const switcher = /<nav aria-label="(?:Language|言語)"[^>]*>(.*?)<\/nav>/.exec(html)?.[1];
         expect(switcher).toBeDefined();
         const links = [...switcher!.matchAll(/<a\b[^>]*>[^<]*<\/a>/g)].map((match) => match[0]);
         expect(links).toHaveLength(2);
@@ -154,7 +152,7 @@ describe("documentation hierarchy", () => {
 
   test("offers both explicit locale URLs from a legacy Japanese article", () => {
     const html = render(chapter);
-    const switcher = html.match(/<nav aria-label="言語"[^>]*>(.*?)<\/nav>/)?.[1];
+    const switcher = /<nav aria-label="言語"[^>]*>(.*?)<\/nav>/.exec(html)?.[1];
     expect(switcher).toContain(`href="/en${chapter.slug}"`);
     expect(switcher).toContain(`href="/ja${chapter.slug}"`);
     expect(switcher).toContain('aria-current="true"');

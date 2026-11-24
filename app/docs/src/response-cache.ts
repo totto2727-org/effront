@@ -35,7 +35,7 @@ export const responseCache = HttpMiddleware.make(
   <E, R>(handler: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>) =>
     Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest;
-      const accept = request.headers["accept"];
+      const { accept } = request.headers;
       const response = yield* handler;
       const acceptsPage = acceptsRepresentation(accept, response.headers["content-type"]);
       const vary = varyFor(response.headers["vary"]);

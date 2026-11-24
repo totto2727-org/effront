@@ -10,12 +10,20 @@ afterEach(() => {
 
 it.effect("uses document navigation without the Navigation API", () => {
   vi.stubGlobal("window", {});
-  return navigationMode.pipe(Effect.map((mode) => expect(mode).toBe("Document")));
+  return navigationMode.pipe(
+    Effect.map((mode) => {
+      expect(mode).toBe("Document");
+    }),
+  );
 });
 
 it.effect("uses document navigation without navigation precommit", () => {
   vi.stubGlobal("window", { navigation: new EventTarget() });
-  return navigationMode.pipe(Effect.map((mode) => expect(mode).toBe("Document")));
+  return navigationMode.pipe(
+    Effect.map((mode) => {
+      expect(mode).toBe("Document");
+    }),
+  );
 });
 
 it.effect("uses client navigation when both APIs are available", () => {
@@ -23,5 +31,9 @@ it.effect("uses client navigation when both APIs are available", () => {
     navigation: new EventTarget(),
     NavigationPrecommitController: class {},
   });
-  return navigationMode.pipe(Effect.map((mode) => expect(mode).toBe("Client")));
+  return navigationMode.pipe(
+    Effect.map((mode) => {
+      expect(mode).toBe("Client");
+    }),
+  );
 });

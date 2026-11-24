@@ -29,9 +29,9 @@ it.effect("initializes once for a React root", () =>
     renderer.initialize(initialRouteTree, publish);
     renderer.initialize(initialRouteTree, publish);
 
-    expect(() => renderer.initialize(initialRouteTree, () => undefined)).toThrow(
-      "BrowserRenderer cannot be initialized by more than one React root.",
-    );
+    expect(() => {
+      renderer.initialize(initialRouteTree, () => undefined);
+    }).toThrow("BrowserRenderer cannot be initialized by more than one React root.");
   }).pipe(Effect.provide(BrowserRenderer.layer)),
 );
 
@@ -411,9 +411,9 @@ it.effect("rejects another root's publication before changing the visible tree",
     void visible.retired.then(visibleRetired);
 
     otherRenderer.refresh(makeRouteTree("foreign"));
-    expect(() => renderer.commit(nextRender(otherRenders))).toThrow(
-      "Browser render does not belong to this root.",
-    );
+    expect(() => {
+      renderer.commit(nextRender(otherRenders));
+    }).toThrow("Browser render does not belong to this root.");
 
     const candidate = renderer.navigate(makeRouteTree("candidate"));
     nextRender(renders);
@@ -441,9 +441,9 @@ it.effect("rejects an older commit without retiring the current tree", () =>
     const currentRetired = vi.fn();
     void current.retired.then(currentRetired);
 
-    expect(() => renderer.commit(skippedRender)).toThrow(
-      "Browser renders must commit in publication order.",
-    );
+    expect(() => {
+      renderer.commit(skippedRender);
+    }).toThrow("Browser renders must commit in publication order.");
     yield* Effect.promise(() => current.committed);
     expect(currentRetired).not.toHaveBeenCalled();
 

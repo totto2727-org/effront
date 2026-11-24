@@ -137,7 +137,10 @@ export class ReactDOMRenderer extends Context.Service<ReactDOMRenderer>()(
                 { formState: initialPayload.formState },
               ),
           }),
-          (root) => Effect.sync(() => root.unmount()),
+          (root) =>
+            Effect.sync(() => {
+              root.unmount();
+            }),
         );
         yield* Effect.promise(() => browserRendererReady.promise);
       });

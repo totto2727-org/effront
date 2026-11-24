@@ -27,7 +27,12 @@ export function ManualShell({
     <>
       <label>
         ガイドを絞り込む
-        <input value={query} onChange={(event) => setQuery(event.target.value)} />
+        <input
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+          }}
+        />
       </label>
       <div data-sidebar="content">
         {links.map((page) => (

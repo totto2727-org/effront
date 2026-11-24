@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, it, test } from "@effect/vitest";
 import { Predicate, Deferred, Effect, Fiber, Stream } from "effect";
 import { AsyncResult, AtomRegistry } from "effect/reactivity";
 import { vi } from "vitest";
@@ -11,7 +11,7 @@ import {
 import { query, stream, streamAtom } from "./query.ts";
 import { matchServerFnQuery } from "./server-fn-protocol.ts";
 
-describe("query", () => {
+describe(query, () => {
   it.effect("invokes the Server Function with positional args and an abort signal", () =>
     Effect.gen(function* () {
       const fetch = query((name: string) => {
@@ -76,8 +76,8 @@ describe("query", () => {
   );
 });
 
-describe("stream", () => {
-  it("keeps streamAtom waiting after the last item and interrupts a superseded Flight", async () => {
+describe(stream, () => {
+  test("keeps streamAtom waiting after the last item and interrupts a superseded Flight", async () => {
     const calls: NonNullable<ReturnType<typeof matchServerFnQuery>>[] = [];
     const atom = streamAtom((...args: Readonly<unknown[]>) => {
       const matched = matchServerFnQuery(args);
@@ -97,12 +97,16 @@ describe("stream", () => {
     try {
       registry.mount(atom);
       registry.set(atom, ["first"]);
-      await vi.waitFor(() => expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("first"));
+      await vi.waitFor(() => {
+        expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("first");
+      });
       expect(registry.get(atom).waiting).toBe(true);
       expect(calls[0]?.signal.aborted).toBe(false);
 
       registry.set(atom, ["second"]);
-      await vi.waitFor(() => expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("second"));
+      await vi.waitFor(() => {
+        expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("second");
+      });
       expect(calls[0]?.signal.aborted).toBe(true);
       expect(registry.get(atom).waiting).toBe(true);
       const second = calls[1];
@@ -110,7 +114,9 @@ describe("stream", () => {
         throw new TypeError("Expected stream metadata.");
       }
       Deferred.doneUnsafe(second.completed, Effect.void);
-      await vi.waitFor(() => expect(registry.get(atom).waiting).toBe(false));
+      await vi.waitFor(() => {
+        expect(registry.get(atom).waiting).toBe(false);
+      });
       expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("second");
     } finally {
       registry.dispose();

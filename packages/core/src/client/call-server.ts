@@ -46,16 +46,18 @@ export const installCallServer = Effect.gen(function* () {
     result: ServerFnResult,
   ): void => {
     switch (result._tag) {
-      case "Success":
+      case "Success": {
         invocationResult.resolve(result.value);
         return;
-      case "Failure":
+      }
+      case "Failure": {
         invocationResult.reject(
           result.error._tag === "ServerFnInputError"
             ? new ServerFnInputError({ detail: result.error.detail })
             : new ServerFnDefect({ detail: result.error.detail, digest: result.error.digest }),
         );
         return;
+      }
     }
   };
   const selectRefreshSource = (invocation: ServerFnInvocation): ServerFnRefreshSource => {
@@ -68,12 +70,14 @@ export const installCallServer = Effect.gen(function* () {
 
     const currentEntry = navigationApi.getCurrentEntry();
     switch (invocation._tag) {
-      case "HistoryEntry":
+      case "HistoryEntry": {
         return currentEntry?.id === invocation.id ? "Response" : "CurrentRoute";
-      case "CurrentUrl":
+      }
+      case "CurrentUrl": {
         return Predicate.isNullish(currentEntry) && navigationApi.getCurrentUrl() === invocation.url
           ? "Response"
           : "CurrentRoute";
+      }
     }
   };
   const callServer = Effect.fnUntraced(function* (
@@ -117,7 +121,7 @@ export const installCallServer = Effect.gen(function* () {
         message: "Server Function response was incompatible with Flight.",
       });
     }
-    const serverFnResult = resource.payload.serverFnResult;
+    const { serverFnResult } = resource.payload;
     if (Predicate.isNullish(serverFnResult)) {
       yield* resource.release;
       return yield* new ServerFnCallError({
@@ -214,13 +218,15 @@ export const installCallServer = Effect.gen(function* () {
             Effect.mapError(invocationError),
           );
       if (query?._tag === "Stream") {
-        const completed = query.completed;
+        const { completed } = query;
         operation = operation.pipe(
           Effect.onExit((exit) => Deferred.done(completed, Exit.mapError(exit, invocationError))),
         );
       }
       void run(operation, Predicate.isNullish(query) ? undefined : { signal: query.signal }).catch(
-        (cause) => invocationResult.reject(invocationError(cause)),
+        (error) => {
+          invocationResult.reject(invocationError(error));
+        },
       );
       return invocationResult.promise;
     });

@@ -57,7 +57,9 @@ function DocsNavigation({
           <a
             href={item.slug}
             aria-current={active ? "page" : undefined}
-            onClick={() => setOpenMobile(false)}
+            onClick={() => {
+              setOpenMobile(false);
+            }}
           >
             {item.title}
           </a>
@@ -86,7 +88,9 @@ function DocsNavigation({
           />
           <SidebarInput
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+            }}
             placeholder={locale === "en" ? "Search guides" : "ガイドを検索"}
             className="pl-7"
           />
@@ -154,7 +158,7 @@ function PreviousNext({
 }: Pick<DocsShellProps, "current" | "navigation" | "locale">): React.JSX.Element | null {
   const index = navigation.findIndex((item) => item.slug === current.slug);
   const previous = index > 0 ? navigation[index - 1] : undefined;
-  const next = index >= 0 && index < navigation.length - 1 ? navigation[index + 1] : undefined;
+  const next = index !== -1 && index < navigation.length - 1 ? navigation[index + 1] : undefined;
   if (!previous && !next) {
     return null;
   }

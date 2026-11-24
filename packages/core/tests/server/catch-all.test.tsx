@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, test } from "@effect/vitest";
 import { Effect, Layer, Schema } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/http";
 
@@ -73,7 +73,7 @@ const makeNativeHandler = () => {
 };
 
 describe("catch-all public Fetch routing", () => {
-  it.each([
+  test.each([
     "/manual",
     "/manual/",
     "/manual/a/b/c/d",
@@ -135,7 +135,7 @@ describe("catch-all public Fetch routing", () => {
     }
   });
 
-  it("preserves HEAD fallback and returns 404 outside registered prefixes", async () => {
+  test("preserves HEAD fallback and returns 404 outside registered prefixes", async () => {
     const handler = makeHandler();
     const head = await handler(
       new Request("https://routes.test/manual/a/b", { method: "HEAD" }),
@@ -151,7 +151,7 @@ describe("catch-all public Fetch routing", () => {
     }
   });
 
-  it("decodes the named catch-all Page schema before selecting HTML or Flight rendering", async () => {
+  test("decodes the named catch-all Page schema before selecting HTML or Flight rendering", async () => {
     const App = Application.effront();
     const Layout = App.Layout.make({ render: ({ children }) => Effect.succeed(children) });
     const Page = App.Page.make({

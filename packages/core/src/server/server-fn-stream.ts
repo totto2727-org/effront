@@ -1,4 +1,5 @@
-import { Effect, FiberHandle, Scope, Stream } from "effect";
+import type { Scope } from "effect";
+import { Effect, FiberHandle, Stream } from "effect";
 
 /**
  * Exposes a Server Function's stream to Flight while its producer remains owned by the

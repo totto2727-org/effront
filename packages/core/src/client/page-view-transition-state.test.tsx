@@ -16,7 +16,7 @@ afterEach(() => {
   media.reduced = false;
 });
 
-describe("PageViewTransitionBoundary policy", () => {
+describe("pageViewTransitionBoundary policy", () => {
   test("uses a stable shared page name and forwards React event classes", () => {
     const config = {
       default: "page",
@@ -63,7 +63,7 @@ describe("PageViewTransitionBoundary policy", () => {
       update: "none",
       children: "page content",
     });
-    const css = readFileSync(new URL("./page-view-transition.css", import.meta.url), "utf8");
+    const css = readFileSync(new URL("page-view-transition.css", import.meta.url), "utf8");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     ["group", "image-pair", "old", "new"].forEach((pseudo) => {
       expect(css).toContain(`::view-transition-${pseudo}(root)`);

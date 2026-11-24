@@ -107,7 +107,9 @@ export const installRouteRefresh = Effect.gen(function* () {
           const resolvedDestination = preserveRequestedHash(destination, resource.resolvedUrl);
           if (resolvedDestination.href !== destination.href) {
             yield* release;
-            yield* Effect.sync(() => navigationApi.replaceDocument(resolvedDestination.href));
+            yield* Effect.sync(() => {
+              navigationApi.replaceDocument(resolvedDestination.href);
+            });
             return;
           }
 
@@ -128,8 +130,8 @@ export const installRouteRefresh = Effect.gen(function* () {
             Effect.promise(() => published.retired),
           ).pipe(
             Effect.ensuring(release),
-            Effect.catch((cause) =>
-              Effect.logError("Failed to stream the refreshed route.", cause),
+            Effect.catch((error) =>
+              Effect.logError("Failed to stream the refreshed route.", error),
             ),
             Effect.forkIn(browserScope, { startImmediately: true }),
           );
@@ -159,7 +161,7 @@ export const installRouteRefresh = Effect.gen(function* () {
       yield* Effect.raceFirst(refreshRoute(transitionType), waitForRoutedNavigation);
     },
     Effect.scoped,
-    Effect.catch((cause) => Effect.logError("Failed to refresh the current route.", cause)),
+    Effect.catch((error) => Effect.logError("Failed to refresh the current route.", error)),
   );
 
   yield* routeRefresher.replace({

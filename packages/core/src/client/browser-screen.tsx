@@ -150,7 +150,9 @@ export function BrowserFailureScreen() {
         <button
           className="effront-browser-failure__reload"
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            window.location.reload();
+          }}
         >
           <svg aria-hidden="true" fill="none" viewBox="0 0 16 16">
             <path
@@ -174,4 +176,6 @@ const renderBrowserScreen = (screen: ReactNode): void => {
   createRoot(container).render(screen);
 };
 
-export const showBrowserFailure = (): void => renderBrowserScreen(<BrowserFailureScreen />);
+export const showBrowserFailure = (): void => {
+  renderBrowserScreen(<BrowserFailureScreen />);
+};

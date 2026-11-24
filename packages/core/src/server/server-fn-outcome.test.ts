@@ -4,7 +4,7 @@ import { Cause, Effect, Exit, Scope, Stream } from "effect";
 import { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
 import { serverFnOutcome, serverFnResponse } from "./server-fn-outcome.ts";
 
-describe("serverFnResponse", () => {
+describe(serverFnResponse, () => {
   it.effect("preserves interruption instead of serializing a failure", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(serverFnResponse(Effect.interrupt));

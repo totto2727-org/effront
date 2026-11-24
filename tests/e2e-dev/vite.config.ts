@@ -4,6 +4,6 @@ import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  root: fileURLToPath(new URL("./fixture", import.meta.url)),
+  root: fileURLToPath(new URL("fixture", import.meta.url)),
   plugins: [effront(), effrontCloudflare({ inspectorPort: false, persistState: false })],
 });

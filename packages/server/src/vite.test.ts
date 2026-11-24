@@ -316,7 +316,13 @@ describe("effrontServer native middleware", () => {
     } finally {
       host.closeAllConnections();
       await new Promise<void>((resolve, reject) =>
-        host.close((error) => (error ? reject(error) : resolve())),
+        host.close((error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        }),
       );
     }
   });

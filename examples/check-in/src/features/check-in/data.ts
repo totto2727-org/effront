@@ -36,13 +36,13 @@ export type CheckInResult =
   | Readonly<{ status: "not-found" }>
   | Readonly<{ status: "forbidden" }>;
 
-type Ticket = {
+interface Ticket {
   readonly id: string;
   readonly eventId: string;
   readonly code: string;
   readonly attendeeName: string;
   checkedInAt: string | null;
-};
+}
 
 type AuditEntry = Readonly<{
   ticketId: string;

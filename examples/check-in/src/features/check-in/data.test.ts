@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { makeCheckInStore } from "./data.ts";
 
-describe("makeCheckInStore", () => {
+describe(makeCheckInStore, () => {
   test("scopes previews to the authenticated organizer", () => {
     const store = makeCheckInStore();
 

@@ -46,15 +46,13 @@ const activateBrowser = Effect.gen(function* () {
 });
 
 const installViteHmr = Effect.gen(function* () {
-  const hot = (
-    import.meta as ImportMeta &
-      Readonly<{
-        hot?: {
-          on: (event: string, listener: () => void) => void;
-          off: (event: string, listener: () => void) => void;
-        };
-      }>
-  ).hot;
+  const { hot } = import.meta as ImportMeta &
+    Readonly<{
+      hot?: {
+        on: (event: string, listener: () => void) => void;
+        off: (event: string, listener: () => void) => void;
+      };
+    }>;
   if (Predicate.isNullish(hot)) {
     return;
   }
@@ -65,7 +63,11 @@ const installViteHmr = Effect.gen(function* () {
     void run(routeRefresher.refreshCurrentRoute("hmr-refresh"));
   };
   hot.on("rsc:update", refresh);
-  yield* Effect.addFinalizer(() => Effect.sync(() => hot.off("rsc:update", refresh)));
+  yield* Effect.addFinalizer(() =>
+    Effect.sync(() => {
+      hot.off("rsc:update", refresh);
+    }),
+  );
 });
 
 export const browserMain = Effect.scoped(

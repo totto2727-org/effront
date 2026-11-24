@@ -5,13 +5,13 @@ const suite = fileURLToPath(new URL(".", import.meta.url));
 const hosts = [
   {
     name: "production",
-    port: 18221,
+    port: 18_221,
     command:
       "vp build --config vite.config.ts && vp preview --config vite.config.ts --host 127.0.0.1 --port 18221 --strictPort",
   },
   {
     name: "development",
-    port: 18222,
+    port: 18_222,
     command: "vp dev --config vite.config.ts --host 127.0.0.1 --port 18222 --strictPort",
   },
 ];

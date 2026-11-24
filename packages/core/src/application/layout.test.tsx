@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, it, test } from "@effect/vitest";
 import { Context, Deferred, Effect, Exit, FiberSet, Layer, Ref, Scope } from "effect";
 import type { ReactNode } from "react";
 
@@ -11,8 +11,8 @@ class ShellTitle extends Context.Service<ShellTitle, Readonly<{ value: string }>
 
 const EFFRONT = Application.effront<ShellTitle>();
 
-describe("EFFRONT.Layout.make", () => {
-  it("rejects rendering outside its application request runtime", () => {
+describe("eFFRONT.Layout.make", () => {
+  test("rejects rendering outside its application request runtime", () => {
     const ServiceFreeEFFRONT = Application.effront();
     const Layout = ServiceFreeEFFRONT.Layout.make({
       render: ({ children }) => Effect.succeed(children),

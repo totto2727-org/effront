@@ -9,7 +9,7 @@ import { expect, test } from "vitest";
 
 const exec = promisify(execFile);
 const compilerTimeout = 30_000;
-const testTimeout = 2 * compilerTimeout + 5_000;
+const testTimeout = 2 * compilerTimeout + 5000;
 
 const repository = fileURLToPath(new URL("../../../../", import.meta.url));
 const compiler = join(
@@ -57,7 +57,7 @@ test(
           [compiler, "--project", join(workspace, "tsconfig.json"), "--extendedDiagnostics"],
           { timeout: compilerTimeout },
         );
-        const match = diagnostics.match(/^Instantiations:\s+(\d+)/mu);
+        const match = /^Instantiations:\s+(\d+)/mu.exec(diagnostics);
         expect(match, diagnostics).not.toBeNull();
         return Number(match?.[1]);
       };

@@ -2,14 +2,14 @@ import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
-type AnimationSample = {
+interface AnimationSample {
   name: string;
   pseudoElement: string | null;
   playState: AnimationPlayState;
   progress: number | null;
   keyframes: ComputedKeyframe[];
   pageStyle: string | null;
-};
+}
 
 declare global {
   interface Window {
@@ -39,7 +39,7 @@ const observeAnimations = (page: Page): Promise<void> =>
       }
       evidence.frames++;
       for (const animation of document.getAnimations()) {
-        const effect = animation.effect;
+        const { effect } = animation;
         if (!(effect instanceof KeyframeEffect)) {
           continue;
         }
@@ -126,17 +126,17 @@ for (const mode of ["default", "custom", "typed"] as const) {
     const playing = samples.filter(isPlaying);
     expect(playing.length).toBeGreaterThan(0);
     expect(playing.some((sample) => sample.pseudoElement?.includes("effront-page"))).toBe(true);
-    if (mode !== "default") {
+    if (mode === "default") {
+      expect(playing.some((sample) => sample.name.startsWith("demo-slide"))).toBe(false);
+      expect(
+        playing.some((sample) => sample.keyframes.some((keyframe) => keyframe["opacity"] === "0")),
+      ).toBe(true);
+    } else {
       const animation = mode === "typed" ? "demo-lift" : "demo-slide";
       expect(playing.some((sample) => sample.name === `${animation}-in`)).toBe(true);
       expect(playing.some((sample) => sample.name === `${animation}-out`)).toBe(true);
       expect(
         playing.some((sample) => sample.keyframes.some((keyframe) => keyframe["transform"])),
-      ).toBe(true);
-    } else {
-      expect(playing.some((sample) => sample.name.startsWith("demo-slide"))).toBe(false);
-      expect(
-        playing.some((sample) => sample.keyframes.some((keyframe) => keyframe["opacity"] === "0")),
       ).toBe(true);
     }
     await assertLayoutRetained(page);
@@ -196,7 +196,11 @@ test("responds to reduced-motion preference changes after hydration", async ({ p
   await page.evaluate(
     () =>
       new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            resolve();
+          }),
+        ),
       ),
   );
   await expect(note).toHaveValue("Keep this page-local state");
@@ -211,7 +215,11 @@ test("responds to reduced-motion preference changes after hydration", async ({ p
   await page.evaluate(
     () =>
       new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            resolve();
+          }),
+        ),
       ),
   );
   await expect(note).toHaveValue("Keep state when motion returns");

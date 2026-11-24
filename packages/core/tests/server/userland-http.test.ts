@@ -134,6 +134,7 @@ describe("userland HTTP through createFetchHandler", () => {
     await response.text();
     expect(events).toStrictEqual(["acquired:unknown", "released:unknown"]);
   });
+
   test("executes the Guide's service-backed JSON route and releases completed non-stream responses", async () => {
     const { events, handler } = makeApplication();
     const response = await handler(

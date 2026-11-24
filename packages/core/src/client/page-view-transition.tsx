@@ -11,7 +11,9 @@ const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 const subscribe = (onChange: () => void) => {
   const query = window.matchMedia(reducedMotionQuery);
   query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
+  return () => {
+    query.removeEventListener("change", onChange);
+  };
 };
 const getSnapshot = (): boolean => window.matchMedia(reducedMotionQuery).matches;
 const getServerSnapshot = (): boolean => false;

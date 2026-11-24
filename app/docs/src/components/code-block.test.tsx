@@ -12,29 +12,35 @@ let CodeBlock: typeof import("./code-block").CodeBlock;
 let offlineMarkup: string;
 
 const decodeText = (value: string): string =>
-  value.replace(/&(amp|lt|gt|quot|#x27);/gu, (entity) => {
+  value.replaceAll(/&(amp|lt|gt|quot|#x27);/gu, (entity) => {
     switch (entity) {
-      case "&amp;":
+      case "&amp;": {
         return "&";
-      case "&lt;":
+      }
+      case "&lt;": {
         return "<";
-      case "&gt;":
+      }
+      case "&gt;": {
         return ">";
-      case "&quot;":
+      }
+      case "&quot;": {
         return '"';
-      case "&#x27;":
+      }
+      case "&#x27;": {
         return "'";
-      default:
+      }
+      default: {
         throw new TypeError(`Unexpected escaped entity: ${entity}`);
+      }
     }
   });
 
 // Inspect React's serialized text without executing markup. Real browser parsing,
 // computed colors and no-JavaScript rendering are covered by docs.e2e.ts.
 const serializedCodeText = (html: string): string => {
-  const body = html.match(/<code>([\s\S]*?)<\/code>/)?.[1];
+  const body = /<code>([\s\S]*?)<\/code>/.exec(html)?.[1];
   expect(body).toBeDefined();
-  return decodeText(body!.replace(/<\/?span\b[^>]*>/g, ""));
+  return decodeText(body!.replaceAll(/<\/?span\b[^>]*>/g, ""));
 };
 
 beforeAll(async () => {
@@ -60,7 +66,7 @@ beforeAll(async () => {
     for (const [language, code] of fixtures) {
       expect(serializedCodeText(renderToStaticMarkup(CodeBlock({ code, language })))).toBe(code);
     }
-    expect(createHighlighterCoreSync).toHaveBeenCalledTimes(1);
+    expect(createHighlighterCoreSync).toHaveBeenCalledOnce();
     expect(fetch).not.toHaveBeenCalled();
     expect(instantiate).not.toHaveBeenCalled();
     expect(compile).not.toHaveBeenCalled();

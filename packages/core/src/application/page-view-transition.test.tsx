@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, it, test } from "@effect/vitest";
 import { Effect, FiberSet, Layer, Schema } from "effect";
 import { isValidElement } from "react";
 import type { ReactNode } from "react";
@@ -38,7 +38,7 @@ const renderBoundary = (override?: false | PageViewTransitionConfig, parameteriz
     return boundaryConfig(node);
   });
 
-describe("PageViewTransition settings", () => {
+describe("pageViewTransition settings", () => {
   it.effect("enables page transitions without requiring a service Layer", () =>
     Effect.gen(function* () {
       expect((yield* PageViewTransition).default).toStrictEqual({
@@ -103,7 +103,7 @@ describe("PageViewTransition settings", () => {
     }).pipe(Effect.provide(Layer.succeed(PageViewTransition, { enter: "application-enter" }))),
   );
 
-  it("shallowly replaces type maps and forwards only public settings", () => {
+  test("shallowly replaces type maps and forwards only public settings", () => {
     const defaults = {
       default: "global",
       share: { default: "fade", "navigation-back": "back" },

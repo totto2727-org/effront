@@ -9,11 +9,15 @@ export function useIsMobile(): boolean {
 
   React.useEffect(() => {
     const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = (): void => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    const onChange = (): void => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
     mediaQuery.addEventListener("change", onChange);
     onChange();
-    return () => mediaQuery.removeEventListener("change", onChange);
+    return () => {
+      mediaQuery.removeEventListener("change", onChange);
+    };
   }, []);
 
-  return !!isMobile;
+  return Boolean(isMobile);
 }

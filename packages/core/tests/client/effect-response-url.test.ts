@@ -1,11 +1,11 @@
 import { createServer } from "node:http";
 
-import { expect, it } from "@effect/vitest";
+import { expect, test } from "@effect/vitest";
 import { HttpClientRequest, HttpClientResponse } from "effect/http";
 
 // The Flight client reads `response.url` directly to learn the resolved route after a redirect.
 // These are dependency contract checks for that accessor, not tests of Effront code.
-it("resolves the final native Fetch URL after a real local redirect", async () => {
+test("resolves the final native Fetch URL after a real local redirect", async () => {
   const server = createServer((request, response) => {
     if (request.url === "/before") {
       response.writeHead(302, { location: "/after?redirected=yes" });
@@ -29,12 +29,18 @@ it("resolves the final native Fetch URL after a real local redirect", async () =
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve())),
+      server.close((error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      }),
     );
   }
 });
 
-it("uses the complete original URL without a fragment for synthetic responses", () => {
+test("uses the complete original URL without a fragment for synthetic responses", () => {
   const response = HttpClientResponse.fromWeb(
     HttpClientRequest.get("https://example.test/path?value=one#fragment"),
     new Response(),
@@ -42,6 +48,6 @@ it("uses the complete original URL without a fragment for synthetic responses", 
   expect(response.url).toBe("https://example.test/path?value=one");
 });
 
-it("does not invent a resolved URL for an invalid original request", () => {
+test("does not invent a resolved URL for an invalid original request", () => {
   expect(HttpClientResponse.fromWeb(HttpClientRequest.empty, new Response()).url).toBe("");
 });

@@ -13,7 +13,8 @@ import { analyzeRoutePath, isAbsolutePath } from "#core/application/route-path.t
 import { FlightMediaType, ServerFnQueryPath } from "#core/rsc/flight.ts";
 import { renderRouteTree } from "#core/rsc/render-route-tree.tsx";
 import { FlightRenderer } from "./flight-renderer.tsx";
-import { HtmlRenderError, HtmlRenderer } from "./html-renderer.tsx";
+import type { HtmlRenderError } from "./html-renderer.tsx";
+import { HtmlRenderer } from "./html-renderer.tsx";
 import type { RequestOutcome } from "./request-outcome.ts";
 import { prepareServerFnQuery } from "./server-fn-query.ts";
 import { prepareServerFnRequest } from "./server-fn-request.ts";
@@ -31,8 +32,8 @@ const appendAcceptVary = (vary: string | undefined): string => {
     return "Accept";
   }
 
-  const fields = vary.split(",").map((field) => field.trim().toLowerCase());
-  return fields.includes("*") || fields.includes("accept") ? vary : `${vary}, Accept`;
+  const fields = new Set(vary.split(",").map((field) => field.trim().toLowerCase()));
+  return fields.has("*") || fields.has("accept") ? vary : `${vary}, Accept`;
 };
 
 const acceptVaryPreResponseHandler: HttpEffect.PreResponseHandler = (_request, response) =>
@@ -99,8 +100,8 @@ const httpLayer = <Services, ApplicationError, Requirements>(
       );
     }
 
-    const pathname = requestUrl.value.pathname;
-    const decodeParams = destination.page.decodeParams;
+    const { pathname } = requestUrl.value;
+    const { decodeParams } = destination.page;
     const encodedParams = yield* Predicate.isNullish(decodeParams)
       ? Effect.succeed(EmptyEncodedPageParams)
       : HttpRouter.params;

@@ -22,13 +22,17 @@ function StoryCard({ story }: Readonly<{ story: Story }>) {
     }
     const controller = new AbortController();
     void Effect.runPromise(readNote({ id: story.id }), { signal: controller.signal })
-      .then((value) => setDetail(value ?? "No note is available."))
+      .then((value) => {
+        setDetail(value ?? "No note is available.");
+      })
       .catch(() => {
         if (!controller.signal.aborted) {
           setFailure(true);
         }
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, [expanded, detail, story.id, attempt]);
 
   return (
@@ -37,7 +41,9 @@ function StoryCard({ story }: Readonly<{ story: Story }>) {
       <p>{story.summary}</p>
       <button
         aria-expanded={expanded}
-        onClick={() => setExpanded((current) => !current)}
+        onClick={() => {
+          setExpanded((current) => !current);
+        }}
         type="button"
       >
         {expanded ? "Close note" : "Read note"}
@@ -87,7 +93,9 @@ export function Feed({ seed }: Readonly<{ seed: Readonly<Story[]> }>) {
     setFailure(false);
     void Effect.runPromise(
       Stream.runForEach(readPage({ after: lastId }), (story) =>
-        Effect.sync(() => setStories((current) => [...current, story])),
+        Effect.sync(() => {
+          setStories((current) => [...current, story]);
+        }),
       ),
       { signal: controller.signal },
     )

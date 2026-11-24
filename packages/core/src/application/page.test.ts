@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, it, test } from "@effect/vitest";
 import {
   Context,
   Deferred,
@@ -32,8 +32,8 @@ const transformedPathParams = Schema.Struct({ slug: Schema.String }).pipe(
   ),
 );
 
-describe("EFFRONT.Page.make", () => {
-  it("rejects rendering outside its application request runtime", () => {
+describe("eFFRONT.Page.make", () => {
+  test("rejects rendering outside its application request runtime", () => {
     const ServiceFreeEFFRONT = Application.effront();
     const Page = ServiceFreeEFFRONT.Page.make({ render: () => Effect.succeed(null) });
 

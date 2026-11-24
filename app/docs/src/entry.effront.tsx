@@ -94,47 +94,45 @@ function documentPage(slug: string) {
   const page = getPage(slug);
   return EFFRONT.Page.make({
     render: () =>
-      Effect.map(page.content(), (content) => {
-        return (
-          <>
-            <title>{`${page.title} | Effront`}</title>
-            <meta name="description" content={page.description} />
-            <article
-              className="prose prose-neutral max-w-none dark:prose-invert"
-              data-doc-page={page.slug}
-            >
-              <header className="not-prose mb-10 border-b pb-8">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-emerald-700">
-                  {page.section}
+      Effect.map(page.content(), (content) => (
+        <>
+          <title>{`${page.title} | Effront`}</title>
+          <meta name="description" content={page.description} />
+          <article
+            className="prose prose-neutral max-w-none dark:prose-invert"
+            data-doc-page={page.slug}
+          >
+            <header className="not-prose mb-10 border-b pb-8">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-emerald-700">
+                {page.section}
+              </p>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>
+              <p className="mt-4 text-base leading-8 text-muted-foreground">{page.description}</p>
+            </header>
+            {(page.section === "アーキテクチャ" || page.section === "Architecture") && (
+              <aside
+                className="not-prose mb-8 rounded-lg border p-4 text-sm leading-7 text-muted-foreground"
+                data-architecture-baseline={architectureBaseline.commit}
+              >
+                <p>
+                  {documentLocale(page.slug) === "en" ? "Source version: " : "解説対象: "}
+                  <code>@effront/core@{architectureBaseline.version}</code>
                 </p>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>
-                <p className="mt-4 text-base leading-8 text-muted-foreground">{page.description}</p>
-              </header>
-              {(page.section === "アーキテクチャ" || page.section === "Architecture") && (
-                <aside
-                  className="not-prose mb-8 rounded-lg border p-4 text-sm leading-7 text-muted-foreground"
-                  data-architecture-baseline={architectureBaseline.commit}
-                >
-                  <p>
-                    {documentLocale(page.slug) === "en" ? "Source version: " : "解説対象: "}
-                    <code>@effront/core@{architectureBaseline.version}</code>
-                  </p>
-                  <p>
-                    {documentLocale(page.slug) === "en" ? "Baseline commit: " : "基準コミット: "}
-                    <code className="break-all">{architectureBaseline.commit}</code>
-                  </p>
-                  <p>
-                    {documentLocale(page.slug) === "en"
-                      ? `Reviewed on ${architectureBaseline.reviewedOn}. This chapter explains the implementation at this baseline.`
-                      : `確認日: ${architectureBaseline.reviewedOn}。この版の実装を基準に解説しています。`}
-                  </p>
-                </aside>
-              )}
-              {content}
-            </article>
-          </>
-        );
-      }),
+                <p>
+                  {documentLocale(page.slug) === "en" ? "Baseline commit: " : "基準コミット: "}
+                  <code className="break-all">{architectureBaseline.commit}</code>
+                </p>
+                <p>
+                  {documentLocale(page.slug) === "en"
+                    ? `Reviewed on ${architectureBaseline.reviewedOn}. This chapter explains the implementation at this baseline.`
+                    : `確認日: ${architectureBaseline.reviewedOn}。この版の実装を基準に解説しています。`}
+                </p>
+              </aside>
+            )}
+            {content}
+          </article>
+        </>
+      )),
   });
 }
 

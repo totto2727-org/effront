@@ -11,7 +11,10 @@ const destinations = [
   { path: unicodePath, title: "Unicode page", hash: "details" },
 ];
 
-type FlightClientReference = { moduleId: string; exportName: string };
+interface FlightClientReference {
+  moduleId: string;
+  exportName: string;
+}
 
 const flightClientReferences = (body: string): FlightClientReference[] => {
   const strings = new Map(
@@ -248,7 +251,9 @@ test("renders public Math and Mermaid subpaths with upstream props", async ({ pa
   await expect(diagram).toHaveCSS("height", "180px");
   await expect(diagram.locator("svg")).toBeVisible();
   await expect(diagram.locator("svg")).toHaveAttribute("style", /#123456/u);
-  await page.locator("html").evaluate((element) => element.classList.add("dark"));
+  await page.locator("html").evaluate((element) => {
+    element.classList.add("dark");
+  });
   await expect(diagram.locator("svg")).toHaveAttribute("style", /#abcdef/u);
 });
 
@@ -257,7 +262,9 @@ test("keeps configured MarkdownDocument readable in dark mode and a narrow built
 }) => {
   await page.setViewportSize({ width: 375, height: 720 });
   await page.goto("/manual");
-  await page.locator("html").evaluate((element) => element.classList.add("dark"));
+  await page.locator("html").evaluate((element) => {
+    element.classList.add("dark");
+  });
   await page.waitForLoadState("networkidle");
 
   await expect(page.locator(".math .katex").first()).toBeVisible();
