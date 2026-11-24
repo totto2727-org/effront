@@ -1,318 +1,145 @@
 // oxlint-disable-next-line import/no-unassigned-import -- Vitest registers the browser decoder fixture before loading the navigation runtime.
 import "./client-routing-rsc.fixture.ts";
 
-import { afterEach, beforeEach, expect, it } from "@effect/vitest";
-import { Predicate, Effect, Exit, Fiber } from "effect";
-import { HttpClient, HttpClientResponse } from "effect/http";
-import { vi } from "vitest";
+import { expect, it } from "@effect/vitest";
+import { Effect, Fiber } from "effect";
 
-import { BrowserRenderer } from "#core/client/browser-renderer.ts";
 import type { BrowserRender } from "#core/client/browser-renderer.ts";
-
-import { makeNavigationEvent, TestAnchor } from "./client-routing-events.fixture.ts";
-import { makeNavigationEntry, TestNavigationApi } from "./client-routing-navigation.fixture.ts";
-
-import { makeStreamingHttpClient } from "./client-routing-http.fixture.ts";
+import { observePromise } from "./client-routing-candidate.fixture.ts";
+import { makePrecommitController, runPrecommit } from "./client-routing-commit.fixture.ts";
+import { makeNavigationEvent } from "./client-routing-events.fixture.ts";
+import {
+  commitHistory,
+  committedFirstPage,
+  nextUrl,
+  openLiveRenderer,
+  prepareRender,
+} from "./client-routing-live.fixture.ts";
+import type { LiveRenderer } from "./client-routing-live.fixture.ts";
+import { makeNavigationEntry } from "./client-routing-navigation.fixture.ts";
 import { initialRouteTree } from "./client-routing-renderer.fixture.ts";
 
-import {
-  invokeNavigationHandler,
-  invokePrecommitHandler,
-  makePrecommitController,
-  prepareNavigation,
-} from "./client-routing-commit.fixture.ts";
-import { listen } from "./client-routing-router.fixture.ts";
+const originalRequest = 0;
+const replacementRequest = 1;
 
-beforeEach(() => {
-  vi.stubGlobal("HTMLAnchorElement", TestAnchor);
+const aborted = ({
+  responseSignals,
+}: LiveRenderer): Readonly<{
+  original: boolean | undefined;
+  replacement: boolean | undefined;
+}> => ({
+  original: responseSignals[originalRequest]?.aborted,
+  replacement: responseSignals[replacementRequest]?.aborted,
 });
 
-afterEach(() => vi.unstubAllGlobals());
-
-it.effect("retains a committed Flight response until its render retires", () => {
-  const navigationAbort = new AbortController();
-  return Effect.scoped(
-    Effect.gen(function* () {
-      const navigation = new TestNavigationApi();
-      const renderRetired = Promise.withResolvers<void>();
-      const responseAborted = Promise.withResolvers<void>();
-      let responseSignal: AbortSignal | undefined;
-      const httpClient = HttpClient.make((request, _url, signal) =>
-        Effect.sync(() => {
-          if (new URL(request.url).pathname === "/schedule/day-three") {
-            return HttpClientResponse.fromWeb(
-              request,
-              new Response(
-                new ReadableStream<Uint8Array>({
-                  start(controller) {
-                    controller.error(new Error("Failed to load the successor."));
-                  },
-                }),
-                {
-                  headers: {
-                    "content-type": "text/x-component",
-                  },
-                },
-              ),
-            );
-          }
-          responseSignal = signal;
-          return HttpClientResponse.fromWeb(
-            request,
-            new Response(
-              new ReadableStream<Uint8Array>({
-                start(controller) {
-                  controller.enqueue(new Uint8Array([1]));
-                  signal.addEventListener(
-                    "abort",
-                    () => {
-                      controller.error(signal.reason);
-                      responseAborted.resolve();
-                    },
-                    { once: true },
-                  );
-                },
-              }),
-              {
-                headers: {
-                  "content-type": "text/x-component",
-                },
-              },
-            ),
-          );
-        }),
-      );
-      const browserRenderer = BrowserRenderer.of({
-        commit: () => undefined,
-        initialize: () => undefined,
-        navigate: () => ({
-          committed: Promise.resolve(),
-          discard: () => Promise.resolve(),
-          retired: renderRetired.promise,
-        }),
-        refresh: () => {
-          throw new TypeError("Unexpected refresh.");
-        },
-      });
-      yield* listen(navigation, { httpClient, renderer: browserRenderer });
-      const pendingNavigation = makeNavigationEvent({ signal: navigationAbort.signal });
-
-      navigation.dispatch(pendingNavigation.event);
-
-      const interception = pendingNavigation.interception();
-      const precommitHandler = interception?.precommitHandler;
-      if (Predicate.isNullish(precommitHandler)) {
-        return yield* Effect.die("Expected a precommit handler.");
-      }
-      const handlers: NavigationInterceptHandler[] = [];
-      yield* Effect.promise(() =>
-        invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
-      );
-      navigation.currentEntry = makeNavigationEntry(
-        "day-two",
-        "https://effront.test/schedule/day-two",
-      );
-      const handler = handlers[0];
-      if (Predicate.isNullish(handler)) {
-        return yield* Effect.die("Expected a post-commit handler.");
-      }
-      yield* Effect.promise(() => invokeNavigationHandler(handler));
-
-      expect(responseSignal?.aborted).toBe(false);
-
-      navigationAbort.abort();
-      yield* Effect.yieldNow;
-
-      expect(responseSignal?.aborted).toBe(false);
-
-      const failedNavigation = makeNavigationEvent({
-        destination: { url: "https://effront.test/schedule/day-three" },
-      });
-      navigation.dispatch(failedNavigation.event);
-      const failedPrecommitHandler = failedNavigation.interception()?.precommitHandler;
-      if (Predicate.isNullish(failedPrecommitHandler)) {
-        return yield* Effect.die("Expected a precommit handler for the failed successor.");
-      }
-      const failed = yield* Effect.exit(
-        Effect.promise(() =>
-          invokePrecommitHandler(failedPrecommitHandler, makePrecommitController()),
-        ),
-      );
-
-      expect(Exit.isFailure(failed)).toBe(true);
-      expect(responseSignal?.aborted).toBe(false);
-
-      renderRetired.resolve();
-      yield* Effect.promise(() => responseAborted.promise);
-
-      expect(responseSignal?.aborted).toBe(true);
-    }),
-  );
+const commitSuccessor = Effect.fn("effront.test.commitNativeSuccessor")(function* (
+  fixture: LiveRenderer,
+  { preparation, render }: Readonly<{ preparation: Fiber.Fiber<unknown>; render: BrowserRender }>,
+) {
+  fixture.renderer.commit(render);
+  yield* Fiber.join(preparation);
+  yield* Effect.yieldNow;
 });
 
 it.effect(
   "releases the previous navigation stream when the real renderer commits its successor",
   () =>
-    Effect.scoped(
-      Effect.gen(function* () {
-        const navigation = new TestNavigationApi();
-        const renderer = yield* BrowserRenderer.make;
-        let published = Promise.withResolvers<BrowserRender>();
-        renderer.initialize(initialRouteTree, (render) => {
-          published.resolve(render);
-        });
-        const { httpClient, responseSignals } = makeStreamingHttpClient();
-        yield* listen(navigation, { httpClient, renderer });
-
-        const firstUrl = "https://effront.test/schedule/day-two";
-        const firstPreparation = yield* prepareNavigation(navigation, firstUrl).pipe(
-          Effect.forkChild,
-        );
-        const firstRender = yield* Effect.promise(() => published.promise);
-        yield* Effect.yieldNow;
-        renderer.commit(firstRender);
-        const firstHistory = yield* Fiber.join(firstPreparation);
-        navigation.currentEntry = makeNavigationEntry("day-two", firstUrl);
-        yield* Effect.promise(() => invokeNavigationHandler(firstHistory));
-
-        published = Promise.withResolvers<BrowserRender>();
-        const secondPreparation = yield* prepareNavigation(
-          navigation,
-          "https://effront.test/schedule/day-three",
-        ).pipe(Effect.forkChild);
-        const secondRender = yield* Effect.promise(() => published.promise);
-        yield* Effect.yieldNow;
-        expect(responseSignals[0]?.aborted).toBe(false);
-
-        // Both router observers are waiting when React commits the successor.
-        // The old stream must close even if the new generation becomes current first.
-        renderer.commit(secondRender);
-        yield* Fiber.join(secondPreparation);
-        yield* Effect.yieldNow;
-        expect(responseSignals[0]?.aborted).toBe(true);
-        expect(responseSignals[1]?.aborted).toBe(false);
-      }),
-    ),
+    Effect.gen(function* () {
+      const fixture = yield* openLiveRenderer;
+      yield* committedFirstPage(fixture);
+      const successor = yield* prepareRender(fixture, nextUrl);
+      expect(aborted(fixture).original).toBe(false);
+      // Both router observers are waiting when React commits the successor.
+      yield* commitSuccessor(fixture, successor);
+      expect(aborted(fixture)).toStrictEqual({ original: true, replacement: false });
+    }).pipe(Effect.scoped),
 );
+
+const queueSuccessor = Effect.fn("effront.test.queueSuccessorDuringCommit")(function* (
+  fixture: LiveRenderer,
+) {
+  const first = makeNavigationEvent();
+  fixture.navigation.dispatch(first.event);
+  const preparation = yield* runPrecommit(first.interception(), makePrecommitController()).pipe(
+    Effect.forkChild,
+  );
+  const render = yield* fixture.read();
+  yield* Effect.yieldNow;
+  const successor = makeNavigationEvent({ destination: { url: nextUrl } });
+  // A child layout effect can queue navigation before the root resolves committed.
+  // That microtask runs before the router processes the commit notification.
+  queueMicrotask(() => {
+    fixture.navigation.dispatch(successor.event);
+  });
+  yield* commitSuccessor(fixture, { preparation, render });
+  return successor;
+});
+
+const publishQueuedSuccessor = Effect.fn("effront.test.publishQueuedSuccessor")(function* (
+  fixture: LiveRenderer,
+  pending: ReturnType<typeof makeNavigationEvent>,
+) {
+  fixture.reset();
+  const preparation = yield* runPrecommit(pending.interception(), makePrecommitController()).pipe(
+    Effect.forkChild,
+  );
+  const render = yield* fixture.read();
+  return { preparation, render };
+});
 
 it.effect(
   "keeps a committed navigation stream alive when superseded before its commit notification",
   () =>
-    Effect.scoped(
-      Effect.gen(function* () {
-        const navigation = new TestNavigationApi();
-        const renderer = yield* BrowserRenderer.make;
-        let published = Promise.withResolvers<BrowserRender>();
-        renderer.initialize(initialRouteTree, (render) => {
-          published.resolve(render);
-        });
-        const { httpClient, responseSignals } = makeStreamingHttpClient();
-        yield* listen(navigation, { httpClient, renderer });
-
-        const first = makeNavigationEvent();
-        navigation.dispatch(first.event);
-        const firstHandler = first.interception()?.precommitHandler;
-        if (Predicate.isNullish(firstHandler)) {
-          return yield* Effect.die("Expected a precommit handler for the first navigation.");
-        }
-        const firstPreparation = yield* Effect.promise(() =>
-          invokePrecommitHandler(firstHandler, makePrecommitController()),
-        ).pipe(Effect.forkChild);
-        const firstRender = yield* Effect.promise(() => published.promise);
-        yield* Effect.yieldNow;
-
-        const successor = makeNavigationEvent({
-          destination: { url: "https://effront.test/schedule/day-three" },
-        });
-        // A child layout effect can queue navigation before the root resolves committed.
-        // That microtask then runs before the router processes the commit notification.
-        queueMicrotask(() => {
-          navigation.dispatch(successor.event);
-        });
-        renderer.commit(firstRender);
-        yield* Fiber.join(firstPreparation);
-        yield* Effect.yieldNow;
-
-        expect(responseSignals).toHaveLength(1);
-        expect(responseSignals[0]?.aborted).toBe(false);
-
-        const successorHandler = successor.interception()?.precommitHandler;
-        if (Predicate.isNullish(successorHandler)) {
-          return yield* Effect.die("Expected a precommit handler for the successor.");
-        }
-        published = Promise.withResolvers<BrowserRender>();
-        const successorPreparation = yield* Effect.promise(() =>
-          invokePrecommitHandler(successorHandler, makePrecommitController()),
-        ).pipe(Effect.forkChild);
-        const successorRender = yield* Effect.promise(() => published.promise);
-        expect(responseSignals[0]?.aborted).toBe(false);
-
-        renderer.commit(successorRender);
-        yield* Fiber.join(successorPreparation);
-        yield* Effect.yieldNow;
-        expect(responseSignals[0]?.aborted).toBe(true);
-        expect(responseSignals[1]?.aborted).toBe(false);
-      }),
-    ),
+    Effect.gen(function* () {
+      const fixture = yield* openLiveRenderer;
+      const pending = yield* queueSuccessor(fixture);
+      expect(fixture.responseSignals).toHaveLength(1);
+      expect(aborted(fixture).original).toBe(false);
+      const successor = yield* publishQueuedSuccessor(fixture, pending);
+      expect(aborted(fixture).original).toBe(false);
+      yield* commitSuccessor(fixture, successor);
+      expect(aborted(fixture)).toStrictEqual({ original: true, replacement: false });
+    }).pipe(Effect.scoped),
 );
 
+const queueRefreshDiscard = Effect.fn("effront.test.queueRefreshDiscard")(function* (
+  fixture: LiveRenderer,
+) {
+  const next = yield* prepareRender(fixture, nextUrl);
+  // A cancelled refresh queues restoration of the first page before the second commits.
+  const refresh = fixture.renderer.refresh(initialRouteTree);
+  fixture.reset();
+  const discarded = refresh.discard();
+  const discardRender = yield* fixture.read();
+  fixture.renderer.commit(next.render);
+  yield* commitHistory(fixture.navigation, next, makeNavigationEntry("day-three", nextUrl));
+  return { discardRender, discarded };
+});
+
+const retireRestoredPage = Effect.fn("effront.test.retireRestoredPage")(function* (
+  fixture: LiveRenderer,
+) {
+  fixture.reset();
+  fixture.renderer.refresh(initialRouteTree);
+  const replacement = yield* fixture.read();
+  fixture.renderer.commit(replacement);
+  yield* Effect.yieldNow;
+});
+
 it.effect("keeps an older navigation stream while a queued discard can restore it", () =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const navigation = new TestNavigationApi();
-      const renderer = yield* BrowserRenderer.make;
-      let published = Promise.withResolvers<BrowserRender>();
-      renderer.initialize(initialRouteTree, (render) => {
-        published.resolve(render);
-      });
-      const { httpClient, responseSignals } = makeStreamingHttpClient();
-      yield* listen(navigation, { httpClient, renderer });
+  Effect.gen(function* () {
+    const fixture = yield* openLiveRenderer;
+    yield* committedFirstPage(fixture);
+    const { discardRender, discarded } = yield* queueRefreshDiscard(fixture);
+    expect(aborted(fixture)).toStrictEqual({ original: false, replacement: false });
 
-      const firstUrl = "https://effront.test/schedule/day-two";
-      const firstPreparation = yield* prepareNavigation(navigation, firstUrl).pipe(
-        Effect.forkChild,
-      );
-      const firstRender = yield* Effect.promise(() => published.promise);
-      yield* Effect.yieldNow;
-      renderer.commit(firstRender);
-      const firstHistory = yield* Fiber.join(firstPreparation);
-      navigation.currentEntry = makeNavigationEntry("day-two", firstUrl);
-      yield* Effect.promise(() => invokeNavigationHandler(firstHistory));
+    // The router has moved on, but React can still restore the first page.
+    fixture.renderer.commit(discardRender);
+    yield* observePromise(discarded);
+    yield* Effect.yieldNow;
+    expect(aborted(fixture)).toStrictEqual({ original: false, replacement: true });
 
-      published = Promise.withResolvers<BrowserRender>();
-      const secondUrl = "https://effront.test/schedule/day-three";
-      const secondPreparation = yield* prepareNavigation(navigation, secondUrl).pipe(
-        Effect.forkChild,
-      );
-      const secondRender = yield* Effect.promise(() => published.promise);
-      yield* Effect.yieldNow;
-
-      // A cancelled refresh queues restoration of the first page before the second commits.
-      const refresh = renderer.refresh(initialRouteTree);
-      published = Promise.withResolvers<BrowserRender>();
-      const discarded = refresh.discard();
-      const discardRender = yield* Effect.promise(() => published.promise);
-      renderer.commit(secondRender);
-      const secondHistory = yield* Fiber.join(secondPreparation);
-      navigation.currentEntry = makeNavigationEntry("day-three", secondUrl);
-      yield* Effect.promise(() => invokeNavigationHandler(secondHistory));
-      expect(responseSignals[0]?.aborted).toBe(false);
-      expect(responseSignals[1]?.aborted).toBe(false);
-
-      // The router has moved on, but React can still restore the first page.
-      renderer.commit(discardRender);
-      yield* Effect.promise(() => discarded);
-      yield* Effect.yieldNow;
-      expect(responseSignals[0]?.aborted).toBe(false);
-      expect(responseSignals[1]?.aborted).toBe(true);
-
-      // Once the restored page retires, its original observer must release its stream.
-      published = Promise.withResolvers<BrowserRender>();
-      renderer.refresh(initialRouteTree);
-      const replacement = yield* Effect.promise(() => published.promise);
-      renderer.commit(replacement);
-      yield* Effect.yieldNow;
-      expect(responseSignals[0]?.aborted).toBe(true);
-    }),
-  ),
+    yield* retireRestoredPage(fixture);
+    expect(aborted(fixture).original).toBe(true);
+  }).pipe(Effect.scoped),
 );

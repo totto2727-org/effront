@@ -29,12 +29,26 @@ type Transport = Readonly<{
 }>;
 
 const firstFlightChunk = 1;
-export const trackFlight = (mode: "streaming" | "pending"): Transport => {
+const failedFlight = (): ReadableStream<Uint8Array> =>
+  new ReadableStream({
+    start: (controller) => {
+      // oxlint-disable-next-line rules/require-tagged-error -- Simulate a native response stream failure before the successor decodes.
+      controller.error(new Error("Failed to load the successor."));
+    },
+  });
+
+const reply = (stream: ReadableStream<Uint8Array>): Response =>
+  new Response(stream, { headers: { "content-type": "text/x-component" } });
+
+export const trackFlight = (mode: "streaming" | "pending", failedPath?: string): Transport => {
   const started = makeGate();
   const aborted = makeGate();
   const current = MutableRef.make(Option.none<AbortSignal>());
   const httpClient = HttpClient.make((request, _url, signal) =>
     Effect.sync(() => {
+      if (new URL(request.url).pathname === failedPath) {
+        return HttpClientResponse.fromWeb(request, reply(failedFlight()));
+      }
       MutableRef.set(current, Option.some(signal));
       const stream = new ReadableStream<Uint8Array>({
         start: (controller) => {
@@ -52,8 +66,7 @@ export const trackFlight = (mode: "streaming" | "pending"): Transport => {
           );
         },
       });
-      const response = new Response(stream, { headers: { "content-type": "text/x-component" } });
-      return HttpClientResponse.fromWeb(request, response);
+      return HttpClientResponse.fromWeb(request, reply(stream));
     }),
   );
   return {
