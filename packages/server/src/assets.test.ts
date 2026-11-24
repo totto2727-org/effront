@@ -3,9 +3,8 @@ import { createServer, request as nodeRequest } from "node:http";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
-import { Context, Effect, Exit, FileSystem, Result, Stream } from "effect";
-import { systemError } from "effect/PlatformError";
+import { NodeHttpServer } from "@effect/platform-node";
+import { Context, Effect, Exit, FileSystem, PlatformError, Result, Stream } from "effect";
 import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
@@ -78,7 +77,11 @@ const withServer = (
             stat: (file) =>
               file === settings.deniedStatPath
                 ? Effect.fail(
-                    systemError({ _tag: "PermissionDenied", module: "FileSystem", method: "stat" }),
+                    PlatformError.systemError({
+                      _tag: "PermissionDenied",
+                      module: "FileSystem",
+                      method: "stat",
+                    }),
                   )
                 : fs.stat(file),
           }),

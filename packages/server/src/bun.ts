@@ -1,8 +1,7 @@
 import "effect/schema/SchemaJITCompiler/enable";
 import { BunHttpServer } from "@effect/platform-bun";
 import { Effect, Layer } from "effect";
-import { HttpServer } from "effect/http";
-import type { HttpServerResponse } from "effect/http/HttpServerResponse";
+import { HttpServer, type HttpServerResponse } from "effect/http";
 import { withAssets, type AssetOptions } from "./assets.ts";
 
 export interface ServeOptions {
@@ -13,7 +12,7 @@ export interface ServeOptions {
 
 /** A scoped native Bun HTTP server. Launch with Layer.launch and BunRuntime.runMain. */
 export const serve = <E, R>(
-  handler: Effect.Effect<HttpServerResponse, E, R>,
+  handler: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>,
   options: ServeOptions,
 ) =>
   Layer.unwrap(

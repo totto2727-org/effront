@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { renderToReadableStream } from "react-dom/server.edge";
-import { afterAll, describe, expect, test, vi } from "vite-plus/test";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vite-plus/test";
 import { Math } from "@effront/markdown/math";
 import { Math as ComarkMath } from "@comark/react/components/Math";
 
@@ -16,11 +16,10 @@ vi.mock("react-dom", async (importOriginal) => ({
   browser: () => ready,
 }));
 vi.mock("@comark/react/components/Mermaid", () => ({ Mermaid: upstreamMermaid }));
-vi.stubEnv("SSR", false);
-const { Mermaid } = await import("@effront/markdown/mermaid");
-afterAll(() => vi.unstubAllEnvs());
-
 describe("public rich components", () => {
+  beforeAll(() => vi.stubEnv("SSR", false));
+  afterAll(() => vi.unstubAllEnvs());
+
   test("exports Math as the unchanged upstream component", () => {
     expect(Math).toBe(ComarkMath);
   });
@@ -44,6 +43,7 @@ describe("public rich components", () => {
   ] satisfies (MermaidProps & { "theme-dark"?: string })[])(
     "forwards upstream props unchanged: %j",
     async (props) => {
+      const { Mermaid } = await import("@effront/markdown/mermaid");
       upstreamMermaid.mockClear();
       const stream = await renderToReadableStream(<Mermaid {...props} />);
       await new Response(stream).text();

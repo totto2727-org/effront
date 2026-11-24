@@ -1,5 +1,5 @@
 import "effect/schema/SchemaJITCompiler/enable";
-import * as BrowserRuntime from "@effect/platform-browser/BrowserRuntime";
+import { BrowserRuntime } from "@effect/platform-browser";
 
 import { browserMain } from "./application.ts";
 

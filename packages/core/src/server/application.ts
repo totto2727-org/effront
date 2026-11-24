@@ -1,5 +1,14 @@
-import { Array, Context, Effect, Layer, Option, Stream, String, type Types } from "effect";
-import type { PlatformError } from "effect/PlatformError";
+import {
+  Array,
+  Context,
+  Effect,
+  Layer,
+  Option,
+  type PlatformError,
+  Stream,
+  String,
+  type Types,
+} from "effect";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 import { type ApplicationDefinition, getApplicationState } from "../application/definition.tsx";
@@ -78,7 +87,7 @@ type HttpApplicationRequirements =
 
 export type HttpApplicationLayer<ApplicationError, Requirements = never> = Layer.Layer<
   never,
-  ApplicationError | PlatformError,
+  ApplicationError | PlatformError.PlatformError,
   HttpApplicationRequirements | Requirements
 >;
 

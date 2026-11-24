@@ -1,11 +1,11 @@
 import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
 import { renderToReadableStream } from "react-dom/server.edge";
 import type { ComponentPropsWithoutRef } from "react";
-import { Effect } from "effect";
-import { describe, expect, test } from "vite-plus/test";
+import { Data, Effect } from "effect";
+import { assert, describe, expect, test } from "vite-plus/test";
 
 import { createMarkdownCollection } from "./collection.ts";
-import { MarkdownError } from "./error.ts";
+import { MarkdownError, MarkdownParseError } from "./error.ts";
 import { parseMarkdown } from "./parse.ts";
 
 const entry = (content: string) =>
@@ -16,6 +16,8 @@ const entry = (content: string) =>
       assets: { "./logo.svg": "/assets/logo.hash.svg" },
     }),
   ).get("/manual/index")!;
+
+class TestPluginError extends Data.TaggedError("TestPluginError")<{ readonly message: string }> {}
 
 describe("parseMarkdown", () => {
   test("resolves nested links and images in the Comark AST before rendering", async () => {
@@ -77,8 +79,8 @@ describe("parseMarkdown", () => {
     expect(document.nodes.at(-1)).toStrictEqual(["a", { href: "/manual/guide" }, "Guide"]);
   });
 
-  test("returns parser exceptions through MarkdownError with the original cause", async () => {
-    const cause = new Error("plugin failed");
+  test("returns parser exceptions through MarkdownParseError with the original cause", async () => {
+    const cause = new TestPluginError({ message: "plugin failed" });
     const error = await Effect.runPromise(
       Effect.flip(
         parseMarkdown(entry("hello"), {
@@ -93,7 +95,7 @@ describe("parseMarkdown", () => {
         }),
       ),
     );
-    expect(error).toBeInstanceOf(MarkdownError);
+    assert.instanceOf(error, MarkdownParseError);
     expect(error.cause).toBe(cause);
   });
 

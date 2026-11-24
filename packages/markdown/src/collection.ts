@@ -1,5 +1,5 @@
-import * as NodePath from "@effect/platform-node-shared/NodePath";
-import { Array, Effect, Path, String } from "effect";
+import { NodePath } from "@effect/platform-node-shared";
+import { Array, Effect, Path, Schema, String } from "effect";
 
 import { MarkdownError } from "./error.ts";
 
@@ -45,6 +45,14 @@ const segments = (path: string): string[] =>
 const encodedPathname = (parts: readonly string[]): string =>
   `/${parts.map(encodeURIComponent).join("/")}`;
 const markdownExtension = /\.md$/iu;
+const markdownExtensionLength = ".md".length;
+const BasePath = Schema.String.check(Schema.isPattern(/^\/[^?#]*$/u));
+const MarkdownFilename = Schema.String.check(
+  Schema.isMinLength(markdownExtensionLength + 1),
+  Schema.isPattern(markdownExtension),
+);
+const isBasePath = Schema.is(BasePath);
+const isMarkdownFilename = Schema.is(MarkdownFilename);
 
 /** Creates a collection from Vite's already-loaded document and asset maps. */
 export const createMarkdownCollection = (
@@ -53,11 +61,7 @@ export const createMarkdownCollection = (
   Effect.gen(function* () {
     const pathService = yield* Path.Path;
     const base = segments(options.basePath);
-    if (
-      !options.basePath.startsWith("/") ||
-      /[?#]/u.test(options.basePath) ||
-      base.includes("..")
-    ) {
+    if (!isBasePath(options.basePath) || base.includes("..")) {
       return yield* new MarkdownError({
         message: "basePath must be an absolute pathname without query, fragment, or traversal",
       });
@@ -128,12 +132,12 @@ export const createMarkdownCollection = (
       }
       const relative = parts;
       const filename = relative.at(-1)!;
-      if (!markdownExtension.test(filename) || filename.length === 3) {
+      if (!isMarkdownFilename(filename)) {
         return yield* new MarkdownError({
           message: `document must have a filename ending in .md: ${key}`,
         });
       }
-      const stem = filename.slice(0, -3);
+      const stem = filename.slice(0, -markdownExtensionLength);
       const page = [...base, ...relative.slice(0, -1), stem];
       const url = encodedPathname(page);
       if (entriesByPathname.has(url)) {

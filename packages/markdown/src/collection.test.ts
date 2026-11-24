@@ -210,12 +210,15 @@ describe("createMarkdownCollection", () => {
     { basePath: "/manual", documents: { "index.md": "" } },
     { basePath: "manual", documents: {} },
     { basePath: "/manual?query=1", documents: {} },
+    { basePath: "/manual#heading", documents: {} },
+    { basePath: "/manual/../outside", documents: {} },
     { basePath: "/manual", documents: { "../elsewhere/page.md": "" } },
     {
       basePath: "/manual",
       documents: { "./foo.md": "", "./foo.MD": "" },
     },
     { basePath: "/manual", documents: { "./file.txt": "" } },
+    { basePath: "/manual", documents: { "./.md": "" } },
     {
       basePath: "/manual",
       documents: {},
@@ -224,7 +227,7 @@ describe("createMarkdownCollection", () => {
   ])("returns configuration failures through the typed error channel: %j", (options) => {
     const error = Effect.runSync(Effect.flip(createMarkdownCollection(options)));
     expect(error).toBeInstanceOf(MarkdownError);
-    expect(error._tag).toBe("MarkdownError");
+    expect(error).not.toHaveProperty("cause");
   });
 
   test("returns missing and out-of-base references through the typed error channel", () => {

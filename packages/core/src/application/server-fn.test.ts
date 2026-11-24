@@ -1,5 +1,5 @@
-import { describe, expect, it } from "@effect/vitest";
-import { Context, Effect, Ref, Schema } from "effect";
+import { assert, describe, expect, it } from "@effect/vitest";
+import { Context, Effect, Exit, Predicate, Ref, Schema } from "effect";
 
 import { Application } from "./effront.ts";
 import { type EFFRONTIdentity, getEFFRONTIdentity } from "./effront-identity.ts";
@@ -14,7 +14,7 @@ const invocationEffect = <Output, Services>(
   identity: EFFRONTIdentity<Services>,
 ) => {
   const match = matchServerFnInvocation(invocation, identity);
-  if (match._tag !== "Match") {
+  if (!Predicate.isTagged(match, "Match")) {
     return Effect.die("Expected an EFFRONT ServerFn invocation.");
   }
 
@@ -110,7 +110,7 @@ describe("ServerFn.make", () => {
       for (const args of [["invalid state", form], [0, new FormData()], [0], []]) {
         const invocation = Reflect.apply(action, null, args);
         const exit = yield* Effect.exit(invocationEffect(invocation, getEFFRONTIdentity(EFFRONT)));
-        expect(exit._tag).toBe("Failure");
+        expect(Exit.isFailure(exit)).toBe(true);
       }
       expect(invoked).toBe("Waiting");
     }),
@@ -259,7 +259,7 @@ describe("ServerFn.make", () => {
       );
 
       const invokedBeforeRender = yield* Ref.get(invoked);
-      expect(exit._tag).toBe("Failure");
+      expect(Exit.isFailure(exit)).toBe(true);
       expect(invokedBeforeRender).toBe(false);
     }),
   );
@@ -295,7 +295,7 @@ describe("ServerFn.make", () => {
 
     const match = matchServerFnInvocation(serverFn("value"), getEFFRONTIdentity(Second));
 
-    expect(match._tag).toBe("IdentityMismatch");
+    expect(Predicate.isTagged(match, "IdentityMismatch")).toBe(true);
   });
 
   it("retains the middleware scope on the native invocation metadata", () => {
@@ -308,9 +308,7 @@ describe("ServerFn.make", () => {
 
     const match = matchServerFnInvocation(serverFn("value"), getEFFRONTIdentity(EFFRONT));
 
-    expect(match._tag).toBe("Match");
-    if (match._tag === "Match") {
-      expect(match.middleware).toStrictEqual([RequireScope]);
-    }
+    assert(Predicate.isTagged(match, "Match"));
+    expect(match.middleware).toStrictEqual([RequireScope]);
   });
 });

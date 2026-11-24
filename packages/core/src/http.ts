@@ -1,5 +1,4 @@
-import { Context, Effect, Layer, Scope } from "effect";
-import type { PlatformError } from "effect/PlatformError";
+import { Context, Effect, Layer, type PlatformError, Scope } from "effect";
 import type { HttpServerError } from "effect/http";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
@@ -16,7 +15,7 @@ type HttpRequirements<Requirements> =
   | HttpRouter.Request.Only<"GlobalRequires", Requirements>;
 
 type HttpError<ApplicationError, Requirements> =
-  | HttpRouter.Request.Without<ApplicationError | PlatformError>
+  | HttpRouter.Request.Without<ApplicationError | PlatformError.PlatformError>
   | HtmlRenderError
   | ServerFnRequestFailure
   | HttpServerError.HttpServerError

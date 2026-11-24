@@ -12,7 +12,7 @@ import packageJson from "../package.json" with { type: "json" };
 import vitePlusPackage from "vite-plus/package.json" with { type: "json" };
 import workspace from "../../../package.json" with { type: "json" };
 import { command } from "./cli.ts";
-import { createProject, platforms } from "./init.ts";
+import { createProject, platforms, projectName } from "./init.ts";
 
 const directories: string[] = [];
 const runCommand = Command.runWith(command, { version: packageJson.version });
@@ -325,6 +325,15 @@ test("refuses to overwrite an existing project", async () => {
   await expect(createProject(directory, "node")).rejects.toThrow("not empty");
   await expect(readFile(join(directory, "keep.txt"), "utf8")).resolves.toBe("preserve me");
   await expect(readdir(directory)).resolves.toStrictEqual(["keep.txt"]);
+});
+
+test("validates the normalized project name before touching the target", async () => {
+  const directory = await temporaryDirectory();
+  expect(projectName(join(directory, "My 🧪 App"))).toBe("my-app");
+  await expect(createProject(join(directory, "🧪"), "node")).rejects.toThrow(
+    "Project directory must contain letters or numbers.",
+  );
+  expect(await readdir(directory)).toStrictEqual([]);
 });
 
 test("rejects invalid platform and unexpected options without creating a project", async () => {

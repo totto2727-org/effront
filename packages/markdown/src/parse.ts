@@ -7,7 +7,7 @@ import type { MarkdownDocument, Node, ParserOptions } from "comark";
 import { Effect } from "effect";
 
 import type { MarkdownEntry } from "./collection.ts";
-import { MarkdownError } from "./error.ts";
+import { type MarkdownError, MarkdownParseError } from "./error.ts";
 
 const defaultPlugins = [
   footnotes(),
@@ -20,7 +20,7 @@ const defaultPlugins = [
 export const parseMarkdown = (
   entry: MarkdownEntry,
   options: ParserOptions = {},
-): Effect.Effect<MarkdownDocument, MarkdownError> =>
+): Effect.Effect<MarkdownDocument, MarkdownError | MarkdownParseError> =>
   Effect.gen(function* () {
     const document = yield* Effect.tryPromise({
       try: () =>
@@ -29,7 +29,7 @@ export const parseMarkdown = (
           plugins: [...defaultPlugins, ...(options.plugins ?? [])],
         }),
       catch: (cause) =>
-        new MarkdownError({ message: `Failed to parse Markdown: ${entry.source}`, cause }),
+        new MarkdownParseError({ message: `Failed to parse Markdown: ${entry.source}`, cause }),
     });
     const visit = (node: Node): Effect.Effect<void, MarkdownError> =>
       Effect.gen(function* () {
