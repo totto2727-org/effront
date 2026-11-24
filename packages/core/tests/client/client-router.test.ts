@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it } from "@effect/vitest";
 import { Predicate, Deferred, Effect, Exit, Fiber, Layer, Scope } from "effect";
-import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
+import { HttpClient, HttpClientResponse } from "effect/http";
 import { vi } from "vitest";
 
 import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
@@ -11,7 +11,6 @@ import { FlightClient } from "#core/client/flight-client.ts";
 import { InitialFlightStream } from "#core/client/initial-flight-stream.ts";
 import { RouteLoader } from "#core/client/route-loader.ts";
 import type { RouteLoad } from "#core/client/route-loader.ts";
-import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
 import { makeNavigationEvent, TestAnchor } from "./client-routing-events.fixture.ts";
 import {
@@ -19,6 +18,18 @@ import {
   makeNavigationEntry,
   TestNavigationApi,
 } from "./client-routing-navigation.fixture.ts";
+
+import {
+  makeHttpClient,
+  makeInvalidFlightClient,
+  makeStreamingHttpClient,
+} from "./client-routing-http.fixture.ts";
+import {
+  initialRouteTree,
+  makeBrowserRenderer,
+  renderRequests,
+} from "./client-routing-renderer.fixture.ts";
+import type { BrowserRenderRequest } from "./client-routing-renderer.fixture.ts";
 
 const react = vi.hoisted(() => ({
   transitionTypes: [] as string[],
@@ -59,113 +70,6 @@ beforeEach(() => {
 });
 
 afterEach(() => vi.unstubAllGlobals());
-
-const makeHttpClient = (
-  requestedUrls: string[] = [],
-  contentType = "text/x-component",
-): HttpClient.HttpClient =>
-  HttpClient.make((request) =>
-    Effect.sync(() => {
-      requestedUrls.push(request.url);
-      const response = HttpClientResponse.fromWeb(
-        request,
-        new Response(new Uint8Array(), {
-          headers: {
-            "content-type": contentType,
-          },
-        }),
-      );
-      Object.defineProperty(response, "url", {
-        value: "https://effront.test/schedule/day-two",
-      });
-      return response;
-    }),
-  );
-
-const makeInvalidFlightClient = (): HttpClient.HttpClient =>
-  HttpClient.make(() =>
-    Effect.succeed(
-      HttpClientResponse.fromWeb(
-        HttpClientRequest.empty,
-        new Response(new Uint8Array(), {
-          headers: { "content-type": "text/x-component" },
-        }),
-      ),
-    ),
-  );
-
-const makeStreamingHttpClient = () => {
-  const responseSignals: AbortSignal[] = [];
-  const httpClient = HttpClient.make((request, _url, signal) =>
-    Effect.sync(() => {
-      responseSignals.push(signal);
-      return HttpClientResponse.fromWeb(
-        request,
-        new Response(
-          new ReadableStream<Uint8Array>({
-            start(controller) {
-              controller.enqueue(new Uint8Array([1]));
-              signal.addEventListener(
-                "abort",
-                () => {
-                  controller.error(signal.reason);
-                },
-                {
-                  once: true,
-                },
-              );
-            },
-          }),
-          {
-            headers: {
-              "content-type": "text/x-component",
-            },
-          },
-        ),
-      );
-    }),
-  );
-  return { httpClient, responseSignals };
-};
-
-type BrowserRenderRequest = Readonly<{
-  _tag: "Navigation" | "ServerFunction";
-  routeTree: RouteTreeModel;
-}>;
-
-const initialRouteTree: RouteTreeModel = {
-  child: null,
-  content: null,
-  id: "day-one",
-};
-
-const makeBrowserRenderer = (renders: BrowserRenderRequest[] = []) => {
-  let visibleNavigation: PromiseWithResolvers<void> | null = null;
-  return BrowserRenderer.of({
-    commit: () => undefined,
-    initialize: () => undefined,
-    navigate: (routeTree) => {
-      const previousNavigation = visibleNavigation;
-      visibleNavigation = Promise.withResolvers<void>();
-      renders.push({ _tag: "Navigation", routeTree });
-      return {
-        committed: Promise.resolve().then(() => previousNavigation?.resolve()),
-        discard: () => Promise.resolve(),
-        retired: visibleNavigation.promise,
-      };
-    },
-    refresh: (routeTree) => {
-      const previousNavigation = visibleNavigation;
-      visibleNavigation = null;
-      renders.push({ _tag: "ServerFunction", routeTree });
-      return {
-        committed: Promise.resolve().then(() => previousNavigation?.resolve()),
-        retired: Promise.withResolvers<void>().promise,
-        discard: () => Promise.resolve(),
-      };
-    },
-  });
-};
 
 const makePrecommitController = (
   redirects: Readonly<{
@@ -311,7 +215,7 @@ it.effect("splits a cancelable navigation between React commit and Flight comple
         expect(requestedUrls).toStrictEqual(["https://effront.test/schedule/day-two"]);
         expect(renders).toHaveLength(1);
         const render = renders[0];
-        if (render?._tag !== "Navigation") {
+        if (Predicate.isNullish(render) || !renderRequests.$is("Navigation")(render)) {
           return yield* Effect.die("Expected a navigation render.");
         }
         expect(render.routeTree.id).toBe("root");
