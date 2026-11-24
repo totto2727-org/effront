@@ -1,4 +1,4 @@
-import { Context, Effect, Exit, FiberHandle, Layer, Ref, Scope } from "effect";
+import { Predicate, Context, Effect, Exit, FiberHandle, Layer, Ref, Scope } from "effect";
 import { addTransitionType, startTransition } from "react";
 
 import { BrowserRenderer } from "./browser-renderer.ts";
@@ -58,7 +58,7 @@ export const installRouteRefresh = Effect.gen(function* () {
 
   const waitForNavigationIdle = Effect.suspend(() => {
     const transition = navigationApi.getTransition();
-    return transition === null
+    return Predicate.isNullish(transition)
       ? Effect.succeed("Idle" as const)
       : Effect.promise(() =>
           transition.finished.then(
@@ -145,7 +145,7 @@ export const installRouteRefresh = Effect.gen(function* () {
       ),
     );
 
-    if (render !== undefined) {
+    if (Predicate.isNotNullish(render)) {
       yield* Effect.promise(() => render.committed);
     }
   });

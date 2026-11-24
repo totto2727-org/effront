@@ -1,6 +1,6 @@
 // Adapted from rsc-html-stream by Devon Govett.
 // Copyright (c) 2024-present Devon Govett. Licensed under the MIT License; see THIRD-PARTY-NOTICES.md.
-import { Context, Effect, Layer } from "effect";
+import { Predicate, Context, Effect, Layer } from "effect";
 
 const Encoder = new TextEncoder();
 
@@ -16,7 +16,7 @@ export const makeInitialFlightStream = (
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const enqueue = (chunk: EmbeddedFlightChunk): void => {
-        controller.enqueue(typeof chunk === "string" ? Encoder.encode(chunk) : chunk);
+        controller.enqueue(Predicate.isString(chunk) ? Encoder.encode(chunk) : chunk);
       };
       for (const chunk of queue) {
         enqueue(chunk);

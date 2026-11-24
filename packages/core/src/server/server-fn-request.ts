@@ -1,4 +1,4 @@
-import { Cause, Effect, Schema } from "effect";
+import { Predicate, Cause, Effect, Schema } from "effect";
 import type { Scope } from "effect";
 import { HttpServerRequest } from "effect/http";
 
@@ -65,12 +65,15 @@ export const validateOrigin = (request: HttpServerRequest.HttpServerRequest) =>
     catch: (cause) => requestError("Rejected a cross-origin Server Function request.", 403, cause),
     try: () => {
       const origin = request.headers["origin"];
-      if (origin === undefined) {
+      if (Predicate.isNullish(origin)) {
         throw new Error("The Origin header is missing.");
       }
 
       const expectedHost = request.headers["host"];
-      if (expectedHost === undefined || new URL(origin).host !== expectedHost.toLowerCase()) {
+      if (
+        Predicate.isNullish(expectedHost) ||
+        new URL(origin).host !== expectedHost.toLowerCase()
+      ) {
         throw new Error(`Origin "${origin}" does not match host "${expectedHost ?? ""}".`);
       }
     },
@@ -237,7 +240,7 @@ const prepareProgressiveServerFn = Effect.fnUntraced(function* <ApplicationServi
     catch: (cause) => requestError("Failed to decode the Server Function form action.", 400, cause),
     try: () => Promise.resolve(decodeAction(formData)),
   });
-  if (decodedAction === null) {
+  if (Predicate.isNullish(decodedAction)) {
     return yield* requestError(
       "The submitted form does not contain a Server Function action.",
       400,
@@ -283,10 +286,9 @@ export const prepareServerFnRequest = Effect.fnUntraced(function* <Services>(
   const signal = yield* Effect.abortSignal;
   const webRequest = yield* HttpServerRequest.toWeb(request, { signal });
   const actionId = request.headers[ServerFnIdHeader];
-  const prepareRequest =
-    actionId === undefined
-      ? prepareProgressiveServerFn(webRequest, identity)
-      : prepareClientServerFn(webRequest, actionId, identity);
+  const prepareRequest = Predicate.isNullish(actionId)
+    ? prepareProgressiveServerFn(webRequest, identity)
+    : prepareClientServerFn(webRequest, actionId, identity);
 
   return yield* prepareRequest;
 });

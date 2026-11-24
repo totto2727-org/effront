@@ -1,5 +1,5 @@
 import { expect, it, vi } from "@effect/vitest";
-import { Deferred, Effect } from "effect";
+import { Predicate, Deferred, Effect } from "effect";
 
 import type { RenderRuntimeContext } from "../application/render-runtime.ts";
 
@@ -47,7 +47,7 @@ it.effect("interrupts application work when its Flight render is released", () =
         },
         serverFnResult: null,
       });
-      if (runApplicationWork === undefined) {
+      if (Predicate.isNullish(runApplicationWork)) {
         return yield* Effect.die("Expected Flight rendering to bind its request runtime.");
       }
 

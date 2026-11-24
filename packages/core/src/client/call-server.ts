@@ -1,4 +1,4 @@
-import { Deferred, Effect, Exit, MutableRef, Schema } from "effect";
+import { Predicate, Deferred, Effect, Exit, MutableRef, Schema } from "effect";
 import { addTransitionType, startTransition } from "react";
 import {
   createTemporaryReferenceSet,
@@ -71,7 +71,7 @@ export const installCallServer = Effect.gen(function* () {
       case "HistoryEntry":
         return currentEntry?.id === invocation.id ? "Response" : "CurrentRoute";
       case "CurrentUrl":
-        return currentEntry === null && navigationApi.getCurrentUrl() === invocation.url
+        return Predicate.isNullish(currentEntry) && navigationApi.getCurrentUrl() === invocation.url
           ? "Response"
           : "CurrentRoute";
     }
@@ -83,15 +83,14 @@ export const installCallServer = Effect.gen(function* () {
   ) {
     const currentEntry = navigationApi.getCurrentEntry();
     const order = MutableRef.incrementAndGet(latestInvocationOrder);
-    const invocation: ServerFnInvocation =
-      currentEntry === null
-        ? { _tag: "CurrentUrl", order, url: navigationApi.getCurrentUrl() }
-        : {
-            _tag: "HistoryEntry",
-            id: currentEntry.id,
-            order,
-            url: currentEntry.url ?? navigationApi.getCurrentUrl(),
-          };
+    const invocation: ServerFnInvocation = Predicate.isNullish(currentEntry)
+      ? { _tag: "CurrentUrl", order, url: navigationApi.getCurrentUrl() }
+      : {
+          _tag: "HistoryEntry",
+          id: currentEntry.id,
+          order,
+          url: currentEntry.url ?? navigationApi.getCurrentUrl(),
+        };
     const temporaryReferences = createTemporaryReferenceSet();
     const signal = yield* Effect.abortSignal;
     const body = yield* Effect.tryPromise({
@@ -119,7 +118,7 @@ export const installCallServer = Effect.gen(function* () {
       });
     }
     const serverFnResult = resource.payload.serverFnResult;
-    if (serverFnResult === null) {
+    if (Predicate.isNullish(serverFnResult)) {
       yield* resource.release;
       return yield* new ServerFnCallError({
         cause: new Error("The Flight payload omitted the Server Function return value."),
@@ -209,20 +208,19 @@ export const installCallServer = Effect.gen(function* () {
     setServerCallback((id, args) => {
       const invocationResult = Promise.withResolvers<unknown>();
       const query = matchServerFnQuery(args);
-      let operation =
-        query === null
-          ? callServer(id, args, invocationResult).pipe(Effect.mapError(invocationError))
-          : callQuery(id, query.args, invocationResult, query._tag).pipe(
-              Effect.mapError(invocationError),
-            );
+      let operation = Predicate.isNullish(query)
+        ? callServer(id, args, invocationResult).pipe(Effect.mapError(invocationError))
+        : callQuery(id, query.args, invocationResult, query._tag).pipe(
+            Effect.mapError(invocationError),
+          );
       if (query?._tag === "Stream") {
         const completed = query.completed;
         operation = operation.pipe(
           Effect.onExit((exit) => Deferred.done(completed, Exit.mapError(exit, invocationError))),
         );
       }
-      void run(operation, query === null ? undefined : { signal: query.signal }).catch((cause) =>
-        invocationResult.reject(invocationError(cause)),
+      void run(operation, Predicate.isNullish(query) ? undefined : { signal: query.signal }).catch(
+        (cause) => invocationResult.reject(invocationError(cause)),
       );
       return invocationResult.promise;
     });

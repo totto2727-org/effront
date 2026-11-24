@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Context, Effect, Layer, Schema } from "effect";
+import { Predicate, Context, Effect, Layer, Schema } from "effect";
 import { isValidElement, Suspense } from "react";
 import type { ReactElement, ReactNode } from "react";
 
@@ -43,7 +43,7 @@ const findDestination = <Services,>(
   pattern: AbsolutePath,
 ): CompiledDestination<Services> => {
   const destination = routes.find((route) => route.pattern === pattern);
-  if (destination === undefined) {
+  if (Predicate.isNullish(destination)) {
     throw new Error(`Expected a compiled destination for "${pattern}".`);
   }
   return destination;

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it } from "@effect/vitest";
-import { Deferred, Effect, Exit, Fiber, Layer, Scope } from "effect";
+import { Predicate, Deferred, Effect, Exit, Fiber, Layer, Scope } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 import { vi } from "vitest";
 
@@ -320,7 +320,7 @@ const prepareNavigation = Effect.fn(function* (navigation: TestNavigationApi, ur
   const pendingNavigation = makeNavigationEvent({ destination: { url } });
   navigation.dispatch(pendingNavigation.event);
   const precommitHandler = pendingNavigation.interception()?.precommitHandler;
-  if (precommitHandler === undefined) {
+  if (Predicate.isNullish(precommitHandler)) {
     return yield* Effect.die("Expected a precommit handler.");
   }
   const handlers: NavigationInterceptHandler[] = [];
@@ -328,7 +328,7 @@ const prepareNavigation = Effect.fn(function* (navigation: TestNavigationApi, ur
     invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
   );
   const handler = handlers[0];
-  if (handler === undefined) {
+  if (Predicate.isNullish(handler)) {
     return yield* Effect.die("Expected a post-commit handler.");
   }
   return handler;
@@ -441,7 +441,7 @@ it.effect("splits a cancelable navigation between React commit and Flight comple
         expect(interception?.handler).toBeUndefined();
         expect(interception?.precommitHandler).toBeTypeOf("function");
         const precommitHandler = interception?.precommitHandler;
-        if (precommitHandler === undefined) {
+        if (Predicate.isNullish(precommitHandler)) {
           return yield* Effect.die("Expected a precommit handler.");
         }
 
@@ -451,7 +451,7 @@ it.effect("splits a cancelable navigation between React commit and Flight comple
         );
         expect(handlers).toHaveLength(1);
         const handler = handlers[0];
-        if (handler === undefined) {
+        if (Predicate.isNullish(handler)) {
           return yield* Effect.die("Expected a post-commit handler.");
         }
         yield* Effect.promise(() => invokeNavigationHandler(handler));
@@ -488,7 +488,7 @@ it.effect("snapshots link types before loading and keeps them local to the navig
       expect(react.transitionTypes).toStrictEqual([]);
 
       const handler = pending.interception()?.precommitHandler;
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
@@ -544,7 +544,7 @@ it.effect("reserves only EFFRONT-owned types and preserves application tokens un
       });
       navigation.dispatch(pending.event);
       const handler = pending.interception()?.precommitHandler;
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
@@ -574,7 +574,7 @@ it.effect("does not read link types for a history traversal", () =>
       });
       navigation.dispatch(pending.event);
       const handler = pending.interception()?.precommitHandler;
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
@@ -620,7 +620,7 @@ it.effect("settles the post-commit handler before the Flight stream reaches EOF"
 
       const interception = pendingNavigation.interception();
       const precommitHandler = interception?.precommitHandler;
-      if (precommitHandler === undefined) {
+      if (Predicate.isNullish(precommitHandler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
 
@@ -629,7 +629,7 @@ it.effect("settles the post-commit handler before the Flight stream reaches EOF"
         invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
       );
       const handler = handlers[0];
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a post-commit handler.");
       }
       let handlerSettled = false;
@@ -639,7 +639,7 @@ it.effect("settles the post-commit handler before the Flight stream reaches EOF"
       yield* Effect.promise(() => Promise.resolve());
 
       expect(handlerSettled).toBe(true);
-      if (responseController === undefined) {
+      if (Predicate.isNullish(responseController)) {
         return yield* Effect.die("Expected a streaming Flight response.");
       }
       responseController.close();
@@ -666,7 +666,7 @@ it.effect("uses a post-commit handler for a non-cancelable traversal", () =>
       expect(interception?.precommitHandler).toBeUndefined();
       expect(interception?.handler).toBeTypeOf("function");
       const handler = interception?.handler;
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a post-commit handler.");
       }
 
@@ -697,7 +697,7 @@ it.effect("reloads after a non-cancelable traversal fails to load Flight", () =>
       navigation.dispatch(pendingNavigation.event);
 
       const handler = pendingNavigation.interception()?.handler;
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a post-commit handler.");
       }
       yield* Effect.promise(() => invokeNavigationHandler(handler));
@@ -730,7 +730,7 @@ it.effect("does not reload a superseded non-cancelable traversal", () => {
       navigation.dispatch(pendingNavigation.event);
 
       const handler = pendingNavigation.interception()?.handler;
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a post-commit handler.");
       }
       yield* Effect.promise(() => invokeNavigationHandler(handler));
@@ -767,7 +767,7 @@ it.effect("coordinates cache identity across Flight and history commit ordering"
           invalidate: () => undefined,
           load: ({ destination }) => {
             const resource = routes.get(destination.url);
-            return resource === undefined
+            return Predicate.isNullish(resource)
               ? Effect.die(new TypeError(`Unexpected route ${destination.url}.`))
               : Effect.succeed(resource);
           },
@@ -830,7 +830,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       const push = makeNavigationEvent();
       navigation.dispatch(push.event);
       const pushPrecommit = push.interception()?.precommitHandler;
-      if (pushPrecommit === undefined) {
+      if (Predicate.isNullish(pushPrecommit)) {
         return yield* Effect.die("Expected a push precommit handler.");
       }
       const pushHandlers: NavigationInterceptHandler[] = [];
@@ -839,7 +839,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       );
       navigation.currentEntry = dayTwoEntry;
       const pushHandler = pushHandlers[0];
-      if (pushHandler === undefined) {
+      if (Predicate.isNullish(pushHandler)) {
         return yield* Effect.die("Expected a push post-commit handler.");
       }
       yield* Effect.promise(() => invokeNavigationHandler(pushHandler));
@@ -850,7 +850,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       });
       navigation.dispatch(back.event);
       const backPrecommit = back.interception()?.precommitHandler;
-      if (backPrecommit === undefined) {
+      if (Predicate.isNullish(backPrecommit)) {
         return yield* Effect.die("Expected a back precommit handler.");
       }
       const backHandlers: NavigationInterceptHandler[] = [];
@@ -859,7 +859,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       );
       navigation.currentEntry = dayOneEntry;
       const backHandler = backHandlers[0];
-      if (backHandler === undefined) {
+      if (Predicate.isNullish(backHandler)) {
         return yield* Effect.die("Expected a back post-commit handler.");
       }
       yield* Effect.promise(() => invokeNavigationHandler(backHandler));
@@ -870,7 +870,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       });
       navigation.dispatch(forward.event);
       const forwardPrecommit = forward.interception()?.precommitHandler;
-      if (forwardPrecommit === undefined) {
+      if (Predicate.isNullish(forwardPrecommit)) {
         return yield* Effect.die("Expected a forward precommit handler.");
       }
       const forwardHandlers: NavigationInterceptHandler[] = [];
@@ -879,7 +879,7 @@ it.effect("reuses completed route trees for back and forward traversals", () =>
       );
       navigation.currentEntry = dayTwoEntry;
       const forwardHandler = forwardHandlers[0];
-      if (forwardHandler === undefined) {
+      if (Predicate.isNullish(forwardHandler)) {
         return yield* Effect.die("Expected a forward post-commit handler.");
       }
       yield* Effect.promise(() => invokeNavigationHandler(forwardHandler));
@@ -905,7 +905,7 @@ it.effect("promotes a non-Flight response to native document navigation", () =>
 
       const interception = pendingNavigation.interception();
       const precommitHandler = interception?.precommitHandler;
-      if (precommitHandler === undefined) {
+      if (Predicate.isNullish(precommitHandler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       yield* Effect.promise(() =>
@@ -941,7 +941,7 @@ it.effect("redirects a cancelable navigation before committing its Flight tree",
 
       const interception = pendingNavigation.interception();
       const precommitHandler = interception?.precommitHandler;
-      if (precommitHandler === undefined) {
+      if (Predicate.isNullish(precommitHandler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       yield* Effect.promise(() =>
@@ -976,7 +976,7 @@ it.effect("falls back to document replacement for a redirected traversal", () =>
 
       const interception = pendingNavigation.interception();
       const handler = interception?.handler;
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a post-commit handler.");
       }
       yield* Effect.promise(() => invokeNavigationHandler(handler));
@@ -1109,7 +1109,7 @@ it.effect("interrupts a pending Flight load when a newer navigation starts", () 
       navigation.dispatch(firstNavigation.event);
 
       const precommitHandler = firstNavigation.interception()?.precommitHandler;
-      if (precommitHandler === undefined) {
+      if (Predicate.isNullish(precommitHandler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       const firstNavigationFinished = invokePrecommitHandler(
@@ -1195,7 +1195,7 @@ it.effect("discards and releases a scheduled candidate when a newer navigation s
       navigation.dispatch(firstNavigation.event);
 
       const precommitHandler = firstNavigation.interception()?.precommitHandler;
-      if (precommitHandler === undefined) {
+      if (Predicate.isNullish(precommitHandler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       const firstNavigationFinished = invokePrecommitHandler(
@@ -1296,7 +1296,7 @@ it.effect("retains a committed Flight response until its render retires", () => 
 
       const interception = pendingNavigation.interception();
       const precommitHandler = interception?.precommitHandler;
-      if (precommitHandler === undefined) {
+      if (Predicate.isNullish(precommitHandler)) {
         return yield* Effect.die("Expected a precommit handler.");
       }
       const handlers: NavigationInterceptHandler[] = [];
@@ -1308,7 +1308,7 @@ it.effect("retains a committed Flight response until its render retires", () => 
         "https://effront.test/schedule/day-two",
       );
       const handler = handlers[0];
-      if (handler === undefined) {
+      if (Predicate.isNullish(handler)) {
         return yield* Effect.die("Expected a post-commit handler.");
       }
       yield* Effect.promise(() => invokeNavigationHandler(handler));
@@ -1325,7 +1325,7 @@ it.effect("retains a committed Flight response until its render retires", () => 
       });
       navigation.dispatch(failedNavigation.event);
       const failedPrecommitHandler = failedNavigation.interception()?.precommitHandler;
-      if (failedPrecommitHandler === undefined) {
+      if (Predicate.isNullish(failedPrecommitHandler)) {
         return yield* Effect.die("Expected a precommit handler for the failed successor.");
       }
       const failed = yield* Effect.exit(
@@ -1442,7 +1442,7 @@ it.effect(
         const first = makeNavigationEvent();
         navigation.dispatch(first.event);
         const firstHandler = first.interception()?.precommitHandler;
-        if (firstHandler === undefined) {
+        if (Predicate.isNullish(firstHandler)) {
           return yield* Effect.die("Expected a precommit handler for the first navigation.");
         }
         const firstPreparation = yield* Effect.promise(() =>
@@ -1465,7 +1465,7 @@ it.effect(
         expect(responseSignals[0]?.aborted).toBe(false);
 
         const successorHandler = successor.interception()?.precommitHandler;
-        if (successorHandler === undefined) {
+        if (Predicate.isNullish(successorHandler)) {
           return yield* Effect.die("Expected a precommit handler for the successor.");
         }
         published = Promise.withResolvers<BrowserRender>();

@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { NodeHttpServer } from "@effect/platform-node";
-import { Effect, Exit, Layer, Scope } from "effect";
+import { Predicate, Effect, Exit, Layer, Scope } from "effect";
 import { HttpEffect, HttpServerResponse } from "effect/http";
 import type { HttpServerRequest } from "effect/http";
 import { isRunnableDevEnvironment } from "vite";
@@ -27,7 +27,7 @@ type NativeHandler = Effect.Effect<
 const nativeHandler = (module: unknown): NativeHandler => {
   if (
     typeof module !== "object" ||
-    module === null ||
+    Predicate.isNullish(module) ||
     !("handler" in module) ||
     !Effect.isEffect(module.handler)
   ) {
@@ -69,7 +69,7 @@ const makeMiddleware = async (load: () => Promise<unknown>) => {
       ).pipe(Effect.provideContext(context)),
     );
     const middleware: Connect.NextHandleFunction = (request, response, next) => {
-      if (closing !== undefined) {
+      if (Predicate.isNotNullish(closing)) {
         next(new Error("Effront's development HTTP handler has closed."));
         return;
       }
@@ -151,7 +151,7 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
         JSON.stringify(config.isProduction ? "production" : "development");
       ["rsc", "ssr"].forEach((name) => {
         const environment = config.environments[name];
-        if (environment === undefined) {
+        if (Predicate.isNullish(environment)) {
           return;
         }
         environment.define = {
@@ -164,12 +164,12 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
     },
     async configureServer(server) {
       const environment = server.environments["rsc"];
-      if (environment === undefined || !isRunnableDevEnvironment(environment)) {
+      if (Predicate.isNullish(environment) || !isRunnableDevEnvironment(environment)) {
         throw new TypeError("Effront server hosting requires a runnable RSC environment.");
       }
       const instance = await makeMiddleware(async () => {
         const resolved = await environment.pluginContainer.resolveId(rsc);
-        if (resolved === null) {
+        if (Predicate.isNullish(resolved)) {
           throw new TypeError(`Cannot resolve Effront RSC entry: ${rsc}`);
         }
         try {
@@ -191,7 +191,7 @@ export const effrontServer = (options: EffrontServerOptions = {}): Plugin => {
     },
     async configurePreviewServer(server) {
       const environment = server.config.environments["rsc"];
-      if (environment === undefined) {
+      if (Predicate.isNullish(environment)) {
         throw new TypeError("Effront requires an RSC build.");
       }
       const entry = pathToFileURL(

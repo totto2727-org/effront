@@ -1,4 +1,4 @@
-import { String } from "effect";
+import { Predicate, String } from "effect";
 
 export type AbsolutePath = `/${string}`;
 
@@ -175,19 +175,19 @@ export const analyzeRoutePath = (path: string): RouteAnalysis => {
     }
 
     const match = DynamicSegment.exec(segment);
-    if (segment.includes("*") && (match === null || segment !== segments.at(-1))) {
+    if (segment.includes("*") && (Predicate.isNullish(match) || segment !== segments.at(-1))) {
       throw new TypeError(
         `Invalid route path "${path}". Catch-all segments must use the terminal "*parameter" convention.`,
       );
     }
-    if (match === null) {
+    if (Predicate.isNullish(match)) {
       throw new TypeError(
         `Invalid route path "${path}". Dynamic segments must use the ":parameter" convention.`,
       );
     }
 
     const parameterName = match[1];
-    if (parameterName === undefined || parameterNames.has(parameterName)) {
+    if (Predicate.isNullish(parameterName) || parameterNames.has(parameterName)) {
       throw new TypeError(
         `Invalid route path "${path}". Dynamic parameter names must be unique within a route.`,
       );
@@ -203,14 +203,18 @@ export const analyzeRoutePath = (path: string): RouteAnalysis => {
   }
 
   const shape = `/${shapeSegments.join("/")}`;
-  const matcher = catchAll === null ? path : `${path.slice(0, path.lastIndexOf("/") + 1)}*`;
+  const matcher = Predicate.isNullish(catchAll)
+    ? path
+    : `${path.slice(0, path.lastIndexOf("/") + 1)}*`;
   if (!isAbsolutePath(matcher)) {
     throw new TypeError(`Expected an absolute route matcher for "${path}".`);
   }
   const common = {
     catchAll,
     matcher,
-    shapes: Object.freeze(catchAll === null ? [shape] : [shape, shape.slice(0, -2) || "/"]),
+    shapes: Object.freeze(
+      Predicate.isNullish(catchAll) ? [shape] : [shape, shape.slice(0, -2) || "/"],
+    ),
   };
   const parameters = parameterNames.values();
   const firstParameter = parameters.next();

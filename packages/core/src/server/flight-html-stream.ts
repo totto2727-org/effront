@@ -1,7 +1,7 @@
 // Adapted from rsc-html-stream by Devon Govett.
 // Copyright (c) 2024-present Devon Govett. Licensed under the MIT License; see THIRD-PARTY-NOTICES.md.
 
-import { String as EffectString } from "effect";
+import { Predicate, String as EffectString } from "effect";
 
 const encoder = new TextEncoder();
 const htmlTrailer = encoder.encode("</body></html>");
@@ -50,7 +50,7 @@ const writeFlightValue = (
   nonce: string | undefined,
 ): void => {
   const script = escapeInlineScript(`(self.__FLIGHT_DATA||=[]).push(${value})`);
-  const nonceAttribute = nonce === undefined ? "" : ` nonce="${nonce}"`;
+  const nonceAttribute = Predicate.isNullish(nonce) ? "" : ` nonce="${nonce}"`;
   controller.enqueue(encoder.encode(`<script${nonceAttribute}>${script}</script>`));
 };
 

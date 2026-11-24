@@ -1,5 +1,5 @@
 import { beforeEach, expect, it } from "@effect/vitest";
-import { Deferred, Effect, Exit, Fiber, Layer, MutableRef, Stream } from "effect";
+import { Predicate, Deferred, Effect, Exit, Fiber, Layer, MutableRef, Stream } from "effect";
 import { HttpClient } from "effect/http";
 import { vi } from "vitest";
 import { encodeReply } from "@vitejs/plugin-rsc/browser";
@@ -304,7 +304,7 @@ it.effect("aborts Server Function argument encoding when the invocation is cance
     vi.mocked(encodeReply).mockImplementationOnce((_args, options) => {
       const signal = options?.signal;
       encodingStarted.resolve(signal);
-      if (signal === undefined) {
+      if (Predicate.isNullish(signal)) {
         throw new TypeError("Expected an encoding abort signal.");
       }
       return new Promise<string>((_resolve, reject) => {
@@ -357,7 +357,7 @@ it.effect("aborts Server Function argument encoding when the invocation is cance
         const rejected = expect(result).rejects.toThrow();
         const signal = yield* Effect.promise(() => encodingStarted.promise);
         expect(signal).toBeInstanceOf(AbortSignal);
-        if (signal === undefined) {
+        if (Predicate.isNullish(signal)) {
           throw new TypeError("Expected an encoding abort signal.");
         }
         expect(signal.aborted).toBe(false);

@@ -29,7 +29,7 @@ export type MatchedQuery = typeof QueryOptions.Type &
 export const matchServerFnQuery = (args: Readonly<unknown[]>): MatchedQuery | null => {
   const last = args.at(-1);
   try {
-    if (typeof last !== "object" || last === null || !(ServerFnQueryTypeId in last)) {
+    if (typeof last !== "object" || Predicate.isNullish(last) || !(ServerFnQueryTypeId in last)) {
       return null;
     }
     const options = last[ServerFnQueryTypeId];
@@ -46,7 +46,7 @@ export const invocationError = (cause: unknown): ServerFnError =>
   isServerFnError(cause) ? cause : transportError(cause);
 
 const streamError = (cause: unknown): ServerFnError =>
-  Predicate.hasProperty(cause, "digest") && typeof cause.digest === "string"
+  Predicate.hasProperty(cause, "digest") && Predicate.isString(cause.digest)
     ? new ServerFnDefect({ detail: serverFnErrorDetail(cause), digest: cause.digest })
     : transportError(cause);
 

@@ -1,5 +1,5 @@
 import { BrowserHttpClient } from "@effect/platform-browser";
-import { Effect, Layer } from "effect";
+import { Predicate, Effect, Layer } from "effect";
 
 import { navigationMode } from "./browser-capabilities.ts";
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
@@ -55,7 +55,7 @@ const installViteHmr = Effect.gen(function* () {
         };
       }>
   ).hot;
-  if (hot === undefined) {
+  if (Predicate.isNullish(hot)) {
     return;
   }
 

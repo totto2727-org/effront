@@ -1,4 +1,4 @@
-import { Effect, Exit, MutableRef } from "effect";
+import { Predicate, Effect, Exit, MutableRef } from "effect";
 import { addTransitionType, startTransition } from "react";
 
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
@@ -48,7 +48,7 @@ const getNavigationTransitionTypes = (
     return types;
   }
 
-  if (fromIndex === null || fromIndex === event.destination.index) {
+  if (Predicate.isNullish(fromIndex) || fromIndex === event.destination.index) {
     return types;
   }
   return [
@@ -390,7 +390,7 @@ export const installClientRouter = Effect.gen(function* () {
   };
 
   const executeRouterCommand = Effect.fnUntraced(function* (command: RouterCommand | null) {
-    if (command === null) {
+    if (Predicate.isNullish(command)) {
       return;
     }
     switch (command._tag) {
@@ -491,7 +491,7 @@ export const installClientRouter = Effect.gen(function* () {
 
         if (
           destination.href !== resolvedDestination.href &&
-          (precommitController === undefined || event.navigationType === "traverse")
+          (Predicate.isNullish(precommitController) || event.navigationType === "traverse")
         ) {
           dispatch({ _tag: "DocumentLoaded", generation });
           yield* resource.release;
@@ -613,7 +613,10 @@ export const installClientRouter = Effect.gen(function* () {
       });
       void run(waitForFlightCompletion).catch(() => undefined);
 
-      if (destination.href !== resolvedDestination.href && precommitController !== undefined) {
+      if (
+        destination.href !== resolvedDestination.href &&
+        Predicate.isNotNullish(precommitController)
+      ) {
         precommitController.redirect(resolvedDestination.href, { history: "auto" });
       }
       const commitHistory = Effect.suspend(() => {
@@ -624,7 +627,7 @@ export const installClientRouter = Effect.gen(function* () {
         });
         return executeRouterCommand(transition.command);
       });
-      if (precommitController === undefined) {
+      if (Predicate.isNullish(precommitController)) {
         await run(commitHistory);
       } else {
         precommitController.addHandler(() => run(commitHistory));

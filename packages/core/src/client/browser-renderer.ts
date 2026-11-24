@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, MutableRef } from "effect";
+import { Predicate, Context, Effect, Layer, MutableRef } from "effect";
 
 import type { RouteTreeModel } from "../rsc/route-tree.ts";
 
@@ -147,7 +147,7 @@ export class BrowserRenderer extends Context.Service<BrowserRenderer>()(
         const visible = render._tag === "Discard" ? render.restore : render;
         if (visible._tag !== "Initial") {
           const live = ready.liveRenders.get(visible);
-          if (live === undefined) {
+          if (Predicate.isNullish(live)) {
             throw new TypeError("A retired browser tree cannot commit.");
           }
           ready.liveRenders.set(visible, {

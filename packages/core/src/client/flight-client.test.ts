@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from "@effect/vitest";
-import { Effect, Fiber, Layer } from "effect";
+import { Predicate, Effect, Fiber, Layer } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 
 import { InitialFlightStream } from "./initial-flight-stream.ts";
@@ -81,7 +81,7 @@ it.effect("loads the embedded initial Flight without waiting for stream completi
     });
     const client = yield* FlightClient;
     const loading = yield* client.loadInitial.pipe(Effect.forkChild);
-    if (initialFlightController === undefined) {
+    if (Predicate.isNullish(initialFlightController)) {
       return yield* Effect.die("Expected the embedded Flight stream.");
     }
     initialFlightController.enqueue(new Uint8Array([1]));

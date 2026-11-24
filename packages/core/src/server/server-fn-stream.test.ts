@@ -1,5 +1,5 @@
 import { it, expect } from "@effect/vitest";
-import { Cause, Deferred, Effect, Exit, Fiber, Scope, Stream } from "effect";
+import { Predicate, Cause, Deferred, Effect, Exit, Fiber, Scope, Stream } from "effect";
 
 import { serverFnStream } from "./server-fn-stream.ts";
 
@@ -61,10 +61,10 @@ it.effect.each(["unlocked", "locked", "canceling"] as const)(
       const reader = readerState === "unlocked" ? null : readable.getReader();
       yield* Deferred.await(started);
       const canceling =
-        readerState === "canceling" && reader !== null
+        readerState === "canceling" && Predicate.isNotNullish(reader)
           ? yield* Effect.forkChild(Effect.promise(() => reader.cancel()))
           : null;
-      if (canceling !== null) {
+      if (Predicate.isNotNullish(canceling)) {
         yield* Deferred.await(finalizing);
       }
       const closing = yield* Effect.forkChild(Scope.close(scope, Exit.void));
@@ -76,10 +76,10 @@ it.effect.each(["unlocked", "locked", "canceling"] as const)(
       expect(events).toStrictEqual(["producer finalizing"]);
       yield* Deferred.succeed(finishFinalizer, undefined);
       yield* Effect.promise(() =>
-        (reader === null ? readable.cancel() : reader.cancel()).catch(() => undefined),
+        (Predicate.isNullish(reader) ? readable.cancel() : reader.cancel()).catch(() => undefined),
       );
       yield* Fiber.join(closing);
-      if (canceling !== null) {
+      if (Predicate.isNotNullish(canceling)) {
         yield* Fiber.join(canceling);
       }
       expect(events).toStrictEqual([

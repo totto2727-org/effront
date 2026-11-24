@@ -1,5 +1,5 @@
 import { expect, it } from "@effect/vitest";
-import { Deferred, Effect, Stream } from "effect";
+import { Predicate, Deferred, Effect, Stream } from "effect";
 import { HttpEffect, HttpRouter, HttpServerResponse } from "effect/http";
 
 import { Application } from "../../src/application/effront.ts";
@@ -56,7 +56,7 @@ it.effect("releases middleware resources when the response stream is canceled", 
     const handler = yield* makeHandler(events, stream);
     const response = yield* Effect.promise(() => handler(new Request("http://localhost/")));
     const reader = response.body?.getReader();
-    if (reader === undefined) {
+    if (Predicate.isNullish(reader)) {
       return yield* Effect.die("Expected a streaming response body.");
     }
 

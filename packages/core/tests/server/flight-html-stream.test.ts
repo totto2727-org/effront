@@ -3,7 +3,7 @@
 import { createContext, runInContext } from "node:vm";
 
 import { describe, expect, it } from "@effect/vitest";
-import { Array as EffectArray, Effect } from "effect";
+import { Predicate, Array as EffectArray, Effect } from "effect";
 
 import { makeInitialFlightStream } from "../../src/client/initial-flight-stream.ts";
 import type { EmbeddedFlightChunk } from "../../src/client/initial-flight-stream.ts";
@@ -22,12 +22,12 @@ const streamFrom = (
       const drain = (): void | Promise<void> => {
         while (EffectArray.isArrayNonEmpty(chunks)) {
           const chunk = chunks.shift();
-          if (typeof chunk === "function") {
+          if (Predicate.isFunction(chunk)) {
             return Promise.resolve(chunk()).then(drain);
           }
-          if (typeof chunk === "string") {
+          if (Predicate.isString(chunk)) {
             controller.enqueue(Encoder.encode(chunk));
-          } else if (chunk !== undefined) {
+          } else if (Predicate.isNotNullish(chunk)) {
             controller.enqueue(chunk);
           }
         }
@@ -50,7 +50,7 @@ const streamToText = (stream: ReadableStream<Uint8Array>): Effect.Effect<string>
   streamToBytes(stream).pipe(Effect.map((bytes) => new TextDecoder().decode(bytes)));
 
 const embeddedFlightQueue = (html: string, nonce?: string) => {
-  const nonceAttribute = nonce === undefined ? "" : ` nonce="${nonce}"`;
+  const nonceAttribute = Predicate.isNullish(nonce) ? "" : ` nonce="${nonce}"`;
   const scripts = html.matchAll(new RegExp(`<script${nonceAttribute}>(.*?)<\\/script>`, "g"));
   const self: { __FLIGHT_DATA?: EmbeddedFlightChunk[] } = {};
   const context = createContext({ atob, self, Uint8Array });

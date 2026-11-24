@@ -1,5 +1,5 @@
 import { expect, it } from "@effect/vitest";
-import { Effect } from "effect";
+import { Predicate, Effect } from "effect";
 import { vi } from "vitest";
 
 import { BrowserRenderer } from "./browser-renderer.ts";
@@ -10,7 +10,7 @@ const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: n
 
 const nextRender = (renders: BrowserRender[]): BrowserRender => {
   const render = renders.shift();
-  if (render === undefined) {
+  if (Predicate.isNullish(render)) {
     throw new Error("Expected the browser renderer to publish an update.");
   }
   return render;

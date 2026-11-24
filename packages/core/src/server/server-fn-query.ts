@@ -1,4 +1,4 @@
-import { Cause, Effect, Option } from "effect";
+import { Predicate, Cause, Effect, Option } from "effect";
 import { HttpServerRequest } from "effect/http";
 import type { Scope } from "effect";
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
@@ -22,7 +22,7 @@ const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
 ) {
   yield* validateOrigin(request);
   const actionId = request.headers[ServerFnIdHeader];
-  if (actionId === undefined) {
+  if (Predicate.isNullish(actionId)) {
     return yield* new ServerFnRequestError({
       cause: new Error(`Missing the ${ServerFnIdHeader} header.`),
       message: "A query request must identify its Server Function.",

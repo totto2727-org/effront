@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Deferred, Effect, Fiber, Stream } from "effect";
+import { Predicate, Deferred, Effect, Fiber, Stream } from "effect";
 import { AsyncResult, AtomRegistry } from "effect/reactivity";
 import { vi } from "vitest";
 
@@ -28,7 +28,7 @@ describe("query", () => {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
       const serverFn = (...args: Readonly<unknown[]>): Promise<string> => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) {
+        if (Predicate.isNotNullish(matched)) {
           observed.resolve(matched);
         }
         return Promise.resolve("done");
@@ -63,7 +63,7 @@ describe("query", () => {
       const observed = Promise.withResolvers<AbortSignal>();
       const fetch = query((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) {
+        if (Predicate.isNotNullish(matched)) {
           observed.resolve(matched.signal);
         }
         return new Promise<string>(() => undefined);
@@ -81,7 +81,7 @@ describe("stream", () => {
     const calls: NonNullable<ReturnType<typeof matchServerFnQuery>>[] = [];
     const atom = streamAtom((...args: Readonly<unknown[]>) => {
       const matched = matchServerFnQuery(args);
-      if (matched !== null) {
+      if (Predicate.isNotNullish(matched)) {
         calls.push(matched);
       }
       return Promise.resolve(
@@ -122,7 +122,7 @@ describe("stream", () => {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
       const read = stream((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) {
+        if (Predicate.isNotNullish(matched)) {
           observed.resolve(matched);
         }
         return Promise.resolve(
@@ -154,7 +154,7 @@ describe("stream", () => {
       const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
       const read = stream((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) {
+        if (Predicate.isNotNullish(matched)) {
           observed.resolve(matched);
         }
         return Promise.resolve(
@@ -188,7 +188,7 @@ describe("stream", () => {
       const observed = Promise.withResolvers<AbortSignal>();
       const read = stream((...args: Readonly<unknown[]>) => {
         const matched = matchServerFnQuery(args);
-        if (matched !== null) {
+        if (Predicate.isNotNullish(matched)) {
           observed.resolve(matched.signal);
         }
         return Promise.resolve(

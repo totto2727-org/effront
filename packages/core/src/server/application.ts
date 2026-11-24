@@ -1,4 +1,4 @@
-import { Array, Context, Effect, Layer, Option, Stream, String } from "effect";
+import { Predicate, Array, Context, Effect, Layer, Option, Stream, String } from "effect";
 import type { PlatformError, Types } from "effect";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
@@ -27,7 +27,7 @@ const DynamicResponseHeaders = {
 } as const;
 
 const appendAcceptVary = (vary: string | undefined): string => {
-  if (vary === undefined || String.isEmpty(vary.trim())) {
+  if (Predicate.isNullish(vary) || String.isEmpty(vary.trim())) {
     return "Accept";
   }
 
@@ -101,7 +101,7 @@ const httpLayer = <Services, ApplicationError, Requirements>(
 
     const pathname = requestUrl.value.pathname;
     const decodeParams = destination.page.decodeParams;
-    const encodedParams = yield* decodeParams === null
+    const encodedParams = yield* Predicate.isNullish(decodeParams)
       ? Effect.succeed(EmptyEncodedPageParams)
       : HttpRouter.params;
     const renderResponse = Effect.fnUntraced(function* (params: PageParams) {
@@ -150,7 +150,7 @@ const httpLayer = <Services, ApplicationError, Requirements>(
       );
     });
 
-    if (request.method !== "POST" && decodeParams !== null) {
+    if (request.method !== "POST" && Predicate.isNotNullish(decodeParams)) {
       return yield* decodeParams(encodedParams).pipe(
         Effect.matchEffect({
           onFailure: () =>
@@ -244,7 +244,7 @@ const httpLayer = <Services, ApplicationError, Requirements>(
         const { catchAll, matcher } = analyzeRoutePath(destination.pattern);
         const RouteParamsMiddleware = HttpRouter.middleware()((httpEffect) =>
           Effect.gen(function* () {
-            if (catchAll === null) {
+            if (Predicate.isNullish(catchAll)) {
               return yield* httpEffect;
             }
             const context = yield* HttpRouter.RouteContext;
@@ -267,12 +267,11 @@ const httpLayer = <Services, ApplicationError, Requirements>(
           }).pipe(HttpEffect.withPreResponseHandler(acceptVaryPreResponseHandler)),
         );
         const lastPageMiddleware = destination.middleware.at(-1);
-        const PageMiddleware =
-          lastPageMiddleware === undefined
-            ? RequestContextMiddleware
-            : combinePageMiddleware(destination.middleware, lastPageMiddleware).combine(
-                RequestContextMiddleware,
-              );
+        const PageMiddleware = Predicate.isNullish(lastPageMiddleware)
+          ? RequestContextMiddleware
+          : combinePageMiddleware(destination.middleware, lastPageMiddleware).combine(
+              RequestContextMiddleware,
+            );
         const PageLayer = GetLayer.pipe(
           Layer.provide(PageMiddleware.combine(RouteParamsMiddleware).layer),
         );

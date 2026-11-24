@@ -1,7 +1,7 @@
 "use client";
 
 import { query, stream } from "@effront/core/query";
-import { Effect, Stream } from "effect";
+import { Predicate, Effect, Stream } from "effect";
 import { useEffect, useRef, useState } from "react";
 import type { Story } from "./feed-data.ts";
 import { pageSize, storyCount } from "./feed-data.ts";
@@ -17,7 +17,7 @@ function StoryCard({ story }: Readonly<{ story: Story }>) {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (!expanded || detail !== null) {
+    if (!expanded || Predicate.isNotNullish(detail)) {
       return;
     }
     const controller = new AbortController();

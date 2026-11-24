@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, MutableRef } from "effect";
+import { Predicate, Context, Effect, Layer, MutableRef } from "effect";
 
 import type { RouteTreeModel } from "../rsc/route-tree.ts";
 import { FlightClient } from "./flight-client.ts";
@@ -92,7 +92,11 @@ export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/
       const cache = MutableRef.get(cacheRef);
       const entry = navigationApi.getCurrentEntry();
       return () => {
-        if (MutableRef.get(cacheRef) === cache && entry !== null && entry.index !== -1) {
+        if (
+          MutableRef.get(cacheRef) === cache &&
+          Predicate.isNotNullish(entry) &&
+          entry.index !== -1
+        ) {
           store(cache, entry, routeTree);
         }
       };
@@ -102,7 +106,7 @@ export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/
       const cache = MutableRef.get(cacheRef);
       if (request.navigationType === "traverse") {
         const cached = cache.get(request.destination.id);
-        if (cached !== undefined) {
+        if (Predicate.isNotNullish(cached)) {
           return {
             _tag: "Route",
             cache: () => undefined,
@@ -136,7 +140,7 @@ export class RouteLoader extends Context.Service<RouteLoader>()("effront/client/
       const entry = navigationApi.getCurrentEntry();
       const resource = yield* flightClient.loadInitial;
 
-      if (entry !== null) {
+      if (Predicate.isNotNullish(entry)) {
         yield* resource.completed.pipe(
           Effect.andThen(
             Effect.sync(() => {
