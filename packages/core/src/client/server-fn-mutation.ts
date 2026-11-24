@@ -1,13 +1,12 @@
-import { Data, Effect, Match, MutableRef, Option, Predicate } from "effect";
-import { addTransitionType, startTransition } from "react";
+import { Data, Effect, Match, MutableRef, Predicate } from "effect";
 
-import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 import { BrowserRenderer } from "./browser-renderer.ts";
 import { FlightClient } from "./flight-client.ts";
 import { flightRequests, flightResources } from "./flight-client-model.ts";
 import { NavigationApi } from "./navigation-api.ts";
 import { RouteLoader } from "./route-loader.ts";
 import { RouteRefresher } from "./route-refresh.ts";
+import { publishRefresh } from "./route-render.ts";
 import {
   encodeCall,
   nativeCallError,
@@ -17,7 +16,6 @@ import {
 import type { ServerFnCall } from "./server-fn-call-result.ts";
 
 type RouteFlight = ReturnType<typeof flightResources.Flight>;
-type BrowserRefresh = ReturnType<BrowserRenderer["Service"]["refresh"]>;
 type Invocation = Data.TaggedEnum<{
   CurrentUrl: { order: number; url: string };
   HistoryEntry: { id: string; order: number; url: string };
@@ -111,21 +109,6 @@ const loadMutation = Effect.fnUntraced(function* (
   return yield* requireMutationResult(resource);
 });
 
-const publish = (
-  renderer: BrowserRenderer["Service"],
-  routeTree: RouteTreeModel,
-): Effect.Effect<BrowserRefresh> =>
-  Effect.sync(() => {
-    const publication = MutableRef.make(Option.none<BrowserRefresh>());
-    startTransition(() => {
-      addTransitionType("server-function");
-      // React can commit after the Transition Action finishes.
-      const rendered = renderer.refresh(routeTree);
-      MutableRef.set(publication, Option.some(rendered));
-    });
-    return Option.getOrThrow(MutableRef.get(publication));
-  });
-
 const refreshFromResponse = Effect.fnUntraced(function* (
   renderer: BrowserRenderer["Service"],
   routeLoader: RouteLoader["Service"],
@@ -133,7 +116,7 @@ const refreshFromResponse = Effect.fnUntraced(function* (
 ) {
   const { routeTree } = resource.payload;
   const commitRefresh = routeLoader.prepareRefresh(routeTree);
-  const published = yield* publish(renderer, routeTree);
+  const published = yield* publishRefresh(renderer, routeTree, "server-function");
   const completed = Effect.all(
     [resource.completed, Effect.promise(async () => published.committed)],
     {
