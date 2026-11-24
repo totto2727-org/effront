@@ -560,7 +560,7 @@ export const coreRuntimePages: Readonly<DocPage[]> = [
         </p>
         <ul>
           <li>
-            <code>committed</code> は、<code>client/react-dom-renderer.tsx</code> のlayout effectが{" "}
+            <code>committed</code> は、<code>client/browser-root.tsx</code> のlayout effectが{" "}
             <code>browserRenderer.commit(render)</code> を呼ぶと解決します。
           </li>
           <li>

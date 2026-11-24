@@ -6,7 +6,7 @@ import { withBrowserServices } from "./browser-layer.ts";
 import { showBrowserFailure } from "./mount-browser-failure.ts";
 import { installCallServer } from "./call-server.ts";
 import { installClientRouter } from "./client-router.ts";
-import { ReactDOMRenderer } from "./react-dom-renderer.tsx";
+import { ReactDOMRenderer } from "./react-dom-renderer.ts";
 import { RouteLoader } from "./route-loader.ts";
 import { installRouteRefresh, RouteRefresher } from "./route-refresh.ts";
 
