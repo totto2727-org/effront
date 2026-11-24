@@ -1,5 +1,4 @@
-import type { ReactNode } from "react";
-import { createRoot } from "react-dom/client";
+import type { ReactElement } from "react";
 
 const BrowserFailureStyles = `
   .effront-browser-failure,
@@ -126,56 +125,57 @@ const BrowserFailureStyles = `
   }
 `;
 
-export function BrowserFailureScreen() {
+const reloadPage = (): void => {
+  globalThis.location.reload();
+};
+
+const failureIcon = (): ReactElement => (
+  <div aria-hidden="true" className="effront-browser-failure__icon">
+    <svg fill="none" viewBox="0 0 22 22">
+      <path d="M11 6.25v5.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
+      <circle cx="11" cy="15.25" fill="currentColor" r=".9" />
+      <path
+        d="M8.93 3.33 2.18 15a2.4 2.4 0 0 0 2.08 3.6h13.48a2.4 2.4 0 0 0 2.08-3.6L13.07 3.33a2.4 2.4 0 0 0-4.14 0Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+    </svg>
+  </div>
+);
+
+const reloadIcon = (): ReactElement => (
+  <svg aria-hidden="true" fill="none" viewBox="0 0 16 16">
+    <path
+      d="M13 5.5A5.5 5.5 0 1 0 13.15 10M13 2.75V5.5h-2.75"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.4"
+    />
+  </svg>
+);
+
+const reloadButton = (): ReactElement => (
+  <button className="effront-browser-failure__reload" type="button" onClick={reloadPage}>
+    {reloadIcon()}
+    Reload page
+  </button>
+);
+
+// oxlint-disable-next-line eslint/func-style -- The shared React rule requires a declaration for named components.
+export function BrowserFailureScreen(): ReactElement {
   return (
     <main aria-labelledby="effront-browser-failure-title" className="effront-browser-failure">
       <style>{BrowserFailureStyles}</style>
       <div className="effront-browser-failure__content">
-        <div aria-hidden="true" className="effront-browser-failure__icon">
-          <svg fill="none" viewBox="0 0 22 22">
-            <path d="M11 6.25v5.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
-            <circle cx="11" cy="15.25" fill="currentColor" r=".9" />
-            <path
-              d="M8.93 3.33 2.18 15a2.4 2.4 0 0 0 2.08 3.6h13.48a2.4 2.4 0 0 0 2.08-3.6L13.07 3.33a2.4 2.4 0 0 0-4.14 0Z"
-              stroke="currentColor"
-              strokeWidth="1.7"
-            />
-          </svg>
-        </div>
+        {failureIcon()}
         <h1 id="effront-browser-failure-title">Something went wrong</h1>
         <p className="effront-browser-failure__message">
           This page couldn’t be displayed. Try reloading it.
         </p>
         <hr className="effront-browser-failure__rule" />
-        <button
-          className="effront-browser-failure__reload"
-          type="button"
-          onClick={() => {
-            window.location.reload();
-          }}
-        >
-          <svg aria-hidden="true" fill="none" viewBox="0 0 16 16">
-            <path
-              d="M13 5.5A5.5 5.5 0 1 0 13.15 10M13 2.75V5.5h-2.75"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.4"
-            />
-          </svg>
-          Reload page
-        </button>
+        {reloadButton()}
       </div>
     </main>
   );
 }
-
-const renderBrowserScreen = (screen: ReactNode): void => {
-  const container = document.createElement("div");
-  document.body.replaceChildren(container);
-  createRoot(container).render(screen);
-};
-
-export const showBrowserFailure = (): void => {
-  renderBrowserScreen(<BrowserFailureScreen />);
-};

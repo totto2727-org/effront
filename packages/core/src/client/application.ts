@@ -3,7 +3,7 @@ import { Predicate, Effect, Layer } from "effect";
 import { navigationMode } from "./browser-capabilities.ts";
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
 import { withBrowserServices } from "./browser-layer.ts";
-import { showBrowserFailure } from "./browser-screen.tsx";
+import { showBrowserFailure } from "./mount-browser-failure.ts";
 import { installCallServer } from "./call-server.ts";
 import { installClientRouter } from "./client-router.ts";
 import { ReactDOMRenderer } from "./react-dom-renderer.tsx";
