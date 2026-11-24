@@ -1,33 +1,20 @@
-import { BrowserHttpClient } from "@effect/platform-browser";
 import { Predicate, Effect, Layer } from "effect";
 
 import { navigationMode } from "./browser-capabilities.ts";
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
-import { BrowserRenderStatus } from "./browser-render-status.ts";
-import { BrowserRenderer } from "./browser-renderer.ts";
+import { withBrowserServices } from "./browser-layer.ts";
 import { showBrowserFailure } from "./browser-screen.tsx";
 import { installCallServer } from "./call-server.ts";
 import { installClientRouter } from "./client-router.ts";
-import { FlightClient } from "./flight-client.ts";
-import { InitialFlightStream } from "./initial-flight-stream.ts";
-import { NavigationApi } from "./navigation-api.ts";
 import { ReactDOMRenderer } from "./react-dom-renderer.tsx";
 import { RouteLoader } from "./route-loader.ts";
 import { installRouteRefresh, RouteRefresher } from "./route-refresh.ts";
-
-const BrowserServicesLayer = Layer.mergeAll(
-  BrowserEffectRunner.layer,
-  BrowserRenderer.layer,
-  BrowserRenderStatus.layer,
-  FlightClient.layer,
-  NavigationApi.layer,
-).pipe(Layer.provide(InitialFlightStream.layer));
 
 const BrowserLayer = Layer.mergeAll(
   ReactDOMRenderer.layer,
   RouteLoader.layer,
   RouteRefresher.layer,
-).pipe(Layer.provideMerge(BrowserServicesLayer), Layer.provide(BrowserHttpClient.layerFetch));
+).pipe(withBrowserServices);
 
 const renderBrowserFailure = Effect.sync(showBrowserFailure);
 
@@ -46,13 +33,16 @@ const activateBrowser = Effect.gen(function* () {
 });
 
 const installViteHmr = Effect.gen(function* () {
-  const { hot } = import.meta as ImportMeta &
-    Readonly<{
-      hot?: {
-        on: (event: string, listener: () => void) => void;
-        off: (event: string, listener: () => void) => void;
-      };
-    }>;
+  // oxlint-disable-next-line eslint/prefer-destructuring -- Vite detects the literal import.meta.hot access when injecting its HMR context.
+  const hot = (
+    import.meta as ImportMeta &
+      Readonly<{
+        hot?: {
+          on: (event: string, listener: () => void) => void;
+          off: (event: string, listener: () => void) => void;
+        };
+      }>
+  ).hot;
   if (Predicate.isNullish(hot)) {
     return;
   }
@@ -60,7 +50,8 @@ const installViteHmr = Effect.gen(function* () {
   const run = yield* BrowserEffectRunner;
   const routeRefresher = yield* RouteRefresher;
   const refresh = (): void => {
-    void run(routeRefresher.refreshCurrentRoute("hmr-refresh"));
+    // oxlint-disable-next-line typescript/no-floating-promises -- Vite delivers updates synchronously. The browser scope owns this refresh.
+    run(routeRefresher.refreshCurrentRoute("hmr-refresh"));
   };
   hot.on("rsc:update", refresh);
   yield* Effect.addFinalizer(() =>
