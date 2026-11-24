@@ -1,20 +1,72 @@
-import { resolve } from "node:path";
+// oxlint-disable-next-line rules/no-node-imports -- Vite resolves compiler entries against the host filesystem during configuration.
+import path from "node:path";
+// oxlint-disable-next-line rules/no-node-imports -- The browser and SSR entry URLs become filesystem paths for Vite.
 import { fileURLToPath } from "node:url";
 
 import react from "@vitejs/plugin-react";
 import rsc from "@vitejs/plugin-rsc";
-import type { EnvironmentModuleNode, Plugin, PluginOption, UserConfig } from "vite";
+import type {
+  EnvironmentModuleGraph,
+  EnvironmentModuleNode,
+  HotUpdateOptions,
+  Plugin,
+  PluginOption,
+  UserConfig,
+} from "vite";
 
-const browserEntry = fileURLToPath(new URL("./browser.js", import.meta.url));
+const browserEntry = fileURLToPath(new URL("browser.js", import.meta.url));
 
 const rawQuery = /[?&]raw(?:&|$)/u;
+const emptyImporters = 0;
+const pathPart = 1;
+
+const isRawModuleFor = (module: EnvironmentModuleNode, file: string): boolean =>
+  module.file === file && rawQuery.test(module.id ?? "");
+
+const refreshRawImporters = (
+  graph: EnvironmentModuleGraph,
+  { file, modules, timestamp }: HotUpdateOptions,
+): EnvironmentModuleNode[] => {
+  const updates = new Set(modules.filter((module) => module.file !== file));
+  const invalidated = new Set<EnvironmentModuleNode>();
+  modules.forEach((module) => {
+    if (module.file === file) {
+      module.importers.forEach((importer) => {
+        if (importer.file !== file) {
+          updates.add(importer);
+        }
+      });
+      graph.invalidateModule(module, invalidated, timestamp, true);
+    }
+  });
+  return [...updates];
+};
 
 const rawAssetUpdates = (): Plugin => {
   const transformed = new WeakSet<EnvironmentModuleNode>();
   return {
-    name: "effront:rsc-raw-assets",
     apply: "serve",
     applyToEnvironment: (environment) => environment.name === "rsc",
+    hotUpdate: {
+      handler(update) {
+        const { file, modules, type } = update;
+        if (type === "delete" && modules.some((module) => isRawModuleFor(module, file))) {
+          // Refresh the live importers so the native glob enumerates the remaining files.
+          return refreshRawImporters(this.environment.moduleGraph, update);
+        }
+        // Vite watches the queryless file when a raw import points to it.
+        // Keep real raw imports and any queryless module that Vite transformed as JavaScript.
+        return modules.filter(
+          (module) =>
+            module.id !== file ||
+            transformed.has(module) ||
+            module.importers.size === emptyImporters ||
+            ![...module.importers].every((importer) => isRawModuleFor(importer, file)),
+        );
+      },
+      order: "pre",
+    },
+    name: "effront:rsc-raw-assets",
     transform(_code, id) {
       if (this.environment.mode !== "dev") {
         return;
@@ -23,45 +75,6 @@ const rawAssetUpdates = (): Plugin => {
       if (module) {
         transformed.add(module);
       }
-    },
-    hotUpdate: {
-      order: "pre",
-      handler({ file, modules, type, timestamp }) {
-        if (
-          type === "delete" &&
-          modules.some((module) => module.file === file && module.id && rawQuery.test(module.id))
-        ) {
-          // Deleted files cannot be transformed. Refresh their live importers so
-          // native import.meta.glob can enumerate the remaining files instead.
-          const updates = new Set(modules.filter((module) => module.file !== file));
-          const invalidated = new Set<EnvironmentModuleNode>();
-          for (const module of modules) {
-            if (module.file !== file) {
-              continue;
-            }
-            for (const importer of module.importers) {
-              if (importer.file !== file) {
-                updates.add(importer);
-              }
-            }
-            this.environment.moduleGraph.invalidateModule(module, invalidated, timestamp, true);
-          }
-          return [...updates];
-        }
-        // Vite's ?raw loader adds a watch edge to the queryless file. That node is
-        // not JavaScript, but plugin-rsc eagerly transforms every changed JS node.
-        // Keep the real ?raw modules and any independently loaded queryless module.
-        return modules.filter(
-          (module) =>
-            module.id !== file ||
-            transformed.has(module) ||
-            module.importers.size === 0 ||
-            ![...module.importers].every(
-              (importer) =>
-                importer.file === file && importer.id !== null && rawQuery.test(importer.id),
-            ),
-        );
-      },
     },
   };
 };
@@ -78,34 +91,39 @@ export type EffrontViteOptions = Readonly<{
  *
  * This integration owns the RSC and React plugins. Consumers should only add their runtime plugin,
  * such as `@cloudflare/vite-plugin`, and must not register either React plugin a second time.
+ * @param {EffrontViteOptions} options - Optional host and application entry paths.
+ * @returns {PluginOption[]} The compiler plugins and entry configuration.
  */
 export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   const rscEntry = options.rsc ?? "./src/entry.workers.ts";
   const application = options.application ?? "./src/entry.effront.tsx";
-  let resolvedRscEntry: string;
+  const entry: { resolved?: string } = {};
   const schemaJit: Plugin = {
-    name: "effront:schema-jit",
-    enforce: "pre",
     configResolved(config) {
-      resolvedRscEntry = resolve(config.root, rscEntry);
+      entry.resolved = path.resolve(config.root, rscEntry);
     },
+    enforce: "pre",
+    name: "effront:schema-jit",
     transform(code, id) {
-      if (this.environment.name !== "rsc" || id.split("?", 1)[0] !== resolvedRscEntry) {
-        return;
-      }
+      const [moduleId] = id.split("?", pathPart);
       // Register the compiler before the application module constructs or captures parsers.
-      return `import "effect/schema/SchemaJITCompiler/enable";\n${code}`;
+      return this.environment.name === "rsc" && moduleId === entry.resolved
+        ? `import "effect/schema/SchemaJITCompiler/enable";\n${code}`
+        : undefined;
     },
   };
   const applicationAlias: Plugin = {
-    name: "effront:application-entry",
     config: (config): UserConfig => ({
       resolve: {
         alias: {
-          "@effront/core/application-entry": resolve(config.root ?? process.cwd(), application),
+          "@effront/core/application-entry": path.resolve(
+            config.root ?? process.cwd(),
+            application,
+          ),
         },
       },
     }),
+    name: "effront:application-entry",
   };
 
   return [
