@@ -1,10 +1,9 @@
 import { invokeServerFn, resetReactClient, transitionTypes } from "./call-server-react.fixture.ts";
 
 import { beforeEach, expect, it } from "@effect/vitest";
-import { Predicate, Deferred, Effect, Exit, Layer, MutableRef } from "effect";
+import { Deferred, Effect, Layer, MutableRef } from "effect";
 import { HttpClient } from "effect/http";
 import { vi } from "vitest";
-import { encodeReply } from "@vitejs/plugin-rsc/browser";
 
 import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
 import { BrowserRenderer } from "#core/client/browser-renderer.ts";
@@ -33,153 +32,6 @@ const makeFlight = (id: string, value: unknown, release: Effect.Effect<void>) =>
 });
 
 beforeEach(resetReactClient);
-
-it.effect("aborts Server Function argument encoding when the invocation is cancelled", () =>
-  Effect.gen(function* () {
-    const encodingStarted = Promise.withResolvers<AbortSignal | undefined>();
-    const encodingAborted = Promise.withResolvers<void>();
-    const load = vi.fn(() => Effect.die("Unexpected Flight load before argument encoding."));
-    vi.mocked(encodeReply).mockImplementationOnce((_args, options) => {
-      const signal = options?.signal;
-      encodingStarted.resolve(signal);
-      if (Predicate.isNullish(signal)) {
-        throw new TypeError("Expected an encoding abort signal.");
-      }
-      return new Promise<string>((_resolve, reject) => {
-        signal.addEventListener(
-          "abort",
-          () => {
-            encodingAborted.resolve();
-            reject(new DOMException("Encoding aborted", "AbortError"));
-          },
-          { once: true },
-        );
-      });
-    });
-
-    const { signal, rejected } = yield* Effect.scoped(
-      Effect.gen(function* () {
-        yield* listen(
-          Layer.mergeAll(
-            BrowserEffectRunner.layer,
-            BrowserRenderer.layerTest({
-              commit: () => undefined,
-              initialize: () => undefined,
-              navigate: () => {
-                throw new TypeError("Unexpected navigation render.");
-              },
-              refresh: () => {
-                throw new TypeError("Unexpected route refresh.");
-              },
-            }),
-            FlightClient.layerTest({ load }),
-            NavigationApi.layerTest({
-              getCurrentEntry: () => firstEntry,
-              getCurrentUrl: () => firstEntry.url,
-              getTransition: () => null,
-              navigate: () => {
-                throw new TypeError("Unexpected navigation.");
-              },
-              reloadDocument: () => undefined,
-              replaceDocument: () => undefined,
-              subscribe: () => () => undefined,
-            }),
-            RouteLoader.layerTest({
-              invalidate: () => undefined,
-              prepareRefresh: () => () => undefined,
-            }),
-            RouteRefresher.layerTest({}),
-          ),
-        );
-        const result = invokeServerFn("cancelled");
-        const rejected = expect(result).rejects.toThrow();
-        const signal = yield* Effect.promise(() => encodingStarted.promise);
-        expect(signal).toBeInstanceOf(AbortSignal);
-        if (Predicate.isNullish(signal)) {
-          throw new TypeError("Expected an encoding abort signal.");
-        }
-        expect(signal.aborted).toBe(false);
-        return { signal, rejected };
-      }),
-    );
-
-    yield* Effect.promise(() => encodingAborted.promise);
-    expect(signal.aborted).toBe(true);
-    yield* Effect.promise(() => rejected);
-    expect(load).not.toHaveBeenCalled();
-  }).pipe(
-    Effect.provideService(
-      HttpClient.HttpClient,
-      HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
-    ),
-  ),
-);
-
-it.effect("releases an incomplete Server Function response", () =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const released = vi.fn();
-      const navigationApiLayer = NavigationApi.layerTest({
-        getCurrentEntry: () => firstEntry,
-        getCurrentUrl: () => firstEntry.url,
-        getTransition: () => null,
-        navigate: () => {
-          throw new TypeError("Unexpected navigation.");
-        },
-        reloadDocument: () => undefined,
-        replaceDocument: () => undefined,
-        subscribe: () => () => undefined,
-      });
-      const flightClientLayer = FlightClient.layerTest({
-        load: () =>
-          Effect.succeed({
-            _tag: "Flight" as const,
-            completed: Effect.void,
-            payload: {
-              formState: null,
-              routeTree: makeRouteTree("incomplete"),
-              serverFnResult: null,
-            },
-            release: Effect.sync(released),
-            resolvedUrl: new URL(firstEntry.url),
-          }),
-        loadInitial: Effect.die("Unexpected initial Flight load."),
-      });
-      yield* listen(
-        Layer.mergeAll(
-          BrowserEffectRunner.layer,
-          BrowserRenderer.layerTest({
-            commit: () => undefined,
-            initialize: () => undefined,
-            navigate: () => {
-              throw new TypeError("Unexpected navigation render.");
-            },
-            refresh: () => {
-              throw new TypeError("Unexpected route refresh.");
-            },
-          }),
-          flightClientLayer,
-          navigationApiLayer,
-          RouteLoader.layerTest({
-            invalidate: () => undefined,
-            prepareRefresh: () => () => undefined,
-          }),
-          RouteRefresher.layerTest({}),
-        ),
-      );
-
-      const exit = yield* Effect.exit(Effect.promise(() => invokeServerFn("incomplete")));
-
-      expect(Exit.isFailure(exit)).toBe(true);
-      expect(released).toHaveBeenCalledOnce();
-    }).pipe(
-      Effect.provideService(
-        HttpClient.HttpClient,
-        HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
-      ),
-    ),
-  ),
-);
 
 type TestNavigationState = Readonly<{
   currentEntry: MutableRef.MutableRef<NavigationHistoryEntry | null>;

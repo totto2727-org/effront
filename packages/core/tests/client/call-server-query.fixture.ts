@@ -1,11 +1,10 @@
-import { Data, Deferred, Effect, Layer, Ref } from "effect";
-import { HttpClient } from "effect/http";
+import { Data, Deferred, Effect, Ref } from "effect";
 
 import { FlightClient } from "#core/client/flight-client.ts";
 import { flightResources, loadFailure } from "#core/client/flight-client-model.ts";
 import type { flightRequests, FlightLoadError } from "#core/client/flight-client-model.ts";
 import type { ServerFnResult } from "#core/rsc/flight.ts";
-import { idleCallServer, listen } from "./call-server-service.fixture.ts";
+import { listenIdle } from "./call-server-service.fixture.ts";
 
 type QueryRequest = ReturnType<typeof flightRequests.Query>;
 type QueryFixture = Effect.Success<ReturnType<typeof openQuery>>;
@@ -13,8 +12,6 @@ type QueryFixture = Effect.Success<ReturnType<typeof openQuery>>;
 const result = Data.taggedEnum<ServerFnResult>();
 const initialReleaseCount = 0;
 const releaseIncrement = 1;
-
-const forbiddenNetwork = HttpClient.make(() => Effect.die("Unexpected HTTP request."));
 
 export const openQuery = Effect.fn("effront.test.openServerFunctionQuery")(function* (
   value: unknown,
@@ -34,9 +31,7 @@ export const openQuery = Effect.fn("effront.test.openServerFunctionQuery")(funct
   const flight = FlightClient.layerTest({
     loadQuery: (request) => Deferred.succeed(started, request).pipe(Effect.as(resource)),
   });
-  yield* listen(Layer.merge(idleCallServer, flight)).pipe(
-    Effect.provideService(HttpClient.HttpClient, forbiddenNetwork),
-  );
+  yield* listenIdle(flight);
   return { completed, released, releases, started };
 });
 

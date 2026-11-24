@@ -1,5 +1,5 @@
 import { Deferred, Effect, Fiber, Function, Layer } from "effect";
-import type { HttpClient } from "effect/http";
+import { HttpClient } from "effect/http";
 
 import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
 import { BrowserRenderer } from "#core/client/browser-renderer.ts";
@@ -37,7 +37,7 @@ const unexpectedCall = (message: string): never => {
   throw new TypeError(message);
 };
 
-export const idleCallServer = Layer.mergeAll(
+const idleCallServer = Layer.mergeAll(
   BrowserEffectRunner.layer,
   BrowserRenderer.layerTest({
     commit: Function.constVoid,
@@ -60,3 +60,18 @@ export const idleCallServer = Layer.mergeAll(
   }),
   RouteRefresher.layerTest({}),
 );
+
+type MissingIdleService = Exclude<
+  Effect.Services<typeof installCallServer>,
+  Layer.Success<typeof idleCallServer>
+>;
+
+const forbiddenNetwork = HttpClient.make(() => Effect.die("Unexpected HTTP request."));
+
+export const listenIdle = Effect.fn("effront.test.listenToIdleServerFunction")(function* (
+  flight: Layer.Layer<MissingIdleService>,
+) {
+  yield* listen(Layer.merge(idleCallServer, flight)).pipe(
+    Effect.provideService(HttpClient.HttpClient, forbiddenNetwork),
+  );
+});
