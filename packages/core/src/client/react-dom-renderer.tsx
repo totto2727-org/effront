@@ -5,7 +5,7 @@ import { hydrateRoot } from "react-dom/client";
 
 import type { FlightPayload } from "#core/rsc/flight.ts";
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
-import { BrowserRenderStatus } from "./browser-render-status.ts";
+import { BrowserRenderStatus, browserRenderStatuses } from "./browser-render-status.ts";
 import { BrowserRenderer } from "./browser-renderer.ts";
 import type { BrowserRender } from "./browser-renderer.ts";
 import { BrowserFailureScreen } from "./browser-screen.tsx";
@@ -88,18 +88,19 @@ export class ReactDOMRenderer extends Context.Service<ReactDOMRenderer>()(
         const reportError = (error: unknown, info: ErrorInfo): void => {
           void run(
             Effect.gen(function* () {
-              yield* renderStatus.report({
-                _tag: "Failed",
-                error,
-                componentStack: info.componentStack ?? null,
-              });
+              yield* renderStatus.report(
+                browserRenderStatuses.Failed({
+                  componentStack: info.componentStack ?? null,
+                  error,
+                }),
+              );
               yield* Effect.logError("Uncaught client render error.", error, info.componentStack);
             }),
           );
         };
 
         const reportRendered = (): void => {
-          void run(renderStatus.report({ _tag: "Rendered" }));
+          void run(renderStatus.report(browserRenderStatuses.Rendered()));
         };
 
         function Root() {
