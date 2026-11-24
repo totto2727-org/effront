@@ -1,4 +1,5 @@
-import { Function, MutableRef } from "effect";
+import { Effect, Function, MutableRef } from "effect";
+import { vi } from "vitest";
 
 // oxlint-disable-next-line unicorn/no-null -- The browser's Navigation API represents absent fields with null.
 export const absentNavigationValue = null;
@@ -10,6 +11,13 @@ export class TestAnchor {
     this.dataset = dataset;
   }
 }
+
+export const nativeNavigationGlobals = Effect.acquireRelease(
+  Effect.sync(() => {
+    vi.stubGlobal("HTMLAnchorElement", TestAnchor);
+  }),
+  () => Effect.sync(vi.unstubAllGlobals),
+);
 
 export type TestNavigateEvent = Event &
   Pick<
