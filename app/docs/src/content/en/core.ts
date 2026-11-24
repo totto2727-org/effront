@@ -1,4 +1,4 @@
-import type { DocPage } from "../types.ts";
+import type { DocPage } from "#docs/content/types.ts";
 import { page as overview } from "./architecture/overview.tsx";
 import { page as application } from "./architecture/application.tsx";
 import { page as routing } from "./architecture/routing.tsx";

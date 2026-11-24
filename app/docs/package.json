@@ -2,6 +2,10 @@
   "name": "@effront/docs",
   "private": true,
   "type": "module",
+  "imports": {
+    "#docs/*": "./src/*",
+    "#docs-vite-config": "./vite.config.ts"
+  },
   "scripts": {
     "dev": "alchemy dev",
     "test:browser": "playwright test --config tests/playwright.config.ts"

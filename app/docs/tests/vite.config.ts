@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import cloudflare from "@alchemy.run/cloudflare-runtime/vite";
 import * as Text from "@alchemy.run/cloudflare-runtime/core/bindings/Text";
 import { defineConfig } from "vite-plus";
-import application from "../vite.config";
+import application from "#docs-vite-config";
 
 // Same local-host pattern as tests/e2e-alchemy. The actual site entry and plugins
 // are built unchanged, without evaluating alchemy.run.ts or touching cloud state.

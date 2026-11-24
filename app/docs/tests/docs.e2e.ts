@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { articleCatalog } from "../src/content/catalog.ts";
-import { corePages, coreSources } from "../src/content/core.ts";
-import { architectureBaseline } from "../src/content/architecture-baseline.ts";
+import { articleCatalog } from "#docs/content/catalog.ts";
+import { corePages, coreSources } from "#docs/content/core.ts";
+import { architectureBaseline } from "#docs/content/architecture-baseline.ts";
 
 const httpStatusOk = 200;
 const httpStatusPermanentRedirect = 308;

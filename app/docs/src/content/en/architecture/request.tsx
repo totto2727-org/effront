@@ -1,7 +1,7 @@
-import { CodeBlock } from "../../../components/code-block.tsx";
-import { coreRuntimeSources } from "../../core-runtime.tsx";
-import type { CoreSource } from "../../core-source.tsx";
-import type { DocPage } from "../../types.ts";
+import { CodeBlock } from "#docs/components/code-block.tsx";
+import { coreRuntimeSources } from "#docs/content/core-runtime.tsx";
+import type { CoreSource } from "#docs/content/core-source.tsx";
+import type { DocPage } from "#docs/content/types.ts";
 
 function SourceExcerpt({ source }: Readonly<{ source: CoreSource }>) {
   return (

@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { architectureBaseline } from "../src/content/architecture-baseline.ts";
-import { articleCatalog } from "../src/content/catalog.ts";
-import { corePages, coreSources } from "../src/content/core.ts";
-import { englishArticleCatalog } from "../src/content/en/catalog.ts";
-import { englishCorePages } from "../src/content/en/core.ts";
+import { architectureBaseline } from "#docs/content/architecture-baseline.ts";
+import { articleCatalog } from "#docs/content/catalog.ts";
+import { corePages, coreSources } from "#docs/content/core.ts";
+import { englishArticleCatalog } from "#docs/content/en/catalog.ts";
+import { englishCorePages } from "#docs/content/en/core.ts";
 
 const httpStatusOk = 200;
 const httpStatusPermanentRedirect = 308;

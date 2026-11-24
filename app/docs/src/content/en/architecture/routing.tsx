@@ -1,6 +1,6 @@
-import { CodeBlock } from "../../../components/code-block.tsx";
-import { coreModelSources } from "../../core-model.tsx";
-import type { DocPage } from "../../types.ts";
+import { CodeBlock } from "#docs/components/code-block.tsx";
+import { coreModelSources } from "#docs/content/core-model.tsx";
+import type { DocPage } from "#docs/content/types.ts";
 
 export const page: DocPage = {
   slug: "/architecture/implementation/routing",

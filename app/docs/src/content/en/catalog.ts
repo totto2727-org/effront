@@ -1,4 +1,4 @@
-import type { DocPage } from "../types.ts";
+import type { DocPage } from "#docs/content/types.ts";
 
 export const englishArticleCatalog = [
   {

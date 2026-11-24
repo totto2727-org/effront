@@ -7,7 +7,7 @@ import { englishArticleCatalog } from "./en/catalog.ts";
 import { localizedPath, localizeDocumentLink } from "./locale.ts";
 import type { DocLocale } from "./locale.ts";
 import type { RenderableDocPage } from "./types.ts";
-import { markdownAlertComponents } from "../components/markdown-alert.tsx";
+import { markdownAlertComponents } from "#docs/components/markdown-alert.tsx";
 
 // Vite owns loading. No runtime filesystem access or client-side parser is needed.
 const articles = createMarkdownCollection({
