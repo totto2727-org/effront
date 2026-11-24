@@ -167,25 +167,27 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
   serverFnDecode: {
     path: "packages/core/src/server/server-fn-request.ts",
     language: "typescript",
-    code: `  const temporaryReferences = createTemporaryReferenceSet();
-  const body = yield* readBody(request);
-  const decoded = yield* Effect.tryPromise({
-    try: () =>
-      decodeReply(body, {
-        arraySizeLimit: ServerFnArraySizeLimit,
-        temporaryReferences,
-      }),
-    catch: (cause) => requestError("Failed to decode Server Function arguments.", 400, cause),
-  });
-  const args = yield* decodeArguments(decoded).pipe(
-    Effect.mapError((cause) =>
-      requestError("Expected a Server Function argument array.", 400, cause),
-    ),
-  );
-  const action = yield* Effect.tryPromise({
-    try: () => loadServerAction(actionId),
-    catch: (cause) => requestError("The requested Server Function does not exist.", 400, cause),
-  });`,
+    code: `    const temporaryReferences = createTemporaryReferenceSet();
+    const body = yield* readServerFnBody(request);
+    const decoded: unknown = yield* Effect.tryPromise({
+      catch: (cause) =>
+        requestError("Failed to decode Server Function arguments.", badRequest, cause),
+      try: async () =>
+        decodeReply(body, {
+          arraySizeLimit: ServerFnArraySizeLimit,
+          temporaryReferences,
+        }),
+    });
+    const args = yield* decodeArguments(decoded).pipe(
+      Effect.mapError((cause) =>
+        requestError("Expected a Server Function argument array.", badRequest, cause),
+      ),
+    );
+    const action = yield* Effect.tryPromise({
+      catch: (cause) =>
+        requestError("The requested Server Function does not exist.", badRequest, cause),
+      try: async () => loadServerAction(actionId),
+    });`,
   },
 } satisfies Record<string, CoreSource>;
 

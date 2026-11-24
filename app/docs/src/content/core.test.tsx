@@ -5,7 +5,6 @@ import { promisify } from "node:util";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vite-plus/test";
 import { corePages, coreSources } from "./core.ts";
-import { coreRuntimeSources } from "./core-runtime.tsx";
 
 const exec = promisify(execFile);
 const repository = new URL("../../../../", import.meta.url);
@@ -40,19 +39,13 @@ describe("current core learning material", () => {
     },
   );
 
-  // Historical excerpts remain in the recorded baseline. Flight error digests and Stream wire
-  // values describe post-baseline code instead.
-  test.each(
-    coreSources.filter(
-      (source) =>
-        source !== coreRuntimeSources.flightRuntime &&
-        source !== coreRuntimeSources.serverFnBrand &&
-        source !== coreRuntimeSources.responseLifetime,
-    ),
-  )("retains the $path excerpt in the architecture baseline", async (source) => {
-    const baseline = await baselineSource(source.path);
-    expect(baseline).toContain(source.code);
-  });
+  test.each(coreSources)(
+    "retains the $path excerpt in the architecture baseline",
+    async (source) => {
+      const baseline = await baselineSource(source.path);
+      expect(baseline).toContain(source.code);
+    },
+  );
 
   test.each(corePages)("explains $slug with current source and navigable sections", (page) => {
     const html = renderToStaticMarkup(page.content());
