@@ -3,6 +3,23 @@ import { Predicate, Deferred, Effect, Exit, Fiber, Layer, Scope } from "effect";
 import { HttpClient, HttpClientRequest, HttpClientResponse } from "effect/http";
 import { vi } from "vitest";
 
+import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
+import { BrowserRenderer } from "#core/client/browser-renderer.ts";
+import type { BrowserRender } from "#core/client/browser-renderer.ts";
+import { installClientRouter } from "#core/client/client-router.ts";
+import { FlightClient } from "#core/client/flight-client.ts";
+import { InitialFlightStream } from "#core/client/initial-flight-stream.ts";
+import { RouteLoader } from "#core/client/route-loader.ts";
+import type { RouteLoad } from "#core/client/route-loader.ts";
+import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
+
+import { makeNavigationEvent, TestAnchor } from "./client-routing-events.fixture.ts";
+import {
+  makeNavigationApiLayer,
+  makeNavigationEntry,
+  TestNavigationApi,
+} from "./client-routing-navigation.fixture.ts";
+
 const react = vi.hoisted(() => ({
   transitionTypes: [] as string[],
 }));
@@ -34,160 +51,7 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
   }),
 }));
 
-import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
-import { BrowserRenderer } from "#core/client/browser-renderer.ts";
-import type { BrowserRender } from "#core/client/browser-renderer.ts";
-import { installClientRouter } from "#core/client/client-router.ts";
-import { FlightClient } from "#core/client/flight-client.ts";
-import { InitialFlightStream } from "#core/client/initial-flight-stream.ts";
-import { NavigationApi } from "#core/client/navigation-api.ts";
-import { RouteLoader } from "#core/client/route-loader.ts";
-import type { RouteLoad } from "#core/client/route-loader.ts";
-import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
-
 const FlightClientLayer = FlightClient.layer.pipe(Layer.provide(InitialFlightStream.layer));
-
-class TestAnchor {
-  readonly dataset: DOMStringMap;
-
-  constructor(dataset: DOMStringMap) {
-    this.dataset = dataset;
-  }
-}
-
-type TestNavigateEvent = Event &
-  Pick<
-    NavigateEvent,
-    | "canIntercept"
-    | "destination"
-    | "downloadRequest"
-    | "formData"
-    | "hasUAVisualTransition"
-    | "hashChange"
-    | "info"
-    | "intercept"
-    | "navigationType"
-    | "signal"
-  >;
-
-const makeNavigationEntry = (key: string, url: string, id = key) =>
-  Object.assign(new EventTarget(), {
-    getState: () => undefined,
-    id,
-    index: 0,
-    key,
-    ondispose: null,
-    sameDocument: true,
-    url,
-  }) satisfies NavigationHistoryEntry;
-
-class TestNavigationApi {
-  private listener: EventListener | null = null;
-  readonly initialEntry = makeNavigationEntry("day-one", "https://effront.test/schedule/day-one");
-  currentEntry = this.initialEntry;
-  readonly nativeNavigations: Readonly<{
-    options: Readonly<{
-      history: "push" | "replace";
-      info: unknown;
-    }>;
-    url: string;
-  }>[] = [];
-
-  addEventListener(_type: "navigate", listener: EventListener): void {
-    this.listener = listener;
-  }
-
-  removeEventListener(_type: "navigate", listener: EventListener): void {
-    if (this.listener === listener) {
-      this.listener = null;
-    }
-  }
-
-  navigate(url: string | URL, options?: NavigationNavigateOptions): NavigationResult {
-    if (options?.history !== "push" && options?.history !== "replace") {
-      throw new TypeError("Expected an explicit push or replace navigation.");
-    }
-    this.nativeNavigations.push({
-      options: { history: options.history, info: options.info },
-      url: url.toString(),
-    });
-    return {
-      committed: Promise.resolve(this.currentEntry),
-      finished: Promise.resolve(this.currentEntry),
-    };
-  }
-
-  dispatch(event: TestNavigateEvent): void {
-    this.listener?.(event);
-  }
-
-  entries() {
-    return [this.initialEntry, this.currentEntry];
-  }
-
-  get isListening() {
-    return this.listener !== null;
-  }
-}
-
-type TestNavigateEventOverrides = Partial<
-  Pick<
-    NavigateEvent,
-    | "canIntercept"
-    | "downloadRequest"
-    | "formData"
-    | "hasUAVisualTransition"
-    | "hashChange"
-    | "info"
-    | "navigationType"
-    | "signal"
-  >
-> &
-  Readonly<{
-    cancelable?: boolean;
-    destination?: Readonly<{ id?: string; key?: string; url: string }>;
-    sourceElement?: Pick<HTMLAnchorElement, "dataset"> | null;
-  }>;
-
-const makeNavigationEvent = (overrides: TestNavigateEventOverrides = {}) => {
-  let interception: NavigationInterceptOptions | null = null;
-  const {
-    cancelable = true,
-    destination = { url: "https://effront.test/schedule/day-two" },
-    ...eventOverrides
-  } = overrides;
-  const navigationType: NavigationType = "push";
-  const event = Object.assign(new Event("navigate", { cancelable }), {
-    canIntercept: true,
-    destination: {
-      getState: () => undefined,
-      id: destination.id ?? destination.key ?? "",
-      index: -1,
-      key: destination.key ?? "",
-      sameDocument: false,
-      url: destination.url,
-    },
-    downloadRequest: null,
-    formData: null,
-    hasUAVisualTransition: false,
-    hashChange: false,
-    info: undefined,
-    intercept: (options: NavigationInterceptOptions) => {
-      interception = options;
-    },
-    navigationType,
-    scroll: () => undefined,
-    signal: new AbortController().signal,
-    sourceElement: null,
-    userInitiated: true,
-    ...eventOverrides,
-  }) satisfies TestNavigateEvent;
-
-  return {
-    event,
-    interception: () => interception,
-  };
-};
 
 beforeEach(() => {
   react.transitionTypes.length = 0;
@@ -358,26 +222,6 @@ const makeControlledRoute = Effect.fn(function* (url: string) {
     } satisfies RouteLoad,
   };
 });
-
-const makeNavigationApiLayer = (
-  navigation: TestNavigationApi,
-  documentReplacements: string[] = [],
-  reloadDocument: () => void = () => undefined,
-): Layer.Layer<NavigationApi> =>
-  NavigationApi.layerTest({
-    getCurrentEntry: () => navigation.currentEntry,
-    getCurrentUrl: () => navigation.currentEntry.url,
-    getTransition: () => null,
-    navigate: (url, options) => navigation.navigate(url, options),
-    reloadDocument,
-    replaceDocument: (url) => documentReplacements.push(url),
-    subscribe: (listener) => {
-      navigation.addEventListener("navigate", listener as EventListener);
-      return () => {
-        navigation.removeEventListener("navigate", listener as EventListener);
-      };
-    },
-  });
 
 const listen = (
   navigation: TestNavigationApi,
