@@ -3,10 +3,10 @@ import { HttpServerRequest } from "effect/http";
 import type { Scope } from "effect";
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
 
-import type { EFFRONTIdentity } from "../application/effront-identity.ts";
-import type { AnyMiddleware } from "../application/middleware.ts";
-import { ServerFnIdHeader } from "../rsc/flight.ts";
-import type { ServerFnResult } from "../rsc/flight.ts";
+import type { EFFRONTIdentity } from "#core/application/effront-identity.ts";
+import type { AnyMiddleware } from "#core/application/middleware.ts";
+import { ServerFnIdHeader } from "#core/rsc/flight.ts";
+import type { ServerFnResult } from "#core/rsc/flight.ts";
 import { serverFnResponse } from "./server-fn-outcome.ts";
 import { decodeServerFnCall, ServerFnRequestError, validateOrigin } from "./server-fn-request.ts";
 

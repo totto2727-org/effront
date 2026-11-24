@@ -3,21 +3,21 @@ import { Predicate, Context, Effect, Layer, Schema } from "effect";
 import { isValidElement, Suspense } from "react";
 import type { ReactElement, ReactNode } from "react";
 
-import { getApplicationState } from "../../src/application/definition.tsx";
-import type { ApplicationDefinition } from "../../src/application/definition.tsx";
-import { Application } from "../../src/application/effront.ts";
-import { getPageState } from "../../src/application/page.ts";
+import { getApplicationState } from "#core/application/definition.tsx";
+import type { ApplicationDefinition } from "#core/application/definition.tsx";
+import { Application } from "#core/application/effront.ts";
+import { getPageState } from "#core/application/page.ts";
 import type {
   AnyPageDefinition,
   EncodedPageParams,
   PageRuntimeProps,
-} from "../../src/application/page.ts";
-import type { CompiledDestination } from "../../src/application/route-graph.ts";
-import type { AbsolutePath } from "../../src/application/route-path.ts";
-import { getRoutesState } from "../../src/application/routes.ts";
-import { RouteOutlet } from "../../src/client/route-tree.tsx";
-import { renderRouteTree } from "../../src/rsc/render-route-tree.tsx";
-import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
+} from "#core/application/page.ts";
+import type { CompiledDestination } from "#core/application/route-graph.ts";
+import type { AbsolutePath } from "#core/application/route-path.ts";
+import { getRoutesState } from "#core/application/routes.ts";
+import { RouteOutlet } from "#core/client/route-tree.tsx";
+import { renderRouteTree } from "#core/rsc/render-route-tree.tsx";
+import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
 const asElement = <Props,>(node: ReactNode): ReactElement<Props> => {
   if (!isValidElement<Props>(node)) {

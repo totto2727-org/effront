@@ -34,16 +34,16 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
   }),
 }));
 
-import { BrowserEffectRunner } from "../../src/client/browser-effect-runner.ts";
-import { BrowserRenderer } from "../../src/client/browser-renderer.ts";
-import type { BrowserRender } from "../../src/client/browser-renderer.ts";
-import { installClientRouter } from "../../src/client/client-router.ts";
-import { FlightClient } from "../../src/client/flight-client.ts";
-import { InitialFlightStream } from "../../src/client/initial-flight-stream.ts";
-import { NavigationApi } from "../../src/client/navigation-api.ts";
-import { RouteLoader } from "../../src/client/route-loader.ts";
-import type { RouteLoad } from "../../src/client/route-loader.ts";
-import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
+import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
+import { BrowserRenderer } from "#core/client/browser-renderer.ts";
+import type { BrowserRender } from "#core/client/browser-renderer.ts";
+import { installClientRouter } from "#core/client/client-router.ts";
+import { FlightClient } from "#core/client/flight-client.ts";
+import { InitialFlightStream } from "#core/client/initial-flight-stream.ts";
+import { NavigationApi } from "#core/client/navigation-api.ts";
+import { RouteLoader } from "#core/client/route-loader.ts";
+import type { RouteLoad } from "#core/client/route-loader.ts";
+import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
 const FlightClientLayer = FlightClient.layer.pipe(Layer.provide(InitialFlightStream.layer));
 

@@ -4,7 +4,7 @@ import { vi } from "vitest";
 
 import { BrowserRenderer } from "./browser-renderer.ts";
 import type { BrowserRender } from "./browser-renderer.ts";
-import type { RouteTreeModel } from "../rsc/route-tree.ts";
+import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
 const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
 

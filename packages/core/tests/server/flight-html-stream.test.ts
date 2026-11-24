@@ -5,9 +5,9 @@ import { createContext, runInContext } from "node:vm";
 import { describe, expect, it } from "@effect/vitest";
 import { Predicate, Array as EffectArray, Effect } from "effect";
 
-import { makeInitialFlightStream } from "../../src/client/initial-flight-stream.ts";
-import type { EmbeddedFlightChunk } from "../../src/client/initial-flight-stream.ts";
-import { injectFlightPayload } from "../../src/server/flight-html-stream.ts";
+import { makeInitialFlightStream } from "#core/client/initial-flight-stream.ts";
+import type { EmbeddedFlightChunk } from "#core/client/initial-flight-stream.ts";
+import { injectFlightPayload } from "#core/server/flight-html-stream.ts";
 
 const Encoder = new TextEncoder();
 

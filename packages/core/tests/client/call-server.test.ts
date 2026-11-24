@@ -4,17 +4,17 @@ import { HttpClient } from "effect/http";
 import { vi } from "vitest";
 import { encodeReply } from "@vitejs/plugin-rsc/browser";
 
-import { BrowserEffectRunner } from "../../src/client/browser-effect-runner.ts";
-import { BrowserRenderer } from "../../src/client/browser-renderer.ts";
-import type { BrowserRender } from "../../src/client/browser-renderer.ts";
-import { FlightClient, FlightLoadError } from "../../src/client/flight-client.ts";
-import { NavigationApi } from "../../src/client/navigation-api.ts";
-import { RouteLoader } from "../../src/client/route-loader.ts";
-import { RouteRefresher } from "../../src/client/route-refresh.ts";
-import { query, stream } from "../../src/client/query.ts";
-import { ServerFnTransportError } from "../../src/rsc/server-fn-error.ts";
-import type { FlightPayload } from "../../src/rsc/flight.ts";
-import type { RouteTreeModel } from "../../src/rsc/route-tree.ts";
+import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
+import { BrowserRenderer } from "#core/client/browser-renderer.ts";
+import type { BrowserRender } from "#core/client/browser-renderer.ts";
+import { FlightClient, FlightLoadError } from "#core/client/flight-client.ts";
+import { NavigationApi } from "#core/client/navigation-api.ts";
+import { RouteLoader } from "#core/client/route-loader.ts";
+import { RouteRefresher } from "#core/client/route-refresh.ts";
+import { query, stream } from "#core/client/query.ts";
+import { ServerFnTransportError } from "#core/rsc/server-fn-error.ts";
+import type { FlightPayload } from "#core/rsc/flight.ts";
+import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
 type ServerCallback = (id: string, args: Readonly<unknown[]>) => Promise<unknown>;
 
@@ -40,7 +40,7 @@ vi.mock("@vitejs/plugin-rsc/browser", () => ({
   }),
 }));
 
-const { installCallServer } = await import("../../src/client/call-server.ts");
+const { installCallServer } = await import("#core/client/call-server.ts");
 
 const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
 

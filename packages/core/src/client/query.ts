@@ -2,7 +2,7 @@ import { Stream } from "effect";
 import type { Cause, Effect } from "effect";
 import { Atom } from "effect/reactivity";
 
-import type { ServerFnError } from "../rsc/server-fn-error.ts";
+import type { ServerFnError } from "#core/rsc/server-fn-error.ts";
 import { callQuery, callQueryStream } from "./server-fn-protocol.ts";
 
 type AnyReadable = ReadableStream<unknown>;

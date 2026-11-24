@@ -8,7 +8,7 @@ import { getEFFRONTIdentity } from "./effront-identity.ts";
 import { getPageState } from "./page.ts";
 import { PageViewTransition, resolvePageViewTransition } from "./page-view-transition.ts";
 import type { PageViewTransitionConfig } from "./page-view-transition.ts";
-import { PageViewTransitionBoundary } from "../client/page-view-transition.tsx";
+import { PageViewTransitionBoundary } from "#core/client/page-view-transition.tsx";
 
 const boundaryConfig = (node: ReactNode): PageViewTransitionConfig => {
   if (!isValidElement<{ config: PageViewTransitionConfig; children: ReactNode }>(node)) {

@@ -2,8 +2,8 @@ import { describe, expect, it } from "@effect/vitest";
 import { Effect, Layer, Schema } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/http";
 
-import { Application } from "../../src/core.ts";
-import { createFetchHandler } from "../../src/workers.ts";
+import { Application } from "#core/core.ts";
+import { createFetchHandler } from "#core/workers.ts";
 
 // These exercise the real public Fetch router and request middleware, without replacing
 // its matcher. Actual HTML and Flight serialization are covered by Markdown Workers e2e.

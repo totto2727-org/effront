@@ -3,8 +3,8 @@ import { createFromReadableStream, getClientEntryUrl } from "@vitejs/plugin-rsc/
 import { use } from "react";
 import { renderToReadableStream } from "react-dom/server.edge";
 
-import { RouteTree } from "../client/route-tree.tsx";
-import type { FlightPayload } from "../rsc/flight.ts";
+import { RouteTree } from "#core/client/route-tree.tsx";
+import type { FlightPayload } from "#core/rsc/flight.ts";
 import { injectFlightPayload } from "./flight-html-stream.ts";
 import type { HtmlRenderOptions } from "./html-renderer.tsx";
 

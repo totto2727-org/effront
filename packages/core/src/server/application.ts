@@ -2,16 +2,16 @@ import { Predicate, Array, Context, Effect, Layer, Option, Stream, String } from
 import type { PlatformError, Types } from "effect";
 import { HttpEffect, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
-import { getApplicationState } from "../application/definition.tsx";
-import type { ApplicationDefinition } from "../application/definition.tsx";
-import { getEFFRONTIdentity } from "../application/effront-identity.ts";
-import { applyMiddleware, getScopedHttpMiddleware } from "../application/middleware.ts";
-import type { AnyMiddleware } from "../application/middleware.ts";
-import type { EncodedPageParams, PageParams } from "../application/page.ts";
-import type { CompiledDestination } from "../application/route-graph.ts";
-import { analyzeRoutePath, isAbsolutePath } from "../application/route-path.ts";
-import { FlightMediaType, ServerFnQueryPath } from "../rsc/flight.ts";
-import { renderRouteTree } from "../rsc/render-route-tree.tsx";
+import { getApplicationState } from "#core/application/definition.tsx";
+import type { ApplicationDefinition } from "#core/application/definition.tsx";
+import { getEFFRONTIdentity } from "#core/application/effront-identity.ts";
+import { applyMiddleware, getScopedHttpMiddleware } from "#core/application/middleware.ts";
+import type { AnyMiddleware } from "#core/application/middleware.ts";
+import type { EncodedPageParams, PageParams } from "#core/application/page.ts";
+import type { CompiledDestination } from "#core/application/route-graph.ts";
+import { analyzeRoutePath, isAbsolutePath } from "#core/application/route-path.ts";
+import { FlightMediaType, ServerFnQueryPath } from "#core/rsc/flight.ts";
+import { renderRouteTree } from "#core/rsc/render-route-tree.tsx";
 import { FlightRenderer } from "./flight-renderer.tsx";
 import { HtmlRenderError, HtmlRenderer } from "./html-renderer.tsx";
 import type { RequestOutcome } from "./request-outcome.ts";

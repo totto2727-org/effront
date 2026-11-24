@@ -6,6 +6,7 @@ import { defineConfig } from "vite-plus";
 const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));
 
 export default defineConfig({
+  resolve: { tsconfigPaths: true },
   run: {
     tasks: {
       check: { command: "vp check", cache: false },

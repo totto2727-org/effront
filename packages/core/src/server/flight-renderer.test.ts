@@ -1,7 +1,7 @@
 import { expect, it, vi } from "@effect/vitest";
 import { Predicate, Deferred, Effect } from "effect";
 
-import type { RenderRuntimeContext } from "../application/render-runtime.ts";
+import type { RenderRuntimeContext } from "#core/application/render-runtime.ts";
 
 let renderSignal: AbortSignal | undefined;
 

@@ -2,12 +2,12 @@ import { describe, expect, it } from "@effect/vitest";
 import { Context, Effect, Layer, Stream } from "effect";
 import { HttpServerResponse } from "effect/http";
 
-import { Application } from "../../src/application/effront.ts";
+import { Application } from "#core/application/effront.ts";
 import {
   createFetchHandler,
   createWorkersContextAccessors,
   getWorkersRequestContext,
-} from "../../src/workers.ts";
+} from "#core/workers.ts";
 
 class RequestEnvironment extends Context.Service<RequestEnvironment, Readonly<{ value: string }>>()(
   "effront/tests/workers/RequestEnvironment",

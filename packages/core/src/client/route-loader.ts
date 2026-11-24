@@ -1,6 +1,6 @@
 import { Predicate, Context, Effect, Layer, MutableRef } from "effect";
 
-import type { RouteTreeModel } from "../rsc/route-tree.ts";
+import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 import { FlightClient } from "./flight-client.ts";
 import type { FlightLoadError } from "./flight-client.ts";
 import { NavigationApi } from "./navigation-api.ts";

@@ -3,7 +3,7 @@ import type { Types } from "effect";
 import { createElement } from "react";
 import type { ReactNode } from "react";
 
-import { PageViewTransitionBoundary } from "../client/page-view-transition.tsx";
+import { PageViewTransitionBoundary } from "#core/client/page-view-transition.tsx";
 import { PageViewTransition, resolvePageViewTransition } from "./page-view-transition.ts";
 import type { PageViewTransitionConfig } from "./page-view-transition.ts";
 

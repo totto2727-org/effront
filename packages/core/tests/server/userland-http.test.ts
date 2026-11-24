@@ -3,7 +3,7 @@ import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import { createFetchHandler, createWorkersContextAccessors } from "@effront/core/workers";
 import { describe, expect, test } from "vite-plus/test";
 
-// oxlint-disable-next-line rules/consistent-import-extension -- Exercise the built JavaScript entry.
+// oxlint-disable-next-line rules/consistent-import-extension, import/no-relative-parent-imports -- Exercise the packed react-server entry without changing ordinary Vitest resolution.
 import { Application } from "../../dist/core.js";
 
 // This spans application registration, native Effect HTTP routing and the public Fetch adapter.

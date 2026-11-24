@@ -3,7 +3,7 @@ import { Array, Effect, Predicate, Schema, Stream } from "effect";
 import { attachEFFRONTMember } from "./effront-identity.ts";
 import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
 import type { AnyMiddleware } from "./middleware.ts";
-import { ServerFnInputError } from "../rsc/server-fn-error.ts";
+import { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
 
 const ServerFnInvocationTypeId: unique symbol = Symbol.for("effront/ServerFnInvocation");
 

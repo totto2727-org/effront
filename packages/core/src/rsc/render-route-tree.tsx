@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 
-import type { PageParams } from "../application/page.ts";
-import type { CompiledDestination } from "../application/route-graph.ts";
-import type { AbsolutePath } from "../application/route-path.ts";
-import { RouteOutlet } from "../client/route-tree.tsx";
+import type { PageParams } from "#core/application/page.ts";
+import type { CompiledDestination } from "#core/application/route-graph.ts";
+import type { AbsolutePath } from "#core/application/route-path.ts";
+import { RouteOutlet } from "#core/client/route-tree.tsx";
 import type { RouteTreeModel } from "./route-tree.ts";
 
 type RenderRouteTreeOptions<Services> = Readonly<{

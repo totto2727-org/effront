@@ -1,9 +1,9 @@
 // Vite replaces `import.meta.env.DEV` at compile time.
 import { Cause, Effect, Option } from "effect";
 
-import { isServerFnStream } from "../application/server-fn.ts";
-import type { ServerFnResult } from "../rsc/flight.ts";
-import { ServerFnInputError, serverFnErrorDetail } from "../rsc/server-fn-error.ts";
+import { isServerFnStream } from "#core/application/server-fn.ts";
+import type { ServerFnResult } from "#core/rsc/flight.ts";
+import { ServerFnInputError, serverFnErrorDetail } from "#core/rsc/server-fn-error.ts";
 import type { RequestOutcome } from "./request-outcome.ts";
 import { serverFnStream } from "./server-fn-stream.ts";
 import { nextErrorDigest } from "./error-digest.ts";

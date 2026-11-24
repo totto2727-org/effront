@@ -5,8 +5,8 @@ import {
   ServerFnDefect,
   ServerFnInputError,
   ServerFnTransportError,
-} from "../rsc/server-fn-error.ts";
-import type { ServerFnError } from "../rsc/server-fn-error.ts";
+} from "#core/rsc/server-fn-error.ts";
+import type { ServerFnError } from "#core/rsc/server-fn-error.ts";
 
 const isServerFnError = Schema.is(
   Schema.Union([ServerFnDefect, ServerFnInputError, ServerFnTransportError]),

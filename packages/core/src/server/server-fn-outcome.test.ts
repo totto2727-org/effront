@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Cause, Effect, Exit, Scope, Stream } from "effect";
 
-import { ServerFnInputError } from "../rsc/server-fn-error.ts";
+import { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
 import { serverFnOutcome, serverFnResponse } from "./server-fn-outcome.ts";
 
 describe("serverFnResponse", () => {

@@ -2,12 +2,12 @@ import { Predicate, Cause, Effect, Schema } from "effect";
 import type { Scope } from "effect";
 import { HttpServerRequest } from "effect/http";
 
-import type { EFFRONTIdentity } from "../application/effront-identity.ts";
-import type { AnyMiddleware } from "../application/middleware.ts";
-import { matchServerFnInvocation } from "../application/server-fn.ts";
-import type { ServerFnOperationError } from "../application/server-fn.ts";
-import { ServerFnIdHeader } from "../rsc/flight.ts";
-import { ServerFnInputError } from "../rsc/server-fn-error.ts";
+import type { EFFRONTIdentity } from "#core/application/effront-identity.ts";
+import type { AnyMiddleware } from "#core/application/middleware.ts";
+import { matchServerFnInvocation } from "#core/application/server-fn.ts";
+import type { ServerFnOperationError } from "#core/application/server-fn.ts";
+import { ServerFnIdHeader } from "#core/rsc/flight.ts";
+import { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
 import type { RequestOutcome } from "./request-outcome.ts";
 import { serverFnOutcome } from "./server-fn-outcome.ts";
 

@@ -3,7 +3,7 @@ import { Component, StrictMode, useLayoutEffect, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { hydrateRoot } from "react-dom/client";
 
-import type { FlightPayload } from "../rsc/flight.ts";
+import type { FlightPayload } from "#core/rsc/flight.ts";
 import { BrowserEffectRunner } from "./browser-effect-runner.ts";
 import { BrowserRenderStatus } from "./browser-render-status.ts";
 import { BrowserRenderer } from "./browser-renderer.ts";

@@ -7,7 +7,7 @@ import {
   ServerFnDefect,
   ServerFnInputError,
   ServerFnTransportError,
-} from "../rsc/server-fn-error.ts";
+} from "#core/rsc/server-fn-error.ts";
 import { query, stream, streamAtom } from "./query.ts";
 import { matchServerFnQuery } from "./server-fn-protocol.ts";
 

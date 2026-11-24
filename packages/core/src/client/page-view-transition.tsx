@@ -3,7 +3,7 @@
 import { useSyncExternalStore, ViewTransition } from "react";
 import type { ReactNode } from "react";
 
-import type { PageViewTransitionConfig } from "../application/page-view-transition.ts";
+import type { PageViewTransitionConfig } from "#core/application/page-view-transition.ts";
 
 import "./page-view-transition.css";
 
