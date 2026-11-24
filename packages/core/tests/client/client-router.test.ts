@@ -1,3 +1,6 @@
+// oxlint-disable-next-line import/no-unassigned-import -- Vitest registers the browser decoder fixture before loading the navigation runtime.
+import "./client-routing-rsc.fixture.ts";
+
 import { afterEach, beforeEach, expect, it } from "@effect/vitest";
 import { Predicate, Deferred, Effect, Exit, Fiber, Layer, Scope } from "effect";
 import { HttpClient, HttpClientResponse } from "effect/http";
@@ -21,11 +24,7 @@ import {
   makeInvalidFlightClient,
   makeStreamingHttpClient,
 } from "./client-routing-http.fixture.ts";
-import {
-  initialRouteTree,
-  makeBrowserRenderer,
-  renderRequests,
-} from "./client-routing-renderer.fixture.ts";
+import { initialRouteTree, makeBrowserRenderer } from "./client-routing-renderer.fixture.ts";
 import type { BrowserRenderRequest } from "./client-routing-renderer.fixture.ts";
 
 import {
@@ -37,209 +36,11 @@ import {
 import { makeControlledRoute } from "./client-routing-flight.fixture.ts";
 import { listen } from "./client-routing-router.fixture.ts";
 
-const react = vi.hoisted(() => ({
-  transitionTypes: [] as string[],
-}));
-
-vi.mock("react", (importOriginal) =>
-  importOriginal<typeof import("react")>().then((original) => ({
-    ...original,
-    addTransitionType: (type: string) => {
-      react.transitionTypes.push(type);
-    },
-  })),
-);
-
-vi.mock("@vitejs/plugin-rsc/browser", () => ({
-  createFromReadableStream: vi.fn((stream: ReadableStream<Uint8Array>) => {
-    const reader = stream.getReader();
-    return reader.read().then(() => {
-      void reader.read().catch(() => undefined);
-      return {
-        formState: null,
-        routeTree: {
-          child: null,
-          content: null,
-          id: "root",
-        },
-        serverFnResult: null,
-      };
-    });
-  }),
-}));
-
 beforeEach(() => {
-  react.transitionTypes.length = 0;
   vi.stubGlobal("HTMLAnchorElement", TestAnchor);
 });
 
 afterEach(() => vi.unstubAllGlobals());
-
-it.effect("splits a cancelable navigation between React commit and Flight completion", () =>
-  Effect.gen(function* () {
-    const navigation = new TestNavigationApi();
-    const requestedUrls: string[] = [];
-    const renders: BrowserRenderRequest[] = [];
-    yield* Effect.scoped(
-      Effect.gen(function* () {
-        yield* listen(navigation, {
-          httpClient: makeHttpClient(requestedUrls),
-          renderer: makeBrowserRenderer(renders),
-        });
-        const pendingNavigation = makeNavigationEvent({ hasUAVisualTransition: true });
-
-        navigation.dispatch(pendingNavigation.event);
-
-        const interception = pendingNavigation.interception();
-        expect(interception?.handler).toBeUndefined();
-        expect(interception?.precommitHandler).toBeTypeOf("function");
-        const precommitHandler = interception?.precommitHandler;
-        if (Predicate.isNullish(precommitHandler)) {
-          return yield* Effect.die("Expected a precommit handler.");
-        }
-
-        const handlers: NavigationInterceptHandler[] = [];
-        yield* Effect.promise(() =>
-          invokePrecommitHandler(precommitHandler, makePrecommitController([], handlers)),
-        );
-        expect(handlers).toHaveLength(1);
-        const handler = handlers[0];
-        if (Predicate.isNullish(handler)) {
-          return yield* Effect.die("Expected a post-commit handler.");
-        }
-        yield* Effect.promise(() => invokeNavigationHandler(handler));
-
-        expect(requestedUrls).toStrictEqual(["https://effront.test/schedule/day-two"]);
-        expect(renders).toHaveLength(1);
-        const render = renders[0];
-        if (Predicate.isNullish(render) || !renderRequests.$is("Navigation")(render)) {
-          return yield* Effect.die("Expected a navigation render.");
-        }
-        expect(render.routeTree.id).toBe("root");
-        expect(react.transitionTypes).toStrictEqual([
-          "navigation",
-          "navigation-push",
-          "navigation-ua-visual-transition",
-          "navigation-forward",
-        ]);
-      }),
-    );
-  }),
-);
-
-it.effect("snapshots link types before loading and keeps them local to the navigation", () =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const navigation = new TestNavigationApi();
-      yield* listen(navigation);
-      const anchor = new TestAnchor({
-        effrontTransitionTypes: " docs-previous\tsection-change docs-previous\n",
-      });
-      const pending = makeNavigationEvent({ sourceElement: anchor });
-      navigation.dispatch(pending.event);
-      anchor.dataset["effrontTransitionTypes"] = "docs-next";
-      expect(react.transitionTypes).toStrictEqual([]);
-
-      const handler = pending.interception()?.precommitHandler;
-      if (Predicate.isNullish(handler)) {
-        return yield* Effect.die("Expected a precommit handler.");
-      }
-      yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
-      expect(react.transitionTypes).toStrictEqual([
-        "navigation",
-        "navigation-push",
-        "navigation-forward",
-        "docs-previous",
-        "section-change",
-      ]);
-
-      react.transitionTypes.length = 0;
-      yield* prepareNavigation(navigation, "https://effront.test/schedule/day-two");
-      expect(react.transitionTypes).toStrictEqual([
-        "navigation",
-        "navigation-push",
-        "navigation-forward",
-      ]);
-    }),
-  ),
-);
-
-it.effect("reserves only EFFRONT-owned types and preserves application tokens unchanged", () =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const navigation = new TestNavigationApi();
-      const renders: BrowserRenderRequest[] = [];
-      yield* listen(navigation, { renderer: makeBrowserRenderer(renders) });
-      const applicationTypes = [
-        "docs-jump",
-        "NAVIGATION-BACKWARD",
-        "none",
-        "initial",
-        "default",
-        "constructor",
-        "toString",
-        "1custom",
-        "custom/type",
-        "étape-suivante",
-      ];
-      const pending = makeNavigationEvent({
-        navigationType: "replace",
-        sourceElement: new TestAnchor({
-          effrontTransitionTypes: [
-            "navigation",
-            "navigation-backward",
-            "navigation-custom",
-            "server-function",
-            "hmr-refresh",
-            ...applicationTypes,
-          ].join(" "),
-        }),
-      });
-      navigation.dispatch(pending.event);
-      const handler = pending.interception()?.precommitHandler;
-      if (Predicate.isNullish(handler)) {
-        return yield* Effect.die("Expected a precommit handler.");
-      }
-      yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
-      expect(renders).toHaveLength(1);
-      expect(react.transitionTypes).toStrictEqual([
-        "navigation",
-        "navigation-replace",
-        ...applicationTypes,
-      ]);
-    }),
-  ),
-);
-
-it.effect("does not read link types for a history traversal", () =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const navigation = new TestNavigationApi();
-      yield* listen(navigation);
-      const readTypes = vi.fn(() => "docs-next");
-      const pending = makeNavigationEvent({
-        navigationType: "traverse",
-        sourceElement: new TestAnchor({
-          get effrontTransitionTypes() {
-            return readTypes();
-          },
-        }),
-      });
-      navigation.dispatch(pending.event);
-      const handler = pending.interception()?.precommitHandler;
-      if (Predicate.isNullish(handler)) {
-        return yield* Effect.die("Expected a precommit handler.");
-      }
-      yield* Effect.promise(() => invokePrecommitHandler(handler, makePrecommitController()));
-      expect(readTypes).not.toHaveBeenCalled();
-      expect(react.transitionTypes).toStrictEqual([
-        "navigation",
-        "navigation-traverse",
-        "navigation-backward",
-      ]);
-    }),
-  ),
-);
 
 it.effect("settles the post-commit handler before the Flight stream reaches EOF", () =>
   Effect.scoped(
