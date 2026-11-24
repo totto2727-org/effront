@@ -5,8 +5,9 @@ import { BrowserEffectRunner } from "./browser-effect-runner.ts";
 import { BrowserRenderer } from "./browser-renderer.ts";
 import type { BrowserRendererNavigation } from "./browser-renderer.ts";
 import { NavigationApi } from "./navigation-api.ts";
+import { executeRouterCommand } from "./navigation-router-command.ts";
 import { initialRouterState, routerEvents } from "./navigation-router-model.ts";
-import type { RouterCommand, RouterEvent, RouterState } from "./navigation-router-model.ts";
+import type { RouterEvent, RouterState } from "./navigation-router-model.ts";
 import { reduceRouterState } from "./navigation-router-reducer.ts";
 import {
   isRoutedNavigation,
@@ -43,57 +44,6 @@ export const installClientRouter = Effect.gen(function* () {
     MutableRef.set(routerState, transition.state);
     return transition;
   };
-
-  const executeRouterCommand = Effect.fnUntraced(function* (command: RouterCommand | undefined) {
-    if (Predicate.isNullish(command)) {
-      return;
-    }
-    switch (command._tag) {
-      case "SupersedeCandidate": {
-        const { candidate } = command;
-        yield* Effect.sync(() => {
-          candidate.lifetime.abort();
-        });
-        if (candidate._tag === "Loading") {
-          break;
-        }
-        if (candidate._tag === "Publishing") {
-          yield* candidate.resource.release;
-          break;
-        }
-        yield* Effect.promise(() => candidate.rendererNavigation.discard()).pipe(
-          Effect.ensuring(candidate.resource.release),
-        );
-        break;
-      }
-      case "ReleaseRoute": {
-        yield* command.resource.release;
-        break;
-      }
-      case "CacheRoute": {
-        yield* Effect.sync(() => {
-          command.cache(command.entry);
-        });
-        break;
-      }
-      case "CacheAndReleaseRoute": {
-        yield* Effect.sync(() => {
-          command.resource.cache(command.entry);
-        });
-        yield* command.resource.release;
-        break;
-      }
-      case "DiscardRoute": {
-        yield* Effect.promise(() => command.rendererNavigation.discard()).pipe(
-          Effect.ensuring(command.resource.release),
-        );
-        break;
-      }
-      default: {
-        throw new TypeError(`Cannot execute the ${command._tag} lifecycle command here.`);
-      }
-    }
-  });
 
   const openDocument = (event: NavigateEvent, destination: URL): void => {
     if (event.navigationType === "traverse") {
