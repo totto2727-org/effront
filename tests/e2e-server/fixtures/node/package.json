@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "imports": {
+    "#fixture/effront.ts": "./src/effront.ts",
     "#loading/*": "./src/*"
   },
   "scripts": {

@@ -4,4 +4,4 @@ export class Host extends Context.Service<Host, Readonly<{ label: string; greeti
   "tests/e2e-server/fixtures/node/Host",
 ) {}
 
-export const HostLive = Layer.succeed(Host)({ label: "Node", greeting: "Hello from Node!" });
+export const HostLive = Layer.succeed(Host)({ greeting: "Hello from Node!", label: "Node" });

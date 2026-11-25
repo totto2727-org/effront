@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 
-export function Shell({ children }: Readonly<{ children: ReactNode }>) {
+// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
+export function Shell({ children }: Readonly<{ children: ReactNode }>): JSX.Element {
   return (
     <>
       <nav className="flex flex-wrap gap-4">
