@@ -1,401 +1,250 @@
-import { readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
 import { architectureBaseline } from "#docs/content/architecture-baseline.ts";
-import { articleCatalog } from "#docs/content/catalog.ts";
-import { corePages, coreSources } from "#docs/content/core.ts";
-import { englishArticleCatalog } from "#docs/content/en/catalog.ts";
-import { englishCorePages } from "#docs/content/en/core.ts";
+import { coreSources } from "#docs/content/core.ts";
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { Predicate } from "effect";
+// oxlint-disable-next-line rules/no-node-imports -- This Node-only Playwright fixture reads the raw Markdown source independently of Vite.
+import { readFile } from "node:fs/promises";
+import type { LocaleArticle, LocaleDocs } from "./locales.fixture.ts";
+import {
+  locales,
+  localizedSlugs,
+  localizedUrl,
+  metadata,
+  retiredArticles,
+} from "./locales.fixture.ts";
 
 const httpStatusOk = 200;
-const httpStatusPermanentRedirect = 308;
-const httpStatusNotFound = 404;
+const noMatches = 0;
+const adjacentDistance = 1;
 
-// Import metadata directly: content/pages also loads the Vite-only Markdown glob.
-// Expectations deliberately construct public URLs without the production locale helpers.
-const locales = [
-  {
-    locale: "en",
-    articles: englishArticleCatalog,
-    core: englishCorePages,
-    contentDirectory: "en/articles",
-    labels: {
-      navigation: "Documentation navigation",
-      search: "Filter guides",
-      breadcrumbs: "Breadcrumbs",
-      previousNext: "Previous and next pages",
-      toc: "On this page",
-      language: "Language",
-      empty: "No guides match your search.",
-    },
-  },
-  {
-    locale: "ja",
-    articles: articleCatalog,
-    core: corePages,
-    contentDirectory: "articles",
-    labels: {
-      navigation: "ドキュメントナビゲーション",
-      search: "ガイドを絞り込む",
-      breadcrumbs: "パンくずリスト",
-      previousNext: "前後のページ",
-      toc: "このページ内",
-      language: "言語",
-      empty: "一致するガイドはありません。",
-    },
-  },
-] as const;
+const expectArticleHeader = async (
+  page: Page,
+  docs: LocaleDocs,
+  article: LocaleArticle,
+): Promise<void> => {
+  await expect(page).toHaveTitle(`${article.title} | Effront`);
+  await expect(page.locator("html")).toHaveAttribute("lang", docs.locale);
+  await expect(page.locator("html")).toHaveClass("dark");
+  await expect(page.locator("article")).toHaveAttribute(
+    "data-doc-page",
+    localizedUrl(docs, article.slug),
+  );
+  await expect(page.locator("article h1")).toHaveText(article.title);
+  await expect(page.locator("article > header > p").last()).toHaveText(article.description);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    article.description,
+  );
+  await expect(page.locator("article h1")).toHaveCSS("font-size", "36px");
+};
 
-const retiredArticles = [
-  { retired: "/platforms/node-bun", canonical: "/platforms", fragment: "#bun" },
-  { retired: "/advanced/production-startup", canonical: "/platforms", fragment: "" },
-  { retired: "/guide/testing", canonical: "/best-practices/testing", fragment: "#production" },
-];
+const expectNavigation = async (page: Page, docs: LocaleDocs, slug: string): Promise<void> => {
+  const navigation = page.getByRole("navigation", { name: docs.labels.navigation });
+  const links = navigation.getByRole("link");
+  await expect(links).toHaveCount(docs.pages.length);
+  expect(
+    await links.evaluateAll((items) => items.map((item) => item.getAttribute("href"))),
+  ).toEqual(localizedSlugs(docs));
+  await expect(navigation.locator('[aria-current="page"]')).toHaveAttribute("href", slug);
+};
 
-for (const { locale, articles, core, contentDirectory, labels } of locales) {
-  const localizedUrl = (slug: string): string => `/${locale}${slug === "/" ? "" : slug}`;
-  const pages = [
-    ...articles.map((article) => ({
-      ...article,
-      hasCode: readFileSync(
-        new URL(`../src/content/${contentDirectory}${article.source}.md`, import.meta.url),
-        "utf8",
-      ).includes("\n```"),
-    })),
-    ...core.map((article) => ({ ...article, hasCode: true })),
-  ];
-  const slugs = pages.map((article) => localizedUrl(article.slug));
-  const metadata = (slug: string) => {
-    const article = pages.find((candidate) => candidate.slug === slug);
-    if (!article) {
-      throw new Error(`Missing ${locale} browser-test article metadata: ${slug}`);
-    }
-    return article;
-  };
+const expectLocalizedBreadcrumbs = async (
+  page: Page,
+  docs: LocaleDocs,
+  article: LocaleArticle,
+): Promise<void> => {
+  const breadcrumbs = page.getByRole("navigation", { name: docs.labels.breadcrumbs });
+  await expect(breadcrumbs.getByRole("link")).toHaveAttribute("href", `/${docs.locale}`);
+  await expect(breadcrumbs.locator('[aria-current="page"]')).toHaveText(article.title);
+};
 
-  test.describe(`${locale} documentation without JavaScript`, () => {
-    test.use({ javaScriptEnabled: false });
+const expectTableOfContents = async (
+  page: Page,
+  docs: LocaleDocs,
+  article: LocaleArticle,
+): Promise<void> => {
+  const toc = page.getByRole("complementary", { name: docs.labels.toc });
+  await expect(toc.getByRole("link")).toHaveCount(article.headings.length);
+  await Promise.all(
+    article.headings.map(async ({ id, title }) => {
+      await expect(page.locator(`article #${id}`)).toHaveText(title);
+      await expect(toc.locator(`a[href="#${id}"]`)).toHaveText(title);
+    }),
+  );
+};
 
-    for (const [index, article] of pages.entries()) {
-      const slug = localizedUrl(article.slug);
-      test(`${slug} serves localized content, TOC, code and article links`, async ({ page }) => {
-        const response = await page.goto(slug);
-        expect(response?.status()).toBe(httpStatusOk);
-        await expect(page).toHaveTitle(`${article.title} | Effront`);
-        await expect(page.locator("html")).toHaveAttribute("lang", locale);
-        await expect(page.locator("html")).toHaveClass("dark");
-        await expect(page.locator("article")).toHaveAttribute("data-doc-page", slug);
-        await expect(page.locator("article h1")).toHaveText(article.title);
-        await expect(page.locator("article > header > p").last()).toHaveText(article.description);
-        await expect(page.locator('meta[name="description"]')).toHaveAttribute(
-          "content",
-          article.description,
-        );
-        await expect(page.locator("article h1")).toHaveCSS("font-size", "36px");
+const expectAdjacentPages = async (page: Page, docs: LocaleDocs, index: number): Promise<void> => {
+  const previousNext = page.getByRole("navigation", { name: docs.labels.previousNext });
+  const hrefs = await previousNext
+    .getByRole("link")
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(hrefs).toEqual(
+    localizedSlugs(docs).filter(
+      (_slug, candidate) => Math.abs(candidate - index) === adjacentDistance,
+    ),
+  );
+};
 
-        const navigation = page.getByRole("navigation", { name: labels.navigation });
-        await expect(navigation.getByRole("link")).toHaveCount(pages.length);
-        expect(
-          await navigation
-            .getByRole("link")
-            .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
-        ).toEqual(slugs);
-        await expect(navigation.locator('[aria-current="page"]')).toHaveAttribute("href", slug);
-        const breadcrumbs = page.getByRole("navigation", { name: labels.breadcrumbs });
-        await expect(breadcrumbs.getByRole("link")).toHaveAttribute("href", `/${locale}`);
-        await expect(breadcrumbs.locator('[aria-current="page"]')).toHaveText(article.title);
+const expectLocaleLinks = async (page: Page, docs: LocaleDocs, slug: string): Promise<void> => {
+  await Promise.all(
+    locales.map(async (destination) =>
+      expect(page.locator(`a[hreflang="${destination.locale}"]`)).toHaveAttribute(
+        "href",
+        localizedUrl(destination, slug),
+      ),
+    ),
+  );
+  await expect(page.locator(`a[hreflang="${docs.locale}"]`)).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+  await expect(
+    page.locator('a[href*="production-startup"], a[href$="/guide/testing"]'),
+  ).toHaveCount(noMatches);
+};
 
-        const toc = page.getByRole("complementary", { name: labels.toc });
-        await expect(toc.getByRole("link")).toHaveCount(article.headings.length);
-        for (const heading of article.headings) {
-          await expect(page.locator(`article #${heading.id}`)).toHaveText(heading.title);
-          await expect(toc.locator(`a[href="#${heading.id}"]`)).toHaveText(heading.title);
-        }
-        const previousNext = page.getByRole("navigation", { name: labels.previousNext });
-        expect(
-          await previousNext
-            .getByRole("link")
-            .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
-        ).toEqual(
-          slugs.filter((_, candidate) => candidate === index - 1 || candidate === index + 1),
-        );
-        for (const language of ["en", "ja"]) {
-          await expect(page.locator(`a[hreflang="${language}"]`)).toHaveAttribute(
-            "href",
-            `/${language}${article.slug === "/" ? "" : article.slug}`,
-          );
-        }
-        await expect(page.locator(`a[hreflang="${locale}"]`)).toHaveAttribute(
-          "aria-current",
-          "true",
-        );
-        await expect(
-          page.locator('a[href*="production-startup"], a[href$="/guide/testing"]'),
-        ).toHaveCount(0);
+const articleHasCode = async (docs: LocaleDocs, article: LocaleArticle): Promise<boolean> => {
+  if ("source" in article) {
+    const file = new URL(
+      `../src/content/${docs.contentDirectory}${article.source}.md`,
+      import.meta.url,
+    );
+    const markdown = await readFile(file, "utf8");
+    return markdown.includes("\n```");
+  }
+  return true;
+};
 
-        const codeBlocks = page.locator("article pre[data-code-block]");
-        if (article.hasCode) {
-          await expect(codeBlocks.first()).toBeVisible();
-        } else {
-          await expect(codeBlocks).toHaveCount(0);
-        }
-        for (const block of await codeBlocks.all()) {
-          await expect(block).toHaveAttribute("tabindex", "0");
-          await expect(block.locator("code")).not.toHaveText("");
-        }
-        if (article.slug.startsWith("/architecture/")) {
-          await expect(page.locator("[data-architecture-baseline]")).toHaveAttribute(
-            "data-architecture-baseline",
-            architectureBaseline.commit,
-          );
-          await expect(page.locator("[data-architecture-baseline]")).toContainText(
-            architectureBaseline.version,
-          );
-          const excerpts = page.locator("[data-core-source]");
-          await expect(excerpts.first()).toBeVisible();
-          for (const excerpt of await excerpts.all()) {
-            const source = await excerpt.getAttribute("data-core-source");
-            expect(
-              coreSources
-                .filter((candidate) => candidate.path === source)
-                .map((candidate) => candidate.code),
-            ).toContain(await excerpt.locator("pre code").textContent());
-          }
-        }
+const expectCodeBlocks = async (page: Page, hasCode: boolean): Promise<void> => {
+  const blocks = page.locator("article pre[data-code-block]");
+  await (hasCode ? expect(blocks.first()).toBeVisible() : expect(blocks).toHaveCount(noMatches));
+  const codeBlocks = await blocks.all();
+  await Promise.all(
+    codeBlocks.map(async (block) => {
+      await expect(block).toHaveAttribute("tabindex", "0");
+      await expect(block.locator("code")).not.toHaveText("");
+    }),
+  );
+};
 
-        // All targets also have their own real HTTP/heading test in this matrix.
-        const hrefs = await page
-          .locator("article a[href]")
-          .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
-        for (const href of hrefs) {
-          if (!href) {
-            continue;
-          }
-          const target = new URL(href, page.url());
-          if (target.origin !== new URL(page.url()).origin) {
-            continue;
-          }
-          expect(slugs, `${slug} links to ${href}`).toContain(target.pathname);
-          if (target.hash) {
-            const targetArticle = pages.find(
-              (candidate) => localizedUrl(candidate.slug) === target.pathname,
-            );
-            expect(
-              targetArticle?.headings.map((heading) => heading.id),
-              `${slug} links to ${href}`,
-            ).toContain(decodeURIComponent(target.hash.slice(1)));
-          }
-        }
-      });
-    }
+const expectCoreExcerpt = async (excerpt: Locator): Promise<void> => {
+  const source = await excerpt.getAttribute("data-core-source");
+  expect(
+    coreSources.filter((candidate) => candidate.path === source).map((candidate) => candidate.code),
+  ).toContain(await excerpt.locator("pre code").textContent());
+};
 
-    for (const path of ["/", "/guide/routes"]) {
-      const canonical = localizedUrl(path);
-      test(`${canonical}/ serves its canonical article and localized navigation`, async ({
-        page,
-      }) => {
-        const response = await page.goto(`${canonical}/`);
-        expect(response?.status()).toBe(httpStatusOk);
-        expect(response?.headers()["content-type"]).toContain("text/html");
-        await expect(page.locator("html")).toHaveAttribute("lang", locale);
-        await expect(page.locator("article")).toHaveAttribute("data-doc-page", canonical);
-        await expect(page.locator("article h1")).toHaveText(metadata(path).title);
-        const navigation = page.getByRole("navigation", { name: labels.navigation });
-        await expect(navigation.getByRole("link")).toHaveCount(pages.length);
-        expect(
-          await navigation
-            .getByRole("link")
-            .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
-        ).toEqual(slugs);
-        await expect(navigation.locator('[aria-current="page"]')).toHaveAttribute(
-          "href",
-          canonical,
-        );
-      });
-    }
+const expectArchitecture = async (page: Page): Promise<void> => {
+  const baseline = page.locator("[data-architecture-baseline]");
+  await expect(baseline).toHaveAttribute("data-architecture-baseline", architectureBaseline.commit);
+  await expect(baseline).toContainText(architectureBaseline.version);
+  const excerpts = page.locator("[data-core-source]");
+  await expect(excerpts.first()).toBeVisible();
+  const authoredExcerpts = await excerpts.all();
+  await Promise.all(authoredExcerpts.map(async (excerpt) => expectCoreExcerpt(excerpt)));
+};
 
-    for (const { retired, canonical, fragment } of retiredArticles) {
-      test(`${localizedUrl(retired)} keeps a bookmarked query and anchor`, async ({ page }) => {
-        const response = await page.goto(`${localizedUrl(retired)}?from=bookmark${fragment}`);
-        expect(response?.status()).toBe(httpStatusOk);
-        await expect(page).toHaveURL(`${localizedUrl(canonical)}?from=bookmark${fragment}`);
-        await expect(page.locator("html")).toHaveAttribute("lang", locale);
-        await expect(page.locator("article")).toHaveAttribute(
-          "data-doc-page",
-          localizedUrl(canonical),
-        );
-        if (fragment) {
-          await expect(page.locator(`article ${fragment}`)).toBeInViewport();
-        }
-      });
-    }
-  });
-
-  test(`${locale} search, sidebar, article links and previous-next navigation retain the locale and shell`, async ({
-    page,
-  }) => {
-    const errors: string[] = [];
-    page.on("pageerror", (error) => errors.push(error.message));
-    await page.goto(`/${locale}`);
-    await page.waitForLoadState("networkidle");
-    const search = page.getByRole("textbox", { name: labels.search });
-    const searchNode = await search.elementHandle();
-    const sidebar = page.locator('[data-slot="sidebar-content"]');
-    await search.fill("not-a-guide-9284");
-    await expect(sidebar.getByRole("link")).toHaveCount(0);
-    await expect(sidebar).toContainText(labels.empty);
-    await search.fill("Markdown");
-    await expect(sidebar.getByRole("link")).toHaveCount(2);
+const expectLinkTarget = (target: URL, docs: LocaleDocs, description: string): void => {
+  expect(localizedSlugs(docs), description).toContain(target.pathname);
+  if (target.hash.length > noMatches) {
+    const article = docs.pages.find(
+      (candidate) => localizedUrl(docs, candidate.slug) === target.pathname,
+    );
     expect(
-      await sidebar
-        .getByRole("link")
-        .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
-    ).toEqual([localizedUrl("/guide/markdown"), localizedUrl("/api-reference/markdown")]);
-    await sidebar.locator(`a[href="${localizedUrl("/guide/markdown")}"]`).click();
-    await expect(page).toHaveURL(localizedUrl("/guide/markdown"));
-    await expect(page.locator("article h1")).toHaveText(metadata("/guide/markdown").title);
-    await page
-      .locator(`article a[href="${localizedUrl("/api-reference/markdown")}#parse"]`)
-      .click();
-    await expect(page).toHaveURL(`${localizedUrl("/api-reference/markdown")}#parse`);
-    await expect(page.locator("article #parse")).toBeInViewport();
-    const index = pages.findIndex((article) => article.slug === "/api-reference/markdown");
-    const nextSlug = slugs[index + 1];
-    if (!nextSlug) {
-      throw new Error(`Missing ${locale} next-page metadata`);
-    }
-    const adjacent = page.getByRole("navigation", { name: labels.previousNext });
-    await adjacent.getByRole("link").last().click();
-    await expect(page).toHaveURL(nextSlug);
-    await adjacent.getByRole("link").first().click();
-    await expect(page).toHaveURL(localizedUrl("/api-reference/markdown"));
-    await page.goBack();
-    await expect(page).toHaveURL(nextSlug);
-    await page.goForward();
-    await expect(page).toHaveURL(localizedUrl("/api-reference/markdown"));
-    await expect(page.locator("html")).toHaveAttribute("lang", locale);
-    await expect(search).toHaveValue("Markdown");
-    expect(await searchNode?.evaluate((node) => node.isConnected)).toBe(true);
-    expect(errors).toEqual([]);
-  });
+      article?.headings.map((heading) => heading.id),
+      description,
+    ).toContain(decodeURIComponent(target.hash.slice("#".length)));
+  }
+};
 
-  for (const slug of ["/guide/markdown", "/architecture/implementation/overview"]) {
-    test(`${locale}${slug} switches language without changing the article`, async ({ page }) => {
-      const other = locale === "en" ? "ja" : "en";
-      const destination = `/${other}${slug}`;
-      await page.goto(localizedUrl(slug));
-      await page.waitForLoadState("networkidle");
-      await page
-        .getByRole("navigation", { name: labels.language })
-        .locator(`a[hreflang="${other}"]`)
-        .click();
-      await expect(page).toHaveURL(destination);
-      await expect(page.locator("article")).toHaveAttribute("data-doc-page", destination);
-      await expect(page.locator("html")).toHaveAttribute("lang", other);
-      await expect(
-        page.getByRole("textbox", { name: other === "en" ? "Filter guides" : "ガイドを絞り込む" }),
-      ).toBeVisible();
-      await expect(page.locator(`a[hreflang="${other}"]`)).toHaveAttribute("aria-current", "true");
-      const otherPages =
-        other === "en"
-          ? [...englishArticleCatalog, ...englishCorePages]
-          : [...articleCatalog, ...corePages];
-      const destinationArticle = otherPages.find((article) => article.slug === slug);
-      if (!destinationArticle) {
-        throw new Error(`Missing translated article: ${destination}`);
+const expectAuthoredLinks = async (page: Page, docs: LocaleDocs, slug: string): Promise<void> => {
+  // Each destination also has its own HTTP and heading checks in the matrix.
+  const hrefs = await page
+    .locator("article a[href]")
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  const current = new URL(page.url());
+  hrefs
+    .filter((href) => Predicate.isNotNullish(href))
+    .forEach((href) => {
+      const target = new URL(href, current);
+      if (href.length > noMatches && target.origin === current.origin) {
+        expectLinkTarget(target, docs, `${slug} links to ${href}`);
       }
-      await expect(page.locator("article h1")).toHaveText(destinationArticle.title);
-      const sidebarLinks = page.locator('[data-slot="sidebar-content"]').getByRole("link");
-      await expect(sidebarLinks).toHaveCount(otherPages.length);
-      expect(
-        await sidebarLinks.evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
-      ).toEqual(
-        otherPages.map((article) => `/${other}${article.slug === "/" ? "" : article.slug}`),
-      );
-      await expect(
-        page
-          .getByRole("complementary", { name: other === "en" ? "On this page" : "このページ内" })
-          .getByRole("link"),
-      ).toHaveText(destinationArticle.headings.map((heading) => heading.title));
-      await page.locator(`a[hreflang="${locale}"]`).click();
-      await expect(page).toHaveURL(localizedUrl(slug));
-      await expect(page.locator("html")).toHaveAttribute("lang", locale);
-      await expect(page.locator("article h1")).toHaveText(metadata(slug).title);
     });
-  }
+};
 
-  test(`${locale} mobile navigation and long code fit a 390px viewport`, async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`/${locale}`);
-    await page.getByRole("button", { name: "Toggle Sidebar" }).click();
-    const dialog = page.getByRole("dialog");
-    await dialog.getByRole("textbox", { name: labels.search }).fill("Markdown");
-    await dialog.locator(`a[href="${localizedUrl("/guide/markdown")}"]`).click();
-    await expect(page).toHaveURL(localizedUrl("/guide/markdown"));
-    await expect(dialog).not.toBeVisible();
-    await expect(page.locator("article h1")).toHaveText(metadata("/guide/markdown").title);
-    await expect(page.getByRole("navigation", { name: labels.language })).toBeInViewport();
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
-      .toBeLessThanOrEqual(390);
-    await page.goto(`${localizedUrl("/guide/markdown")}#authoring`);
-    await expect(page.locator("article #authoring")).toBeInViewport();
-    const code = page
-      .locator("article pre[data-code-block]")
-      .filter({ hasText: "plugins: [toc()]" });
-    await expect(code).toHaveAttribute("tabindex", "0");
-    await code.focus();
-    await expect(code).toBeFocused();
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
-      .toBeLessThanOrEqual(390);
-  });
+const expectLocalizedArticle = async (
+  page: Page,
+  docs: LocaleDocs,
+  { article, index }: Readonly<{ article: LocaleArticle; index: number }>,
+): Promise<void> => {
+  const slug = localizedUrl(docs, article.slug);
+  await expectArticleHeader(page, docs, article);
+  await expectNavigation(page, docs, slug);
+  await expectLocalizedBreadcrumbs(page, docs, article);
+  await expectTableOfContents(page, docs, article);
+  await expectAdjacentPages(page, docs, index);
+  await expectLocaleLinks(page, docs, article.slug);
+};
 
-  for (const { retired, canonical } of retiredArticles) {
-    for (const accept of ["text/html", "text/x-component"]) {
-      for (const method of ["GET", "HEAD"]) {
-        test(`${localizedUrl(retired)} redirects ${method} ${accept} within its locale`, async ({
-          request,
-        }) => {
-          const bookmark = `${localizedUrl(retired)}?from=bookmark`;
-          const response = await request.fetch(bookmark, {
-            method,
-            headers: { Accept: accept },
-            maxRedirects: 0,
-          });
-          expect(response.status()).toBe(httpStatusPermanentRedirect);
-          expect(response.headers()["location"]).toBe(`${localizedUrl(canonical)}?from=bookmark`);
-          expect(await response.body()).toHaveLength(0);
-          const followed = await request.fetch(bookmark, { method, headers: { Accept: accept } });
-          expect(followed.status()).toBe(httpStatusOk);
-          expect(new URL(followed.url()).pathname).toBe(localizedUrl(canonical));
-          expect(new URL(followed.url()).search).toBe("?from=bookmark");
-          expect(followed.headers()["content-type"]).toContain(accept);
-          if (method === "HEAD") {
-            expect(await followed.body()).toHaveLength(0);
-          } else {
-            expect(await followed.text()).toContain(metadata(canonical).title);
-          }
-        });
+const registerArticleChecks = (docs: LocaleDocs): void => {
+  docs.pages.forEach((article, index) => {
+    const slug = localizedUrl(docs, article.slug);
+    test(`${slug} serves localized content, TOC, code and article links`, async ({ page }) => {
+      const response = await page.goto(slug);
+      expect(response?.status()).toBe(httpStatusOk);
+      await expectLocalizedArticle(page, docs, { article, index });
+      const hasCode = await articleHasCode(docs, article);
+      await expectCodeBlocks(page, hasCode);
+      if (article.slug.startsWith("/architecture/")) {
+        await expectArchitecture(page);
       }
-    }
-  }
+      await expectAuthoredLinks(page, docs, slug);
+    });
+  });
+};
 
-  for (const path of [
-    "/not-a-document",
-    "/index",
-    "/reading/overview",
-    "/advanced/production-startup-extra",
-    "/guide/testing-extra",
-    "/platforms/node-bun-extra",
-  ]) {
-    for (const accept of ["text/html", "text/x-component"]) {
-      test(`${localizedUrl(path)} returns a real ${accept} 404`, async ({ request }) => {
-        const response = await request.get(localizedUrl(path), {
-          headers: { Accept: accept },
-          maxRedirects: 0,
-        });
-        expect(response.status()).toBe(httpStatusNotFound);
-      });
-    }
-  }
-}
+const registerCanonicalUrls = (docs: LocaleDocs): void => {
+  ["/", "/guide/routes"].forEach((path) => {
+    const canonical = localizedUrl(docs, path);
+    test(`${canonical}/ serves its canonical article and localized navigation`, async ({
+      page,
+    }) => {
+      const response = await page.goto(`${canonical}/`);
+      expect(response?.status()).toBe(httpStatusOk);
+      expect(response?.headers()["content-type"]).toContain("text/html");
+      await expect(page.locator("html")).toHaveAttribute("lang", docs.locale);
+      await expect(page.locator("article")).toHaveAttribute("data-doc-page", canonical);
+      await expect(page.locator("article h1")).toHaveText(metadata(docs, path).title);
+      await expectNavigation(page, docs, canonical);
+    });
+  });
+};
+
+const registerRetiredBookmarks = (docs: LocaleDocs): void => {
+  retiredArticles.forEach(({ canonical, fragment, retired }) => {
+    test(`${localizedUrl(docs, retired)} keeps a bookmarked query and anchor`, async ({ page }) => {
+      const response = await page.goto(`${localizedUrl(docs, retired)}?from=bookmark${fragment}`);
+      expect(response?.status()).toBe(httpStatusOk);
+      await expect(page).toHaveURL(`${localizedUrl(docs, canonical)}?from=bookmark${fragment}`);
+      await expect(page.locator("html")).toHaveAttribute("lang", docs.locale);
+      await expect(page.locator("article")).toHaveAttribute(
+        "data-doc-page",
+        localizedUrl(docs, canonical),
+      );
+      if (fragment.length > noMatches) {
+        await expect(page.locator(`article ${fragment}`)).toBeInViewport();
+      }
+    });
+  });
+};
+
+locales.forEach((docs) => {
+  test.describe(`${docs.locale} documentation without JavaScript`, () => {
+    test.use({ javaScriptEnabled: false });
+    registerArticleChecks(docs);
+    registerCanonicalUrls(docs);
+    registerRetiredBookmarks(docs);
+  });
+});
