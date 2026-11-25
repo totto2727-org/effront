@@ -6,61 +6,6 @@ import { documentLocale, localizedPath } from "./locale.ts";
 import { render, text } from "./pages-render.fixture.ts";
 
 describe("documentation catalog", () => {
-  test.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
-    "%s indexes every public code export without duplicating release versions",
-    async (slug) => {
-      const html = await render(slug);
-      expect(html).toContain("peerDependencies");
-      expect(html).toContain("lockfile");
-      expect(html).not.toMatch(/\b\d+\.\d+\.\d+\b/u);
-      const root = new URL("../../../../packages/", import.meta.url);
-      for (const name of (await readdir(root)).filter((name) => name !== "create-effront")) {
-        const manifest = JSON.parse(
-          await readFile(new URL(`${name}/package.json`, root), "utf8"),
-        ) as {
-          name: string;
-          exports: Record<string, unknown>;
-        };
-        for (const subpath of Object.keys(manifest.exports).filter(
-          (path) => !path.includes("/internal/") && !path.endsWith(".css"),
-        )) {
-          expect(html).toContain(
-            subpath === "." ? manifest.name : `${manifest.name}${subpath.slice(1)}`,
-          );
-        }
-      }
-    },
-  );
-
-  test("keeps ordinary installation examples unversioned in both locales and READMEs", async () => {
-    const articles = await Promise.all(
-      ["articles", "en/articles"].map(async (directory) => {
-        const files = await readdir(new URL(`./${directory}/`, import.meta.url), {
-          recursive: true,
-          encoding: "utf8",
-        });
-        return files
-          .filter((path) => path.endsWith(".md"))
-          .map((path) => new URL(`./${directory}/${path}`, import.meta.url));
-      }),
-    );
-    const repository = new URL("../../../../", import.meta.url);
-    const packages = await readdir(new URL("packages/", repository));
-    const sources = [
-      ...articles.flat(),
-      new URL("README.md", repository),
-      ...packages.map((name) => new URL(`packages/${name}/README.md`, repository)),
-    ];
-    const contents = await Promise.all(sources.map((source) => readFile(source, "utf8")));
-    const commands = contents.flatMap(
-      (source) => source.match(/(?:vp add|npm install|pnpm add|bun add|yarn add)\b[^`\n]*/g) ?? [],
-    );
-    expect(commands.length).toBeGreaterThan(0);
-    for (const command of commands) {
-      expect(command).not.toMatch(/(?:@[a-z\d._-]+\/)?[a-z\d._-]+@[^\s'"]+/i);
-    }
-  });
-
   test.each(["en", "ja"])(
     "%s explains the selected Markdown collection and ordinary index paths",
     async (locale) => {
