@@ -147,9 +147,11 @@ export const isRoutedNavigation = (event: NavigateEvent) =>
     path: "packages/core/src/http.ts",
   },
   serverFnBrand: {
-    code: `      const unavailable =
-        Promise.reject<ServerFnWireValue<Effect.Success<typeof effect>>>(directInvocationError());
-      void unavailable.catch(() => undefined);
+    code: `      const unavailable = Promise.reject<Result>(directInvocationError());
+      // oxlint-disable-next-line promise/prefer-await-to-then -- React inspects the original rejected promise; handle it without wrapping or awaiting it.
+      unavailable.catch(() => {
+        // Direct calls still reject through the original promise.
+      });
 
       return Object.assign(unavailable, {
         [ServerFnInvocationTypeId]: Object.freeze({ effect, identity, middleware }),
