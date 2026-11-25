@@ -1,43 +1,48 @@
 import { defineConfig } from "@playwright/test";
-import { fileURLToPath } from "node:url";
 
-const fixtures = fileURLToPath(new URL("fixtures/", import.meta.url));
+const fixtures = `${import.meta.dirname}/fixtures`;
 // Playwright starts web servers in this order. Preview reuses the completed Node build.
 const hosts = [
   {
+    command: "vp build && node dist/rsc/server.js",
+    cwd: `${fixtures}/node`,
     name: "node",
     port: 4451,
-    cwd: `${fixtures}node`,
-    command: "vp build && node dist/rsc/server.js",
   },
-  { name: "bun", port: 4452, cwd: `${fixtures}bun`, command: "vp build && bun dist/rsc/server.js" },
   {
+    command: "vp build && bun dist/rsc/server.js",
+    cwd: `${fixtures}/bun`,
+    name: "bun",
+    port: 4452,
+  },
+  {
+    command: "vp preview --host 127.0.0.1 --port 4454 --strictPort",
+    cwd: `${fixtures}/node`,
     name: "preview",
     port: 4454,
-    cwd: `${fixtures}node`,
-    command: "vp preview --host 127.0.0.1 --port 4454 --strictPort",
   },
   {
+    command: "vp dev --host 127.0.0.1 --port 4453 --strictPort",
+    cwd: `${fixtures}/node`,
     name: "dev",
     port: 4453,
-    cwd: `${fixtures}node`,
-    command: "vp dev --host 127.0.0.1 --port 4453 --strictPort",
   },
 ];
 
+// oxlint-disable-next-line import/no-default-export -- Playwright reads this configuration from the default export.
 export default defineConfig({
+  fullyParallel: false,
+  projects: hosts.map(({ name, port }) => ({ name, use: { baseURL: `http://127.0.0.1:${port}` } })),
   testDir: ".",
   testMatch: "*.e2e.ts",
-  fullyParallel: false,
-  workers: 1,
   use: { browserName: "chromium" },
-  projects: hosts.map(({ name, port }) => ({ name, use: { baseURL: `http://127.0.0.1:${port}` } })),
-  webServer: hosts.map(({ port, cwd, command }) => ({
-    cwd,
+  webServer: hosts.map(({ command, cwd, port }) => ({
     command,
-    env: { PORT: String(port), HOST: "127.0.0.1" },
-    url: `http://127.0.0.1:${port}`,
+    cwd,
+    env: { HOST: "127.0.0.1", PORT: String(port) },
     reuseExistingServer: false,
     timeout: 90_000,
+    url: `http://127.0.0.1:${port}`,
   })),
+  workers: 1,
 });
