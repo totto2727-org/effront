@@ -5,7 +5,7 @@ import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 
 import type { ApplicationDefinition } from "./application/definition.tsx";
 import { ServerApplication } from "./server/application.ts";
-import type { HtmlRenderError } from "./server/html-renderer.tsx";
+import type { HtmlRenderError } from "./server/html-render-error.ts";
 import type { ServerFnRequestFailure } from "./server/server-fn-request.ts";
 
 type HttpRequirements<Requirements> =

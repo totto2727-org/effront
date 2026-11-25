@@ -13,7 +13,7 @@ import { analyzeRoutePath, isAbsolutePath } from "#core/application/route-path.t
 import { FlightMediaType, ServerFnQueryPath } from "#core/rsc/flight.ts";
 import { renderRouteTree } from "#core/rsc/render-route-tree.tsx";
 import { FlightRenderer } from "./flight-renderer.tsx";
-import type { HtmlRenderError } from "./html-renderer.tsx";
+import type { HtmlRenderError } from "./html-render-error.ts";
 import { HtmlRenderer } from "./html-renderer.tsx";
 import type { RequestOutcome } from "./request-outcome.ts";
 import { prepareServerFnQuery } from "./server-fn-query.ts";
