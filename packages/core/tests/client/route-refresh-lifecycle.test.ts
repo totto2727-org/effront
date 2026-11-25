@@ -8,7 +8,6 @@ import { loadFailure } from "#core/client/flight-client-model.ts";
 import { RouteRefresher } from "#core/client/route-refresh.ts";
 
 import { observePromise } from "./client-routing-candidate.fixture.ts";
-import { absentNavigationValue } from "./client-routing-events.fixture.ts";
 import {
   committedRefresh,
   loaderFor,
@@ -20,6 +19,7 @@ import {
 import type { Refresh } from "./route-refresh-browser.fixture.ts";
 import {
   entry,
+  holdNavigation,
   makeNavigationApiLayer,
   routedNavigation,
   TestNavigation,
@@ -46,21 +46,6 @@ describe("initial route refresh service", () => {
   });
 });
 
-type Completed = Effect.Success<typeof Effect.void>;
-const holdNavigation = (navigation: TestNavigation): (() => void) => {
-  const pending = Promise.withResolvers<Completed>();
-  navigation.transition = {
-    committed: Promise.resolve(),
-    finished: pending.promise,
-    from: entry,
-    navigationType: "replace",
-  };
-  return (): void => {
-    navigation.transition = absentNavigationValue;
-    pending.resolve();
-  };
-};
-
 const hmrResponse = (): ReturnType<typeof route> =>
   route({
     cache: Function.constVoid,
@@ -72,7 +57,7 @@ const hmrResponse = (): ReturnType<typeof route> =>
 
 const prepareQueuedHmr = Effect.gen(function* () {
   const navigation = new TestNavigation();
-  const releaseNavigation = holdNavigation(navigation);
+  const releaseNavigation = holdNavigation(navigation, "replace");
   const loaded = yield* Deferred.make<boolean>();
   const rendered = Promise.withResolvers<ReturnType<typeof makeRouteTree>>();
   const invalidated = vi.fn<() => void>();

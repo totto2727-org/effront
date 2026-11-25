@@ -1,4 +1,4 @@
-import type { Layer } from "effect";
+import type { Effect, Layer } from "effect";
 import { vi } from "vitest";
 
 import { NavigationApi } from "#core/client/navigation-api.ts";
@@ -16,6 +16,23 @@ export class TestNavigation extends EventTarget {
   public reloadDocument = vi.fn<() => void>();
   public transition: NavigationTransition | null = absentNavigationValue;
 }
+
+export const holdNavigation = (
+  navigation: TestNavigation,
+  navigationType: "push" | "replace",
+): (() => void) => {
+  const pending = Promise.withResolvers<Effect.Success<typeof Effect.void>>();
+  navigation.transition = {
+    committed: navigationType === "push" ? pending.promise : Promise.resolve(),
+    finished: pending.promise,
+    from: entry,
+    navigationType,
+  };
+  return (): void => {
+    navigation.transition = absentNavigationValue;
+    pending.resolve();
+  };
+};
 
 export const routedNavigation = (): Event =>
   makeNavigationEvent({
