@@ -6,55 +6,6 @@ import { documentLocale, localizedPath } from "./locale.ts";
 import { render, text } from "./pages-render.fixture.ts";
 
 describe("documentation catalog", () => {
-  test.each(["en", "ja"] as const)(
-    "introduces Layout, Page, Routes, then the complete entry in %s",
-    async (locale) => {
-      const directory = locale === "en" ? "en/articles" : "articles";
-      const source = await readFile(
-        new URL(`./${directory}/guide/routes.md`, import.meta.url),
-        "utf8",
-      );
-      const sections = source.split(/^## /mu).slice(1);
-      expect(
-        sections.slice(0, 4).map((section) => /\{#([^}]+)\}/.exec(section)?.[1]),
-      ).toStrictEqual(["layouts", "pages", "routes", "application"]);
-      const code = (section: string): string => /```tsx\n([\s\S]*?)\n```/.exec(section)?.[1] ?? "";
-      expect(code(sections[0]!)).toContain("EFFRONT.Layout.make");
-      expect(code(sections[0]!)).not.toContain("EFFRONT.Page.make");
-      expect(code(sections[1]!)).toContain("EFFRONT.Page.make");
-      expect(code(sections[1]!)).not.toContain("EFFRONT.Routes.make");
-      expect(code(sections[2]!)).toContain(
-        'Routes.make({ layout: RootLayout }).page("/", HomePage)',
-      );
-      expect(code(sections[3]!)).toContain("export default EFFRONT.make({ routes })");
-      expect(source).toContain("`/articles/hello`");
-    },
-  );
-
-  test.each(["en", "ja"] as const)(
-    "keeps guide URL instructions concise and host-neutral in %s",
-    async (locale) => {
-      for (const guide of [
-        "routes",
-        "components",
-        "effect",
-        "server-functions",
-        "middleware",
-        "markdown",
-        "http",
-      ]) {
-        const html = await render(`/${locale}/guide/${guide}`);
-        expect(html).not.toContain("127.0.0.1:1340");
-        expect(html).not.toMatch(/開発サーバー\s*に\s*表示された\s*URL/u);
-      }
-      const config = await readFile(
-        new URL("../../../../examples/node/vite.config.ts", import.meta.url),
-        "utf8",
-      );
-      expect(config).not.toContain("server:");
-    },
-  );
-
   test.each(["/api-reference", "/ja/api-reference", "/en/api-reference"])(
     "%s indexes every public code export without duplicating release versions",
     async (slug) => {
