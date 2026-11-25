@@ -4,7 +4,7 @@ import type { MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { Application } from "@effront/core";
-import { manual } from "../content.ts";
+import { manual } from "#fixture/content.ts";
 
 const EFFRONT = Application.effront();
 class CurrentEntry extends Context.Service<CurrentEntry, MarkdownEntry>()("e2e-dev/CurrentEntry") {}
@@ -42,6 +42,9 @@ const Page = Manual.Page.make({
     return <MarkdownDocument value={document} />;
   }),
 });
-export default EFFRONT.make({
+const application = EFFRONT.make({
   routes: Manual.Routes.make({ layout: Layout }).page("/manual/*path", Page),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin loads this application through its default export.
+export default application;

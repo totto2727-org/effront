@@ -1,4 +1,7 @@
 import { createFetchHandler } from "@effront/core/workers";
 import application from "./entry.effront";
 
-export default { fetch: createFetchHandler(application) };
+const worker = { fetch: createFetchHandler(application) };
+
+// oxlint-disable-next-line import/no-default-export -- Wrangler consumes the Worker’s default export.
+export default worker;
