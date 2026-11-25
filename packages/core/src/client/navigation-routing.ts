@@ -1,19 +1,21 @@
-import { String } from "effect";
+import { Predicate, String } from "effect";
 
 const ReactTransitionNavigationInfo = "react-transition";
 
 export const NativeDocumentNavigationInfo = "effront-native-document";
 
-export const isRoutedNavigation = (event: NavigateEvent) =>
+export const isRoutedNavigation = (event: NavigateEvent): boolean =>
   event.canIntercept &&
   !event.hashChange &&
-  event.downloadRequest === null &&
-  event.formData === null &&
+  // oxlint-disable-next-line rules/prefer-is-nullish -- A native NavigateEvent represents no download with an explicit null.
+  Predicate.isNull(event.downloadRequest) &&
+  // oxlint-disable-next-line rules/prefer-is-nullish -- Route navigation accepts the native null for absent form data.
+  Predicate.isNull(event.formData) &&
   event.info !== ReactTransitionNavigationInfo &&
   event.info !== NativeDocumentNavigationInfo &&
   event.navigationType !== "reload";
 
-export const preserveRequestedHash = (requested: URL, resolved: URL) =>
+export const preserveRequestedHash = (requested: URL, resolved: URL): URL =>
   String.isEmpty(resolved.hash) &&
   resolved.origin === requested.origin &&
   resolved.pathname === requested.pathname &&
