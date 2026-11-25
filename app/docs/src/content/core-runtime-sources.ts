@@ -20,35 +20,32 @@ export const coreRuntimeSources = {
     path: "packages/core/src/http.ts",
   },
   flightRuntime: {
-    code: `        const errorDigest = yield* nextErrorDigest;
-        const parentScope = yield* Effect.scope;
-        const renderScope = yield* Scope.fork(parentScope);
-        const release = Scope.close(renderScope, Exit.void);
-        return yield* Effect.gen(function* () {
-          const runtime = yield* FiberSet.makeRuntimePromise<Services>().pipe(
-            Scope.provide(renderScope),
-          );
-          const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
-          const { renderToReadableStream } = yield* Effect.promise(
-            () => import("@vitejs/plugin-rsc/rsc/server"),
-          );
-          const stream = renderRuntime.bind(runtime, middleware, () => {
-            const payload = { formState, routeTree, serverFnResult } satisfies FlightPayload;
-            return renderToReadableStream(payload, {
-              onError: (error: unknown) => {
-                if (!signal.aborted) {
-                  void runtime(
-                    Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)),
-                  );
-                }
-                return errorDigest;
-              },
-              signal,
-              temporaryReferences,
-            });
-          });
-          return { release, signal, stream } satisfies FlightRender;
-        }).pipe(Effect.onError(() => release));`,
+    code: `  const errorDigest = yield* nextErrorDigest;
+  const parentScope = yield* Effect.scope;
+  const renderScope = yield* Scope.fork(parentScope);
+  const release = Scope.close(renderScope, Exit.void);
+  return yield* Effect.gen(function* () {
+    const fibers = yield* FiberSet.make().pipe(Scope.provide(renderScope));
+    const runtime = yield* FiberSet.runtimePromise(fibers)<Services>();
+    const fork = yield* FiberSet.runtime(fibers)<Services>();
+    const signal = yield* Effect.abortSignal.pipe(Scope.provide(renderScope));
+    const { renderToReadableStream } = yield* Effect.promise(
+      async () => import("@vitejs/plugin-rsc/rsc/server"),
+    );
+    const stream = renderRuntime.bind(runtime, middleware, () =>
+      renderToReadableStream(payload, {
+        onError: (error: unknown): string => {
+          if (!signal.aborted) {
+            fork(Effect.logError(error).pipe(Effect.annotateLogs("errorDigest", errorDigest)));
+          }
+          return errorDigest;
+        },
+        signal,
+        temporaryReferences,
+      }),
+    );
+    return { release, signal, stream } satisfies FlightRender;
+  }).pipe(Effect.onError(() => release));`,
     language: "tsx",
     path: "packages/core/src/server/flight-renderer.tsx",
   },
