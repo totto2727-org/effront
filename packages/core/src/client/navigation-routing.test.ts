@@ -6,23 +6,21 @@ import {
   preserveRequestedHash,
 } from "./navigation-routing.ts";
 
-type RoutingFields = Pick<
-  NavigateEvent,
-  "canIntercept" | "downloadRequest" | "formData" | "hashChange" | "info" | "navigationType"
->;
+type RoutingFields = Parameters<typeof isRoutedNavigation>[0];
+// oxlint-disable-next-line unicorn/no-null -- A native navigation event uses null for absent form and download fields.
+const absent = null;
 
-const makeEvent = (overrides: Partial<RoutingFields> = {}): NavigateEvent =>
-  ({
-    canIntercept: true,
-    downloadRequest: null,
-    formData: null,
-    hashChange: false,
-    info: undefined,
-    navigationType: "push",
-    ...overrides,
-  }) as NavigateEvent;
+const makeEvent = (overrides: Partial<RoutingFields> = {}): RoutingFields => ({
+  canIntercept: true,
+  downloadRequest: absent,
+  formData: absent,
+  hashChange: false,
+  info: undefined,
+  navigationType: "push",
+  ...overrides,
+});
 
-describe(isRoutedNavigation, () => {
+describe("navigation eligibility", () => {
   test("routes an ordinary same-document navigation", () => {
     expect(isRoutedNavigation(makeEvent())).toBe(true);
     expect(isRoutedNavigation(makeEvent({ navigationType: "replace" }))).toBe(true);
@@ -33,7 +31,8 @@ describe(isRoutedNavigation, () => {
     expect(isRoutedNavigation(makeEvent({ canIntercept: false }))).toBe(false);
     expect(isRoutedNavigation(makeEvent({ hashChange: true }))).toBe(false);
     expect(isRoutedNavigation(makeEvent({ downloadRequest: "" }))).toBe(false);
-    expect(isRoutedNavigation(makeEvent({ formData: new FormData() }))).toBe(false);
+    const formData = new FormData();
+    expect(isRoutedNavigation(makeEvent({ formData }))).toBe(false);
     expect(isRoutedNavigation(makeEvent({ navigationType: "reload" }))).toBe(false);
   });
 
@@ -43,7 +42,7 @@ describe(isRoutedNavigation, () => {
   });
 });
 
-describe(preserveRequestedHash, () => {
+describe("navigation redirects and fragments", () => {
   const requested = new URL("https://effront.test/schedule#session-4");
 
   test("reattaches the requested fragment when the server resolved the same location", () => {
