@@ -1,28 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import type { ReactNode } from "react";
-import { Counter } from "./counter.tsx";
+import type { JSX, ReactNode } from "react";
+// oxlint-disable-next-line import/no-unassigned-import -- Vite includes this stylesheet in the fixture's root client layout.
 import "./styles.css";
 
-export function PageNote() {
-  const [note, setNote] = useState("");
-  return (
-    <p>
-      <label>
-        Page note{" "}
-        <input
-          value={note}
-          onChange={(event) => {
-            setNote(event.target.value);
-          }}
-        />
-      </label>
-    </p>
-  );
-}
-
-export function ExampleShell({ children }: Readonly<{ children: ReactNode }>) {
+// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
+export function ExampleShell({ children }: Readonly<{ children: ReactNode }>): JSX.Element {
   return (
     <>
       <nav>
@@ -30,25 +13,6 @@ export function ExampleShell({ children }: Readonly<{ children: ReactNode }>) {
         <a href="/transitions/default-a">Page transitions</a>
       </nav>
       <main>{children}</main>
-    </>
-  );
-}
-
-export function TransitionExampleLayout({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <>
-      <aside aria-label="Persistent transition layout">
-        <h2>Page transitions</h2>
-        <p>This counter belongs to the layout and stays mounted while the page changes.</p>
-        <Counter />
-        <nav aria-label="Transition examples">
-          <a href="/transitions/default-a">Default transition</a>
-          <a href="/transitions/custom-a">Custom transition</a>
-          <a href="/transitions/typed-a">Link-selected transition</a>
-          <a href="/transitions/disabled-a">Disabled transition</a>
-        </nav>
-      </aside>
-      {children}
     </>
   );
 }

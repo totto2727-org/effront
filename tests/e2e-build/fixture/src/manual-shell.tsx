@@ -1,92 +1,90 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { ChangeEvent, JSX, ReactNode, RefObject } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Counter } from "./counter.tsx";
+import { ManualContent } from "./manual-content.tsx";
+import { ManualSidebar } from "./manual-sidebar.tsx";
 
-import { pages } from "./manual-pages.ts";
+type ManualNavigation = Readonly<{
+  close: () => void;
+  dialog: RefObject<HTMLDialogElement | null>;
+  query: string;
+  restoreFocus: () => void;
+  show: () => void;
+  toggle: RefObject<HTMLButtonElement | null>;
+  update: (event: ChangeEvent<HTMLInputElement>) => void;
+}>;
 
+const useManualNavigation = (children: ReactNode): ManualNavigation => {
+  const [query, setQuery] = useState("");
+  const dialog = useRef<HTMLDialogElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const rendered = useRef(children);
+  const close = useCallback(() => {
+    dialog.current?.close();
+  }, []);
+  const show = useCallback(() => {
+    dialog.current?.showModal();
+  }, []);
+  const restoreFocus = useCallback(() => {
+    toggle.current?.focus();
+  }, []);
+  const update = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setQuery(event.target.value);
+  }, []);
+
+  useEffect(() => {
+    if (rendered.current !== children) {
+      rendered.current = children;
+      close();
+    }
+  }, [children, close]);
+
+  return { close, dialog, query, restoreFocus, show, toggle, update };
+};
+
+// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
 export function ManualShell({
   children,
   pathname,
 }: Readonly<{
   children: ReactNode;
   pathname: string;
-}>) {
-  const [query, setQuery] = useState("");
-  const dialog = useRef<HTMLDialogElement>(null);
-  const toggle = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    dialog.current?.close();
-  }, [children]);
-  const current = pages.findIndex((page) => page.href === pathname);
-  const links = pages.filter((page) =>
-    page.title.toLowerCase().includes(query.trim().toLowerCase()),
+}>): JSX.Element {
+  const { close, dialog, query, restoreFocus, show, toggle, update } =
+    useManualNavigation(children);
+  const button = (
+    <button className="mobile-toggle" onClick={show} ref={toggle} type="button">
+      Toggle Sidebar
+    </button>
   );
   const navigation = (
-    <>
-      <label>
-        ガイドを絞り込む
-        <input
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-          }}
-        />
-      </label>
-      <div data-sidebar="content">
-        {links.map((page) => (
-          <a
-            key={page.href}
-            href={page.href}
-            data-sidebar="menu-button"
-            aria-current={page.href === pathname ? "page" : undefined}
-            onClick={() => dialog.current?.close()}
-          >
-            {page.title}
-          </a>
-        ))}
-      </div>
-    </>
+    <ManualSidebar close={close} pathname={pathname} query={query} update={update} />
   );
+  const toolbar = (
+    <header className="manual-toolbar">
+      <Counter />
+      {button}
+    </header>
+  );
+  const desktop = (
+    <aside aria-label="Manual sidebar" data-sidebar="sidebar">
+      {navigation}
+    </aside>
+  );
+  const mobile = (
+    <dialog aria-label="Manual navigation" onClose={restoreFocus} ref={dialog}>
+      {navigation}
+    </dialog>
+  );
+
   return (
     <section className="manual-layout">
-      <header className="manual-toolbar">
-        <Counter />
-        <button className="mobile-toggle" ref={toggle} onClick={() => dialog.current?.showModal()}>
-          Toggle Sidebar
-        </button>
-      </header>
-      <aside data-sidebar="sidebar" aria-label="Manual sidebar">
-        {navigation}
-      </aside>
-      <dialog ref={dialog} aria-label="Manual navigation" onClose={() => toggle.current?.focus()}>
-        {navigation}
-      </dialog>
-      <div className="manual-body">
-        <nav aria-label="パンくずリスト">
-          <a href="/manual">Manual</a>
-          <span aria-current="page">{pages[current]?.title}</span>
-        </nav>
-        {children}
-        <nav aria-label="前後のページ">
-          {pages[current - 1] && <a href={pages[current - 1]?.href}>前のページ</a>}
-          {pages[current + 1] && <a href={pages[current + 1]?.href}>次のページ</a>}
-        </nav>
-        <aside aria-label="このページ内">
-          <a
-            href={
-              pathname === "/manual"
-                ? "#features"
-                : pathname.endsWith("getting-started")
-                  ? "#installation"
-                  : "#details"
-            }
-          >
-            Section
-          </a>
-        </aside>
-      </div>
+      {toolbar}
+      {desktop}
+      {mobile}
+      <ManualContent pathname={pathname}>{children}</ManualContent>
     </section>
   );
 }
