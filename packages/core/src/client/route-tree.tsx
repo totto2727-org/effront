@@ -1,26 +1,13 @@
 "use client";
 
-import { createContext, use } from "react";
+import type { JSX } from "react";
 
 import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
+import { RouteNodeRenderer } from "./route-node-renderer.tsx";
 
-type RouteNodeRendererProps = Readonly<{ node: RouteTreeModel }>;
 type RouteTreeProps = Readonly<{ root: RouteTreeModel }>;
 
-const RouteNodeContext = createContext<RouteTreeModel | null>(null);
-
-function RouteNodeRenderer({ node }: RouteNodeRendererProps) {
-  return <RouteNodeContext value={node}>{node.content}</RouteNodeContext>;
-}
-
-export function RouteTree({ root }: RouteTreeProps) {
+// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
+export function RouteTree({ root }: RouteTreeProps): JSX.Element {
   return <RouteNodeRenderer node={root} />;
-}
-
-export function RouteOutlet() {
-  const node = use(RouteNodeContext);
-  if (node === null) {
-    throw new TypeError("RouteOutlet rendered outside its route node.");
-  }
-  return node.child === null ? null : <RouteNodeRenderer key={node.child.id} node={node.child} />;
 }

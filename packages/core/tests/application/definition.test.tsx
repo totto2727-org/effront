@@ -15,7 +15,7 @@ import type {
 import type { CompiledDestination } from "#core/application/route-graph.ts";
 import type { AbsolutePath } from "#core/application/route-path.ts";
 import { getRoutesState } from "#core/application/routes.ts";
-import { RouteOutlet } from "#core/client/route-tree.tsx";
+import { RouteOutlet } from "#core/client/route-outlet.tsx";
 import { renderRouteTree } from "#core/rsc/render-route-tree.tsx";
 import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
