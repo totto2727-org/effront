@@ -50,7 +50,7 @@ const expectNoBrowserFaults = (faults: BrowserFaults): void => {
   ).toEqual([]);
 };
 
-export const layoutTest = base.extend({
+export const docsTest = base.extend({
   page: async ({ page, baseURL }, runWithPage) => {
     const faults = await observeBrowserFaults(page, getOrigin(baseURL));
     await runWithPage(page);

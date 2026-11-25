@@ -17,7 +17,7 @@ import {
   requireHref,
   visibleSidebar,
 } from "./layout-assertions.browser.fixture.ts";
-import { layoutTest as test } from "./layout-host.fixture.ts";
+import { docsTest as test } from "./docs-host.fixture.ts";
 import {
   expectCurrentDocument,
   expectLatestSidebarScroll,

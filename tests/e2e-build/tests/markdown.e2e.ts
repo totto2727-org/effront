@@ -1,17 +1,12 @@
-import { readFile } from "node:fs/promises";
-import { expect, test as base } from "@playwright/test";
+import { expect } from "@playwright/test";
+
+import { docsTest as test } from "./docs-host.fixture.ts";
+import { destinations } from "./markdown-destinations.fixture.ts";
 
 import { observeMarkdownFlight, observedFlightBody } from "./flight-observation.fixture.ts";
 
 const httpStatusOk = 200;
 const httpStatusNotFound = 404;
-
-const unicodePath = `/manual/guide/${encodeURIComponent("日本語 space")}`;
-const destinations = [
-  { path: "/manual/guide/getting-started", title: "Getting started", hash: "installation" },
-  { path: "/manual/guide/deep/details", title: "Deep details", hash: undefined },
-  { path: unicodePath, title: "Unicode page", hash: "details" },
-];
 
 interface FlightClientReference {
   moduleId: string;
@@ -36,163 +31,6 @@ const flightClientReferences = (body: string): FlightClientReference[] => {
     return [{ moduleId: value[0], exportName }];
   });
 };
-
-const test = base.extend({
-  page: async ({ page, baseURL }, use) => {
-    if (!baseURL) {
-      throw new TypeError("Markdown acceptance requires a local host baseURL");
-    }
-    const errors: string[] = [];
-    const remoteRequests: string[] = [];
-    await page.route("**/*", (route) => {
-      const url = new URL(route.request().url());
-      if (/^https?:$/u.test(url.protocol) && url.origin !== new URL(baseURL).origin) {
-        remoteRequests.push(url.href);
-        return route.abort("blockedbyclient");
-      }
-      return route.continue();
-    });
-    page.on("pageerror", (error) => errors.push(error.message));
-    page.on("console", (message) => {
-      if (/hydrat|server rendered html|did not match/i.test(message.text())) {
-        errors.push(message.text());
-      }
-    });
-    await use(page);
-    expect(errors, "No browser exceptions or React hydration faults").toEqual([]);
-    expect(
-      remoteRequests.filter((url) => !url.startsWith("https://fonts.googleapis.com/")),
-      "Only upstream Mermaid's Google Fonts import may be blocked by local acceptance policy",
-    ).toEqual([]);
-  },
-});
-
-test.describe("Markdown without JavaScript", () => {
-  test.use({ javaScriptEnabled: false });
-
-  test("renders default Markdown plugins in the original server document", async ({ page }) => {
-    const response = await page.goto("/manual");
-    expect(response?.status()).toBe(httpStatusOk);
-    expect(response?.headers()["content-type"]).toContain("text/html");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Markdown manual");
-    await expect(page.getByRole("heading", { name: "Features", exact: true })).toHaveAttribute(
-      "id",
-      "features",
-    );
-    await expect(page.locator(".footnotes")).toBeVisible();
-    await expect(page.locator(".footnotes")).toContainText("Footnote detail");
-    const footnote = page.locator('sup a[href^="#"]').first();
-    await expect(footnote).toBeVisible();
-    const footnoteHref = await footnote.getAttribute("href");
-    if (!footnoteHref) {
-      throw new Error("A footnote must link to its rendered definition");
-    }
-    await expect(page.locator(`[id=${JSON.stringify(footnoteHref.slice(1))}]`)).toContainText(
-      "Footnote detail",
-    );
-    await footnote.click();
-    await expect.poll(() => new URL(page.url()).hash).toBe(footnoteHref);
-
-    // The rich leaves are client-only: without JavaScript their documented
-    // loading states are present, but no browser-only KaTeX or Mermaid output is emitted.
-    await expect(page.getByTestId("markdown-heading-override")).toHaveText("Markdown manual");
-    await expect(page.locator(".math")).toHaveText(["...", "...", "..."]);
-    const mermaid = page.locator(".mermaid");
-    await expect(mermaid).toHaveCount(3);
-    await expect(mermaid).toHaveText(["", "", ""]);
-    await expect(page.locator(".katex, .mermaid svg")).toHaveCount(0);
-    const code = page.locator("pre.shiki").first();
-    await expect(code).toBeVisible();
-    await expect(code.locator("code")).toHaveText('const message: string = "Hello Markdown";');
-    const tokenColors = await code
-      .locator("code span[style]")
-      .evaluateAll((tokens) => [...new Set(tokens.map((token) => getComputedStyle(token).color))]);
-    expect(tokenColors.length, "Syntax colors apply without a browser highlighter").toBeGreaterThan(
-      1,
-    );
-    await expect(page.getByRole("table")).toBeVisible();
-    await expect(page.getByRole("checkbox")).toHaveCount(2);
-    await expect(page.getByRole("checkbox").first()).toBeDisabled();
-    await expect(page.getByRole("checkbox").first()).toBeChecked();
-    await expect(page.getByRole("checkbox").last()).not.toBeChecked();
-    await expect(page.locator('blockquote[as="note"]')).toContainText(
-      "Markdown links point to source files, not hand-written website routes.",
-    );
-    expect(await page.locator("blockquote").allTextContents()).not.toContain("[!NOTE]");
-    await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toBeVisible();
-  });
-
-  test("maps source references to public URLs while retaining suffixes and external URLs", async ({
-    page,
-  }) => {
-    await page.goto("/manual");
-    await expect(
-      page.locator("main article").getByRole("link", { name: "Getting started", exact: true }),
-    ).toHaveAttribute("href", "/manual/guide/getting-started?from=manual#installation");
-    await expect(
-      page.locator("main article").getByRole("link", { name: "Deep details", exact: true }),
-    ).toHaveAttribute("href", "/manual/guide/deep/details");
-    await expect(
-      page.locator("main article").getByRole("link", { name: "Unicode page", exact: true }),
-    ).toHaveAttribute("href", `${unicodePath}?from=manual#details`);
-    await expect(
-      page.locator("main article").getByRole("link", { name: "External reference", exact: true }),
-    ).toHaveAttribute("href", "https://example.com/reference?q=markdown#section");
-    const localSection = page
-      .locator("main article")
-      .getByRole("link", { name: "Local section", exact: true });
-    await expect(localSection).toHaveAttribute("href", "#features");
-    await localSection.click();
-    await expect.poll(() => new URL(page.url()).hash).toBe("#features");
-    await expect(page.locator("#features")).toBeInViewport();
-    await page
-      .locator("main article")
-      .getByRole("link", { name: "Getting started", exact: true })
-      .click();
-    await expect(page).toHaveURL(/\/manual\/guide\/getting-started\?from=manual#installation$/u);
-    await expect(page.locator("#installation")).toBeVisible();
-  });
-
-  test("serves a source-linked image as real Vite asset bytes and a decoded browser image", async ({
-    page,
-    request,
-  }) => {
-    await page.goto("/manual");
-    const image = page.getByRole("img", { name: "Markdown diagram", exact: true });
-    await expect(image).toBeVisible();
-    const src = await image.getAttribute("src");
-    if (!src) {
-      throw new Error("The Markdown image must resolve to a public asset URL");
-    }
-    expect(src).not.toMatch(/^(?:data:|file:)/u);
-    const asset = await request.get(new URL(src, page.url()).href);
-    expect(asset.status()).toBe(httpStatusOk);
-    expect(asset.headers()["content-type"]).toMatch(/^image\//u);
-    expect(await asset.body()).toEqual(
-      await readFile(new URL("../fixture/content/manual/images/diagram.svg", import.meta.url)),
-    );
-    await expect
-      .poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth))
-      .toBeGreaterThan(0);
-    await expect
-      .poll(() => image.evaluate((element: HTMLImageElement) => element.complete))
-      .toBe(true);
-  });
-
-  for (const destination of destinations) {
-    test(`directly serves nested source page ${destination.title}`, async ({ page }) => {
-      const response = await page.goto(destination.path);
-      expect(response?.status()).toBe(httpStatusOk);
-      await expect(page.getByRole("heading", { level: 1 })).toHaveText(destination.title);
-      if (destination.hash) {
-        await expect(page.locator(`[id=${JSON.stringify(destination.hash)}]`)).toBeVisible();
-      }
-      await expect(
-        page.locator("main article").getByRole("link", { name: "Manual home", exact: true }),
-      ).toHaveAttribute("href", "/manual");
-    });
-  }
-});
 
 test("renders configured upstream math and diagrams after hydration", async ({ page, request }) => {
   await page.goto("/manual");
