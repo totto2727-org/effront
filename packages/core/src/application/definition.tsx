@@ -3,6 +3,7 @@ import type { Types } from "effect";
 import type { HttpRouter } from "effect/http";
 
 import {
+  authoringTypeError,
   EFFRONTIdentityTypeId,
   EFFRONTMemberKindTypeId,
   EFFRONTStateTypeId,
@@ -21,16 +22,21 @@ export interface ApplicationDefinition<
   Services,
   out ApplicationError = never,
   out Requirements = never,
-> extends EFFRONTStatefulMember<
-  Services,
-  "Application",
-  ApplicationImplementationState<Services, ApplicationError, Requirements>
-> {
-  readonly [ApplicationContractTypeId]: Readonly<{
-    error: Types.Covariant<ApplicationError>;
-    requirements: Types.Covariant<Requirements>;
-  }>;
-}
+>
+  extends
+    EFFRONTStatefulMember<
+      Services,
+      "Application",
+      ApplicationImplementationState<Services, ApplicationError, Requirements>
+    >,
+    Readonly<{
+      [ApplicationContractTypeId]: ApplicationContract<ApplicationError, Requirements>;
+    }> {}
+
+type ApplicationContract<ApplicationError, Requirements> = Readonly<{
+  error: Types.Covariant<ApplicationError>;
+  requirements: Types.Covariant<Requirements>;
+}>;
 
 export type ApplicationImplementationState<Services, ApplicationError, Requirements> = Readonly<{
   layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
@@ -42,23 +48,20 @@ class ApplicationDefinitionImpl<
   ApplicationError,
   Requirements,
 > implements ApplicationDefinition<Services, ApplicationError, Requirements> {
-  declare readonly [ApplicationContractTypeId]: Readonly<{
-    error: Types.Covariant<ApplicationError>;
-    requirements: Types.Covariant<Requirements>;
-  }>;
-  readonly [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
-  readonly [EFFRONTMemberKindTypeId] = "Application" as const;
-  get [EFFRONTStateTypeId](): ApplicationImplementationState<
+  declare public [ApplicationContractTypeId]: ApplicationContract<ApplicationError, Requirements>;
+  public [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
+  public [EFFRONTMemberKindTypeId] = "Application" as const;
+  public get [EFFRONTStateTypeId](): ApplicationImplementationState<
     Services,
     ApplicationError,
     Requirements
   > {
     return this;
   }
-  readonly layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
-  readonly routes: CompiledRouteGraph<Services>;
+  public layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>;
+  public routes: CompiledRouteGraph<Services>;
 
-  constructor(
+  public constructor(
     identity: EFFRONTIdentity<Services>,
     routes: CompiledRouteGraph<Services>,
     layer: Layer.Layer<Services, ApplicationError, HttpRouter.HttpRouter | Requirements>,
@@ -78,7 +81,7 @@ export const getApplicationState = <Services, ApplicationError, Requirements>(
   application: ApplicationDefinition<Services, ApplicationError, Requirements>,
 ): ApplicationImplementationState<Services, ApplicationError, Requirements> => {
   if (!isEFFRONTMember(application, "Application")) {
-    throw new TypeError("Application must be created with EFFRONT.make.");
+    throw authoringTypeError("Application must be created with EFFRONT.make.");
   }
   return application[EFFRONTStateTypeId];
 };
@@ -158,7 +161,7 @@ export const makeApplication = <
   }: EFFRONTApplicationOptions<Services, Definition, ApplicationError, Requirements>,
 ): ApplicationDefinition<Services, ApplicationError, Requirements> => {
   if (getEFFRONTIdentity(routes) !== identity) {
-    throw new TypeError("Root Routes were created by a different EFFRONT module.");
+    throw authoringTypeError("Root Routes were created by a different EFFRONT module.");
   }
 
   return new ApplicationDefinitionImpl(
