@@ -1,84 +1,92 @@
+import { Array } from "effect";
 import { describe, expect, test } from "vite-plus/test";
+
+import {
+  incorrectlyLocalized,
+  internalTargets,
+  invalidDeclaredHeadings,
+  missingFragments,
+  renderedHeadings,
+  renderedIds,
+} from "./pages-link-targets.fixture.ts";
+import { render, text, textOf } from "./pages-render.fixture.ts";
 import { getPage, localizedPages, pages } from "./pages.ts";
-import { documentLocale, localizedPath } from "./locale.ts";
 
-import { render, text } from "./pages-render.fixture.ts";
+const architecture = "/architecture/implementation/";
+const numberOfChapters = 7;
+const invalidChapter = (page: (typeof pages)[number]): boolean =>
+  page.group !== "実装解説" || !page.slug.startsWith(architecture);
+const architectureTitles = [
+  { locale: "en", note: "For advanced consumers and Effront developers" },
+  { locale: "ja", note: "高度な使い方をする利用者や Effront の開発者" },
+];
 
-describe("documentation catalog", () => {
-  test("retains all seven authored architecture chapters under their implementation group", async () => {
-    const architecture = pages.filter((page) => page.section === "アーキテクチャ");
-    expect(architecture).toHaveLength(7);
-    for (const page of architecture) {
-      expect(page.group).toBe("実装解説");
-      expect(page.slug).toMatch(/^\/architecture\/implementation\//u);
-    }
-    expect(pages.some((page) => page.slug.startsWith("/reading/"))).toBe(false);
-    for (const locale of ["en", "ja"] as const) {
-      await expect(text(`/${locale}`)).resolves.toContain(
-        locale === "en"
-          ? "For advanced consumers and Effront developers"
-          : "高度な使い方をする利用者や Effront の開発者",
-      );
-    }
+describe("published architecture chapters", () => {
+  test("keeps all authored chapters under the implementation group", () => {
+    const chapters = Array.filter(pages, (page) => page.section === "アーキテクチャ");
+    expect(chapters).toHaveLength(numberOfChapters);
+    expect(Array.filter(chapters, (page) => invalidChapter(page))).toStrictEqual([]);
+    expect(Array.some(pages, (page) => page.slug.startsWith("/reading/"))).toBe(false);
   });
 
-  test.each(
-    localizedPages.filter((page) => page.slug.startsWith("/en/architecture/implementation/")),
-  )("$slug labels every source excerpt in English", async (page) => {
+  test.each(architectureTitles)(
+    "describes the intended audience on the $locale home page",
+    async ({ locale, note }) => {
+      await expect(text(`/${locale}`)).resolves.toContain(note);
+    },
+  );
+});
+
+const englishChapters = Array.filter(localizedPages, (page) =>
+  page.slug.startsWith(`/en${architecture}`),
+);
+const sourceFigure =
+  /<figure\b[^>]*data-core-source="(?<path>[^"]+)"[^>]*>(?<figure>[\s\S]*?)<\/figure>/gu;
+const figureCaption = /<figcaption\b[^>]*>(?<caption>[\s\S]*?)<\/figcaption>/u;
+type Excerpt = Readonly<{ caption: string; path: string }>;
+const missingCaption = ({ caption, path }: Excerpt): boolean =>
+  caption !== `Excerpt from ${path}` && caption !== `${path} excerpt`;
+
+const extractExcerpts = (html: string): Excerpt[] => {
+  const figures = Array.fromIterable(html.matchAll(sourceFigure));
+  return Array.map(figures, ({ groups }) => {
+    const caption = figureCaption.exec(groups?.["figure"] ?? "")?.groups?.["caption"] ?? "";
+    return { caption: textOf(caption).trim(), path: groups?.["path"] ?? "" };
+  });
+};
+
+describe("english source excerpt labels", () => {
+  test.each(englishChapters)("$slug labels every source excerpt", async (page) => {
     const html = await render(page.slug);
-    const excerpts = [
-      ...html.matchAll(/<figure\b[^>]*data-core-source="([^"]+)"[^>]*>([\s\S]*?)<\/figure>/g),
-    ];
-    expect(excerpts.length).toBeGreaterThan(0);
-    for (const [, path, figure] of excerpts) {
-      const caption = figure?.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/)?.[1];
-      expect([`Excerpt from ${path}`, `${path} excerpt`]).toContain(
-        caption?.replaceAll(/<[^>]*>/g, "").trim(),
-      );
-    }
+    const excerpts = extractExcerpts(html);
+    expect(excerpts).not.toHaveLength(0);
+    expect(Array.filter(excerpts, (excerpt) => missingCaption(excerpt))).toStrictEqual([]);
   });
+});
 
-  test("rejects missing content instead of silently rendering another page", () => {
-    ["/not-a-document", "/en/not-a-document", "/ja/not-a-document", "/fr/guide/routes"].forEach(
-      (slug) => {
-        expect(() => getPage(slug)).toThrow(`Documentation route is missing content: ${slug}`);
-      },
-    );
-  });
+describe("documentation route validation", () => {
+  test.each(["/not-a-document", "/en/not-a-document", "/ja/not-a-document", "/fr/guide/routes"])(
+    "reports missing content at %s",
+    (slug) => {
+      expect(() => getPage(slug)).toThrow(`Documentation route is missing content: ${slug}`);
+    },
+  );
 
   test.each([...pages, ...localizedPages])(
-    "$slug renders every table-of-contents target and valid internal links",
+    "$slug renders the declared headings and valid internal links",
     async (page) => {
       const html = await render(page.slug);
-      expect(page.headings.length).toBeGreaterThan(0);
-      const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+      const ids = renderedIds(html);
+      const declared = Array.map(page.headings, (heading) => heading.id);
+      const linked = internalTargets(html, page.slug);
+      expect(declared).not.toHaveLength(0);
       expect(new Set(ids).size).toBe(ids.length);
-      const headingIds = [...html.matchAll(/<h[2-6]\b[^>]*\bid="([^"]+)"/g)].map(
-        (match) => match[1],
-      );
-      expect(headingIds).toStrictEqual(page.headings.map((heading) => heading.id));
-      for (const heading of page.headings) {
-        expect(heading.id).toMatch(/^[a-z][a-z0-9-]*$/u);
-        expect(ids).toContain(heading.id);
-      }
-      for (const [, href] of html.matchAll(/href="([^"]+)"/g)) {
-        if (!href || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href)) {
-          continue;
-        }
-        const url = new URL(href, `https://docs.example${page.slug}`);
-        const target = getPage(url.pathname);
-        if (/^\/(en|ja)(?:\/|$)/u.test(page.slug)) {
-          expect(target.slug, `${page.slug} -> ${href}`).toBe(
-            localizedPath(target.slug, documentLocale(page.slug)),
-          );
-        }
-        if (url.hash) {
-          const targetHtml = url.pathname === page.slug ? html : await render(target.slug);
-          expect(targetHtml, `${page.slug} -> ${href}`).toContain(
-            `id="${decodeURIComponent(url.hash.slice(1))}"`,
-          );
-        }
-      }
+      expect(renderedHeadings(html)).toStrictEqual(declared);
+      expect({
+        invalidHeadings: invalidDeclaredHeadings(declared, ids),
+        invalidLinks: incorrectlyLocalized(linked, page.slug),
+      }).toStrictEqual({ invalidHeadings: [], invalidLinks: [] });
+      await expect(missingFragments(linked, { html, slug: page.slug })).resolves.toStrictEqual([]);
     },
   );
 });
