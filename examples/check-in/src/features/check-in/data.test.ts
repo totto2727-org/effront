@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { makeCheckInStore } from "./data.ts";
 
-describe(makeCheckInStore, () => {
+describe("check-in store", () => {
   test("scopes previews to the authenticated organizer", () => {
     const store = makeCheckInStore();
 
@@ -20,21 +20,21 @@ describe(makeCheckInStore, () => {
     const store = makeCheckInStore();
 
     expect(store.checkIn("organizer-ada", "summit-ada")).toMatchObject({
-      status: "checked-in",
       attendeeName: "Ada Lovelace",
+      status: "checked-in",
     });
     expect(store.checkIn("organizer-ada", "SUMMIT-ADA")).toMatchObject({
-      status: "already-checked-in",
       attendeeName: "Ada Lovelace",
+      status: "already-checked-in",
     });
 
     const preview = store.preview("organizer-ada");
     expect(preview?.checkedIn).toBe(1);
     expect(preview?.audit).toStrictEqual([
       {
-        ticketCode: "SUMMIT-ADA",
         actorId: "organizer-ada",
         occurredAt: "2026-09-24T03:00:00.000Z",
+        ticketCode: "SUMMIT-ADA",
       },
     ]);
   });

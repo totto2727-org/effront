@@ -22,7 +22,10 @@ const CheckInPage = EFFRONT.Page.make({
   render: Effect.fn("CheckInPage.render")(() => Effect.succeed(<CheckInConsole />)),
 });
 
-export default EFFRONT.make({
+const application = EFFRONT.make({
   layer: Layer.effect(CheckInStore, CheckInStore),
   routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", CheckInPage),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin loads its application from this entry’s default export.
+export default application;
