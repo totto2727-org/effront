@@ -76,7 +76,12 @@ export const coreRuntimeSources = {
 
 export const NativeDocumentNavigationInfo = "effront-native-document";
 
-export const isRoutedNavigation = (event: NavigateEvent): boolean =>
+type NavigationInputs = Pick<
+  NavigateEvent,
+  "canIntercept" | "downloadRequest" | "formData" | "hashChange" | "info" | "navigationType"
+>;
+
+export const isRoutedNavigation = (event: NavigationInputs): boolean =>
   event.canIntercept &&
   !event.hashChange &&
   // oxlint-disable-next-line rules/prefer-is-nullish -- A native NavigateEvent represents no download with an explicit null.
