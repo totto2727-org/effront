@@ -1,5 +1,7 @@
+// oxlint-disable-next-line rules/no-node-imports -- React owns the async callbacks; AsyncLocalStorage propagates the request runtime across them.
 import { AsyncLocalStorage } from "node:async_hooks";
 
+import { Predicate } from "effect";
 import type { Effect } from "effect";
 
 export type RenderRuntime<Services> = <Output, Error>(
@@ -10,7 +12,7 @@ type RenderConcern = "Component" | "Layout" | "Page";
 
 type BoundRenderRuntime = Readonly<{
   activeMiddleware: Readonly<object[]>;
-  run: RenderRuntime<any>;
+  run: RenderRuntime<never>;
 }>;
 
 export type RenderRuntimeContext = Readonly<{
@@ -26,27 +28,39 @@ export type RenderRuntimeContext = Readonly<{
   ) => Promise<Output>;
 }>;
 
+const renderScopeError = (message: string): TypeError =>
+  // oxlint-disable-next-line rules/require-tagged-error -- Invalid calls retain the synchronous TypeError contract of authoring components.
+  new TypeError(message);
+
 export const makeRenderRuntimeContext = (): RenderRuntimeContext => {
   const storage = new AsyncLocalStorage<BoundRenderRuntime>();
 
   return {
     bind: (runtime, activeMiddleware, evaluate) =>
       storage.run({ activeMiddleware, run: runtime }, evaluate),
-    run: (concern, effect, requiredMiddleware) => {
+    // oxlint-disable-next-line typescript/promise-function-async -- React authoring callers receive synchronous errors for invalid render scopes.
+    run: <Output, Error, Services>(
+      concern: RenderConcern,
+      effect: Effect.Effect<Output, Error, Services>,
+      requiredMiddleware: Readonly<object[]>,
+    ): Promise<Output> => {
       const bound = storage.getStore();
-      if (bound === undefined) {
-        throw new TypeError(`EFFRONT ${concern} rendered outside its application request runtime.`);
+      if (Predicate.isNullish(bound)) {
+        throw renderScopeError(
+          `EFFRONT ${concern} rendered outside its application request runtime.`,
+        );
       }
       const middlewareAvailable = requiredMiddleware.every((required) =>
         bound.activeMiddleware.includes(required),
       );
       if (!middlewareAvailable) {
-        throw new TypeError(
+        throw renderScopeError(
           `EFFRONT ${concern} requires a middleware scope that is not active for this request.`,
         );
       }
 
-      return bound.run(effect);
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Authoring validates required services, and this request scope provides them at runtime.
+      return bound.run(effect as Effect.Effect<Output, Error>);
     },
   };
 };
