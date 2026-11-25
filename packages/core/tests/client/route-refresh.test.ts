@@ -1,315 +1,21 @@
+import { resetTransitions } from "./route-refresh-react.fixture.ts";
+
 import { beforeEach, expect, it } from "@effect/vitest";
-import { Deferred, Effect, Fiber, Layer } from "effect";
-import { HttpClient } from "effect/http";
+import { Deferred, Effect } from "effect";
 import { vi } from "vitest";
 
-vi.mock(import("@vitejs/plugin-rsc/browser"), () => ({
-  createFromReadableStream: vi.fn(),
-}));
-
-const react = vi.hoisted(() => ({
-  transitionResults: [] as unknown[],
-  transitionTypes: [] as string[],
-}));
-
-vi.mock("react", (importOriginal) =>
-  importOriginal<typeof import("react")>().then((original) => ({
-    ...original,
-    startTransition: (action: Parameters<typeof original.startTransition>[0]) => {
-      original.startTransition(() => {
-        const result = action();
-        react.transitionResults.push(result);
-        return result;
-      });
-    },
-    addTransitionType: (type: string) => {
-      react.transitionTypes.push(type);
-    },
-  })),
-);
-
-import { BrowserEffectRunner } from "#core/client/browser-effect-runner.ts";
 import { BrowserRenderer } from "#core/client/browser-renderer.ts";
 import type { BrowserRender } from "#core/client/browser-renderer.ts";
-import { FlightLoadError } from "#core/client/flight-client.ts";
-import { NavigationApi } from "#core/client/navigation-api.ts";
 import { RouteLoader } from "#core/client/route-loader.ts";
-import { installRouteRefresh, RouteRefresher } from "#core/client/route-refresh.ts";
-import type { RouteTreeModel } from "#core/rsc/route-tree.ts";
 
-const committedRefresh = () => ({
-  committed: Promise.resolve(),
-  retired: Promise.withResolvers<void>().promise,
-  discard: () => Promise.resolve(),
-});
+import {
+  committedRefresh,
+  makeRouteTree,
+  withBrowserRefresh,
+} from "./route-refresh-browser.fixture.ts";
+import { entry, routedNavigation, TestNavigation } from "./route-refresh-navigation.fixture.ts";
 
-const makeRouteTree = (id: string): RouteTreeModel => ({ child: null, content: null, id });
-
-const entry = Object.assign(new EventTarget(), {
-  getState: () => undefined,
-  id: "entry-one",
-  index: 0,
-  key: "entry-one",
-  ondispose: null,
-  sameDocument: true,
-  url: "https://effront.test/schedule/day-one",
-}) satisfies NavigationHistoryEntry;
-
-class TestNavigation extends EventTarget {
-  currentEntry = entry;
-  navigate = vi.fn(
-    (_url: string | URL, _options?: NavigationNavigateOptions): NavigationResult => ({
-      finished: Promise.resolve(entry),
-    }),
-  );
-  reloadDocument = vi.fn();
-  transition: NavigationTransition | null = null;
-
-  entries = () => [entry];
-}
-
-const routedNavigation = () =>
-  Object.assign(new Event("navigate"), {
-    canIntercept: true,
-    destination: {
-      id: "entry-two",
-      url: "https://effront.test/schedule/day-two",
-    },
-    downloadRequest: null,
-    formData: null,
-    hashChange: false,
-    info: undefined,
-    navigationType: "push" as const,
-  });
-
-const makeNavigationApiLayer = (navigation: TestNavigation): Layer.Layer<NavigationApi> =>
-  NavigationApi.layerTest({
-    getCurrentEntry: () => navigation.currentEntry,
-    getCurrentUrl: () => entry.url,
-    getTransition: () => navigation.transition,
-    navigate: (url, options) => navigation.navigate(url, options),
-    reloadDocument: navigation.reloadDocument,
-    replaceDocument: vi.fn(),
-    subscribe: (listener) => {
-      navigation.addEventListener("navigate", listener as EventListener);
-      return () => {
-        navigation.removeEventListener("navigate", listener as EventListener);
-      };
-    },
-  });
-
-const testHttpClient = HttpClient.make(() => Effect.die("Unexpected HTTP request."));
-
-beforeEach(() => {
-  react.transitionResults.length = 0;
-  react.transitionTypes.length = 0;
-});
-
-it.effect("reloads the document until navigation installs streamed route refresh", () => {
-  const navigation = new TestNavigation();
-  const streamedRefresh = vi.fn();
-
-  return Effect.gen(function* () {
-    const routeRefresher = yield* RouteRefresher;
-    yield* routeRefresher.refreshCurrentRoute("server-function");
-    expect(navigation.reloadDocument).toHaveBeenCalledOnce();
-
-    yield* routeRefresher.replace({
-      interruptCurrentRouteRefresh: Effect.void,
-      refreshCurrentRoute: () => Effect.sync(streamedRefresh),
-    });
-    yield* routeRefresher.refreshCurrentRoute("server-function");
-    expect(streamedRefresh).toHaveBeenCalledOnce();
-    expect(navigation.reloadDocument).toHaveBeenCalledOnce();
-  }).pipe(
-    Effect.provide(RouteRefresher.layer.pipe(Layer.provide(makeNavigationApiLayer(navigation)))),
-  );
-});
-
-const withBrowserRefresh = <A, E>(
-  navigation: TestNavigation,
-  browserRenderer: BrowserRenderer["Service"],
-  routeLoader: RouteLoader["Service"],
-  test: (
-    refresh: RouteRefresher["Service"]["refreshCurrentRoute"],
-    interrupt: Effect.Effect<void>,
-  ) => Effect.Effect<A, E>,
-): Effect.Effect<A, E> =>
-  Effect.scoped(
-    Effect.gen(function* () {
-      const initialized = yield* Deferred.make<RouteRefresher["Service"]>();
-      const navigationApiLayer = makeNavigationApiLayer(navigation);
-      const routeRefresherLayer = RouteRefresher.layer.pipe(Layer.provide(navigationApiLayer));
-      const servicesLayer = Layer.mergeAll(
-        BrowserEffectRunner.layer,
-        BrowserRenderer.layerTest(browserRenderer),
-        navigationApiLayer,
-        RouteLoader.layerTest(routeLoader),
-        routeRefresherLayer,
-      ).pipe(Layer.provideMerge(Layer.succeed(HttpClient.HttpClient, testHttpClient)));
-      const browserRefreshLayer = Layer.effectDiscard(
-        Effect.gen(function* () {
-          yield* installRouteRefresh;
-          const routeRefresher = yield* RouteRefresher;
-          yield* Deferred.succeed(initialized, routeRefresher);
-        }),
-      ).pipe(Layer.provideMerge(servicesLayer));
-      const running = yield* Layer.launch(browserRefreshLayer).pipe(Effect.forkScoped);
-      const routeRefresher = yield* Effect.raceFirst(
-        Deferred.await(initialized),
-        Fiber.join(running),
-      );
-      return yield* test(
-        routeRefresher.refreshCurrentRoute,
-        routeRefresher.interruptCurrentRouteRefresh,
-      );
-    }),
-  );
-
-it.effect("applies the HMR transition type after the active navigation settles", () =>
-  Effect.gen(function* () {
-    const navigation = new TestNavigation();
-    const transition = Promise.withResolvers<void>();
-    navigation.transition = {
-      committed: Promise.resolve(),
-      finished: transition.promise,
-      from: entry,
-      navigationType: "replace",
-    };
-    const loaded = yield* Deferred.make<void>();
-    const rendered = Promise.withResolvers<RouteTreeModel>();
-    const invalidated = vi.fn();
-    const cached = vi.fn();
-    const routeLoader = RouteLoader.of({
-      invalidate: invalidated,
-      load: () =>
-        Deferred.succeed(loaded, undefined).pipe(
-          Effect.as({
-            _tag: "Route" as const,
-            cache: () => undefined,
-            completed: Effect.void,
-            release: Effect.void,
-            resolvedUrl: new URL(entry.url),
-            routeTree: makeRouteTree("refreshed"),
-          }),
-        ),
-      loadInitial: Effect.die("Unexpected initial route load."),
-      prepareRefresh: () => cached,
-    });
-    const browserRenderer = BrowserRenderer.of({
-      commit: () => undefined,
-      initialize: () => undefined,
-      navigate: () => {
-        throw new TypeError("Unexpected navigation render.");
-      },
-      refresh: (nextRouteTree) => {
-        rendered.resolve(nextRouteTree);
-        return committedRefresh();
-      },
-    });
-
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh) =>
-      Effect.gen(function* () {
-        yield* refresh("hmr-refresh");
-        yield* Effect.yieldNow;
-        expect(Deferred.isDoneUnsafe(loaded)).toBe(false);
-        expect(react.transitionTypes).toStrictEqual([]);
-
-        navigation.transition = null;
-        transition.resolve();
-        const nextRouteTree = yield* Effect.promise(() => rendered.promise);
-
-        expect(nextRouteTree.id).toBe("refreshed");
-        expect(react.transitionTypes).toStrictEqual(["hmr-refresh"]);
-        // Returning an async Action here would make React wait for its own UI commit.
-        expect(react.transitionResults).toStrictEqual([undefined]);
-        expect(invalidated).toHaveBeenCalledOnce();
-        expect(navigation.navigate).not.toHaveBeenCalled();
-        yield* Effect.yieldNow;
-        expect(cached).toHaveBeenCalledOnce();
-      }),
-    );
-  }),
-);
-
-it.effect("leaves the current render untouched when refresh loading fails", () =>
-  Effect.gen(function* () {
-    const navigation = new TestNavigation();
-    const loadFinished = yield* Deferred.make<void>();
-    const renderRefresh = vi.fn(committedRefresh);
-    const routeLoader = RouteLoader.of({
-      invalidate: vi.fn(),
-      load: () =>
-        Effect.fail(
-          new FlightLoadError({ cause: new Error("Refresh failed."), reason: "RequestFailed" }),
-        ).pipe(Effect.ensuring(Deferred.succeed(loadFinished, undefined))),
-      loadInitial: Effect.die("Unexpected initial route load."),
-      prepareRefresh: () => () => undefined,
-    });
-    const browserRenderer = BrowserRenderer.of({
-      commit: () => undefined,
-      initialize: () => undefined,
-      navigate: () => {
-        throw new TypeError("Unexpected navigation render.");
-      },
-      refresh: renderRefresh,
-    });
-
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh) =>
-      Effect.gen(function* () {
-        yield* refresh("server-function");
-        yield* Deferred.await(loadFinished);
-        yield* Effect.yieldNow;
-
-        expect(renderRefresh).not.toHaveBeenCalled();
-      }),
-    );
-  }),
-);
-
-it.effect("interrupts a current-route refresh when a routed navigation begins", () =>
-  Effect.gen(function* () {
-    const navigation = new TestNavigation();
-    const loadStarted = yield* Deferred.make<void>();
-    const loadInterrupted = yield* Deferred.make<void>();
-    const responseScopeClosed = yield* Deferred.make<void>();
-    const rootRefresh = vi.fn(committedRefresh);
-    const cached = vi.fn();
-    const routeLoader = RouteLoader.of({
-      invalidate: vi.fn(),
-      load: () =>
-        Effect.acquireRelease(Deferred.succeed(loadStarted, undefined), () =>
-          Deferred.succeed(responseScopeClosed, undefined),
-        ).pipe(
-          Effect.andThen(Effect.never),
-          Effect.onInterrupt(() => Deferred.succeed(loadInterrupted, undefined)),
-        ),
-      loadInitial: Effect.die("Unexpected initial route load."),
-      prepareRefresh: () => cached,
-    });
-    const browserRenderer = BrowserRenderer.of({
-      commit: () => undefined,
-      initialize: () => undefined,
-      navigate: () => {
-        throw new TypeError("Unexpected navigation render.");
-      },
-      refresh: rootRefresh,
-    });
-
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh) =>
-      Effect.gen(function* () {
-        yield* refresh("server-function");
-        yield* Deferred.await(loadStarted);
-        navigation.dispatchEvent(routedNavigation());
-        yield* Deferred.await(loadInterrupted);
-        yield* Deferred.await(responseScopeClosed);
-
-        expect(rootRefresh).not.toHaveBeenCalled();
-        expect(cached).not.toHaveBeenCalled();
-      }),
-    );
-  }),
-);
+beforeEach(resetTransitions);
 
 const makeStreamingRefresh = Effect.gen(function* () {
   const streamFinished = yield* Deferred.make<void>();
@@ -364,7 +70,7 @@ it.effect("keeps a visible refresh stream open while the next navigation is pend
       releaseStream,
     } = yield* makeStreamingRefresh;
 
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh) =>
+    yield* withBrowserRefresh({ browserRenderer, navigation, routeLoader }, (refresh) =>
       Effect.gen(function* () {
         // Commit the refreshed page while its server response is still streaming.
         yield* refresh("server-function");
@@ -413,7 +119,7 @@ it.effect("releases a streaming refresh when its replacement becomes visible", (
     const { routeLoader, streamReleased, responseScopeClosed, releaseStream, cached } =
       yield* makeStreamingRefresh;
 
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh) =>
+    yield* withBrowserRefresh({ browserRenderer, navigation, routeLoader }, (refresh) =>
       Effect.gen(function* () {
         yield* refresh("hmr-refresh");
         const render = yield* Effect.promise(() => published.promise);
@@ -450,7 +156,7 @@ it.effect("discards an uncommitted refresh before releasing its response", () =>
     const { routeLoader, streamReleased, responseScopeClosed, releaseStream, cached } =
       yield* makeStreamingRefresh;
 
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh, interrupt) =>
+    yield* withBrowserRefresh({ browserRenderer, navigation, routeLoader }, (refresh, interrupt) =>
       Effect.gen(function* () {
         yield* refresh("hmr-refresh");
         const pending = yield* Effect.promise(() => published.promise);
@@ -497,20 +203,22 @@ it.effect("keeps response ownership when navigation interrupts refresh publicati
       load: (request) => Deferred.await(allowLoad).pipe(Effect.andThen(routeLoader.load(request))),
     });
 
-    yield* withBrowserRefresh(navigation, browserRenderer, delayedLoader, (refresh) =>
-      Effect.gen(function* () {
-        yield* refresh("hmr-refresh");
-        yield* Effect.yieldNow;
-        yield* Deferred.succeed(allowLoad, undefined);
-        const discard = yield* Effect.promise(() => discardPublished.promise);
-        expect(discard._tag).toBe("Discard");
-        expect(releaseStream).not.toHaveBeenCalled();
-        expect(Deferred.isDoneUnsafe(responseScopeClosed)).toBe(false);
+    yield* withBrowserRefresh(
+      { browserRenderer, navigation, routeLoader: delayedLoader },
+      (refresh) =>
+        Effect.gen(function* () {
+          yield* refresh("hmr-refresh");
+          yield* Effect.yieldNow;
+          yield* Deferred.succeed(allowLoad, undefined);
+          const discard = yield* Effect.promise(() => discardPublished.promise);
+          expect(discard._tag).toBe("Discard");
+          expect(releaseStream).not.toHaveBeenCalled();
+          expect(Deferred.isDoneUnsafe(responseScopeClosed)).toBe(false);
 
-        browserRenderer.commit(discard);
-        yield* Deferred.await(responseScopeClosed);
-        expect(releaseStream).toHaveBeenCalledOnce();
-      }),
+          browserRenderer.commit(discard);
+          yield* Deferred.await(responseScopeClosed);
+          expect(releaseStream).toHaveBeenCalledOnce();
+        }),
     );
   }),
 );
@@ -523,7 +231,7 @@ it.effect("releases a visible refresh when the browser runtime shuts down", () =
     browserRenderer.initialize(makeRouteTree("initial"), published.resolve);
     const { routeLoader, responseScopeClosed, releaseStream } = yield* makeStreamingRefresh;
 
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh) =>
+    yield* withBrowserRefresh({ browserRenderer, navigation, routeLoader }, (refresh) =>
       Effect.gen(function* () {
         yield* refresh("hmr-refresh");
         const render = yield* Effect.promise(() => published.promise);
@@ -563,7 +271,7 @@ it.effect("interrupts a current-route refresh when another refresh source supers
       refresh: rootRefresh,
     });
 
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh, interrupt) =>
+    yield* withBrowserRefresh({ browserRenderer, navigation, routeLoader }, (refresh, interrupt) =>
       Effect.gen(function* () {
         yield* refresh("server-function");
         yield* Deferred.await(loadStarted);
@@ -616,7 +324,7 @@ it.effect("replaces an older refresh when a newer development update arrives", (
       },
     });
 
-    yield* withBrowserRefresh(navigation, browserRenderer, routeLoader, (refresh) =>
+    yield* withBrowserRefresh({ browserRenderer, navigation, routeLoader }, (refresh) =>
       Effect.gen(function* () {
         yield* refresh("server-function");
         yield* Deferred.await(firstStarted);
