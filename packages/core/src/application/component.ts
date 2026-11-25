@@ -32,6 +32,7 @@ export const makeComponentFactory = <ApplicationServices, AvailableServices>(
     Props,
     ApplicationServices
   > => {
+    // oxlint-disable-next-line typescript/promise-function-async -- The request runtime throws synchronously when the caller has no matching scope.
     const EffectComponent = (props: Props): Promise<Awaited<ReactNode>> =>
       identity.renderRuntime.run(
         "Component",

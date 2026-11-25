@@ -1,14 +1,16 @@
+import { Array } from "effect";
 import type { Effect, Types } from "effect";
 import { HttpRouter } from "effect/http";
 import type { HttpServerResponse } from "effect/http";
 
 import {
+  authoringTypeError,
   EFFRONTIdentityTypeId,
   isEFFRONTMember,
   EFFRONTMemberKindTypeId,
   EFFRONTStateTypeId,
 } from "./effront-identity.ts";
-import type { EFFRONTIdentity, EFFRONTStatefulMember } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
 
 type MiddlewareConfig = Readonly<{
   provides?: unknown;
@@ -37,11 +39,10 @@ export interface Middleware<
   ApplicationServices,
   out RequiredServices,
   out ProvidedServices,
-> extends EFFRONTStatefulMember<
-  ApplicationServices,
-  "Middleware",
-  MiddlewareImplementationState<RequiredServices, ProvidedServices>
-> {}
+> extends EFFRONTMember<ApplicationServices, "Middleware"> {
+  // oxlint-disable-next-line rules/no-readonly -- Consumers can inspect the immutable middleware state through this shared runtime symbol.
+  readonly [EFFRONTStateTypeId]: MiddlewareImplementationState<RequiredServices, ProvidedServices>;
+}
 
 export type AnyMiddleware<ApplicationServices> = Middleware<ApplicationServices, unknown, unknown>;
 
@@ -69,15 +70,18 @@ class MiddlewareImpl<ApplicationServices, RequiredServices, ProvidedServices>
     Middleware<ApplicationServices, RequiredServices, ProvidedServices>,
     MiddlewareImplementationState<RequiredServices, ProvidedServices>
 {
-  readonly [EFFRONTIdentityTypeId]: EFFRONTIdentity<ApplicationServices>;
-  readonly [EFFRONTMemberKindTypeId] = "Middleware" as const;
-  get [EFFRONTStateTypeId](): MiddlewareImplementationState<RequiredServices, ProvidedServices> {
+  public [EFFRONTIdentityTypeId]: EFFRONTIdentity<ApplicationServices>;
+  public [EFFRONTMemberKindTypeId] = "Middleware" as const;
+  public get [EFFRONTStateTypeId](): MiddlewareImplementationState<
+    RequiredServices,
+    ProvidedServices
+  > {
     return this;
   }
-  readonly handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
-  readonly httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
+  public handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
+  public httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
 
-  constructor(
+  public constructor(
     identity: EFFRONTIdentity<ApplicationServices>,
     handler: MiddlewareHandler<RequiredServices, ProvidedServices>,
     httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>,
@@ -93,7 +97,7 @@ export const getMiddlewareState = <ApplicationServices, RequiredServices, Provid
   middleware: Middleware<ApplicationServices, RequiredServices, ProvidedServices>,
 ): MiddlewareImplementationState<RequiredServices, ProvidedServices> => {
   if (!isEFFRONTMember(middleware, "Middleware")) {
-    throw new TypeError("Middleware must be created with EFFRONT.Middleware.make.");
+    throw authoringTypeError("Middleware must be created with EFFRONT.Middleware.make.");
   }
   return middleware[EFFRONTStateTypeId];
 };
@@ -110,24 +114,28 @@ export const applyMiddleware = <ApplicationServices, Error, RemainingServices>(
     Error,
     ApplicationServices | HttpRouter.Provided | RemainingServices
   >,
-) =>
-  middleware.reduceRight(
-    (current, value) => getScopedMiddlewareHandler(value)(current),
-    httpEffect,
+): Effect.Effect<
+  HttpServerResponse.HttpServerResponse,
+  Error,
+  ApplicationServices | HttpRouter.Provided | RemainingServices
+> =>
+  Array.reduceRight(middleware, httpEffect, (current, value) =>
+    getScopedMiddlewareHandler(value)(current),
   );
 
 export function getScopedHttpMiddleware<ApplicationServices>(
   middleware: AnyMiddleware<ApplicationServices>,
 ): HttpMiddleware<never, never>;
-// AnyMiddleware erases each link's service contract after withMiddleware has validated the ordered
-// chain. Callers must compose that complete chain inside the application and request context; the
-// returned native descriptor retains the real runtime provisioning behavior.
-export function getScopedHttpMiddleware(middleware: AnyMiddleware<unknown>) {
+// Application construction validates the ordered chain before its static requirements are erased.
+// The native chain still provisions real services at runtime.
+export function getScopedHttpMiddleware(
+  middleware: AnyMiddleware<unknown>,
+): HttpMiddleware<unknown, unknown> {
   return getMiddlewareState(middleware).httpMiddleware;
 }
 
 export type MiddlewareFactory<ApplicationServices, AvailableServices> = Readonly<{
-  make: <Config extends MiddlewareConfig = {}>(
+  make: <Config extends MiddlewareConfig = MiddlewareConfig>(
     handler: MiddlewareHandler<AvailableServices, MiddlewareProvides<Config>>,
   ) => Middleware<ApplicationServices, AvailableServices, MiddlewareProvides<Config>>;
 }>;
@@ -135,7 +143,7 @@ export type MiddlewareFactory<ApplicationServices, AvailableServices> = Readonly
 export const makeMiddlewareFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
 ): MiddlewareFactory<ApplicationServices, AvailableServices> => ({
-  make: <Config extends MiddlewareConfig = {}>(
+  make: <Config extends MiddlewareConfig = MiddlewareConfig>(
     handler: MiddlewareHandler<AvailableServices, MiddlewareProvides<Config>>,
   ): Middleware<ApplicationServices, AvailableServices, MiddlewareProvides<Config>> => {
     type Provides = MiddlewareProvides<Config>;

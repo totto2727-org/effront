@@ -28,7 +28,7 @@ export const makeLoadingFactory = <Services>(
   identity: EFFRONTIdentity<Services>,
 ): LoadingFactory<Services> => ({
   make: ({ render }) => {
-    const LoadingComponent = () => render();
+    const LoadingComponent = (): Awaited<ReactNode> => render();
     return attachEFFRONTMember(LoadingComponent, identity, "Loading");
   },
 });

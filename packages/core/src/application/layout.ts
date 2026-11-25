@@ -31,7 +31,8 @@ export const makeLayoutFactory = <ApplicationServices, AvailableServices>(
   middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): LayoutFactory<ApplicationServices, AvailableServices> => ({
   make: ({ render }) => {
-    const LayoutComponent = (props: LayoutProps) =>
+    // oxlint-disable-next-line typescript/promise-function-async -- The request runtime throws synchronously when the caller has no matching scope.
+    const LayoutComponent = (props: LayoutProps): Promise<Awaited<ReactNode>> =>
       identity.renderRuntime.run(
         "Layout",
         Effect.suspend(() => render(props)),
