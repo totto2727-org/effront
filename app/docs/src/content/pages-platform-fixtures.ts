@@ -9,14 +9,16 @@ export const installGuides = [
   "/platforms/cloudflare",
   "/platforms/alchemy",
 ];
-const manifestSources = import.meta.glob<string>("../../../../examples/{node,bun}/package.json", {
-  eager: true,
-  import: "default",
-  query: "?raw",
-});
+const exampleSources = import.meta.glob<string>(
+  "../../../../examples/{node,bun,cloudflare,alchemy-cloudflare}/{package.json,vite.config.ts,src/{entry.effront.tsx,entry.workers.ts}}",
+  { eager: true, import: "default", query: "?raw" },
+);
+
+export const exampleSource = (example: string, path: string): string =>
+  exampleSources[`../../../../examples/${example}/${path}`] ?? "";
 
 export const nativeScripts = (host: (typeof nativeHosts)[number]): unknown => {
-  const source = manifestSources[`../../../../examples/${host}/package.json`] ?? "{}";
+  const source = exampleSource(host, "package.json");
   const parsed: unknown = JSON.parse(source);
   return Predicate.hasProperty(parsed, "scripts") ? parsed.scripts : undefined;
 };
