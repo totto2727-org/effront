@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const httpStatusOk = 200;
+const noBody = 0;
 
 const origin = "http://127.0.0.1:4395";
 
@@ -10,12 +11,12 @@ test("starter Worker Layer serves the minimal application without deployment ser
   const response = await page.goto(origin);
   expect(response?.status()).toBe(httpStatusOk);
   await expect(page).toHaveTitle("Hello, world");
-  await expect(page.getByRole("heading", { name: "Hello, world", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { exact: true, name: "Hello, world" })).toBeVisible();
 });
 
 test("starter Worker Layer retains HEAD handling", async ({ request }) => {
   const response = await request.head(origin);
   expect(response.status()).toBe(httpStatusOk);
   expect(response.headers()["content-type"]).toContain("text/html");
-  expect(await response.body()).toHaveLength(0);
+  expect(await response.body()).toHaveLength(noBody);
 });

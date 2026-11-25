@@ -1,13 +1,9 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 test.use({ baseURL: "http://127.0.0.1:4394" });
 
-test("Alchemy Loading homepage navigates through the slow route to its completed page", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-
+const openPlayground = async (page: Page): Promise<void> => {
   await page.goto("/");
   await page.getByRole("link", { name: "実験室を開く" }).click();
   await expect(page).toHaveURL(/\/loading$/u);
@@ -15,6 +11,15 @@ test("Alchemy Loading homepage navigates through the slow route to its completed
   await expect(
     page.getByRole("heading", { name: "同じ「待つ」でも境界で見え方が変わる" }),
   ).toBeVisible();
+};
+
+test("Alchemy Loading homepage navigates through the slow route to its completed page", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+
+  await openPlayground(page);
   await page.getByRole("link", { name: "1. リンクで2秒待つ" }).click();
   await expect(page.getByTestId("route-loading")).toBeVisible();
   await expect(page).toHaveURL(/\/loading\/navigation$/u);
