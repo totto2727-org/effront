@@ -1,32 +1,38 @@
+import type { ReactNode } from "react";
+
 import { CodeBlock } from "#docs/components/code-block.tsx";
 import type { CodeLanguage } from "#docs/components/code-block.tsx";
 
-export interface CoreSource {
-  readonly path: string;
-  readonly code: string;
-  readonly language: CodeLanguage;
-}
+export type CoreSource = Readonly<{
+  code: string;
+  language: CodeLanguage;
+  path: string;
+}>;
 
+type ExcerptLocale = "en" | "ja";
+
+const renderCaption = (locale: ExcerptLocale, path: string): ReactNode =>
+  locale === "en" ? (
+    <figcaption>
+      Excerpt from <code>{path}</code>
+    </figcaption>
+  ) : (
+    <figcaption>
+      <code>{path}</code> の抜粋
+    </figcaption>
+  );
+
+// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named function declaration.
 export function SourceExcerpt({
   source,
   locale = "ja",
 }: Readonly<{
   source: CoreSource;
-  locale?: "en" | "ja";
-}>) {
+  locale?: ExcerptLocale;
+}>): ReactNode {
   return (
     <figure data-core-source={source.path}>
-      <figcaption>
-        {locale === "en" ? (
-          <>
-            Excerpt from <code>{source.path}</code>
-          </>
-        ) : (
-          <>
-            <code>{source.path}</code> の抜粋
-          </>
-        )}
-      </figcaption>
+      {renderCaption(locale, source.path)}
       <CodeBlock code={source.code} language={source.language} />
     </figure>
   );

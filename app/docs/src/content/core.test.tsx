@@ -1,11 +1,16 @@
+// oxlint-disable-next-line rules/no-node-imports -- The documentation check shells out to Git to verify committed source excerpts.
 import { execFile } from "node:child_process";
-import { architectureBaseline } from "./architecture-baseline.ts";
+// oxlint-disable-next-line rules/no-node-imports -- This Node test compares committed excerpts with the live working-tree files.
 import { readFile } from "node:fs/promises";
+// oxlint-disable-next-line rules/no-node-imports -- Node promisify adapts the Git subprocess callback for this Vitest test.
 import { promisify } from "node:util";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vite-plus/test";
+
+import { architectureBaseline } from "./architecture-baseline.ts";
 import { corePages, coreSources } from "./core.ts";
 
+// oxlint-disable-next-line typescript/strict-void-return -- Node's callback overload also returns a ChildProcess, which promisify deliberately ignores.
 const exec = promisify(execFile);
 const repository = new URL("../../../../", import.meta.url);
 const gitTimeout = 4000;
