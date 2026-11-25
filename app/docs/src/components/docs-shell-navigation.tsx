@@ -6,6 +6,7 @@ import type { ChangeEvent, JSX } from "react";
 import { localizedPath } from "#docs/content/locale.ts";
 import type { DocLocale } from "#docs/content/locale.ts";
 import type { DocsNavigationProps, NavigationItem } from "./docs-shell-types.ts";
+import { useSidebar } from "./ui/sidebar-context.ts";
 import {
   SidebarContent,
   SidebarFooter,
@@ -17,7 +18,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-  useSidebar,
 } from "./ui/sidebar.tsx";
 
 const renderBrand = (locale: DocLocale): JSX.Element => (
