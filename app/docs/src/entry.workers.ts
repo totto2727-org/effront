@@ -2,18 +2,20 @@ import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/applicati
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 
-import type application from "./entry.effront";
+import type application from "./entry.effront.tsx";
 
 export class Docs extends Cloudflare.Worker<Docs, Cloudflare.WorkerShape>()("Docs") {}
 
-export const docsWorker = (deployment: Pick<Cloudflare.WorkerProps, "domain" | "preview"> = {}) =>
+export const docsWorker = (
+  deployment: Pick<Cloudflare.WorkerProps, "domain" | "preview"> = {},
+): ReturnType<typeof Docs.make> =>
   Docs.make(
     {
-      main: import.meta.url,
       cache: { enabled: true },
-      dev: { port: 1339 },
       compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-      vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+      dev: { port: 1339 },
+      main: import.meta.url,
+      vite: { viteEnvironments: { children: ["ssr"], entry: "rsc" } },
       ...deployment,
     },
     Effect.gen(function* () {
@@ -24,4 +26,5 @@ export const docsWorker = (deployment: Pick<Cloudflare.WorkerProps, "domain" | "
     }),
   );
 
+// oxlint-disable-next-line import/no-default-export -- Alchemy uses the local worker entrypoint's default resource.
 export default docsWorker();
