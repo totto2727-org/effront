@@ -124,10 +124,6 @@ const workspaceConfig = (source: string): string =>
       '\nconst ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));\n',
       "",
     )
-    .replace(
-      "// oxlint-disable-next-line import/no-default-export -- Vite loads its configuration from a default export.\n",
-      "",
-    )
     .replace("  fmt: { ignorePatterns },\n  lint: createLintConfig(ignorePatterns),\n", "");
 
 describe("generated host parity", () => {
