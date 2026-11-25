@@ -12,9 +12,9 @@ export const coreRuntimeSources = {
   Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
     const length = request.headers["content-length"];
-    if (length !== undefined) {
+    if (Predicate.isNotNullish(length)) {
       const size = Number(length);
-      if (!Number.isSafeInteger(size) || size < 0 || size > maxRequestBodySize) {
+      if (!Number.isSafeInteger(size) || size < minRequestBodySize || size > maxRequestBodySize) {
         return HttpServerResponse.text("Request body exceeds the 10 MiB limit.", { status: 413 });
       }
     }
@@ -33,8 +33,10 @@ export const coreRuntimeSources = {
  *
  * Application layers are built once per evaluation, using the current services.
  * The host must retain the request scope until the body ends, fails, or is cancelled.
- * Effect HTTP's Web handler performs this transfer automatically. Do not wrap
- * response production alone in Effect.scoped: producing headers does not consume a body.
+ * Effect HTTP's Web handler performs this transfer automatically. Scoping
+ * response production alone would close the scope before the body is consumed.
+ * @param {ApplicationDefinition<Services, ApplicationError, Requirements>} application The application that owns the request layer.
+ * @returns {HttpApplicationEffect<ApplicationError, Requirements>} The handler effect for the current request.
  */`,
   },
   externalContext: {
