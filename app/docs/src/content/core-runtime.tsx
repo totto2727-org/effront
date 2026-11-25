@@ -97,15 +97,14 @@ export const coreRuntimeSources = {
     async flush(controller) {
       try {
         htmlWriter.finish(controller);
-        // HTML chunks are arbitrary bytes, not parser boundaries. Only HTML EOF is
-        // safe for injection without a tokenizer. The SSR tee branch keeps pulling
-        // Flight while its browser branch queues, so HTML still streams normally.
-        await writeFlightStream(flightReader, controller, options?.nonce);
+        // HTML chunks can end inside any token.
+        // The SSR tee branch keeps pulling Flight while its browser branch queues.
+        await writeFlightStream(flight.reader, { controller, nonce: options?.nonce });
         controller.enqueue(htmlTrailer);
-      } catch (cause) {
-        controller.error(cause);
+      } catch (error) {
+        controller.error(error);
       } finally {
-        releaseFlight();
+        flight.release();
       }
     },
     transform(chunk, controller) {
