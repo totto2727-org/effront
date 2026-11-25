@@ -1,5 +1,4 @@
-import { Array } from "effect";
-import type { Types } from "effect";
+import { Array, Predicate } from "effect";
 
 import {
   EFFRONTIdentityTypeId,
@@ -8,152 +7,102 @@ import {
   getEFFRONTIdentity,
   isEFFRONTMember,
 } from "./effront-identity.ts";
-import type { EFFRONTIdentity, EFFRONTStatefulMember } from "./effront-identity.ts";
-import type { LayoutComponent } from "./layout.ts";
-import type { LoadingComponent } from "./loading.ts";
+import type { EFFRONTIdentity } from "./effront-identity.ts";
 import type { AnyMiddleware } from "./middleware.ts";
 import { getPageState } from "./page.ts";
-import type { AnyPageDefinition, PageConcern } from "./page.ts";
+import type { AnyPageDefinition } from "./page.ts";
 import { analyzeRoutePath, joinRoutePaths } from "./route-path.ts";
+import type { AbsolutePath, RouteShape, ValidRoutePath } from "./route-path.ts";
 import type {
-  AbsolutePath,
-  JoinPath,
-  RouteParamNames,
-  RouteShape,
-  ValidRoutePath,
-} from "./route-path.ts";
+  AnyRoutes,
+  HasLayoutFromOptions,
+  KnownNonEmptyRoutes,
+  MatchingPageParams,
+  MountedPaths,
+  NoPathCollision,
+  RoutesContractTypeId,
+  RoutesDefinition,
+  RoutesFactory,
+  RoutesImplementationState,
+  RoutesOptions,
+  RoutesState,
+  StaticMountPath,
+} from "./routes-contract.ts";
 
-declare const RoutesContractTypeId: unique symbol;
-
-type RoutesState<
-  HasLayout extends boolean,
-  Paths extends AbsolutePath,
-  Shapes extends AbsolutePath,
-> = Readonly<{
-  hasLayout: Types.Covariant<HasLayout>;
-  paths: Types.Covariant<Paths>;
-  shapes: Types.Covariant<Shapes>;
-}>;
-
-type MountedPaths<Prefix extends AbsolutePath, Child> =
-  RoutesPaths<Child> extends infer Path extends AbsolutePath ? JoinPath<Prefix, Path> : never;
-
-type NoPathCollision<CurrentShapes extends AbsolutePath, Added extends AbsolutePath> = [
-  Extract<RouteShape<Added>, CurrentShapes>,
-] extends [never]
-  ? unknown
-  : never;
-
-type PageParamNames<Page> =
-  Page extends PageConcern<infer ParamNames, infer _Mode> ? ParamNames : never;
-
-type PageMode<Page> = Page extends PageConcern<infer _ParamNames, infer Mode> ? Mode : never;
-
-type ExactPageParamNames<Path extends AbsolutePath, Page> = [RouteParamNames<Path>] extends [
-  PageParamNames<Page>,
-]
-  ? [PageParamNames<Page>] extends [RouteParamNames<Path>]
-    ? unknown
-    : never
-  : never;
-
-type MatchingPageParams<Path extends AbsolutePath, Page> =
-  PageMode<Page> extends "Static"
-    ? [RouteParamNames<Path>] extends [never]
-      ? unknown
-      : never
-    : PageMode<Page> extends "Parameterized"
-      ? [RouteParamNames<Path>] extends [never]
-        ? never
-        : ExactPageParamNames<Path, Page>
-      : never;
-
-type StaticMountPath<Path extends AbsolutePath> = [RouteParamNames<Path>] extends [never]
-  ? unknown
-  : never;
-
-type KnownNonEmptyRoutes<Definition> =
-  AbsolutePath extends RoutesPaths<Definition>
-    ? never
-    : [RoutesPaths<Definition>] extends [never]
-      ? never
-      : unknown;
-
-export interface RoutesDefinition<
-  Services,
-  out HasLayout extends boolean,
-  out Paths extends AbsolutePath,
-  // Retain each matcher shape so additions do not recompute every earlier path's shape.
-  out Shapes extends AbsolutePath = RouteShape<Paths>,
-> extends EFFRONTStatefulMember<Services, "Routes", RoutesImplementationState<Services>> {
-  readonly [RoutesContractTypeId]: RoutesState<HasLayout, Paths, Shapes>;
-
-  /**
-   * Register a literal, `:parameter`, or terminal `*parameter` route.
-   * A catch-all captures the remaining decoded path, including an empty string at its prefix.
-   * Its prefix is reserved too, so `/manual` cannot coexist with `/manual/*path`.
-   */
-  page<const Path extends AbsolutePath, const Page extends AnyPageDefinition<Services>>(
-    path: Path & ValidRoutePath<Path> & NoPathCollision<Shapes, Path>,
-    page: Page & MatchingPageParams<Path, Page>,
-  ): RoutesDefinition<Services, HasLayout, Paths | Path, Shapes | RouteShape<Path>>;
-
-  mount<const Prefix extends AbsolutePath, const Child extends AnyRoutes<Services>>(
-    path: Prefix & ValidRoutePath<Prefix> & StaticMountPath<Prefix>,
-    routes: Child &
-      KnownNonEmptyRoutes<Child> &
-      NoPathCollision<Shapes, MountedPaths<Prefix, Child>>,
-  ): RoutesDefinition<
-    Services,
-    HasLayout,
-    Paths | MountedPaths<Prefix, Child>,
-    Shapes | RouteShape<MountedPaths<Prefix, Child>>
-  >;
-}
-
-export type AnyRoutes<Services> = RoutesDefinition<Services, boolean, AbsolutePath>;
-
-export type RoutesHasLayout<Definition> =
-  Definition extends RoutesDefinition<infer _Services, infer HasLayout, infer _Paths, infer _Shapes>
-    ? HasLayout
-    : never;
-
-export type RoutesPaths<Definition> =
-  Definition extends RoutesDefinition<infer _Services, infer _HasLayout, infer Paths, infer _Shapes>
-    ? Paths
-    : never;
-
-type RoutesPage<Services> = Readonly<{
-  page: AnyPageDefinition<Services>;
-  path: AbsolutePath;
-}>;
-
-type RoutesMount<Services> = Readonly<{
-  path: AbsolutePath;
-  routes: AnyRoutes<Services>;
-}>;
-
-export type RoutesImplementationState<Services> = Readonly<{
-  layout: LayoutComponent<Services> | null;
-  loading: LoadingComponent<Services> | null;
-  middleware: Readonly<AnyMiddleware<Services>[]>;
-  mounts: Readonly<RoutesMount<Services>[]>;
-  pages: Readonly<RoutesPage<Services>[]>;
-  paths: Readonly<AbsolutePath[]>;
-  scopeId: number;
-}>;
-
-type RoutesOptions<Services> = Readonly<{
-  layout?: LayoutComponent<Services>;
-  loading?: LoadingComponent<Services>;
-}>;
-
-type HasLayoutFromOptions<Options> = Options extends Readonly<{ layout: unknown }> ? true : false;
+export type {
+  AnyRoutes,
+  RoutesDefinition,
+  RoutesFactory,
+  RoutesHasLayout,
+  RoutesImplementationState,
+  RoutesPaths,
+} from "./routes-contract.ts";
 
 type RuntimeRoutesOptions<Services> = RoutesImplementationState<Services> &
-  Readonly<{
-    routeShapes: ReadonlySet<string>;
-  }>;
+  Readonly<{ routeShapes: ReadonlySet<string> }>;
+
+const invalidRoutes = (message: string): TypeError =>
+  // oxlint-disable-next-line rules/require-tagged-error -- Synchronous authoring errors keep the public TypeError contract.
+  new TypeError(message);
+
+export const getRoutesState = <Services>(
+  routes: AnyRoutes<Services>,
+): RoutesImplementationState<Services> => {
+  if (!isEFFRONTMember(routes, "Routes")) {
+    throw invalidRoutes("Routes must be created with EFFRONT.Routes.make.");
+  }
+  return routes[EFFRONTStateTypeId];
+};
+
+const checkPageConcern = <Services>(
+  { page, path }: Readonly<{ page: AnyPageDefinition<Services>; path: AbsolutePath }>,
+  route: ReturnType<typeof analyzeRoutePath>,
+  identity: EFFRONTIdentity<Services>,
+): void => {
+  const pageState = getPageState(page);
+  if (getEFFRONTIdentity(page) !== identity) {
+    throw invalidRoutes(`Page for "${path}" was created by a different EFFRONT module.`);
+  }
+  const hasParameters = Predicate.hasProperty(route, "parameterNames");
+  const hasDecoder = Predicate.isNotNullish(pageState.decodeParams);
+  if (!hasParameters && hasDecoder) {
+    throw invalidRoutes(`Parameterized Page for "${path}" requires route parameters.`);
+  }
+  if (hasParameters && !hasDecoder) {
+    throw invalidRoutes(`Page for "${path}" must declare a parameter Schema.`);
+  }
+};
+
+const mountedPaths = <Services>(
+  path: AbsolutePath,
+  routes: AnyRoutes<Services>,
+  identity: EFFRONTIdentity<Services>,
+): AbsolutePath[] => {
+  if (Predicate.hasProperty(analyzeRoutePath(path), "parameterNames")) {
+    throw invalidRoutes(`Routes cannot be mounted beneath parameterized path "${path}".`);
+  }
+  const state = getRoutesState(routes);
+  if (Array.isReadonlyArrayEmpty(state.paths)) {
+    throw invalidRoutes(`Cannot mount empty Routes at "${path}".`);
+  }
+  if (getEFFRONTIdentity(routes) !== identity) {
+    throw invalidRoutes(`Routes mounted at "${path}" were created by a different EFFRONT module.`);
+  }
+  return state.paths.map((child) => joinRoutePaths(path, child));
+};
+
+const checkNewShapes = (
+  path: AbsolutePath,
+  additions: Readonly<string[]>,
+  shapes: Set<string>,
+): void => {
+  Array.forEach(additions, (shape) => {
+    if (shapes.has(shape)) {
+      throw invalidRoutes(`Route "${path}" conflicts with an existing route pattern.`);
+    }
+    shapes.add(shape);
+  });
+};
 
 class RoutesDefinitionImpl<
   Services,
@@ -161,23 +110,23 @@ class RoutesDefinitionImpl<
   Paths extends AbsolutePath,
   Shapes extends AbsolutePath = RouteShape<Paths>,
 > implements RoutesDefinition<Services, HasLayout, Paths, Shapes> {
-  declare readonly [RoutesContractTypeId]: RoutesState<HasLayout, Paths, Shapes>;
-  readonly [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
-  readonly [EFFRONTMemberKindTypeId] = "Routes" as const;
-  get [EFFRONTStateTypeId](): RoutesImplementationState<Services> {
+  declare public [RoutesContractTypeId]: RoutesState<HasLayout, Paths, Shapes>;
+  public [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
+  public [EFFRONTMemberKindTypeId] = "Routes" as const;
+  public get [EFFRONTStateTypeId](): RoutesImplementationState<Services> {
     return this;
   }
 
-  readonly layout: LayoutComponent<Services> | null;
-  readonly loading: LoadingComponent<Services> | null;
-  readonly middleware: Readonly<AnyMiddleware<Services>[]>;
-  readonly mounts: Readonly<RoutesMount<Services>[]>;
-  readonly pages: Readonly<RoutesPage<Services>[]>;
-  readonly paths: Readonly<AbsolutePath[]>;
-  readonly scopeId: number;
-  readonly #routeShapes: ReadonlySet<string>;
+  public layout: RoutesImplementationState<Services>["layout"];
+  public loading: RoutesImplementationState<Services>["loading"];
+  public middleware: RoutesImplementationState<Services>["middleware"];
+  public mounts: RoutesImplementationState<Services>["mounts"];
+  public pages: RoutesImplementationState<Services>["pages"];
+  public paths: RoutesImplementationState<Services>["paths"];
+  public scopeId: number;
+  #routeShapes: ReadonlySet<string>;
 
-  constructor(
+  public constructor(
     identity: EFFRONTIdentity<Services>,
     {
       layout,
@@ -202,44 +151,29 @@ class RoutesDefinitionImpl<
     Object.freeze(this);
   }
 
-  page<const Path extends AbsolutePath, const Page extends AnyPageDefinition<Services>>(
+  public page<const Path extends AbsolutePath, const Page extends AnyPageDefinition<Services>>(
     path: Path & ValidRoutePath<Path> & NoPathCollision<Shapes, Path>,
     page: Page & MatchingPageParams<Path, Page>,
   ): RoutesDefinitionImpl<Services, HasLayout, Paths | Path, Shapes | RouteShape<Path>> {
     const route = analyzeRoutePath(path);
-    if (route.shapes.some((shape) => this.#routeShapes.has(shape))) {
-      throw new TypeError(`Route "${path}" conflicts with an existing route pattern.`);
-    }
-    const pageState = getPageState(page);
-    if (getEFFRONTIdentity(page) !== this[EFFRONTIdentityTypeId]) {
-      throw new TypeError(`Page for "${path}" was created by a different EFFRONT module.`);
-    }
-
-    if (route._tag === "ParameterFree" && pageState.decodeParams !== null) {
-      throw new TypeError(`Parameterized Page for "${path}" requires route parameters.`);
-    }
-    if (route._tag === "Parameterized" && pageState.decodeParams === null) {
-      throw new TypeError(`Page for "${path}" must declare a parameter Schema.`);
-    }
-
     const routeShapes = new Set(this.#routeShapes);
-    for (const shape of route.shapes) {
-      routeShapes.add(shape);
-    }
-
-    return new RoutesDefinitionImpl(this[EFFRONTIdentityTypeId], {
+    checkNewShapes(path, route.shapes, routeShapes);
+    const identity = this[EFFRONTIdentityTypeId];
+    const entry = Object.freeze({ page, path });
+    checkPageConcern(entry, route, identity);
+    return new RoutesDefinitionImpl(identity, {
       layout: this.layout,
       loading: this.loading,
       middleware: this.middleware,
       mounts: this.mounts,
-      pages: Object.freeze([...this.pages, Object.freeze({ page, path })]),
+      pages: Object.freeze([...this.pages, entry]),
       paths: Object.freeze([...this.paths, path]),
       routeShapes,
       scopeId: this.scopeId,
     });
   }
 
-  mount<const Prefix extends AbsolutePath, const Child extends AnyRoutes<Services>>(
+  public mount<const Prefix extends AbsolutePath, const Child extends AnyRoutes<Services>>(
     path: Prefix & ValidRoutePath<Prefix> & StaticMountPath<Prefix>,
     routes: Child &
       KnownNonEmptyRoutes<Child> &
@@ -250,61 +184,46 @@ class RoutesDefinitionImpl<
     Paths | MountedPaths<Prefix, Child>,
     Shapes | RouteShape<MountedPaths<Prefix, Child>>
   > {
-    const route = analyzeRoutePath(path);
-    if (route._tag === "Parameterized") {
-      throw new TypeError(`Routes cannot be mounted beneath parameterized path "${path}".`);
-    }
-    const routesState = getRoutesState(routes);
-    if (Array.isReadonlyArrayEmpty(routesState.paths)) {
-      throw new TypeError(`Cannot mount empty Routes at "${path}".`);
-    }
-    if (getEFFRONTIdentity(routes) !== this[EFFRONTIdentityTypeId]) {
-      throw new TypeError(
-        `Routes mounted at "${path}" were created by a different EFFRONT module.`,
-      );
-    }
-
-    const mountedPaths = routesState.paths.map((childPath) => joinRoutePaths(path, childPath));
+    const identity = this[EFFRONTIdentityTypeId];
+    const paths = mountedPaths(path, routes, identity);
     const routeShapes = new Set(this.#routeShapes);
-    for (const mountedPath of mountedPaths) {
-      for (const shape of analyzeRoutePath(mountedPath).shapes) {
-        if (routeShapes.has(shape)) {
-          throw new TypeError(`Route "${mountedPath}" conflicts with an existing route pattern.`);
-        }
-        routeShapes.add(shape);
-      }
-    }
+    Array.forEach(paths, (mounted) => {
+      checkNewShapes(mounted, analyzeRoutePath(mounted).shapes, routeShapes);
+    });
 
-    return new RoutesDefinitionImpl(this[EFFRONTIdentityTypeId], {
+    const entry = Object.freeze({ path, routes });
+    return new RoutesDefinitionImpl(identity, {
       layout: this.layout,
       loading: this.loading,
       middleware: this.middleware,
-      mounts: Object.freeze([...this.mounts, Object.freeze({ path, routes })]),
+      mounts: Object.freeze([...this.mounts, entry]),
       pages: this.pages,
-      paths: Object.freeze([...this.paths, ...mountedPaths]),
+      paths: Object.freeze([...this.paths, ...paths]),
       routeShapes,
       scopeId: this.scopeId,
     });
   }
 }
 
-export const getRoutesState = <Services>(
-  routes: AnyRoutes<Services>,
-): RoutesImplementationState<Services> => {
-  if (!isEFFRONTMember(routes, "Routes")) {
-    throw new TypeError("Routes must be created with EFFRONT.Routes.make.");
-  }
-  return routes[EFFRONTStateTypeId];
-};
+// oxlint-disable-next-line unicorn/no-null -- Missing route layouts and loaders use the existing route compiler sentinel.
+const missingRouteComponent = null;
 
-export type RoutesFactory<Services> = Readonly<{
-  make: {
-    (): RoutesDefinition<Services, false, never>;
-    <Options extends RoutesOptions<Services>>(
-      options: Options,
-    ): RoutesDefinition<Services, HasLayoutFromOptions<Options>, never>;
-  };
-}>;
+const checkOptionalConcern = <Services>(
+  concern: RoutesOptions<Services>["layout" | "loading"],
+  kind: "Layout" | "Loading",
+  identity: EFFRONTIdentity<Services>,
+): void => {
+  // oxlint-disable-next-line rules/prefer-is-nullish -- Omitted options are undefined; an explicit null is an invalid route concern.
+  if (Predicate.isUndefined(concern)) {
+    return;
+  }
+  if (!isEFFRONTMember(concern, kind)) {
+    throw invalidRoutes(`${kind} must be created with EFFRONT.${kind}.make.`);
+  }
+  if (getEFFRONTIdentity(concern) !== identity) {
+    throw invalidRoutes(`${kind} was created by a different EFFRONT module.`);
+  }
+};
 
 export const makeRoutesFactory = <Services>(
   identity: EFFRONTIdentity<Services>,
@@ -316,27 +235,12 @@ export const makeRoutesFactory = <Services>(
     options: Options,
   ): RoutesDefinition<Services, HasLayoutFromOptions<Options>, never>;
   function make(options: RoutesOptions<Services> = {}): AnyRoutes<Services> {
-    if (options.layout !== undefined) {
-      if (!isEFFRONTMember(options.layout, "Layout")) {
-        throw new TypeError("Layout must be created with EFFRONT.Layout.make.");
-      }
-      if (getEFFRONTIdentity(options.layout) !== identity) {
-        throw new TypeError("Layout was created by a different EFFRONT module.");
-      }
-    }
-    if (options.loading !== undefined) {
-      if (!isEFFRONTMember(options.loading, "Loading")) {
-        throw new TypeError("Loading must be created with EFFRONT.Loading.make.");
-      }
-      if (getEFFRONTIdentity(options.loading) !== identity) {
-        throw new TypeError("Loading was created by a different EFFRONT module.");
-      }
-    }
+    checkOptionalConcern(options.layout, "Layout", identity);
+    checkOptionalConcern(options.loading, "Loading", identity);
     const scopeId = allocateScopeId();
-
     return new RoutesDefinitionImpl(identity, {
-      layout: options.layout ?? null,
-      loading: options.loading ?? null,
+      layout: options.layout ?? missingRouteComponent,
+      loading: options.loading ?? missingRouteComponent,
       middleware,
       mounts: Object.freeze([]),
       pages: Object.freeze([]),
