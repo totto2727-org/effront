@@ -1,28 +1,34 @@
+import { Predicate } from "effect";
+
 export const pageSize = 6;
 export const storyCount = 10_000;
 
+const firstStoryId = 1;
+const nextStoryOffset = 1;
+
 export type Story = Readonly<{
-  id: number;
-  title: string;
-  summary: string;
   detail: string;
+  id: number;
+  summary: string;
+  title: string;
 }>;
 
-export function storyById(id: number): Story | null {
-  if (!Number.isSafeInteger(id) || id < 1 || id > storyCount) {
-    return null;
+export const storyById = (id: number): Story | undefined => {
+  if (!Number.isSafeInteger(id) || id < firstStoryId || id > storyCount) {
+    return undefined;
   }
   return {
-    id,
-    title: `Field note ${id}`,
-    summary: `A short observation from note ${id}.`,
     detail: `The full story for note ${id} is revealed without reloading the feed.`,
+    id,
+    summary: `A short observation from note ${id}.`,
+    title: `Field note ${id}`,
   };
-}
+};
 
-export function storiesAfter(after: number): Readonly<Story[]> {
-  const start = Math.max(1, after + 1);
-  return Array.from({ length: Math.min(pageSize, storyCount - after) }, (_, offset) =>
-    storyById(start + offset),
-  ).filter((story): story is Story => story !== null);
-}
+export const storiesAfter = (after: number): Readonly<Story[]> => {
+  const start = Math.max(firstStoryId, after + nextStoryOffset);
+  const length = Math.min(pageSize, storyCount - after);
+  return Array.from({ length }, (_unused, offset) => storyById(start + offset)).filter((story) =>
+    Predicate.isNotNullish(story),
+  );
+};

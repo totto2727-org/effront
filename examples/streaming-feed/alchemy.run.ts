@@ -3,11 +3,14 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
 import Worker from "./src/entry.workers";
 
-export default Stack(
+const stack = Stack(
   "effront-streaming-feed-example",
-  { state: localState(), providers: Cloudflare.providers() },
+  { providers: Cloudflare.providers(), state: localState() },
   Effect.gen(function* () {
     const site = yield* Worker;
     return { url: site.url };
   }),
 );
+
+// oxlint-disable-next-line import/no-default-export -- The Alchemy CLI loads the default stack from this entry.
+export default stack;
