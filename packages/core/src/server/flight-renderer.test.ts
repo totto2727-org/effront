@@ -1,71 +1,95 @@
 import { expect, it, vi } from "@effect/vitest";
-import { Predicate, Deferred, Effect } from "effect";
+import { Data, Deferred, Effect, MutableRef, Option } from "effect";
 
 import type { RenderRuntimeContext } from "#core/application/render-runtime.ts";
+import type { FlightRenderOptions } from "./flight-renderer.tsx";
 
-let renderSignal: AbortSignal | undefined;
+const renderSignal = MutableRef.make(Option.none<AbortSignal>());
 
 vi.doMock(import("@vitejs/plugin-rsc/rsc/server"), () => ({
   renderToReadableStream: (_model: unknown, options?: Readonly<{ signal?: AbortSignal }>) => {
-    renderSignal = options?.signal;
+    MutableRef.set(renderSignal, Option.fromNullishOr(options?.signal));
     return new ReadableStream<Uint8Array>();
   },
 }));
 
 const { FlightRenderer } = await import("./flight-renderer.tsx");
 
+class UnexpectedRenderRuntime extends Data.TaggedError("UnexpectedRenderRuntime") {}
+
+const workProbe = Effect.fn("workProbe")(function* () {
+  const started = yield* Deferred.make<boolean>();
+  const interrupted = yield* Deferred.make<boolean>();
+  const application = MutableRef.make(Option.none<() => Promise<never>>());
+  const work = Deferred.succeed(started, true).pipe(
+    Effect.andThen(Effect.never),
+    Effect.onInterrupt(() => Deferred.succeed(interrupted, true)),
+  );
+
+  const renderRuntime: RenderRuntimeContext = {
+    bind: (runtime, _middleware, evaluate) => {
+      MutableRef.set(
+        application,
+        Option.some(async () => runtime(work)),
+      );
+      return evaluate();
+    },
+    run: () => {
+      throw new UnexpectedRenderRuntime();
+    },
+  };
+  const start = async (): Promise<never> => {
+    const run = Option.getOrThrow(MutableRef.get(application));
+    return run();
+  };
+
+  return { interrupted, renderRuntime, start, started };
+});
+
+// oxlint-disable-next-line unicorn/no-null -- React Flight's wire model uses null for unoccupied slots.
+const emptySlot = null;
+const renderOptions = (renderRuntime: RenderRuntimeContext): FlightRenderOptions<never> => ({
+  formState: emptySlot,
+  middleware: [],
+  renderRuntime,
+  routeTree: { child: emptySlot, content: emptySlot, id: "root" },
+  serverFnResult: emptySlot,
+});
+
+const observeOutcome = async (execution: Promise<never>): Promise<string> => {
+  try {
+    await execution;
+    return "completed";
+  } catch {
+    return "interrupted";
+  }
+};
+
+const expectRelease = Effect.fn("expectRelease")(function* (
+  probe: Effect.Success<ReturnType<typeof workProbe>>,
+  release: Effect.Effect<void>,
+) {
+  const outcome = observeOutcome(probe.start());
+  yield* Deferred.await(probe.started);
+  yield* release;
+  yield* Deferred.await(probe.interrupted);
+  const completed = yield* Effect.promise(async () => outcome);
+  return completed;
+});
+
 it.effect("interrupts application work when its Flight render is released", () =>
   Effect.scoped(
     Effect.gen(function* () {
-      let runApplicationWork: (() => Promise<never>) | undefined;
-      const started = yield* Deferred.make<void>();
-      const interrupted = yield* Deferred.make<void>();
-      const renderRuntime: RenderRuntimeContext = {
-        bind: (runtime, _middleware, evaluate) => {
-          runApplicationWork = () =>
-            runtime(
-              Deferred.succeed(started, void 0).pipe(
-                Effect.andThen(Effect.never),
-                Effect.onInterrupt(() => Deferred.succeed(interrupted, void 0)),
-              ),
-            );
-          return evaluate();
-        },
-        run: () => {
-          throw new TypeError("Unexpected request runtime invocation.");
-        },
-      };
+      const probe = yield* workProbe();
       const renderer = yield* FlightRenderer;
-      const flight = yield* renderer.render<never>({
-        formState: null,
-        middleware: [],
-        renderRuntime,
-        routeTree: {
-          child: null,
-          content: null,
-          id: "root",
-        },
-        serverFnResult: null,
-      });
-      if (Predicate.isNullish(runApplicationWork)) {
-        return yield* Effect.die("Expected Flight rendering to bind its request runtime.");
-      }
+      const flight = yield* renderer.render(renderOptions(probe.renderRuntime));
+      const signal = Option.getOrThrow(MutableRef.get(renderSignal));
+      expect(flight.signal).toBe(signal);
+      expect(signal.aborted).toBe(false);
 
-      const applicationWork = runApplicationWork();
-      const applicationWorkOutcome = applicationWork.then(
-        () => "completed" as const,
-        () => "interrupted" as const,
-      );
-      yield* Deferred.await(started);
-      expect(flight.signal).toBe(renderSignal);
-      expect(renderSignal?.aborted).toBe(false);
-
-      yield* flight.release;
-
-      yield* Deferred.await(interrupted);
-      const applicationOutcome = yield* Effect.promise(() => applicationWorkOutcome);
-      expect(applicationOutcome).toBe("interrupted");
-      expect(renderSignal?.aborted).toBe(true);
+      const completed = yield* expectRelease(probe, flight.release);
+      expect(completed).toBe("interrupted");
+      expect(signal.aborted).toBe(true);
     }).pipe(Effect.provide(FlightRenderer.layer)),
   ),
 );
