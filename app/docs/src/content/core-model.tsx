@@ -15,14 +15,10 @@ export const coreModelSources = {
     code: `const effront = <Services = never>(): EFFRONT<Services> => {
   const identity = makeEFFRONTIdentity<Services>();
   const make: EFFRONTMake<Services> = (options) => makeApplication(identity, options);
-  let nextRouteScopeId = 0;
-  const allocateRouteScopeId = () => {
-    const scopeId = nextRouteScopeId;
-    nextRouteScopeId += 1;
-    return scopeId;
-  };
+  const nextRouteScopeId = MutableRef.make(firstRouteScopeId);
+  const allocateRouteScopeId = (): number => MutableRef.getAndIncrement(nextRouteScopeId);
 
-  return makeEFFRONT(identity, Object.freeze([]), allocateRouteScopeId, make);
+  return makeEFFRONT({ allocateRouteScopeId, identity, make }, Object.freeze([]));
 };`,
     language: "ts",
   },
@@ -33,13 +29,13 @@ export const coreModelSources = {
   ): EFFRONT<ApplicationServices, AvailableServices | MiddlewareProvidedServices<Value>> => {
     getMiddlewareState(value);
     if (getEFFRONTIdentity(value) !== identity) {
-      throw new TypeError("Middleware was created by a different EFFRONT module.");
+      throw authoringTypeError("Middleware was created by a different EFFRONT module.");
     }
     if (middleware.includes(value)) {
-      throw new TypeError("Middleware cannot appear twice in the same scope.");
+      throw authoringTypeError("Middleware cannot appear twice in the same scope.");
     }
 
-    return makeEFFRONT(identity, Object.freeze([...middleware, value]), allocateRouteScopeId, make);
+    return makeEFFRONT(context, Object.freeze([...middleware, value]));
   };`,
     language: "ts",
   },
