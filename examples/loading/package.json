@@ -2,6 +2,9 @@
   "name": "effront-loading-example",
   "private": true,
   "type": "module",
+  "imports": {
+    "#loading/*": "./src/*"
+  },
   "scripts": {
     "dev": "alchemy dev"
   },
