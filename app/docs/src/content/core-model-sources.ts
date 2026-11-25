@@ -35,7 +35,7 @@ export type CompiledRouteGraph<Services> = Readonly<
   },
   fetchBoundary: {
     code: `  const handler = HttpEffect.toWebHandler(toHttpEffect(application));
-  return (request, env, executionContext) =>
+  return async (request, env, executionContext) =>
     handler(request, Context.make(WorkersRequestContext, { env, executionContext, request }));`,
     language: "ts",
     path: "packages/core/src/workers.ts",
