@@ -1,4 +1,4 @@
-import { Context, Effect, Layer, Scope } from "effect";
+import { Context, Effect, Layer, Predicate, Scope } from "effect";
 import type { PlatformError } from "effect";
 import type { HttpServerError } from "effect/http";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
@@ -29,15 +29,19 @@ export type HttpApplicationEffect<ApplicationError = never, Requirements = never
   HttpRequirements<Requirements>
 >;
 
-const maxRequestBodySize = 10 * 1024 * 1024;
+const minRequestBodySize = 0;
+// Request bodies are limited to 10 MiB.
+const maxRequestBodySize = 10_485_760;
 
 /**
  * Handles the current HTTP request in its host-owned scope.
  *
  * Application layers are built once per evaluation, using the current services.
  * The host must retain the request scope until the body ends, fails, or is cancelled.
- * Effect HTTP's Web handler performs this transfer automatically. Do not wrap
- * response production alone in Effect.scoped: producing headers does not consume a body.
+ * Effect HTTP's Web handler performs this transfer automatically. Scoping
+ * response production alone would close the scope before the body is consumed.
+ * @param {ApplicationDefinition<Services, ApplicationError, Requirements>} application The application that owns the request layer.
+ * @returns {HttpApplicationEffect<ApplicationError, Requirements>} The handler effect for the current request.
  */
 export const toHttpEffect = <Services, ApplicationError, Requirements>(
   application: ApplicationDefinition<Services, ApplicationError, Requirements>,
@@ -45,9 +49,9 @@ export const toHttpEffect = <Services, ApplicationError, Requirements>(
   Effect.gen(function* () {
     const request = yield* HttpServerRequest.HttpServerRequest;
     const length = request.headers["content-length"];
-    if (length !== undefined) {
+    if (Predicate.isNotNullish(length)) {
       const size = Number(length);
-      if (!Number.isSafeInteger(size) || size < 0 || size > maxRequestBodySize) {
+      if (!Number.isSafeInteger(size) || size < minRequestBodySize || size > maxRequestBodySize) {
         return HttpServerResponse.text("Request body exceeds the 10 MiB limit.", { status: 413 });
       }
     }
@@ -61,8 +65,7 @@ export const toHttpEffect = <Services, ApplicationError, Requirements>(
   });
 
 type RequestServices = HttpRouter.Provided | HttpRouter.HttpRouter | Layer.CurrentMemoMap;
-// Effect.context<R>() includes ambient keys beyond R. Removing keys already
-// excluded from the input contract preserves every promised external service.
+// Omit ambient HTTP keys while preserving every external service in the input contract.
 function captureExternalContext<R>(
   context: Context.Context<Exclude<R, RequestServices>>,
 ): Context.Context<Exclude<R, RequestServices>>;
@@ -89,6 +92,8 @@ type RemainingRequirements<Requirements> = Exclude<
  * owner must keep them alive through all response bodies. Application layers are
  * still built per request. Live request services take precedence over captured
  * services, and construction-time HTTP services and scopes are never restored.
+ * @param {ApplicationDefinition<Services, ApplicationError, Requirements>} application The application that owns the request layer.
+ * @returns {Effect.Effect} The reusable HTTP effect with the current external services captured.
  */
 export const makeHttpEffect = <Services, ApplicationError, Requirements>(
   application: ApplicationDefinition<Services, ApplicationError, Requirements>,
