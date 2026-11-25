@@ -79,7 +79,8 @@ export type PageParams = Data.TaggedEnum<{
   Encoded: Readonly<{ value: EncodedPageParams }>;
 }>;
 
-const isDecodedParams = Data.taggedEnum<PageParams>().$is("Decoded");
+export const pageParams = Data.taggedEnum<PageParams>();
+const isDecodedParams = pageParams.$is("Decoded");
 
 export type PageRuntimeProps = Readonly<{
   params: PageParams;
