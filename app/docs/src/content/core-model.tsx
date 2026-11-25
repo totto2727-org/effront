@@ -45,38 +45,35 @@ export const coreModelSources = {
   },
   compiledDestination: {
     path: "packages/core/src/application/route-graph.ts",
-    code: `export type RouteScope<Services> = {
-  readonly id: string;
-  readonly layout: LayoutComponent<Services> | null;
-  readonly loading: LoadingComponent<Services> | null;
-};
+    code: `export type RouteScope<Services> = Readonly<{
+  id: string;
+  layout: LayoutComponent<Services> | null;
+  loading: LoadingComponent<Services> | null;
+}>;
 
-export type CompiledDestination<Services> = {
-  readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-  readonly page: PageImplementationState<Services>;
-  readonly pattern: AbsolutePath;
-  readonly scopes: ReadonlyArray<RouteScope<Services>>;
-};
+export type CompiledDestination<Services> = Readonly<{
+  middleware: Readonly<AnyMiddleware<Services>[]>;
+  page: PageImplementationState<Services>;
+  pattern: AbsolutePath;
+  scopes: Readonly<RouteScope<Services>[]>;
+}>;
 
-export type CompiledRouteGraph<Services> = readonly [
-  CompiledDestination<Services>,
-  ...Array<CompiledDestination<Services>>,
-];`,
+export type CompiledRouteGraph<Services> = Readonly<
+  [CompiledDestination<Services>, ...CompiledDestination<Services>[]]
+>;`,
     language: "ts",
   },
   routeTraversal: {
     path: "packages/core/src/application/route-graph.ts",
-    code: `    for (const route of currentState.pages) {
+    code: `    Array.forEach(state.pages, (route) => {
       const pattern = joinRoutePaths(prefix, route.path);
       validateUnreservedPath(pattern);
-      destinations.push(
-        Object.freeze({ middleware, page: getPageState(route.page), pattern, scopes }),
-      );
-    }
-
-    for (const mount of currentState.mounts) {
-      visit(mount.routes, joinRoutePaths(prefix, mount.path), scopes, middleware);
-    }
+      const page = getPageState(route.page);
+      destinations.push(Object.freeze({ middleware, page, pattern, scopes }));
+    });
+    Array.forEach(state.mounts, (mount) => {
+      visit(mount.routes, joinRoutePaths(prefix, mount.path), { middleware, scopes });
+    });
   };`,
     language: "ts",
   },
