@@ -1,12 +1,14 @@
-import { Array, Effect, Predicate, Schema, Stream } from "effect";
+import { Array, Data, Effect, Predicate, Schema, Stream } from "effect";
+import type { Types } from "effect";
 
-import { attachEFFRONTMember } from "./effront-identity.ts";
+import { attachEFFRONTMember, authoringTypeError } from "./effront-identity.ts";
 import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
 import type { AnyMiddleware } from "./middleware.ts";
 import { ServerFnInputError } from "#core/rsc/server-fn-error.ts";
 
 const ServerFnInvocationTypeId: unique symbol = Symbol.for("effront/ServerFnInvocation");
 
+// oxlint-disable-next-line unicorn/throw-new-error -- Effect's schema error builder supplies the error superclass.
 export class ServerFnOperationError extends Schema.TaggedError<ServerFnOperationError>()(
   "ServerFnOperationError",
   { cause: Schema.Defect() },
@@ -24,18 +26,21 @@ type ServerFnInvocation<ApplicationServices> = Readonly<{
   }>;
 }>;
 
-type ServerFnInvocationMatch<ApplicationServices> =
-  | Readonly<{ _tag: "Native" }>
-  | Readonly<{ _tag: "IdentityMismatch" }>
-  | Readonly<{
-      _tag: "Match";
-      effect: Effect.Effect<
-        unknown,
-        ServerFnInputError | ServerFnOperationError,
-        ApplicationServices
-      >;
-      middleware: Readonly<AnyMiddleware<ApplicationServices>[]>;
-    }>;
+// oxlint-disable-next-line typescript/no-generated-empty-object-type -- Effect represents a tag with no payload as an empty record.
+type NoPayload = Record<never, never>;
+
+type ServerFnInvocationMatch<ApplicationServices> = Data.TaggedEnum<{
+  IdentityMismatch: NoPayload;
+  Match: Omit<ServerFnInvocation<ApplicationServices>[typeof ServerFnInvocationTypeId], "identity">;
+  Native: NoPayload;
+}>;
+
+// oxlint-disable-next-line eslint/no-magic-numbers -- Effect's generic enum binds its single ApplicationServices parameter.
+interface InvocationMatchDefinition extends Data.TaggedEnum.WithGenerics<1> {
+  taggedEnum: ServerFnInvocationMatch<this["A"]>;
+}
+
+const invocationMatches = Data.taggedEnum<InvocationMatchDefinition>();
 
 type ServerFnInput<Services> =
   | Schema.ConstraintDecoder<unknown, Services>
@@ -43,11 +48,9 @@ type ServerFnInput<Services> =
 
 type ServerFnArguments<Input, Side extends "Type" | "Encoded"> =
   Input extends Readonly<Schema.Constraint[]>
-    ? {
-        -readonly [Key in keyof Input]: Input[Key] extends Schema.Constraint
-          ? Input[Key][Side]
-          : never;
-      }
+    ? Types.Mutable<{
+        [Key in keyof Input]: Input[Key] extends Schema.Constraint ? Input[Key][Side] : never;
+      }>
     : Input extends Schema.Constraint
       ? [Input[Side]]
       : never;
@@ -96,15 +99,17 @@ export type ServerFnFactory<ApplicationServices, AvailableServices> = Readonly<{
 
 export const isServerFnStream = <Services>(
   value: unknown,
+  // oxlint-disable-next-line rules/no-type-predicate -- The ServerFn factory contract guarantees stream errors and services. The Stream runtime brand identifies the variant.
 ): value is Stream.Stream<unknown, never, Services> => Stream.isStream(value);
 
-const directInvocationError = () =>
-  new TypeError(
+const directInvocationError = (): TypeError =>
+  authoringTypeError(
     "An EFFRONT ServerFn is a framework intrinsic and cannot be invoked directly in the server graph.",
   );
 
 const isServerFnInvocation = <ApplicationServices>(
   value: unknown,
+  // oxlint-disable-next-line rules/no-type-predicate -- The opaque cross-module symbol brands native promises with framework-owned metadata.
 ): value is ServerFnInvocation<ApplicationServices> =>
   Predicate.hasProperty(value, ServerFnInvocationTypeId);
 
@@ -113,17 +118,17 @@ export const matchServerFnInvocation = <ApplicationServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
 ): ServerFnInvocationMatch<ApplicationServices> => {
   if (!isServerFnInvocation<ApplicationServices>(value)) {
-    return { _tag: "Native" };
+    return invocationMatches.Native();
   }
 
-  // The framework-owned brand proves the state shape; matching the opaque identity proves the
-  // application service universe erased by the native React invocation.
+  // The brand establishes the state shape.
+  // The opaque application identity establishes the service universe erased by React.
   const metadata = value[ServerFnInvocationTypeId];
   if (metadata.identity !== identity) {
-    return { _tag: "IdentityMismatch" };
+    return invocationMatches.IdentityMismatch();
   }
 
-  return { _tag: "Match", effect: metadata.effect, middleware: metadata.middleware };
+  return invocationMatches.Match({ effect: metadata.effect, middleware: metadata.middleware });
 };
 
 export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
@@ -132,27 +137,32 @@ export const makeServerFnFactory = <ApplicationServices, AvailableServices>(
 ): ServerFnFactory<ApplicationServices, AvailableServices> => ({
   make: ({ input = [], handler }) => {
     const schemas = Array.ensure<Schema.ConstraintDecoder<unknown, AvailableServices>>(input);
-    // oxlint-disable-next-line rules/require-top-level-decoder -- Compile the author-supplied schema once per Server Function.
+    // oxlint-disable-next-line rules/require-top-level-decoder, rules/prefer-non-unknown-decode -- Compile the author-supplied schemas once to validate unknown arguments arriving from React.
     const decode = Schema.decodeUnknownEffect(Schema.Tuple(schemas));
-    const serverFunction = (...untrustedArgs: ServerFnArguments<typeof input, "Encoded">) => {
+    type Result = ServerFnWireValue<Effect.Success<ReturnType<typeof handler>>>;
+    // oxlint-disable-next-line typescript/promise-function-async -- React reads framework invocation metadata from this exact promise before awaiting it.
+    const serverFunction = (
+      ...untrustedArgs: ServerFnArguments<typeof input, "Encoded">
+    ): Promise<Result> => {
       // Unary functions still ignore extra native arguments and decode undefined when omitted.
       const effect = decode(Array.isArray(input) ? untrustedArgs : [untrustedArgs[0]]).pipe(
         Effect.mapError(
           (cause) =>
             new ServerFnInputError({ detail: { message: cause.message, name: cause.name } }),
         ),
-        Effect.flatMap((args: Readonly<unknown[]>) =>
-          // Array.ensure widens the input schemas to an array, so Tuple decoding loses the
-          // positional Type tuple. Successful decoding against those same schemas establishes
-          // the handler's argument types, but TypeScript cannot recover that relationship here.
-          handler(...(args as Parameters<typeof handler>)).pipe(
+        Effect.flatMap((args: Readonly<unknown[]>) => {
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Successful tuple decoding against the authored schemas establishes the handler's argument types.
+          const decodedArgs = args as Parameters<typeof handler>;
+          return handler(...decodedArgs).pipe(
             Effect.mapError((cause) => new ServerFnOperationError({ cause })),
-          ),
-        ),
+          );
+        }),
       );
-      const unavailable =
-        Promise.reject<ServerFnWireValue<Effect.Success<typeof effect>>>(directInvocationError());
-      void unavailable.catch(() => undefined);
+      const unavailable = Promise.reject<Result>(directInvocationError());
+      // oxlint-disable-next-line promise/prefer-await-to-then -- React inspects the original rejected promise; handle it without wrapping or awaiting it.
+      unavailable.catch(() => {
+        // Direct calls still reject through the original promise.
+      });
 
       return Object.assign(unavailable, {
         [ServerFnInvocationTypeId]: Object.freeze({ effect, identity, middleware }),
