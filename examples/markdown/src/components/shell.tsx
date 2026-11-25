@@ -1,10 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import type { ReactNode } from "react";
+import { useCallback, useState } from "react";
+import type { JSX, ReactNode } from "react";
 
-export function Shell({ children }: Readonly<{ children: ReactNode }>) {
-  const [count, setCount] = useState(0);
+const initialCount = 0;
+const increment = 1;
+
+// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
+export function Shell({ children }: Readonly<{ children: ReactNode }>): JSX.Element {
+  const [count, setCount] = useState(initialCount);
+  const incrementCount = useCallback(() => {
+    setCount((value) => value + increment);
+  }, []);
   return (
     <>
       <header className="flex flex-wrap items-center gap-8 border-b border-slate-700 px-8 py-4">
@@ -14,9 +21,7 @@ export function Shell({ children }: Readonly<{ children: ReactNode }>) {
         <button
           className="rounded border border-slate-600 bg-slate-800 px-4 py-2"
           type="button"
-          onClick={() => {
-            setCount((value) => value + 1);
-          }}
+          onClick={incrementCount}
         >
           Count: {count}
         </button>

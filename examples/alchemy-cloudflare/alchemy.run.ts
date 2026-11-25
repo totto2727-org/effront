@@ -7,9 +7,9 @@ const preview = Cloudflare.Worker.ref("effront-alchemy-cloudflare-app", {
   stage: "production",
 }).pipe(Effect.map((parent) => workerLayer({ preview: { of: parent } })));
 
-export default Stack(
+const stack = Stack(
   "effront-alchemy-cloudflare",
-  { state: localState(), providers: Cloudflare.providers() },
+  { providers: Cloudflare.providers(), state: localState() },
   Effect.gen(function* () {
     const { stage } = yield* Stack;
     const layer = stage.startsWith("preview-") ? yield* preview : local;
@@ -17,3 +17,6 @@ export default Stack(
     return { url: site.url };
   }),
 );
+
+// oxlint-disable-next-line import/no-default-export -- The Alchemy CLI loads the stack from this entry’s default export.
+export default stack;

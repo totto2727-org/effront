@@ -2,6 +2,9 @@
   "name": "effront-markdown-example",
   "private": true,
   "type": "module",
+  "imports": {
+    "#example/content.ts": "./content.ts"
+  },
   "scripts": {
     "dev": "alchemy dev"
   },

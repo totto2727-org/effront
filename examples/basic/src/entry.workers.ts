@@ -6,12 +6,12 @@ import { CacheClient } from "./features/greeting/services.ts";
 
 export const Cache = Cloudflare.KV.Namespace("Cache");
 
-export default class App extends Cloudflare.Worker<App>()(
+class App extends Cloudflare.Worker<App>()(
   "App",
   {
-    main: import.meta.url,
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-    vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+    main: import.meta.url,
+    vite: { viteEnvironments: { children: ["ssr"], entry: "rsc" } },
   },
   Effect.gen(function* () {
     const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
@@ -21,3 +21,6 @@ export default class App extends Cloudflare.Worker<App>()(
     return { fetch: fetch.pipe(Effect.orDie) };
   }).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding)),
 ) {}
+
+// oxlint-disable-next-line import/no-default-export -- The Alchemy worker loader uses this entry’s default export.
+export default App;

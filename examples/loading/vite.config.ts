@@ -6,11 +6,12 @@ import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";
 
 const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));
 
+// oxlint-disable-next-line import/no-default-export -- Vite loads configuration through the default export.
 export default defineConfig({
-  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
   lint: {
     ignorePatterns,
-    plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
     options: { typeAware: true, typeCheck: true },
+    plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
   },
+  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
 });

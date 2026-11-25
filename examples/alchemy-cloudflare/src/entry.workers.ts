@@ -8,18 +8,27 @@ export class Worker extends Cloudflare.Worker<Worker, Cloudflare.WorkerShape>()(
   "effront-alchemy-cloudflare-app",
 ) {}
 
-export const workerLayer = (deployment: Pick<Cloudflare.WorkerProps, "domain" | "preview"> = {}) =>
+const runWorker = Effect.gen(function* () {
+  const fetch = yield* makeApplicationHttpEffect<typeof application>();
+  return { fetch: fetch.pipe(Effect.orDie) };
+});
+
+type NativeRequirements = Effect.Services<typeof runWorker>;
+
+export const workerLayer = (
+  deployment: Pick<Cloudflare.WorkerProps, "domain" | "preview"> = {},
+): ReturnType<typeof Worker.make<never, NativeRequirements>> =>
   Worker.make(
     {
-      main: import.meta.url,
       compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-      vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+      main: import.meta.url,
+      vite: { viteEnvironments: { children: ["ssr"], entry: "rsc" } },
       ...deployment,
     },
-    Effect.gen(function* () {
-      const fetch = yield* makeApplicationHttpEffect<typeof application>();
-      return { fetch: fetch.pipe(Effect.orDie) };
-    }),
+    runWorker,
   );
 
-export default workerLayer();
+const local = workerLayer();
+
+// oxlint-disable-next-line import/no-default-export -- The Alchemy worker loader uses this entry’s default export.
+export default local;
