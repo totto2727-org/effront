@@ -10,14 +10,17 @@ const preview = Cloudflare.Worker.ref("Docs", { stage: "production" }).pipe(
   Effect.map((parent) => docsWorker({ preview: { of: parent } })),
 );
 
-export default Stack(
+const stack = Stack(
   "effront-docs",
-  { state: Cloudflare.state(), providers: Cloudflare.providers() },
+  { providers: Cloudflare.providers(), state: Cloudflare.state() },
   Effect.gen(function* () {
     const { stage } = yield* Stack;
-    const worker =
-      stage === "production" ? production : stage.startsWith("preview-") ? yield* preview : local;
+    const other = stage.startsWith("preview-") ? yield* preview : local;
+    const worker = stage === "production" ? production : other;
     const site = yield* Docs.pipe(Effect.provide(worker));
     return { url: site.url };
   }),
 );
+
+// oxlint-disable-next-line import/no-default-export -- The Alchemy CLI consumes this stack from the default export.
+export default stack;

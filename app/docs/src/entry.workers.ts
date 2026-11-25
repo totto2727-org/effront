@@ -6,9 +6,16 @@ import type application from "./entry.effront.tsx";
 
 export class Docs extends Cloudflare.Worker<Docs, Cloudflare.WorkerShape>()("Docs") {}
 
+const runWorker = Effect.gen(function* () {
+  const fetch = yield* makeApplicationHttpEffect<typeof application>();
+  return { fetch: fetch.pipe(Effect.orDie) };
+});
+
+type NativeRequirements = Effect.Services<typeof runWorker>;
+
 export const docsWorker = (
   deployment: Pick<Cloudflare.WorkerProps, "domain" | "preview"> = {},
-): ReturnType<typeof Docs.make> =>
+): ReturnType<typeof Docs.make<never, NativeRequirements>> =>
   Docs.make(
     {
       cache: { enabled: true },
@@ -18,12 +25,7 @@ export const docsWorker = (
       vite: { viteEnvironments: { children: ["ssr"], entry: "rsc" } },
       ...deployment,
     },
-    Effect.gen(function* () {
-      const fetch = yield* makeApplicationHttpEffect<typeof application>();
-      return {
-        fetch: fetch.pipe(Effect.orDie),
-      };
-    }),
+    runWorker,
   );
 
 // oxlint-disable-next-line import/no-default-export -- Alchemy uses the local worker entrypoint's default resource.
