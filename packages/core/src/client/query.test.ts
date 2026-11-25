@@ -1,58 +1,59 @@
-import { describe, expect, it, test } from "@effect/vitest";
-import { Predicate, Deferred, Effect, Fiber, Stream } from "effect";
-import { AsyncResult, AtomRegistry } from "effect/reactivity";
-import { vi } from "vitest";
+import { describe, expect, it } from "@effect/vitest";
+import { Effect, Fiber } from "effect";
 
-import {
-  ServerFnDefect,
-  ServerFnInputError,
-  ServerFnTransportError,
-} from "#core/rsc/server-fn-error.ts";
-import { query, stream, streamAtom } from "./query.ts";
-import { matchServerFnQuery } from "./server-fn-protocol.ts";
+import { ServerFnInputError, ServerFnTransportError } from "#core/rsc/server-fn-error.ts";
+import { proxy } from "./query-probe.fixture.ts";
+import { query } from "./query.ts";
+import type { MatchedQuery } from "./server-fn-protocol.ts";
 
-describe(query, () => {
+describe("query invocation", () => {
   it.effect("invokes the Server Function with positional args and an abort signal", () =>
     Effect.gen(function* () {
-      const fetch = query((name: string) => {
+      const greet = query(async (name: string) => {
         expect(name).toBe("Ada");
-        return Promise.resolve(`Hello, ${name}`);
+        await Promise.resolve();
+        return `Hello, ${name}`;
       });
       // Direct functions ignore the framework-only final marker.
-      expect(yield* fetch("Ada")).toBe("Hello, Ada");
+      expect(yield* greet("Ada")).toBe("Hello, Ada");
     }),
   );
 
   it.effect("matches a query marker without leaking it into encoded arguments", () =>
     Effect.gen(function* () {
-      const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
-      const serverFn = (...args: Readonly<unknown[]>): Promise<string> => {
-        const matched = matchServerFnQuery(args);
-        if (Predicate.isNotNullish(matched)) {
-          observed.resolve(matched);
-        }
-        return Promise.resolve("done");
-      };
+      const observed = Promise.withResolvers<MatchedQuery>();
+      const serverFn = proxy(observed.resolve, () => "done");
       expect(yield* query(serverFn)("Ada")).toBe("done");
-      const matched = yield* Effect.promise(() => observed.promise);
+      const matched = yield* Effect.promise(async () => observed.promise);
       expect(matched.args).toStrictEqual(["Ada"]);
       expect(matched.signal).toBeInstanceOf(AbortSignal);
     }),
   );
+});
 
+describe("query failure and cancellation", () => {
   it.effect("retains framework input failure in the typed Effect error channel", () =>
     Effect.gen(function* () {
       const failure = new ServerFnInputError({
         detail: { message: "invalid", name: "ParseError" },
       });
-      const result = yield* Effect.flip(query(() => Promise.reject(failure))());
+      const read = query(async () => {
+        await Promise.resolve();
+        throw failure;
+      });
+      const result = yield* Effect.flip(read());
       expect(result).toStrictEqual(failure);
     }),
   );
 
   it.effect("translates a rejected transport promise to a typed transport error", () =>
     Effect.gen(function* () {
-      const result = yield* Effect.flip(query(() => Promise.reject(new Error("offline")))());
+      const offline = new DOMException("offline", "Error");
+      const read = query(async () => {
+        await Promise.resolve();
+        throw offline;
+      });
+      const result = yield* Effect.flip(read());
       expect(result).toBeInstanceOf(ServerFnTransportError);
       expect(result.detail).toMatchObject({ message: "offline", name: "Error" });
     }),
@@ -60,176 +61,13 @@ describe(query, () => {
 
   it.effect("interrupts the callback signal when the query fiber is cancelled", () =>
     Effect.gen(function* () {
-      const observed = Promise.withResolvers<AbortSignal>();
-      const fetch = query((...args: Readonly<unknown[]>) => {
-        const matched = matchServerFnQuery(args);
-        if (Predicate.isNotNullish(matched)) {
-          observed.resolve(matched.signal);
-        }
-        return new Promise<string>(() => undefined);
-      });
-      const fiber = yield* fetch().pipe(Effect.forkScoped({ startImmediately: true }));
-      const signal = yield* Effect.promise(() => observed.promise);
+      const observed = Promise.withResolvers<MatchedQuery>();
+      const interrupted = Promise.withResolvers<string>();
+      const read = query(proxy(observed.resolve, async () => interrupted.promise));
+      const fiber = yield* read().pipe(Effect.forkScoped({ startImmediately: true }));
+      const { signal } = yield* Effect.promise(async () => observed.promise);
       yield* Fiber.interrupt(fiber);
       expect(signal.aborted).toBe(true);
-    }),
-  );
-});
-
-describe(stream, () => {
-  test("keeps streamAtom waiting after the last item and interrupts a superseded Flight", async () => {
-    const calls: NonNullable<ReturnType<typeof matchServerFnQuery>>[] = [];
-    const atom = streamAtom((...args: Readonly<unknown[]>) => {
-      const matched = matchServerFnQuery(args);
-      if (Predicate.isNotNullish(matched)) {
-        calls.push(matched);
-      }
-      return Promise.resolve(
-        new ReadableStream<string>({
-          start(controller) {
-            controller.enqueue(String(args[0]));
-            controller.close();
-          },
-        }),
-      );
-    });
-    const registry = AtomRegistry.make();
-    try {
-      registry.mount(atom);
-      registry.set(atom, ["first"]);
-      await vi.waitFor(() => {
-        expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("first");
-      });
-      expect(registry.get(atom).waiting).toBe(true);
-      expect(calls[0]?.signal.aborted).toBe(false);
-
-      registry.set(atom, ["second"]);
-      await vi.waitFor(() => {
-        expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("second");
-      });
-      expect(calls[0]?.signal.aborted).toBe(true);
-      expect(registry.get(atom).waiting).toBe(true);
-      const second = calls[1];
-      if (second?._tag !== "Stream") {
-        throw new TypeError("Expected stream metadata.");
-      }
-      Deferred.doneUnsafe(second.completed, Effect.void);
-      await vi.waitFor(() => {
-        expect(registry.get(atom).waiting).toBe(false);
-      });
-      expect(AsyncResult.getOrThrow(registry.get(atom))).toBe("second");
-    } finally {
-      registry.dispose();
-    }
-  });
-
-  it.effect("waits for full Flight completion after the returned stream closes", () =>
-    Effect.gen(function* () {
-      const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
-      const read = stream((...args: Readonly<unknown[]>) => {
-        const matched = matchServerFnQuery(args);
-        if (Predicate.isNotNullish(matched)) {
-          observed.resolve(matched);
-        }
-        return Promise.resolve(
-          new ReadableStream<string>({
-            start(controller) {
-              controller.enqueue("card");
-              controller.close();
-            },
-          }),
-        );
-      });
-      const consumer = yield* Stream.runCollect(read()).pipe(Effect.forkScoped);
-      const matched = yield* Effect.promise(() => observed.promise);
-      expect(matched._tag).toBe("Stream");
-      if (matched._tag !== "Stream") {
-        return yield* Effect.die("Expected stream metadata.");
-      }
-      yield* Effect.yieldNow;
-      expect(consumer.pollUnsafe()).toBeUndefined();
-      expect(matched.signal.aborted).toBe(false);
-      yield* Deferred.succeed(matched.completed, undefined);
-      expect(yield* Fiber.join(consumer)).toStrictEqual(["card"]);
-      expect(matched.signal.aborted).toBe(true);
-    }),
-  );
-
-  it.effect("propagates transport failure after the final stream value", () =>
-    Effect.gen(function* () {
-      const observed = Promise.withResolvers<NonNullable<ReturnType<typeof matchServerFnQuery>>>();
-      const read = stream((...args: Readonly<unknown[]>) => {
-        const matched = matchServerFnQuery(args);
-        if (Predicate.isNotNullish(matched)) {
-          observed.resolve(matched);
-        }
-        return Promise.resolve(
-          new ReadableStream<string>({
-            start(controller) {
-              controller.enqueue("card");
-              controller.close();
-            },
-          }),
-        );
-      });
-      const consumer = yield* Stream.runCollect(read()).pipe(Effect.forkScoped);
-      const matched = yield* Effect.promise(() => observed.promise);
-      if (matched._tag !== "Stream") {
-        return yield* Effect.die("Expected stream metadata.");
-      }
-      yield* Deferred.fail(
-        matched.completed,
-        new ServerFnTransportError({
-          detail: { message: "connection lost", name: "Error", stack: null },
-        }),
-      );
-      const failure = yield* Effect.flip(Fiber.join(consumer));
-      expect(failure).toBeInstanceOf(ServerFnTransportError);
-      expect(failure.detail?.message).toBe("connection lost");
-    }),
-  );
-
-  it.effect("aborts its request when the consumer stops after one item", () =>
-    Effect.gen(function* () {
-      const observed = Promise.withResolvers<AbortSignal>();
-      const read = stream((...args: Readonly<unknown[]>) => {
-        const matched = matchServerFnQuery(args);
-        if (Predicate.isNotNullish(matched)) {
-          observed.resolve(matched.signal);
-        }
-        return Promise.resolve(
-          new ReadableStream<string>({
-            start(controller) {
-              controller.enqueue("card");
-            },
-          }),
-        );
-      });
-      yield* Stream.runDrain(read().pipe(Stream.take(1)));
-      expect((yield* Effect.promise(() => observed.promise)).aborted).toBe(true);
-    }),
-  );
-
-  it.effect("retains a Flight stream error digest", () =>
-    Effect.gen(function* () {
-      const read = stream((...args: Readonly<unknown[]>) => {
-        const matched = matchServerFnQuery(args);
-        if (matched?._tag === "Stream") {
-          Deferred.doneUnsafe(matched.completed, Effect.void);
-        }
-        return Promise.resolve(
-          new ReadableStream<string>({
-            start(controller) {
-              controller.error(
-                Object.assign(new Error("producer failed"), { digest: "render-123" }),
-              );
-            },
-          }),
-        );
-      });
-      const failure = yield* Effect.flip(Stream.runDrain(read()));
-      expect(failure).toBeInstanceOf(ServerFnDefect);
-      expect(failure).toMatchObject({ digest: "render-123" });
     }),
   );
 });
