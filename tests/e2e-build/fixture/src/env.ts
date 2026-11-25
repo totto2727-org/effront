@@ -1,5 +1,5 @@
-export interface Env {
-  readonly APP_LABEL: string;
-  readonly GREETING: string;
-  readonly SERVER_TOKEN?: string;
-}
+export type Env = Readonly<{
+  APP_LABEL: string;
+  GREETING: string;
+  SERVER_TOKEN?: string;
+}>;
