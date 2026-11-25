@@ -59,8 +59,8 @@ const renderRequestServices = (): ReactNode => (
       <code>ServerApplication.httpLayer</code> combines the application Layer,{" "}
       <code>FlightRenderer.layer</code>, and <code>HtmlRenderer.layer</code> into{" "}
       <code>RequestLayer</code>. <code>Layer.build(RequestLayer)</code> produces the{" "}
-      <code>applicationServices</code> Context. Before route execution,{" "}
-      <code>RequestContextMiddleware</code> merges it into the live HTTP Context.
+      <code>applicationServices</code> Context. Before route execution, the middleware returned by{" "}
+      <code>provideRequestContext</code> merges it into the live HTTP Context.
     </p>
     <p>
       <code>Services</code> describes the application Layer&apos;s outputs.{" "}

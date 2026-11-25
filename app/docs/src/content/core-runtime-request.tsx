@@ -60,8 +60,8 @@ const renderRequestServices = (): ReactNode => (
       <code>FlightRenderer.layer</code>、<code>HtmlRenderer.layer</code> を{" "}
       <code>RequestLayer</code> にまとめます。
       <code>Layer.build(RequestLayer)</code> が <code>applicationServices</code>{" "}
-      のContextを生成します。 ルートの実行前に、<code>RequestContextMiddleware</code>{" "}
-      がこれを実行中のHTTP Contextへ合流させます。
+      のContextを生成します。 ルートの実行前に、<code>provideRequestContext</code>{" "}
+      が返すmiddlewareがこれを実行中のHTTP Contextへ合流させます。
     </p>
     <p>
       <code>Services</code> はアプリケーションLayerの出力を表します。

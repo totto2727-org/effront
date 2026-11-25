@@ -143,7 +143,7 @@ const renderRuntimeBoundary = (): ReactNode => (
     <p>
       <code>server/application.ts</code>{" "}
       は、リクエスト用にアプリケーションとレンダラーのLayerを構築します。
-      <code>RequestContextMiddleware</code> が取得済みサービスをHTTP
+      <code>provideRequestContext</code> が返すmiddlewareは、取得済みサービスをHTTP
       Contextへ合流させ、スコープ付きmiddlewareが選択された定義の要求するサービスを追加できます。
     </p>
     <p>

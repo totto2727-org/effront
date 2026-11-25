@@ -142,8 +142,9 @@ const renderRuntimeBoundary = (): ReactNode => (
     <h2 id="runtime-boundary">Run the definition inside a request</h2>
     <p>
       <code>server/application.ts</code> builds the application and renderer Layers for the request.{" "}
-      <code>RequestContextMiddleware</code> merges the acquired services into the HTTP Context, and
-      scoped middleware can add services required by the selected definitions.
+      The middleware returned by <code>provideRequestContext</code> merges the acquired services
+      into the HTTP Context, and scoped middleware can add services required by the selected
+      definitions.
     </p>
     <p>
       React invokes Page and Layout outside an Effect call stack.{" "}

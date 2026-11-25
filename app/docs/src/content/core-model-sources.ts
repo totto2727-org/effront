@@ -58,15 +58,16 @@ export type CompiledRouteGraph<Services> = Readonly<
     path: "packages/core/src/application/effront.ts",
   },
   parameterValidation: {
-    code: `        Effect.matchEffect({
-          onFailure: () =>
-            Effect.succeed(
-              HttpServerResponse.empty({ status: 404, headers: DynamicResponseHeaders }),
-            ),
-          onSuccess: (value) => renderResponse({ _tag: "Decoded", value }),
-        }),`,
+    code: `      Effect.matchEffect({
+        onFailure: () => Effect.succeed(pageNotFound()),
+        onSuccess: (value) =>
+          renderPageResponse(identity, options, {
+            params: pageParams.Decoded({ value }),
+            pathname,
+          }),
+      }),`,
     language: "ts",
-    path: "packages/core/src/server/application.ts",
+    path: "packages/core/src/server/application-render.ts",
   },
   routeTraversal: {
     code: `    Array.forEach(state.pages, (route) => {
