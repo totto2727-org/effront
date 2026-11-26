@@ -24,11 +24,6 @@ export default defineConfig({
         files: ["packages/**"],
         rules: { "rules/effect-tracing": libraryPreset.rules["rules/effect-tracing"] },
       },
-      {
-        // The packaged declaration must stay ambient. Oxlint reports its zero-width diagnostic before inline directives.
-        files: ["packages/core/src/application-entry.d.ts"],
-        rules: { "import/unambiguous": "off" },
-      },
     ],
   },
   resolve: { tsconfigPaths: true },
