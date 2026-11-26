@@ -31,7 +31,7 @@ it.effect("validates input and runs the handler with request services", () =>
   Effect.gen(function* () {
     const EFFRONT = Application.effront<Greeting>();
     const greet = EFFRONT.ServerFn.make({
-      handler: Effect.fn("greet")(function* ({ name }) {
+      handler: Effect.fnUntraced(function* ({ name }) {
         const greeting = yield* Greeting;
         return `${greeting.prefix}, ${name}`;
       }),
@@ -66,7 +66,7 @@ it.effect("decodes previous state and FormData with request services", () =>
   Effect.gen(function* () {
     const EFFRONT = Application.effront<Greeting>();
     const greet = EFFRONT.ServerFn.make({
-      handler: Effect.fn("greet")(function* (count, { name }) {
+      handler: Effect.fnUntraced(function* (count, { name }) {
         const greeting = yield* Greeting;
         return `${greeting.prefix}, ${name}: ${count + 1}`;
       }),
@@ -133,7 +133,7 @@ it.effect("rejects untrusted input before invoking the handler", () =>
     const invoked = yield* Ref.make(false);
     const EFFRONT = Application.effront();
     const serverFn = EFFRONT.ServerFn.make({
-      handler: Effect.fn("serverFn")(function* () {
+      handler: Effect.fnUntraced(function* () {
         yield* Ref.set(invoked, true);
       }),
       input: Schema.Struct({ value: Schema.NonEmptyString }),

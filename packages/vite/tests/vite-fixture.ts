@@ -19,7 +19,7 @@ export const exampleRoot = Effect.gen(function* () {
   return yield* path.fromFileUrl(new URL("../../../examples/basic/", import.meta.url));
 });
 
-export const fixtureDirectory = Effect.fn(function* (prefix: string) {
+export const fixtureDirectory = Effect.fnUntraced(function* (prefix: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const directory = yield* path.fromFileUrl(new URL("../../../tmp/", import.meta.url));

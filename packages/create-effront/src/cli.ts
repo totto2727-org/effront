@@ -10,7 +10,7 @@ export const command = Command.make(
     directory: Argument.String("directory").pipe(Argument.optional),
     platform: Flag.Literals("platform", platforms).pipe(Flag.optional),
   },
-  Effect.fn(function* ({ directory, platform }) {
+  Effect.fnUntraced(function* ({ directory, platform }) {
     if ((Option.isNone(directory) || Option.isNone(platform)) && (!stdin.isTTY || !stdout.isTTY)) {
       yield* new CliError.UserError({
         cause: "Specify a directory and --platform in non-interactive mode.",

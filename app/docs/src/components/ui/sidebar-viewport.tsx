@@ -83,12 +83,11 @@ const renderDesktopSidebar = (
   </div>
 );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function Sidebar({
+export const Sidebar = ({
   collapsible = "offcanvas",
   side = "left",
   ...props
-}: SidebarProps): JSX.Element {
+}: SidebarProps): JSX.Element => {
   const { isMobile, state } = useSidebar();
   if (collapsible === "none") {
     return renderFixedSidebar(props);
@@ -97,4 +96,4 @@ export function Sidebar({
     return <SidebarMobile side={side}>{props.children}</SidebarMobile>;
   }
   return renderDesktopSidebar(props, { collapsible, side, state });
-}
+};

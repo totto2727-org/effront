@@ -8,7 +8,7 @@ import { initialRouteTree } from "./client-routing-renderer.fixture.ts";
 type Completed = Effect.Success<typeof Effect.void>;
 const routeLoads = Data.taggedEnum<RouteLoad>();
 
-export const makeControlledRoute = Effect.fn("effront.test.controlFlight")(function* (url: string) {
+export const makeControlledRoute = Effect.fnUntraced(function* (url: string) {
   const completed = yield* Deferred.make<Completed>();
   const released = Promise.withResolvers<Completed>();
   const cachedEntries: NavigationHistoryEntry[] = [];

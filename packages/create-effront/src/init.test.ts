@@ -29,7 +29,7 @@ const metadata = Effect.gen(function* () {
   return { packageManager, version };
 });
 
-const generate = Effect.fn(function* (platform: Platform, name: string = platform) {
+const generate = Effect.fnUntraced(function* (platform: Platform, name: string = platform) {
   const source = yield* starterWorkspace("create-effront-test-");
   const directory = source.path.join(source.directory, name);
   yield* generateProject(directory, platform);

@@ -23,15 +23,14 @@ type SidebarMenuButtonProps = ComponentProps<"button"> &
     tooltip?: string;
   };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function SidebarMenuButton({
+export const SidebarMenuButton = ({
   asChild = false,
   isActive = false,
   className,
   size,
   tooltip,
   ...props
-}: SidebarMenuButtonProps): JSX.Element {
+}: SidebarMenuButtonProps): JSX.Element => {
   const Comp = asChild ? Slot.Root : "button";
   const { isMobile, state } = useSidebar();
   const button = (
@@ -55,4 +54,4 @@ export function SidebarMenuButton({
       </TooltipContent>
     </Tooltip>
   );
-}
+};

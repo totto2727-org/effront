@@ -51,9 +51,7 @@ describe("server function outcomes", () => {
   );
 });
 
-const expectPublishedChunks = Effect.fn("expectPublishedChunks")(function* (
-  result: ServerFnResult,
-) {
+const expectPublishedChunks = Effect.fnUntraced(function* (result: ServerFnResult) {
   assert(results.$is("Success")(result));
   assert(result.value instanceof ReadableStream);
   const reader = result.value.getReader();

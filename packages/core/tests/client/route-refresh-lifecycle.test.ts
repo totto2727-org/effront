@@ -87,9 +87,7 @@ const startQueuedHmr = Effect.gen(function* () {
   return observed;
 });
 
-const readHmrRender = Effect.fn("effront.test.readHmrRouteRender")(function* (
-  state: Effect.Success<typeof startQueuedHmr>,
-) {
+const readHmrRender = Effect.fnUntraced(function* (state: Effect.Success<typeof startQueuedHmr>) {
   state.releaseNavigation();
   const tree = yield* observePromise(state.rendered.promise);
   const { transitionResults, transitionTypes } = readTransitions();
@@ -159,7 +157,7 @@ const interruptedLoad = Effect.gen(function* () {
   return { closed, interrupted, load, started };
 });
 
-const interruptByNavigation = Effect.fn("effront.test.interruptRefreshByNavigation")(function* (
+const interruptByNavigation = Effect.fnUntraced(function* (
   request: Effect.Success<typeof interruptedLoad>,
   navigation: TestNavigation,
 ) {

@@ -18,7 +18,7 @@ import { producerFinalizer, readChunk, recordedScope } from "./stream-scope.fixt
 const finalizerCount = 1;
 const noFinalizers = 0;
 
-const collectOpeningValues = Effect.fn("collectOpeningValues")(function* (
+const collectOpeningValues = Effect.fnUntraced(function* (
   reader: ReadableStreamDefaultReader<string>,
 ) {
   const first = yield* readChunk(reader);
@@ -50,7 +50,7 @@ const states = ["unlocked", "locked", "canceling"] as const;
 type ReaderState = (typeof states)[number];
 type Reader = ReadableStreamDefaultReader<never>;
 
-const producerInspection = Effect.fn("producerInspection")(function* (events: string[]) {
+const producerInspection = Effect.fnUntraced(function* (events: string[]) {
   const started = yield* Deferred.make<boolean>();
   const finalizing = yield* Deferred.make<boolean>();
   const finishFinalizer = yield* Deferred.make<boolean>();
@@ -69,7 +69,7 @@ const producerInspection = Effect.fn("producerInspection")(function* (events: st
   return { finalizing, finishFinalizer, source, started };
 });
 
-const beginCancellation = Effect.fn("beginCancellation")(function* (
+const beginCancellation = Effect.fnUntraced(function* (
   state: ReaderState,
   reader: Reader | undefined,
   finalizing: Deferred.Deferred<boolean>,
@@ -82,7 +82,7 @@ const beginCancellation = Effect.fn("beginCancellation")(function* (
   return Option.some(canceling);
 });
 
-const awaitFinalization = Effect.fn("awaitFinalization")(function* (
+const awaitFinalization = Effect.fnUntraced(function* (
   scope: Scope.Closeable,
   probe: Effect.Success<ReturnType<typeof producerInspection>>,
   events: string[],
@@ -108,7 +108,7 @@ const cancelReadable = (
     ),
   );
 
-const joinShutdown = Effect.fn("joinShutdown")(function* (
+const joinShutdown = Effect.fnUntraced(function* (
   closing: Fiber.Fiber<void>,
   canceling: Option.Option<Fiber.Fiber<void>>,
 ) {
@@ -141,9 +141,7 @@ it.effect.each(states)(
     }),
 );
 
-const observeTerminatedReader = Effect.fn("observeTerminatedReader")(function* (
-  source: Stream.Stream<never>,
-) {
+const observeTerminatedReader = Effect.fnUntraced(function* (source: Stream.Stream<never>) {
   const count = yield* Ref.make(noFinalizers);
   const parent = yield* Effect.scope;
   const scope = yield* Scope.fork(parent);

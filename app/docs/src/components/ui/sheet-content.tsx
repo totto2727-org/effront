@@ -32,8 +32,7 @@ const renderCloseButton = (): JSX.Element => (
   </SheetPrimitive.Close>
 );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function SheetContent({
+export const SheetContent = ({
   children,
   className,
   showCloseButton = true,
@@ -42,24 +41,22 @@ export function SheetContent({
 }: ComponentProps<typeof SheetPrimitive.Content> & {
   showCloseButton?: boolean;
   side?: SheetSide;
-}): JSX.Element {
-  return (
-    <SheetPrimitive.Portal data-slot="sheet-portal">
-      {renderOverlay()}
-      <SheetPrimitive.Content
-        data-slot="sheet-content"
-        // oxlint-disable-next-line react/forbid-component-props -- The native dialog remains responsible for position, backdrop layering, and transitions.
-        className={cn(
-          "fixed z-50 flex flex-col bg-background shadow-xl outline-none transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=open]:animate-in data-[state=open]:duration-300",
-          sideClasses[side],
-          className,
-        )}
-        // oxlint-disable-next-line react/jsx-props-no-spreading -- Preserve the Radix dialog's focus, event, attribute, and ref contract.
-        {...props}
-      >
-        {children}
-        {showCloseButton && renderCloseButton()}
-      </SheetPrimitive.Content>
-    </SheetPrimitive.Portal>
-  );
-}
+}): JSX.Element => (
+  <SheetPrimitive.Portal data-slot="sheet-portal">
+    {renderOverlay()}
+    <SheetPrimitive.Content
+      data-slot="sheet-content"
+      // oxlint-disable-next-line react/forbid-component-props -- The native dialog remains responsible for position, backdrop layering, and transitions.
+      className={cn(
+        "fixed z-50 flex flex-col bg-background shadow-xl outline-none transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=open]:animate-in data-[state=open]:duration-300",
+        sideClasses[side],
+        className,
+      )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Preserve the Radix dialog's focus, event, attribute, and ref contract.
+      {...props}
+    >
+      {children}
+      {showCloseButton && renderCloseButton()}
+    </SheetPrimitive.Content>
+  </SheetPrimitive.Portal>
+);

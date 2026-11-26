@@ -44,7 +44,7 @@ const stagedDocument = (): StagedDocument => {
   return { content, flight, flightRead, flightReady, htmlReady, reader, shell };
 };
 
-const waitForPayload = Effect.fn("effront.test.observeLateFlightPayload")(function* ({
+const waitForPayload = Effect.fnUntraced(function* ({
   flightRead,
   flightReady,
   reader,

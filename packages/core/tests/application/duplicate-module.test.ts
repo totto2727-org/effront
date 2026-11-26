@@ -11,7 +11,7 @@ import { matchServerFnInvocation } from "#core/application/server-fn.ts";
 // oxlint-disable-next-line unicorn/no-null -- React renders a null result as an empty Page.
 const emptyPage = null;
 
-const loadDuplicate = Effect.fn("loadDuplicate")(function* () {
+const loadDuplicate = Effect.fnUntraced(function* () {
   vi.resetModules();
   const { Application } = yield* Effect.promise(async () => import("#core/application/effront.ts"));
   const EFFRONT = Application.effront();

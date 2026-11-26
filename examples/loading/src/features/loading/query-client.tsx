@@ -104,8 +104,7 @@ const createQueryClient = (): QueryClient =>
 
 const nextItem = (item: number): number => item + itemIncrement;
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function QueryDemo(): JSX.Element {
+export const QueryDemo = (): JSX.Element => {
   // The client stays stable across retries because its owner is above the Suspense boundary.
   // oxlint-disable-next-line react/hook-use-state -- This state owns a QueryClient and never replaces it.
   const [client] = useState(createQueryClient);
@@ -132,4 +131,4 @@ export function QueryDemo(): JSX.Element {
       </QueryClientProvider>
     </section>
   );
-}
+};

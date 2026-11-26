@@ -45,7 +45,7 @@ it.effect("decodes dynamic route params before invoking the render operation", (
       params: Schema.Struct({
         day: Schema.Literals(["saturday", "sunday"]),
       }),
-      render: Effect.fn(function* ({ params }) {
+      render: Effect.fnUntraced(function* ({ params }) {
         const greeting = yield* Greeting;
         return `${greeting.value} ${params.day}`;
       }),
@@ -68,7 +68,7 @@ it.effect("runs an Effect.fn operation with request services", () =>
   Effect.gen(function* () {
     const runtime = yield* FiberSet.makeRuntimePromise<Greeting>();
     const PageComponent = EFFRONT.Page.make({
-      render: Effect.fn(function* () {
+      render: Effect.fnUntraced(function* () {
         const greeting = yield* Greeting;
         return greeting.value;
       }),

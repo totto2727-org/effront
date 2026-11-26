@@ -22,7 +22,7 @@ class ArchiveProcessFailure extends Data.TaggedError("ArchiveProcessFailure")<{
   stderr: string;
 }> {}
 
-const run = Effect.fn(function* (executable: string, args: string[], cwd: string) {
+const run = Effect.fnUntraced(function* (executable: string, args: string[], cwd: string) {
   const { exitCode, stderr, stdout } = yield* ChildProcess.make(executable, args, { cwd });
   const output = yield* Effect.all(
     {
@@ -42,7 +42,7 @@ const run = Effect.fn(function* (executable: string, args: string[], cwd: string
   return output.stdout;
 }, Effect.scoped);
 
-const unpack = Effect.fn(function* (owner: string, workspace: string) {
+const unpack = Effect.fnUntraced(function* (owner: string, workspace: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   yield* run("pnpm", ["pack", "--pack-destination", workspace], owner).pipe(
@@ -61,7 +61,7 @@ const unpack = Effect.fn(function* (owner: string, workspace: string) {
   );
 });
 
-const installConsumer = Effect.fn(function* (owner: string, workspace: string) {
+const installConsumer = Effect.fnUntraced(function* (owner: string, workspace: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const packed = path.join(workspace, "package");
@@ -141,7 +141,7 @@ const declarationImports = (content: string): string[] =>
     return Predicate.isNullish(specifier) ? [] : [specifier];
   });
 
-const resolveImports = Effect.fn(function* (workspace: string) {
+const resolveImports = Effect.fnUntraced(function* (workspace: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const output = path.join(workspace, "package/dist/cloudflare");
@@ -174,7 +174,7 @@ const tsconfig = JSON.stringify({
   include: ["consumer-*.ts", "resolution.ts"],
 });
 
-const compileConsumer = Effect.fn(function* (workspace: string) {
+const compileConsumer = Effect.fnUntraced(function* (workspace: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const manifest = yield* path.fromFileUrl(new URL(import.meta.resolve("typescript/package.json")));

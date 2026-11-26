@@ -185,8 +185,11 @@ const filterNavigation = (
   );
 };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function DocsNavigation({ current, locale, navigation }: DocsNavigationProps): JSX.Element {
+export const DocsNavigation = ({
+  current,
+  locale,
+  navigation,
+}: DocsNavigationProps): JSX.Element => {
   const [query, setQuery] = useState("");
   const { setOpenMobile } = useSidebar();
   const changeQuery = useCallback((event: ChangeEvent<HTMLInputElement>) => {
@@ -208,4 +211,4 @@ export function DocsNavigation({ current, locale, navigation }: DocsNavigationPr
       {renderFooter(locale)}
     </>
   );
-}
+};

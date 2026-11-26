@@ -10,9 +10,7 @@ const shellDocument = "<html><body>shell</body></html>";
 const responseCancelled = "response cancelled";
 const requestFinalized = "request scope released";
 
-const pendingBrowserFlight = Effect.fn("effront.test.pendingEmbeddedFlightRead")(function* (
-  flight: ReadableStream<Uint8Array>,
-) {
+const pendingBrowserFlight = Effect.fnUntraced(function* (flight: ReadableStream<Uint8Array>) {
   const reader = withFlight(streamFrom([shellDocument]), flight).getReader();
   yield* Effect.promise(async () => reader.read());
   const pending = reader.read();
@@ -31,20 +29,18 @@ const trackSourceCancellation = (
     },
   });
 
-const completeSsrCancellation = Effect.fn("effront.test.completeFlightSiblingCancellation")(
-  function* (
-    reader: ReadableStreamDefaultReader<Uint8Array>,
-    pending: ReturnType<ReadableStreamDefaultReader<Uint8Array>["read"]>,
-  ) {
-    // The caller can release the server response scope only after browser cancellation settles.
-    yield* Effect.promise(async () => reader.cancel(requestFinalized));
-    const result = yield* Effect.promise(async () => pending);
-    if (!result.done) {
-      yield* Effect.die("Expected EOF after SSR reader cancellation.");
-    }
-    reader.releaseLock();
-  },
-);
+const completeSsrCancellation = Effect.fnUntraced(function* (
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  pending: ReturnType<ReadableStreamDefaultReader<Uint8Array>["read"]>,
+) {
+  // The caller can release the server response scope only after browser cancellation settles.
+  yield* Effect.promise(async () => reader.cancel(requestFinalized));
+  const result = yield* Effect.promise(async () => pending);
+  if (!result.done) {
+    yield* Effect.die("Expected EOF after SSR reader cancellation.");
+  }
+  reader.releaseLock();
+});
 
 describe("cancellation of a browser response blocked on flight", () => {
   it.effect("settles an overlapping read and cancellation", () =>

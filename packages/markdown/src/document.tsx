@@ -17,8 +17,7 @@ export type { MarkdownDocumentProps } from "@comark/react/components/MarkdownDoc
  * @param {MarkdownDocumentProps} input The parsed document and any caller renderer overrides.
  * @returns {ReactElement} A Comark document with the Effront wrapper class.
  */
-// oxlint-disable-next-line eslint/func-style -- The React rule requires a function declaration for this component.
-export function MarkdownDocument(input: MarkdownDocumentProps): ReactElement {
+export const MarkdownDocument = (input: MarkdownDocumentProps): ReactElement => {
   const { className, components, ...props } = input;
   const wrapperClass =
     Predicate.isNotNullish(className) && String.isNonEmpty(className)
@@ -29,4 +28,4 @@ export function MarkdownDocument(input: MarkdownDocumentProps): ReactElement {
     className: wrapperClass,
     components: { Math, Mermaid, ...components },
   });
-}
+};

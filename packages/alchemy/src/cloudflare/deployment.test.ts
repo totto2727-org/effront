@@ -94,7 +94,7 @@ const withConstructionServices = Effect.gen(function* () {
   Effect.scoped,
 );
 
-const loadLive = Effect.fn(function* (
+const loadLive = Effect.fnUntraced(function* (
   id: string,
   handler: Effect.Success<typeof withConstructionServices>["handler"],
 ) {

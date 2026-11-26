@@ -22,18 +22,15 @@ const renderCaption = (locale: ExcerptLocale, path: string): ReactNode =>
     </figcaption>
   );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named function declaration.
-export function SourceExcerpt({
+export const SourceExcerpt = ({
   source,
   locale = "ja",
 }: Readonly<{
   source: CoreSource;
   locale?: ExcerptLocale;
-}>): ReactNode {
-  return (
-    <figure data-core-source={source.path}>
-      {renderCaption(locale, source.path)}
-      <CodeBlock code={source.code} language={source.language} />
-    </figure>
-  );
-}
+}>): ReactNode => (
+  <figure data-core-source={source.path}>
+    {renderCaption(locale, source.path)}
+    <CodeBlock code={source.code} language={source.language} />
+  </figure>
+);

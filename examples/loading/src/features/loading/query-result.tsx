@@ -36,8 +36,7 @@ const loadQuery = async (item: number): Promise<string> => {
   return Effect.runPromise(request);
 };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function QueryResult({ item }: Readonly<{ item: number }>): JSX.Element {
+export const QueryResult = ({ item }: Readonly<{ item: number }>): JSX.Element => {
   const { data, dataUpdatedAt, error, isFetching, refetch } = useSuspenseQuery({
     queryFn: async () => loadQuery(item),
     queryKey: ["loading-playground", item],
@@ -73,4 +72,4 @@ export function QueryResult({ item }: Readonly<{ item: number }>): JSX.Element {
       </button>
     </div>
   );
-}
+};

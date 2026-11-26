@@ -156,7 +156,7 @@ it.effect("rejects another root's publication before changing the visible tree",
   }),
 );
 
-const commitRefresh = Effect.fn("effront.test.commitRefresh")(function* (
+const commitRefresh = Effect.fnUntraced(function* (
   fixture: Effect.Success<typeof rendererFixture>,
   id: string,
 ) {

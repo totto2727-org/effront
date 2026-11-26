@@ -9,7 +9,7 @@ const bodyText = "response";
 const firstChunk = Stream.make(bodyText).pipe(Stream.encodeText);
 const requestUrl = "http://localhost/";
 
-const middlewareResponse = Effect.fn("middlewareResponse")(function* (
+const middlewareResponse = Effect.fnUntraced(function* (
   events: string[],
   stream: Stream.Stream<Uint8Array>,
 ) {

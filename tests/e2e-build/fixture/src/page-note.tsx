@@ -3,8 +3,7 @@
 import type { ChangeEvent, JSX } from "react";
 import { useCallback, useState } from "react";
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function PageNote(): JSX.Element {
+export const PageNote = (): JSX.Element => {
   const [note, setNote] = useState("");
   const update = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setNote(event.target.value);
@@ -15,4 +14,4 @@ export function PageNote(): JSX.Element {
     </label>
   );
   return <p>{label}</p>;
-}
+};

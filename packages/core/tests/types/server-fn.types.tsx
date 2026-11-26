@@ -33,14 +33,13 @@ expectTypeOf(action({ count: 0 }));
 // @ts-expect-error The declaration has exactly two arguments.
 expectTypeOf(action({ count: 0 }, new FormData(), "extra"));
 
-// oxlint-disable-next-line eslint/func-style -- The React preset requires a declaration for this hook-using type fixture.
-export function ActionForm(): ReactNode {
+export const ActionForm = (): ReactNode => {
   const [state, formAction] = useActionState(action, { count: 0 });
   return <form action={formAction}>{state.count}</form>;
-}
+};
 
 const transformed = EFFRONT.ServerFn.make({
-  handler: Effect.fn(function* (count, text) {
+  handler: Effect.fnUntraced(function* (count, text) {
     const value: number = count;
     return yield* Effect.succeed(`${value}:${text}`);
   }),

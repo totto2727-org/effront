@@ -40,9 +40,7 @@ const intercept = (
   return pending.interception();
 };
 
-const postCommit = Effect.fn("effront.test.runPostCommit")(function* (
-  interception: NavigationInterceptOptions | null,
-) {
+const postCommit = Effect.fnUntraced(function* (interception: NavigationInterceptOptions | null) {
   const handler = interception?.handler;
   if (Predicate.isNullish(handler)) {
     return yield* Effect.die("Expected a post-commit handler.");
@@ -67,9 +65,7 @@ it.effect("uses a post-commit handler for a non-cancelable traversal", () =>
   }).pipe(Effect.scoped),
 );
 
-const observeFailedFlight = Effect.fn("effront.test.observeFailedTraversal")(function* (
-  overrides: TestNavigateEventOverrides,
-) {
+const observeFailedFlight = Effect.fnUntraced(function* (overrides: TestNavigateEventOverrides) {
   yield* browser;
   const navigation = new TestNavigationApi();
   const reloadDocument = vi.fn<() => void>();
@@ -109,7 +105,7 @@ it.effect("promotes a non-Flight response to native document navigation", () =>
 );
 
 type Redirect = Readonly<{ options: NavigationNavigateOptions | undefined; url: string }>;
-const observeRedirect = Effect.fn("effront.test.observeBrowserRedirect")(function* () {
+const observeRedirect = Effect.fnUntraced(function* () {
   yield* browser;
   const navigation = new TestNavigationApi();
   const redirects: Redirect[] = [];

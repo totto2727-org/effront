@@ -12,14 +12,11 @@ import { makeHttpEffect, toHttpEffect } from "./http.ts";
 type Mode = "captured" | "ambient";
 type ProbeApplication = ReturnType<typeof makeProbeApplication>;
 
-const resolveHttp = Effect.fn("effront.test.resolveHttpHandler")(function* (
-  mode: Mode,
-  application: ProbeApplication,
-) {
+const resolveHttp = Effect.fnUntraced(function* (mode: Mode, application: ProbeApplication) {
   return mode === "captured" ? yield* makeHttpEffect(application) : toHttpEffect(application);
 });
 
-const issueRequests = Effect.fn("effront.test.issueRequestsWithPrimedMemoMap")(function* (
+const issueRequests = Effect.fnUntraced(function* (
   mode: Mode,
   application: ProbeApplication,
   memoMap: Layer.MemoMap,
@@ -37,7 +34,7 @@ const issueRequests = Effect.fn("effront.test.issueRequestsWithPrimedMemoMap")(f
   return [first, second] as const;
 });
 
-const exercisePrimedMap = Effect.fn("effront.test.exercisePrimedHttpMap")(function* (
+const exercisePrimedMap = Effect.fnUntraced(function* (
   mode: Mode,
   acquisitions: Acquisition[],
   memoMap: Layer.MemoMap,

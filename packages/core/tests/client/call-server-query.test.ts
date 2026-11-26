@@ -24,7 +24,7 @@ const invokeStream = (...args: unknown[]): Promise<ReadableStream<string>> =>
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The fixture's streaming endpoint returns a ReadableStream<string>.
   invokeServerFn("stream", args) as Promise<ReadableStream<string>>;
 
-const pendingStream = Effect.fn("effront.test.collectQueryStream")(function* (stopEarly: boolean) {
+const pendingStream = Effect.fnUntraced(function* (stopEarly: boolean) {
   const fixture = yield* openQuery(cardResponse());
   const received = yield* Deferred.make<string>();
   const items = yield* Ref.make<string[]>([]);
@@ -52,10 +52,7 @@ type Observation = Readonly<{
   fixture: Effect.Success<ReturnType<typeof openQuery>>;
 }>;
 
-const readPending = Effect.fn("effront.test.observeFlightPending")(function* ({
-  consumer,
-  fixture,
-}: Observation) {
+const readPending = Effect.fnUntraced(function* ({ consumer, fixture }: Observation) {
   yield* Effect.yieldNow;
   const releases = yield* Ref.get(fixture.releases);
   return { exit: consumer.pollUnsafe(), releases };

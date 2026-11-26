@@ -32,7 +32,7 @@ const greetingLayer = Layer.succeed(Greeting, {
   message: (name) => Effect.succeed(`こんにちは、${name} さん。`),
 });
 
-const captureEnvironment = Effect.fn("captureEnvironment")(function* (events: string[]) {
+const captureEnvironment = Effect.fnUntraced(function* (events: string[]) {
   return yield* Effect.acquireRelease(
     Effect.gen(function* () {
       const { env, executionContext, request } = yield* workers.getWorkersRequestContext();
@@ -48,7 +48,7 @@ const captureEnvironment = Effect.fn("captureEnvironment")(function* (events: st
 
 const { use: registerRoutes } = HttpRouter;
 const greetingApi = registerRoutes(
-  Effect.fn("greetingApi")(function* (router) {
+  Effect.fnUntraced(function* (router) {
     const greeting = yield* Greeting;
     const environment = yield* RequestEnvironment;
     yield* router.add(

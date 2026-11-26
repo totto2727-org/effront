@@ -40,7 +40,7 @@ export const streamRefresh = Effect.gen(function* () {
 
 export type StreamingRefresh = Effect.Success<typeof streamRefresh>;
 
-export const queuedRenderer = Effect.fn("effront.test.queuedRouteRenderer")(function* (
+export const queuedRenderer = Effect.fnUntraced(function* (
   observe: (render: BrowserRender) => boolean = Function.constTrue,
 ) {
   const browserRenderer = yield* BrowserRenderer.make;

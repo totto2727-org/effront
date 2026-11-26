@@ -28,22 +28,23 @@ const routeLoader = (routes: Routes): Layer.Layer<RouteLoader> =>
     prepareRefresh: () => Function.constVoid,
   });
 
-export const listenToControlledRoutes = Effect.fn("effront.test.listenToControlledRoutes")(
-  function* (navigation: TestNavigationApi, routes: Routes) {
-    const installed = yield* Deferred.make<Completed>();
-    const transport = Layer.succeed(HttpClient.HttpClient, makeHttpClient());
-    const services = Layer.mergeAll(
-      BrowserEffectRunner.layer,
-      BrowserRenderer.layerTest(makeBrowserRenderer()),
-      makeNavigationApiLayer(navigation),
-      routeLoader(routes),
-    ).pipe(Layer.provideMerge(transport));
-    const install = installClientRouter.pipe(Effect.andThen(Deferred.done(installed, Exit.void)));
-    const router = Layer.effectDiscard(install).pipe(Layer.provideMerge(services));
-    const running = yield* Layer.launch(router).pipe(Effect.forkScoped);
-    yield* Effect.raceFirst(Deferred.await(installed), Fiber.join(running));
-  },
-);
+export const listenToControlledRoutes = Effect.fnUntraced(function* (
+  navigation: TestNavigationApi,
+  routes: Routes,
+) {
+  const installed = yield* Deferred.make<Completed>();
+  const transport = Layer.succeed(HttpClient.HttpClient, makeHttpClient());
+  const services = Layer.mergeAll(
+    BrowserEffectRunner.layer,
+    BrowserRenderer.layerTest(makeBrowserRenderer()),
+    makeNavigationApiLayer(navigation),
+    routeLoader(routes),
+  ).pipe(Layer.provideMerge(transport));
+  const install = installClientRouter.pipe(Effect.andThen(Deferred.done(installed, Exit.void)));
+  const router = Layer.effectDiscard(install).pipe(Layer.provideMerge(services));
+  const running = yield* Layer.launch(router).pipe(Effect.forkScoped);
+  yield* Effect.raceFirst(Deferred.await(installed), Fiber.join(running));
+});
 
 export const dayTwoUrl = "https://effront.test/schedule/day-two";
 export const dayThreeUrl = "https://effront.test/schedule/day-three";

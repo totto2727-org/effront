@@ -55,7 +55,7 @@ it.effect("runs an Effect operation with children and request services", () =>
   Effect.gen(function* () {
     const runtime = yield* FiberSet.makeRuntimePromise<ShellTitle>();
     const LayoutComponent = EFFRONT.Layout.make({
-      render: Effect.fn(function* ({ children }) {
+      render: Effect.fnUntraced(function* ({ children }) {
         const inferredChildren: ReactNode = children;
         const title = yield* ShellTitle;
         return (

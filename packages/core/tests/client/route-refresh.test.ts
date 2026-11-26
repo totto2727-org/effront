@@ -27,7 +27,7 @@ const responseReleased = (stream: StreamingRefresh): Effect.Effect<void> =>
     Effect.asVoid,
   );
 
-const expectOpenDuringNavigation = Effect.fn("effront.test.expectOpenDuringNavigation")(function* (
+const expectOpenDuringNavigation = Effect.fnUntraced(function* (
   navigation: TestNavigation,
   stream: StreamingRefresh,
 ) {

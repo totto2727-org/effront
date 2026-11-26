@@ -21,15 +21,14 @@ const buttonVariants = cva(
   },
 );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function Button({
+export const Button = ({
   className,
   variant,
   size,
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & { asChild?: boolean }): React.JSX.Element {
+  VariantProps<typeof buttonVariants> & { asChild?: boolean }): React.JSX.Element => {
   const Comp = asChild ? Slot.Root : "button";
   return (
     <Comp
@@ -40,4 +39,4 @@ export function Button({
       {...props}
     />
   );
-}
+};

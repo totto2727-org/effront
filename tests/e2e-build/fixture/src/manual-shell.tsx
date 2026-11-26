@@ -44,14 +44,13 @@ const useManualNavigation = (children: ReactNode): ManualNavigation => {
   return { close, dialog, query, restoreFocus, show, toggle, update };
 };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function ManualShell({
+export const ManualShell = ({
   children,
   pathname,
 }: Readonly<{
   children: ReactNode;
   pathname: string;
-}>): JSX.Element {
+}>): JSX.Element => {
   const { close, dialog, query, restoreFocus, show, toggle, update } =
     useManualNavigation(children);
   const button = (
@@ -87,4 +86,4 @@ export function ManualShell({
       <ManualContent pathname={pathname}>{children}</ManualContent>
     </section>
   );
-}
+};

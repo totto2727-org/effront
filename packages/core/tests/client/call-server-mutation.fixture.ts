@@ -32,9 +32,7 @@ export const makeFlight = (
     resolvedUrl: new URL(firstEntry.url),
   });
 
-export const recordRefresh = Effect.fn("effront.test.recordCurrentRouteRefresh")(function* (
-  onInterrupt: () => void,
-) {
+export const recordRefresh = Effect.fnUntraced(function* (onInterrupt: () => void) {
   const observed = yield* Deferred.make<boolean>();
   const recorded: string[] = [];
   const acknowledge = Deferred.succeed(observed, true);

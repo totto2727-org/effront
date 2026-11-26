@@ -162,20 +162,17 @@ const reloadButton = (): ReactElement => (
   </button>
 );
 
-// oxlint-disable-next-line eslint/func-style -- The shared React rule requires a declaration for named components.
-export function BrowserFailureScreen(): ReactElement {
-  return (
-    <main aria-labelledby="effront-browser-failure-title" className="effront-browser-failure">
-      <style>{BrowserFailureStyles}</style>
-      <div className="effront-browser-failure__content">
-        {failureIcon()}
-        <h1 id="effront-browser-failure-title">Something went wrong</h1>
-        <p className="effront-browser-failure__message">
-          This page couldn’t be displayed. Try reloading it.
-        </p>
-        <hr className="effront-browser-failure__rule" />
-        {reloadButton()}
-      </div>
-    </main>
-  );
-}
+export const BrowserFailureScreen = (): ReactElement => (
+  <main aria-labelledby="effront-browser-failure-title" className="effront-browser-failure">
+    <style>{BrowserFailureStyles}</style>
+    <div className="effront-browser-failure__content">
+      {failureIcon()}
+      <h1 id="effront-browser-failure-title">Something went wrong</h1>
+      <p className="effront-browser-failure__message">
+        This page couldn’t be displayed. Try reloading it.
+      </p>
+      <hr className="effront-browser-failure__rule" />
+      {reloadButton()}
+    </div>
+  </main>
+);

@@ -31,7 +31,7 @@ const ServiceRootLayout = ServiceEFFRONT.Layout.make({
   render: ({ children }) => Effect.succeed(children),
 });
 const ServicePage = ServiceEFFRONT.Page.make({
-  render: Effect.fn(function* () {
+  render: Effect.fnUntraced(function* () {
     yield* PageService;
     return emptyContent;
   }),
@@ -67,7 +67,7 @@ const ServiceSchema = Schema.String.pipe(
   Schema.catchDecodingWithContext(() => Effect.map(LayoutService, () => Option.some("fallback"))),
 );
 const layoutServicePageOptions = {
-  render: Effect.fn(function* () {
+  render: Effect.fnUntraced(function* () {
     yield* LayoutService;
     return emptyContent;
   }),
@@ -89,7 +89,7 @@ const ProvideLayoutDependencies = NarrowEFFRONT.Middleware.make<{
 );
 const LayoutDependenciesEFFRONT = NarrowEFFRONT.withMiddleware(ProvideLayoutDependencies);
 LayoutDependenciesEFFRONT.Page.make({
-  render: Effect.fn(function* () {
+  render: Effect.fnUntraced(function* () {
     yield* LayoutService;
     yield* LayerDependency;
     return emptyContent;
@@ -117,7 +117,7 @@ NarrowEFFRONT.Middleware.make((httpEffect) =>
 NarrowEFFRONT.Layout.make({
   // @ts-expect-error LayoutService is not part of this application's declared contracts.
   // Intentional invalid Effect fixture
-  render: Effect.fn(function* ({ children }) {
+  render: Effect.fnUntraced(function* ({ children }) {
     yield* LayoutService;
     return children;
   }),
@@ -125,7 +125,7 @@ NarrowEFFRONT.Layout.make({
 NarrowEFFRONT.Component.make({
   // @ts-expect-error LayoutService is not part of this application's declared contracts.
   // Intentional invalid Effect fixture
-  render: Effect.fn(function* () {
+  render: Effect.fnUntraced(function* () {
     yield* LayoutService;
     return emptyContent;
   }),
@@ -133,7 +133,7 @@ NarrowEFFRONT.Component.make({
 NarrowEFFRONT.ServerFn.make({
   // @ts-expect-error LayoutService is not part of this application's declared contracts.
   // Intentional invalid Effect fixture
-  handler: Effect.fn(function* () {
+  handler: Effect.fnUntraced(function* () {
     yield* LayoutService;
     return emptyContent;
   }),

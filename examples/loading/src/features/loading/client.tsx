@@ -37,8 +37,7 @@ const renderResult = (local: boolean, result: Promise<string> | undefined): JSX.
   return local ? <Suspense fallback={pendingResult}>{view}</Suspense> : view;
 };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function SuspensionDemo({ local }: Readonly<{ local: boolean }>): JSX.Element {
+export const SuspensionDemo = ({ local }: Readonly<{ local: boolean }>): JSX.Element => {
   const [result, setResult] = useState<Promise<string>>();
   const [isPending, startTransition] = useTransition();
   const attempt = useRef(initialAttempt);
@@ -81,4 +80,4 @@ export function SuspensionDemo({ local }: Readonly<{ local: boolean }>): JSX.Ele
       {renderResult(local, result)}
     </section>
   );
-}
+};

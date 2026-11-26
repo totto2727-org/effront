@@ -72,14 +72,12 @@ const waitForRelease = (route: ControlledFlight): Effect.Effect<void> =>
   // oxlint-disable-next-line typescript/promise-function-async -- Observe release of the existing Flight resource.
   Effect.promise(() => route.released.promise);
 
-const finishFlight = Effect.fn("effront.test.finishControlledRoute")(function* (
-  route: ControlledFlight,
-) {
+const finishFlight = Effect.fnUntraced(function* (route: ControlledFlight) {
   yield* Deferred.done(route.completed, Exit.void);
   yield* waitForRelease(route);
 });
 
-const commitEntry = Effect.fn("effront.test.commitHistoryEntry")(function* (
+const commitEntry = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   handler: NavigationInterceptHandler,
   entry: HistoryEntry,
@@ -89,7 +87,7 @@ const commitEntry = Effect.fn("effront.test.commitHistoryEntry")(function* (
   yield* Effect.promise(() => invokeNavigationHandler(handler));
 });
 
-const observeFlightBeforeHistory = Effect.fn("effront.test.flightBeforeHistory")(function* (
+const observeFlightBeforeHistory = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   route: ControlledFlight,
 ) {
@@ -101,7 +99,7 @@ const observeFlightBeforeHistory = Effect.fn("effront.test.flightBeforeHistory")
   return { afterCommit: route.cachedEntries, beforeCommit, entry };
 });
 
-const observeHistoryBeforeFlight = Effect.fn("effront.test.historyBeforeFlight")(function* (
+const observeHistoryBeforeFlight = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   route: ControlledFlight,
 ) {
@@ -114,7 +112,7 @@ const observeHistoryBeforeFlight = Effect.fn("effront.test.historyBeforeFlight")
   return { afterCompletion: route.cachedEntries, beforeCompletion, entry };
 });
 
-const retireBeforeCompletion = Effect.fn("effront.test.retireBeforeCompletion")(function* (
+const retireBeforeCompletion = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   route: ControlledFlight,
 ) {
@@ -148,7 +146,7 @@ it.effect("coordinates cache identity across Flight and history commit ordering"
   }).pipe(Effect.scoped),
 );
 
-const navigateHistory = Effect.fn("effront.test.navigateHistory")(function* (
+const navigateHistory = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   target: HistoryEntry,
   navigationType: "push" | "traverse",

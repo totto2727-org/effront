@@ -16,14 +16,13 @@ type BrowserRootProps = BrowserRenderObservers &
     renderer: typeof BrowserRenderer.Service;
   }>;
 
-// oxlint-disable-next-line eslint/func-style -- The shared React rule requires a declaration for named components.
-export function BrowserRoot({
+export const BrowserRoot = ({
   initialTree,
   initialize,
   onError,
   onRendered,
   renderer,
-}: BrowserRootProps): ReactElement {
+}: BrowserRootProps): ReactElement => {
   const [render, setRender] = useState<BrowserRender>(() =>
     renders.Initial({ routeTree: initialTree }),
   );
@@ -43,4 +42,4 @@ export function BrowserRoot({
       <RouteTree root={routeTree} />
     </BrowserErrorBoundary>
   );
-}
+};

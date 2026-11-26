@@ -37,7 +37,7 @@ const retirementRenderer = Effect.sync(() => {
   return { renderer, retired };
 });
 
-const prepareFirstNavigation = Effect.fn("effront.test.commitFirstTrackedFlight")(function* (
+const prepareFirstNavigation = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   signal: AbortSignal,
 ) {
@@ -61,9 +61,7 @@ const committedFlight = Effect.gen(function* () {
   return { cancellation, navigation, retired, transport };
 });
 
-const failedSuccessor = Effect.fn("effront.test.failSuccessorFlight")(function* (
-  navigation: TestNavigationApi,
-) {
+const failedSuccessor = Effect.fnUntraced(function* (navigation: TestNavigationApi) {
   const successor = makeNavigationEvent({ destination: { url: nextUrl } });
   navigation.dispatch(successor.event);
   return yield* Effect.exit(runPrecommit(successor.interception(), makePrecommitController()));

@@ -106,19 +106,19 @@ describe("application layer and service contracts", () => {
   test("declares service contracts once and chooses their implementations at application assembly", () => {
     const ServiceEFFRONT = Application.effront<AppServices>();
     const ServiceLayout = ServiceEFFRONT.Layout.make({
-      render: Effect.fn(function* ({ children }) {
+      render: Effect.fnUntraced(function* ({ children }) {
         yield* LayoutService;
         return children;
       }),
     });
     const ServicePage = ServiceEFFRONT.Page.make({
-      render: Effect.fn(function* () {
+      render: Effect.fnUntraced(function* () {
         yield* PageService;
         return <h1>Home</h1>;
       }),
     });
     const ServiceNestedPage = ServiceEFFRONT.Page.make({
-      render: Effect.fn(function* () {
+      render: Effect.fnUntraced(function* () {
         yield* NestedPageService;
         return <h1>Nested</h1>;
       }),

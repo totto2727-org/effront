@@ -12,11 +12,10 @@ const ComarkMermaid = import.meta.env.SSR
       return { default: Diagram };
     });
 
-// oxlint-disable-next-line eslint/func-style -- The React rule requires a function declaration for this component.
-function BrowserMermaid(props: MermaidProps): ReactElement {
+const BrowserMermaid = (props: MermaidProps): ReactElement => {
   use(browser());
   return createElement(ComarkMermaid, props);
-}
+};
 
 const placeholder = <div className="mermaid" />;
 
@@ -25,8 +24,8 @@ const placeholder = <div className="mermaid" />;
  * @param {MermaidProps} props The original Comark Mermaid props.
  * @returns {ReactElement} A diagram with a server-rendered loading placeholder.
  */
-// oxlint-disable-next-line eslint/func-style, react/no-multi-comp -- Keep the React declaration with the browser gate that renders beneath its Suspense boundary.
-export function Mermaid(props: MermaidProps): ReactElement {
+// oxlint-disable-next-line react/no-multi-comp -- Keep the browser-only component with the browser gate that renders beneath its Suspense boundary.
+export const Mermaid = (props: MermaidProps): ReactElement => {
   const diagram = createElement(BrowserMermaid, props);
   return <Suspense fallback={placeholder}>{diagram}</Suspense>;
-}
+};

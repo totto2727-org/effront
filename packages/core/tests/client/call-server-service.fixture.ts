@@ -10,7 +10,7 @@ import { RouteRefresher } from "#core/client/route-refresh.ts";
 import { absentNavigationValue } from "./client-routing-events.fixture.ts";
 import { makeNavigationEntry } from "./client-routing-navigation.fixture.ts";
 
-export const listen = Effect.fn("effront.test.installServerFunctionCallback")(function* (
+export const listen = Effect.fnUntraced(function* (
   dependencies: Layer.Layer<
     Effect.Services<typeof installCallServer>,
     never,
@@ -90,8 +90,6 @@ export const withoutNetwork: Layer.Layer<HttpClient.HttpClient> = Layer.succeed(
   HttpClient.make(() => Effect.die("Unexpected HTTP request.")),
 );
 
-export const listenIdle = Effect.fn("effront.test.listenToIdleServerFunction")(function* (
-  flight: Layer.Layer<MissingIdleService>,
-) {
+export const listenIdle = Effect.fnUntraced(function* (flight: Layer.Layer<MissingIdleService>) {
   yield* listen(Layer.merge(idleCallServer, flight)).pipe(Effect.provide(withoutNetwork));
 });

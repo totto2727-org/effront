@@ -39,36 +39,33 @@ const ticketField = (
   </label>
 );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function CheckInEvent({ event, pending, result, submit }: EventProps): JSX.Element {
-  return (
-    <section aria-labelledby="event-title">
-      <p data-testid="scope">Authorized organizer: {event.organizerName}</p>
-      <h1 id="event-title">{event.eventName} check-in</h1>
-      <p data-testid="count">
-        {event.checkedIn} of {event.total} attendees checked in
+export const CheckInEvent = ({ event, pending, result, submit }: EventProps): JSX.Element => (
+  <section aria-labelledby="event-title">
+    <p data-testid="scope">Authorized organizer: {event.organizerName}</p>
+    <h1 id="event-title">{event.eventName} check-in</h1>
+    <p data-testid="count">
+      {event.checkedIn} of {event.total} attendees checked in
+    </p>
+    <form action={submit}>
+      {ticketField}
+      <button disabled={pending} type="submit">
+        Check in attendee
+      </button>
+    </form>
+    {Predicate.isNotNullish(result) && (
+      <p aria-live="polite" data-testid="check-in-result">
+        {message(result)}
       </p>
-      <form action={submit}>
-        {ticketField}
-        <button disabled={pending} type="submit">
-          Check in attendee
-        </button>
-      </form>
-      {Predicate.isNotNullish(result) && (
-        <p aria-live="polite" data-testid="check-in-result">
-          {message(result)}
-        </p>
-      )}
-      <h2>Authorized attendee preview</h2>
-      <ul>
-        {event.attendees.map((attendee) => (
-          <li key={attendee.ticketCode}>
-            {attendee.attendeeName}: {attendee.status}
-          </li>
-        ))}
-      </ul>
-      <h2>Audit entries</h2>
-      <output data-testid="audit-count">{event.audit.length}</output>
-    </section>
-  );
-}
+    )}
+    <h2>Authorized attendee preview</h2>
+    <ul>
+      {event.attendees.map((attendee) => (
+        <li key={attendee.ticketCode}>
+          {attendee.attendeeName}: {attendee.status}
+        </li>
+      ))}
+    </ul>
+    <h2>Audit entries</h2>
+    <output data-testid="audit-count">{event.audit.length}</output>
+  </section>
+);

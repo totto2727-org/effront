@@ -27,7 +27,7 @@ class EntryProcessFailure extends Data.TaggedError("EntryProcessFailure")<{
   stderr: string;
 }> {}
 
-const evaluate = Effect.fn(
+const evaluate = Effect.fnUntraced(
   function* (program: string, conditions: string[] = []) {
     const path = yield* Path.Path;
     const cwd = yield* path.fromFileUrl(new URL("../../", import.meta.url));

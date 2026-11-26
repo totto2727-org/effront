@@ -57,7 +57,13 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 ## Development tools
 
 - **VitePlus**: versioned in the shared `pnpm-workspace.yaml` catalog. The root config owns shared checks and standard Vitest discovery. Do not add dependency overrides except the Vite+ prescribed Vite alias and exact matching toolchain Vitest. Document the official source for every unavoidable exception.
-- **Oxlint** applies the complete published preset through `vite.config.ts`. Library implementations use the library variant. Apps, examples, the CLI, and tests use the application variant. Keep any exception local and explain the language or runtime boundary that requires it. Use the root check and fix tasks for both variants. [Shared Oxlint preset](https://github.com/totto2727-org/oxlint)
+- **Oxlint** uses the full shared preset through `vite.config.ts`.
+  The application mode applies to `app/`, `examples/`, and `tests/`.
+  The library mode applies to all of `packages/`, including package tests, fixtures, and CLI code.
+  Generated applications use the application preset in their own configuration.
+  Keep each exception local and give its reason.
+  Use the root check and fix tasks for both modes.
+  [Shared Oxlint preset](https://github.com/totto2727-org/oxlint)
 - **pnpm**: keep `packageManager`, the Nix development shell, and generated starters aligned with the pinned Nix pnpm version. Define workspace globs, the shared catalog, and the official `vite@*` and `vitest@*` overrides in `pnpm-workspace.yaml`. Explicitly allow only necessary `bun`, `esbuild`, and `workerd` lifecycle scripts. Do not configure minimum release age or exclusions, preserving Effront's intentional exception. Publication uses the shared `publish-npm` action through VitePlus. Do not add repository-owned publishing tasks.
 - **Bun runtime**: optional only for genuine TypeScript-direct or Bun host execution, never dependency management. The native server browser suite owns its catalog-managed Bun binary. Node and Workers consumers do not require Bun, and the default Nix shell uses Node.js and pnpm.
 - **Gitignore exclusions**: `vite.config.ts` uses the published [npm package](https://www.npmjs.com/package/@totto2727/gitignore-patterns), versioned in the catalog. Do not restore a vendored implementation or its upstream tests.
@@ -70,7 +76,7 @@ Choose checks appropriate to the change, using the detailed test boundaries belo
 - Keep internal references as `workspace:`. Public Vite peers stay `"*"` to accept the consumer's Vite. Development uses the catalog-managed VitePlus alias.
 - Preserve explicit public subpaths, package-owned pack settings, and test-excluding publication entries. Keep every `packages/*` library at the same release version, including Alchemy. Shared release requirements are in the release policy below.
 - Do not create or use `index.ts` or `index.tsx` modules. Use responsibility-named modules and explicit imports, and map public package subpaths directly to those modules.
-- Use path-qualified Effect service identifiers and implementation-free shared contracts. Use `Effect.fnUntraced` for internals and `Effect.fn` for application/examples/public API authoring. Use typed failures for input/I/O. Reserve `TypeError` for violated wiring invariants.
+- Use path-qualified Effect service identifiers and implementation-free shared contracts. Use `Effect.fnUntraced` in library mode and `Effect.fn` in application mode. Use typed failures for input/I/O. Reserve `TypeError` for violated wiring invariants.
 - Colocate unit tests as `<module>.test.ts(x)`. Reserve `tests/` for integration or black-box contracts. Keep all retained source/tests checked. Keep standard Vitest discovery. Playwright uses `*.e2e.ts`.
 - Follow `share-artifact` for README/AGENTS: README is consumer-facing, Setup uses normal installation rather than `workspace:`/`catalog:`, and Development links to AGENTS. Package AGENTS supplements, not duplicates, root rules.
 - Keep user-facing guides host-neutral unless they describe a specific platform. Document only implemented guarantees. Put deferred designs in the roadmap.

@@ -13,8 +13,7 @@ export type AlertKind = keyof typeof alerts;
 export type AlertContent = Readonly<{ children?: ReactNode }>;
 type AlertProps = AlertContent & Readonly<{ kind: AlertKind }>;
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function MarkdownAlert({ children, kind }: AlertProps): JSX.Element {
+export const MarkdownAlert = ({ children, kind }: AlertProps): JSX.Element => {
   const { title, Icon } = alerts[kind];
   return (
     <aside className="docs-alert" data-alert={kind} aria-label={title}>
@@ -25,4 +24,4 @@ export function MarkdownAlert({ children, kind }: AlertProps): JSX.Element {
       <div className="docs-alert-body">{children}</div>
     </aside>
   );
-}
+};

@@ -106,14 +106,13 @@ const renderWrapper = ({
   </div>
 );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function SidebarProvider({
+export const SidebarProvider = ({
   defaultOpen,
   open,
   onOpenChange,
   style,
   ...wrapper
-}: SidebarProviderProps): JSX.Element {
+}: SidebarProviderProps): JSX.Element => {
   const context = useSidebarController({ defaultOpen, onOpenChange, open });
   const wrapperStyle = useMemo<SidebarStyle>(
     () => ({
@@ -130,4 +129,4 @@ export function SidebarProvider({
       </TooltipProvider>
     </SidebarContext.Provider>
   );
-}
+};

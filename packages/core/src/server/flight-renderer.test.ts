@@ -17,7 +17,7 @@ const { FlightRenderer } = await import("./flight-renderer.tsx");
 
 class UnexpectedRenderRuntime extends Data.TaggedError("UnexpectedRenderRuntime") {}
 
-const workProbe = Effect.fn("workProbe")(function* () {
+const workProbe = Effect.fnUntraced(function* () {
   const started = yield* Deferred.make<boolean>();
   const interrupted = yield* Deferred.make<boolean>();
   const application = MutableRef.make(Option.none<() => Promise<never>>());
@@ -65,7 +65,7 @@ const observeOutcome = async (execution: Promise<never>): Promise<string> => {
   }
 };
 
-const expectRelease = Effect.fn("expectRelease")(function* (
+const expectRelease = Effect.fnUntraced(function* (
   probe: Effect.Success<ReturnType<typeof workProbe>>,
   release: Effect.Effect<void>,
 ) {

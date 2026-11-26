@@ -11,9 +11,7 @@ import { makeHttpEffect } from "./http.ts";
 const bytesPerMiB = 1024 * 1024;
 const maxRequestBodyBytes = 10 * bytesPerMiB;
 
-const beginAbortableRequest = Effect.fn("effront.test.beginAbortableRequest")(function* (
-  acquisitions: Acquisition[],
-) {
+const beginAbortableRequest = Effect.fnUntraced(function* (acquisitions: Acquisition[]) {
   const interrupted = MutableRef.make(false);
   const pending = Effect.never.pipe(
     Effect.onInterrupt(() => Effect.sync(() => MutableRef.set(interrupted, true))),
@@ -55,7 +53,7 @@ describe("http request scope before starting the body", () => {
   );
 });
 
-const releaseRequest = Effect.fn("effront.test.finishExternalHttpRequest")(function* (
+const releaseRequest = Effect.fnUntraced(function* (
   hostReleases: MutableRef.MutableRef<number>,
   acquisitions: Acquisition[],
 ) {

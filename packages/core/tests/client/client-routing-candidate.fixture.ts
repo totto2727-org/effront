@@ -109,7 +109,7 @@ export const makeUncommittedRenderer = (): ControlledRenderer => {
   return { allowDiscard, discardStarted, renderStarted, renderer };
 };
 
-export const startCandidatePrecommit = Effect.fn("effront.test.startCandidatePrecommit")(function* (
+export const startCandidatePrecommit = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   signal: AbortSignal,
 ) {

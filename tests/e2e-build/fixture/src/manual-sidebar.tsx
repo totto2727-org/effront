@@ -8,8 +8,7 @@ type SidebarProps = Readonly<{
   update: (event: ChangeEvent<HTMLInputElement>) => void;
 }>;
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function ManualSidebar({ close, pathname, query, update }: SidebarProps): JSX.Element {
+export const ManualSidebar = ({ close, pathname, query, update }: SidebarProps): JSX.Element => {
   const filter = query.trim().toLowerCase();
   const links = pages.filter((page) => page.title.toLowerCase().includes(filter));
 
@@ -34,4 +33,4 @@ export function ManualSidebar({ close, pathname, query, update }: SidebarProps):
       </div>
     </>
   );
-}
+};

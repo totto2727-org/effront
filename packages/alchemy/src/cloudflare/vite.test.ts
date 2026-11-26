@@ -18,7 +18,7 @@ class InvalidViteFixture extends Data.TaggedError("InvalidViteFixture")<{
   message: string;
 }> {}
 
-const resolveConfiguredFixture = Effect.fn(function* (
+const resolveConfiguredFixture = Effect.fnUntraced(function* (
   options: UserConfig,
   mode: "serve" | "build",
 ) {

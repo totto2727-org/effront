@@ -21,11 +21,10 @@ export const renderHtml = async (
     (flight: ReadableStream<Uint8Array>) => createFromReadableStream<FlightPayload>(flight),
   );
 
-  // oxlint-disable-next-line eslint/func-style -- React Compiler requires a named component declaration.
-  function SsrRoot(): JSX.Element {
+  const SsrRoot = (): JSX.Element => {
     const { routeTree } = use(decodePayload(ssrFlightStream));
     return <RouteTree root={routeTree} />;
-  }
+  };
 
   const html = await renderToReadableStream(<SsrRoot />, {
     bootstrapScriptContent: `import(${JSON.stringify(getClientEntryUrl())})`,

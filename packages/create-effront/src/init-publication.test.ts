@@ -28,7 +28,7 @@ const tracingProbe = [
   "export const probe = Effect.fnUntraced(() => Effect.void);",
 ].join("\n");
 
-const unpackStarter = Effect.fn(function* () {
+const unpackStarter = Effect.fnUntraced(function* () {
   const source = yield* starterWorkspace("create-effront-publication-");
   const { directory, fs, owner, path } = source;
   const archive = path.join(directory, "create-effront.tgz");
@@ -39,7 +39,7 @@ const unpackStarter = Effect.fn(function* () {
   return { ...source, packed };
 });
 
-const packStarter = Effect.fn(function* () {
+const packStarter = Effect.fnUntraced(function* () {
   const { directory, fs, packed, path, workspace } = yield* unpackStarter();
   const manifest = yield* readPackedManifest(packed);
   const entry = path.join(packed, manifest.bin["create-effront"]);
@@ -54,7 +54,7 @@ const alchemyImports = [
   "makeApplicationHttpEffect<typeof application>()",
 ];
 
-const readPackedAlchemy = Effect.fn(function* (directory: string) {
+const readPackedAlchemy = Effect.fnUntraced(function* (directory: string) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const worker = yield* fs.readFileString(path.join(directory, "src/entry.workers.ts"));
@@ -64,7 +64,7 @@ const readPackedAlchemy = Effect.fn(function* (directory: string) {
   };
 });
 
-const readPackedStarter = Effect.fn(function* (
+const readPackedStarter = Effect.fnUntraced(function* (
   packed: Effect.Success<ReturnType<typeof packStarter>>,
   platform: Platform,
 ) {
@@ -126,7 +126,7 @@ describe("published CLI package", () => {
   );
 });
 
-const prepareLintProject = Effect.fn(function* (platform: Platform) {
+const prepareLintProject = Effect.fnUntraced(function* (platform: Platform) {
   const { directory, fs, path, workspace } = yield* starterWorkspace("create-effront-lint-");
   const project = yield* generateProject(path.join(directory, platform), platform);
   // Reuse installed platform dependencies. The private Git root owns the ignore scope.

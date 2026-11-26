@@ -92,7 +92,7 @@ describe("stream atom subscription", () => {
   });
 });
 
-const collectCard = Effect.fn("collectCard")(function* () {
+const collectCard = Effect.fnUntraced(function* () {
   const observed = Promise.withResolvers<MatchedQuery>();
   const read = stream(proxy(observed.resolve, () => streamValue("card")));
   const consumer = yield* Stream.runCollect(read()).pipe(Effect.forkScoped);

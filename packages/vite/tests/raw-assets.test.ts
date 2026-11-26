@@ -8,7 +8,7 @@ import { assert, describe, expect, vi } from "vitest";
 
 import { exampleRoot, fixtureDirectory, startVite } from "./vite-fixture.ts";
 
-const prepareFixture = Effect.fn(function* (files: Readonly<Record<string, string>>) {
+const prepareFixture = Effect.fnUntraced(function* (files: Readonly<Record<string, string>>) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const root = yield* fixtureDirectory("raw-assets-test-");
@@ -20,7 +20,7 @@ const prepareFixture = Effect.fn(function* (files: Readonly<Record<string, strin
   return { path, root };
 });
 
-const open = Effect.fn(function* (files: Readonly<Record<string, string>>) {
+const open = Effect.fnUntraced(function* (files: Readonly<Record<string, string>>) {
   const { path, root } = yield* prepareFixture(files);
   const consumer = yield* exampleRoot;
   const entry = path.join(root, "entry.ts");
@@ -41,7 +41,7 @@ const open = Effect.fn(function* (files: Readonly<Record<string, string>>) {
   return { client, root, rsc, server };
 });
 
-const serve = Effect.fn(function* (files: Readonly<Record<string, string>>) {
+const serve = Effect.fnUntraced(function* (files: Readonly<Record<string, string>>) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const opened = yield* open(files);
@@ -50,11 +50,11 @@ const serve = Effect.fn(function* (files: Readonly<Record<string, string>>) {
     Effect.promise(async () => {
       await expect.poll(() => opened.server.watcher.getWatched()[opened.root]).toContain(name);
     });
-  const edit = Effect.fn(function* (name: string, content: string) {
+  const edit = Effect.fnUntraced(function* (name: string, content: string) {
     yield* waitForWatch(name);
     yield* fs.writeFileString(file(name), content);
   });
-  const remove = Effect.fn(function* (name: string) {
+  const remove = Effect.fnUntraced(function* (name: string) {
     yield* waitForWatch(name);
     yield* fs.remove(file(name));
   });
@@ -107,7 +107,7 @@ const expectRawWatchEdge = (fixture: Fixture, name: string): void => {
   });
 };
 
-const readAsset = Effect.fn(function* (fixture: Fixture, file: string) {
+const readAsset = Effect.fnUntraced(function* (fixture: Fixture, file: string) {
   const [origin] = fixture.server.resolvedUrls?.local ?? [];
   assert.isDefined(origin);
   const target = new URL(fixture.url(file), origin);

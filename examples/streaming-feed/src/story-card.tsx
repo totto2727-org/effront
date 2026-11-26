@@ -2,8 +2,7 @@ import type { JSX } from "react";
 import type { Story } from "./feed-data.ts";
 import { useStoryNote } from "./story-note.ts";
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function StoryCard({ story }: Readonly<{ story: Story }>): JSX.Element {
+export const StoryCard = ({ story }: Readonly<{ story: Story }>): JSX.Element => {
   const { detail, expanded, failed, retry, toggle } = useStoryNote(story.id);
   const retryButton = (
     <button onClick={retry} type="button">
@@ -22,4 +21,4 @@ export function StoryCard({ story }: Readonly<{ story: Story }>): JSX.Element {
       {expanded && <div aria-live="polite">{note}</div>}
     </li>
   );
-}
+};

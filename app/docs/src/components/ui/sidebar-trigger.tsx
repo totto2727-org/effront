@@ -6,12 +6,11 @@ import { cn } from "#docs/lib/utils.ts";
 import { Button } from "./button.tsx";
 import { useSidebar } from "./sidebar-context.ts";
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function SidebarTrigger({
+export const SidebarTrigger = ({
   className,
   onClick,
   ...props
-}: ComponentProps<typeof Button>): JSX.Element {
+}: ComponentProps<typeof Button>): JSX.Element => {
   const { toggleSidebar, triggerRef } = useSidebar();
   const toggle = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -36,4 +35,4 @@ export function SidebarTrigger({
       <span className="sr-only">Toggle navigation</span>
     </Button>
   );
-}
+};

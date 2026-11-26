@@ -31,9 +31,7 @@ const captureBrowserRenders = Effect.gen(function* () {
   };
 });
 
-export const openSubmittedRoute = Effect.fn("effront.test.openSubmittedRoute")(function* (
-  completed: Effect.Effect<void>,
-) {
+export const openSubmittedRoute = Effect.fnUntraced(function* (completed: Effect.Effect<void>) {
   const publication = yield* captureBrowserRenders;
   const released = vi.fn<() => void>();
   const cached = vi.fn<() => void>();
@@ -55,7 +53,7 @@ export const openSubmittedRoute = Effect.fn("effront.test.openSubmittedRoute")(f
 type SubmittedRoute = Effect.Success<ReturnType<typeof openSubmittedRoute>>;
 type Publication = SubmittedRoute["publication"];
 
-export const prepareReplacement = Effect.fn("effront.test.prepareMutationReplacement")(function* (
+export const prepareReplacement = Effect.fnUntraced(function* (
   publication: Publication,
   kind: "navigation" | "refresh",
 ) {
@@ -68,7 +66,7 @@ export const prepareReplacement = Effect.fn("effront.test.prepareMutationReplace
   return { render, replacement };
 });
 
-export const commitReplacement = Effect.fn("effront.test.commitMutationReplacement")(function* (
+export const commitReplacement = Effect.fnUntraced(function* (
   { renderer }: Publication,
   { render, replacement }: Effect.Success<ReturnType<typeof prepareReplacement>>,
 ) {

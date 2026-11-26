@@ -47,14 +47,14 @@ interface MapCase {
 
 class MissingViteModule extends Data.TaggedError("MissingViteModule")<{ path: string }> {}
 
-const lookupModuleId = Effect.fn(function* (graph: DevEnvironment, path: string) {
+const lookupModuleId = Effect.fnUntraced(function* (graph: DevEnvironment, path: string) {
   yield* Effect.promise(async () => graph.transformRequest(path));
   const module = yield* Effect.promise(async () => graph.moduleGraph.getModuleByUrl(path));
   const id = module?.id;
   return Predicate.isString(id) ? id : yield* new MissingViteModule({ path });
 });
 
-const sourceMapUrl = Effect.fn(function* (
+const sourceMapUrl = Effect.fnUntraced(function* (
   { origin, server }: { origin: string; server: ViteDevServer },
   fixture: MapCase,
 ) {

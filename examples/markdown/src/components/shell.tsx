@@ -6,8 +6,7 @@ import type { JSX, ReactNode } from "react";
 const initialCount = 0;
 const increment = 1;
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function Shell({ children }: Readonly<{ children: ReactNode }>): JSX.Element {
+export const Shell = ({ children }: Readonly<{ children: ReactNode }>): JSX.Element => {
   const [count, setCount] = useState(initialCount);
   const incrementCount = useCallback(() => {
     setCount((value) => value + increment);
@@ -29,4 +28,4 @@ export function Shell({ children }: Readonly<{ children: ReactNode }>): JSX.Elem
       <main className="mx-auto max-w-[54rem] p-8 leading-[1.8]">{children}</main>
     </>
   );
-}
+};

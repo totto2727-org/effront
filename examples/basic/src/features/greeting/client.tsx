@@ -4,8 +4,7 @@ import type { JSX } from "react";
 import { useActionState } from "react";
 import { greet } from "./server.ts";
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function GreetingAction(): JSX.Element {
+export const GreetingAction = (): JSX.Element => {
   const [greeting, submit, pending] = useActionState(async () => greet("Ada"), "");
   return (
     <form action={submit}>
@@ -19,4 +18,4 @@ export function GreetingAction(): JSX.Element {
       <output data-testid="action-greeting">{greeting}</output>
     </form>
   );
-}
+};

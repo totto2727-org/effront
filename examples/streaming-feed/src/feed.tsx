@@ -18,8 +18,7 @@ const loadLabel = (pending: boolean, failed: boolean): string => {
   return failed ? "Retry" : `Load ${pageSize} more notes`;
 };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function Feed({ seed }: Readonly<{ seed: Readonly<Story[]> }>): JSX.Element {
+export const Feed = ({ seed }: Readonly<{ seed: Readonly<Story[]> }>): JSX.Element => {
   const { ended, failed, loadMore, pending, stories } = useFeedRequest(seed);
   const root = useRef<HTMLDivElement>(noElement);
   useEffect(() => {
@@ -55,4 +54,4 @@ export function Feed({ seed }: Readonly<{ seed: Readonly<Story[]> }>): JSX.Eleme
       {requestControls}
     </div>
   );
-}
+};

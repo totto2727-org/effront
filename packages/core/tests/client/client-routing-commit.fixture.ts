@@ -30,7 +30,7 @@ export const invokePrecommitHandler = (
   controller: NavigationPrecommitController,
 ): Promise<void> => Promise.resolve(handler(controller));
 
-export const runPrecommit = Effect.fn("effront.test.runPrecommit")(function* (
+export const runPrecommit = Effect.fnUntraced(function* (
   interception: NavigationInterceptOptions | null,
   controller: NavigationPrecommitController,
 ) {
@@ -42,7 +42,7 @@ export const runPrecommit = Effect.fn("effront.test.runPrecommit")(function* (
   return yield* Effect.promise(() => invokePrecommitHandler(handler, controller));
 });
 
-export const prepareNavigation = Effect.fn("effront.test.prepareNavigation")(function* (
+export const prepareNavigation = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   url: string,
 ) {

@@ -20,11 +20,10 @@ const renderMobileContent = (children: ReactNode): JSX.Element => (
   <div className="flex h-full w-full flex-col">{children}</div>
 );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function SidebarMobile({
+export const SidebarMobile = ({
   children,
   side,
-}: Readonly<{ children: ReactNode; side: "left" | "right" }>): JSX.Element {
+}: Readonly<{ children: ReactNode; side: "left" | "right" }>): JSX.Element => {
   const { openMobile, setOpenMobile, triggerRef } = useSidebar();
   const focusTrigger = useCallback(
     (event: Event) => {
@@ -50,4 +49,4 @@ export function SidebarMobile({
       </SheetContent>
     </Sheet>
   );
-}
+};

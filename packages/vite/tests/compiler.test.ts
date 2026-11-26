@@ -11,7 +11,7 @@ import { exampleRoot, fixtureDirectory, quietServer, startVite } from "./vite-fi
 const memoSentinel = "react.memo_cache_sentinel";
 const counter = "/src/components/counter.tsx";
 
-const openCompiler = Effect.fn(function* (compiler: boolean) {
+const openCompiler = Effect.fnUntraced(function* (compiler: boolean) {
   const path = yield* Path.Path;
   const root = yield* exampleRoot;
   const directory = yield* fixtureDirectory("compiler-test-");
@@ -39,7 +39,7 @@ const source = (runtime: DevEnvironment, moduleId: string): Effect.Effect<string
     return result?.code;
   });
 
-const resolveReact = Effect.fn(function* (runtime: DevEnvironment) {
+const resolveReact = Effect.fnUntraced(function* (runtime: DevEnvironment) {
   const path = yield* Path.Path;
   const importer = yield* path.fromFileUrl(
     new URL("../../core/src/application/definition.tsx", import.meta.url),

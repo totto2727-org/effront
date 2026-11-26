@@ -5,7 +5,6 @@ import { RouteNodeContext } from "./route-node-context.ts";
 
 type RouteNodeRendererProps = Readonly<{ node: RouteTreeModel }>;
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function RouteNodeRenderer({ node }: RouteNodeRendererProps): JSX.Element {
-  return <RouteNodeContext value={node}>{node.content}</RouteNodeContext>;
-}
+export const RouteNodeRenderer = ({ node }: RouteNodeRendererProps): JSX.Element => (
+  <RouteNodeContext value={node}>{node.content}</RouteNodeContext>
+);

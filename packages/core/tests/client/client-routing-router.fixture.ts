@@ -20,7 +20,7 @@ type ListenerOptions = Readonly<{
 
 type Completed = Effect.Success<typeof Effect.void>;
 
-export const listen = Effect.fn("effront.test.listenToNavigation")(function* (
+export const listen = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   {
     documentReplacements = [],

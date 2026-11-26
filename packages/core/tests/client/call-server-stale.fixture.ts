@@ -49,7 +49,7 @@ type ChangeTiming = "BeforeResponse" | "DuringInterruption";
 type ChangeNavigation = (navigation: StaleNavigation) => void;
 const firstResult = "first result";
 
-const runStaleResponse = Effect.fn("effront.test.observeStaleServerFunction")(function* (
+const runStaleResponse = Effect.fnUntraced(function* (
   change: ChangeNavigation,
   timing: ChangeTiming,
 ) {
@@ -78,23 +78,24 @@ const runStaleResponse = Effect.fn("effront.test.observeStaleServerFunction")(fu
   return { navigation, refresh, released, rendered, transport };
 });
 
-export const observeStaleResponse = Effect.fn("effront.test.completeStaleServerFunction")(
-  function* (change: ChangeNavigation, timing: ChangeTiming = "BeforeResponse") {
-    const ready = yield* runStaleResponse(change, timing);
-    const result = invokeServerFn("first");
-    yield* Deferred.await(ready.transport.started);
-    if (timing === "BeforeResponse") {
-      change(ready.navigation);
-    }
-    const response = makeFlight("stale", firstResult, Effect.sync(ready.released));
-    yield* Deferred.succeed(ready.transport.pending, response);
-    const value = yield* Effect.promise(async () => result);
-    yield* Deferred.await(ready.refresh.observed);
-    return {
-      recorded: ready.refresh.recorded,
-      released: ready.released.mock.calls.length,
-      rendered: ready.rendered.mock.calls.length,
-      value,
-    };
-  },
-);
+export const observeStaleResponse = Effect.fnUntraced(function* (
+  change: ChangeNavigation,
+  timing: ChangeTiming = "BeforeResponse",
+) {
+  const ready = yield* runStaleResponse(change, timing);
+  const result = invokeServerFn("first");
+  yield* Deferred.await(ready.transport.started);
+  if (timing === "BeforeResponse") {
+    change(ready.navigation);
+  }
+  const response = makeFlight("stale", firstResult, Effect.sync(ready.released));
+  yield* Deferred.succeed(ready.transport.pending, response);
+  const value = yield* Effect.promise(async () => result);
+  yield* Deferred.await(ready.refresh.observed);
+  return {
+    recorded: ready.refresh.recorded,
+    released: ready.released.mock.calls.length,
+    rendered: ready.rendered.mock.calls.length,
+    value,
+  };
+});

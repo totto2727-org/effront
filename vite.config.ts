@@ -11,51 +11,21 @@ const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url
 export default defineConfig({
   fmt: { ignorePatterns },
   lint: {
-    ...preset,
+    extends: [preset],
     // Raw templates resolve their imports in generated applications.
     ignorePatterns: [...ignorePatterns, "packages/create-effront/templates/**"],
-    options: { ...preset.options, typeCheck: true },
+    options: { typeCheck: true },
     overrides: [
-      { env: { worker: true }, files: ["{app,examples,packages,tests}/**/*.{ts,tsx}"] },
       {
-        env: { browser: true },
-        files: [
-          "packages/core/src/client/**/*.{ts,tsx}",
-          "packages/core/tests/client/**/*.{ts,tsx}",
-          "{app,examples,tests}/**/*.{tsx,jsx}",
-          "app/docs/src/components/ui/**/*.{ts,tsx}",
-          "{app,tests}/**/*.{e2e,spec,test}.{ts,tsx}",
-          "{app,tests}/**/*.browser.fixture.{ts,tsx}",
-        ],
+        files: ["{app,examples,tests}/**"],
+        rules: { "rules/effect-tracing": applicationPreset.rules["rules/effect-tracing"] },
       },
       {
-        env: { node: true },
-        files: [
-          "vite.config.ts",
-          "**/*.config.ts",
-          "**/alchemy.run.ts",
-          "**/*.test.{ts,tsx}",
-          "{packages/create-effront,packages/server,packages/vite,tests}/**/*.{ts,tsx}",
-          "examples/{node,bun}/src/entry.server.ts",
-        ],
+        files: ["packages/**"],
+        rules: { "rules/effect-tracing": libraryPreset.rules["rules/effect-tracing"] },
       },
       {
-        files: ["packages/**/*.{ts,tsx}"],
-        rules: { ...libraryPreset.rules },
-      },
-      {
-        // Tests and fixtures exercise the public application API.
-        files: [
-          "{app,examples,tests}/**/*.{ts,tsx}",
-          "packages/**/*.{test,types}.{ts,tsx}",
-          "packages/*/tests/**/*.{ts,tsx}",
-          "packages/create-effront/src/{cli,main}.ts",
-        ],
-        rules: { ...applicationPreset.rules },
-      },
-      ...(preset.overrides ?? []),
-      {
-        // The Vite virtual module uses an ambient script. This diagnostic has a zero-width span at the start of the file.
+        // The packaged declaration must stay ambient. Oxlint reports its zero-width diagnostic before inline directives.
         files: ["packages/core/src/application-entry.d.ts"],
         rules: { "import/unambiguous": "off" },
       },

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { effrontServer } from "./vite.ts";
 
-const resolveHost = Effect.fn(function* (options: UserConfig, command: "serve" | "build") {
+const resolveHost = Effect.fnUntraced(function* (options: UserConfig, command: "serve" | "build") {
   const path = yield* Path.Path;
   const location = new URL("../../../tests/e2e-server/fixtures/node/", import.meta.url);
   const root = yield* path.fromFileUrl(location);

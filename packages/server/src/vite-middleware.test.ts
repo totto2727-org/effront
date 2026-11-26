@@ -57,7 +57,7 @@ const fixtureRoot = Effect.gen(function* () {
   return yield* path.fromFileUrl(location);
 }).pipe(Effect.provide(NodeServices.layer));
 
-const setupServer = Effect.fn(function* (middlewareMode: boolean) {
+const setupServer = Effect.fnUntraced(function* (middlewareMode: boolean) {
   const root = yield* fixtureRoot;
   const entryScript = { source: handlerSource("first") };
   const fixture: Plugin = {
@@ -93,7 +93,7 @@ const originOf = (server: Server | ViteDevServer["httpServer"]): string => {
   return `http://127.0.0.1:${address.port}`;
 };
 
-const listen = Effect.fn(function* (server: ViteDevServer) {
+const listen = Effect.fnUntraced(function* (server: ViteDevServer) {
   yield* Effect.promise(async () => server.listen());
   return originOf(server.httpServer);
 });
@@ -165,14 +165,14 @@ const setupListener = Effect.gen(function* () {
   return { change, origin, server };
 });
 
-const standaloneOrigin = Effect.fn(function* (server: ViteDevServer) {
+const standaloneOrigin = Effect.fnUntraced(function* (server: ViteDevServer) {
   const host = yield* Effect.acquireRelease(openHost(server), (owned) =>
     closeHost(owned).pipe(Effect.orDie),
   );
   return originOf(host);
 });
 
-const openStream = Effect.fn(function* (origin: string) {
+const openStream = Effect.fnUntraced(function* (origin: string) {
   const response = yield* readResponse(`${origin}/stream`);
   const reader = readStream(response);
   const first = yield* Effect.promise(async () => reader.read());

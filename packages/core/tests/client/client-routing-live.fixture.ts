@@ -37,10 +37,7 @@ export const openLiveRenderer = Effect.gen(function* () {
 export type LiveRenderer = Effect.Success<typeof openLiveRenderer>;
 export type History = ReturnType<typeof makeNavigationEntry>;
 
-export const prepareRender = Effect.fn("effront.test.prepareNativeRendererPublication")(function* (
-  fixture: LiveRenderer,
-  url: string,
-) {
+export const prepareRender = Effect.fnUntraced(function* (fixture: LiveRenderer, url: string) {
   const preparation = yield* prepareNavigation(fixture.navigation, url).pipe(Effect.forkChild);
   const render = yield* fixture.read();
   yield* Effect.yieldNow;
@@ -49,7 +46,7 @@ export const prepareRender = Effect.fn("effront.test.prepareNativeRendererPublic
 
 type Prepared = Effect.Success<ReturnType<typeof prepareRender>>;
 
-export const commitHistory = Effect.fn("effront.test.commitNativeRendererHistory")(function* (
+export const commitHistory = Effect.fnUntraced(function* (
   navigation: TestNavigationApi,
   { preparation }: Prepared,
   entry: History,
@@ -59,9 +56,7 @@ export const commitHistory = Effect.fn("effront.test.commitNativeRendererHistory
   yield* observePromise(invokeNavigationHandler(history));
 });
 
-export const committedFirstPage = Effect.fn("effront.test.openFirstCommittedNavigation")(function* (
-  fixture: LiveRenderer,
-) {
+export const committedFirstPage = Effect.fnUntraced(function* (fixture: LiveRenderer) {
   const prepared = yield* prepareRender(fixture, firstUrl);
   fixture.renderer.commit(prepared.render);
   yield* commitHistory(fixture.navigation, prepared, makeNavigationEntry("day-two", firstUrl));

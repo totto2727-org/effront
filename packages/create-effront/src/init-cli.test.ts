@@ -30,7 +30,7 @@ const cliVersion = Effect.gen(function* () {
   return yield* decodeVersion(source);
 });
 
-const runCli = Effect.fn(function* (args: string[]) {
+const runCli = Effect.fnUntraced(function* (args: string[]) {
   const { version } = yield* cliVersion;
   const base = yield* Console.Console;
   const log = vi.fn<Console.Console["log"]>();
@@ -43,7 +43,7 @@ const runCli = Effect.fn(function* (args: string[]) {
   return log;
 });
 
-const initialize = Effect.fn(function* (directory: string, platform: Platform) {
+const initialize = Effect.fnUntraced(function* (directory: string, platform: Platform) {
   return yield* Effect.tryPromise(async () => createProject(directory, platform));
 });
 

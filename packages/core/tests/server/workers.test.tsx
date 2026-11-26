@@ -18,7 +18,7 @@ const request = (
     handler(new Request(`https://workers.test/?request=${env.value}`), env, { requestId }),
   );
 
-const expectPerRequestServices = Effect.fn("expectPerRequestServices")(function* (
+const expectPerRequestServices = Effect.fnUntraced(function* (
   handler: FetchHandler,
   events: string[],
 ) {
@@ -44,7 +44,7 @@ const expectPerRequestServices = Effect.fn("expectPerRequestServices")(function*
   );
 });
 
-const expectEmptyResponseRelease = Effect.fn("expectEmptyResponseRelease")(function* (
+const expectEmptyResponseRelease = Effect.fnUntraced(function* (
   handler: FetchHandler,
   events: string[],
 ) {
@@ -53,7 +53,7 @@ const expectEmptyResponseRelease = Effect.fn("expectEmptyResponseRelease")(funct
   assert.deepEqual(events, ["acquired", "released"]);
 });
 
-const expectCancellationRelease = Effect.fn("expectCancellationRelease")(function* (
+const expectCancellationRelease = Effect.fnUntraced(function* (
   handler: FetchHandler,
   events: string[],
 ) {
@@ -64,10 +64,7 @@ const expectCancellationRelease = Effect.fn("expectCancellationRelease")(functio
   assert.deepEqual(events, ["acquired", "released", "acquired", "released"]);
 });
 
-const expectFailureRelease = Effect.fn("expectFailureRelease")(function* (
-  handler: FetchHandler,
-  events: string[],
-) {
+const expectFailureRelease = Effect.fnUntraced(function* (handler: FetchHandler, events: string[]) {
   const failing = yield* request(handler, { mode: "failure", value: "failure" });
   yield* Effect.flip(Effect.tryPromise(async () => failing.text()));
   assert.lengthOf(

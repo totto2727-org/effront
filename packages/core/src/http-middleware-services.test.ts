@@ -33,7 +33,7 @@ class AcquisitionFailure extends Data.TaggedError("AcquisitionFailure")<
   Readonly<{ message: string }>
 > {}
 
-const failAcquisition = Effect.fn("effront.test.failHttpServiceAcquisition")(function* (
+const failAcquisition = Effect.fnUntraced(function* (
   failure: AcquisitionFailure,
   released: MutableRef.MutableRef<number>,
 ) {

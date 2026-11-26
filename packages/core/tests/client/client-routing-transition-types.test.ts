@@ -39,22 +39,20 @@ const browser = Effect.acquireRelease(
 
 const target = "https://effront.test/schedule/day-two";
 
-const publishWithVisualTransition = Effect.fn("effront.test.publishWithVisualTransition")(
-  function* () {
-    const navigation = new TestNavigationApi();
-    const requestedUrls: string[] = [];
-    const renders: BrowserRenderRequest[] = [];
-    yield* listen(navigation, {
-      httpClient: makeHttpClient(requestedUrls),
-      renderer: makeBrowserRenderer(renders),
-    });
-    const pending = makeNavigationEvent({ hasUAVisualTransition: true });
-    navigation.dispatch(pending.event);
-    return { interception: pending.interception(), renders, requestedUrls };
-  },
-);
+const publishWithVisualTransition = Effect.fnUntraced(function* () {
+  const navigation = new TestNavigationApi();
+  const requestedUrls: string[] = [];
+  const renders: BrowserRenderRequest[] = [];
+  yield* listen(navigation, {
+    httpClient: makeHttpClient(requestedUrls),
+    renderer: makeBrowserRenderer(renders),
+  });
+  const pending = makeNavigationEvent({ hasUAVisualTransition: true });
+  navigation.dispatch(pending.event);
+  return { interception: pending.interception(), renders, requestedUrls };
+});
 
-const settleRecordedCommit = Effect.fn("effront.test.settleRecordedCommit")(function* (
+const settleRecordedCommit = Effect.fnUntraced(function* (
   interception: NavigationInterceptOptions | null,
 ) {
   const handlers: NavigationInterceptHandler[] = [];

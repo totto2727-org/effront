@@ -6,8 +6,7 @@ import { useCallback, useState } from "react";
 const initialCount = 0;
 const increment = 1;
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function Counter(): JSX.Element {
+export const Counter = (): JSX.Element => {
   const [count, setCount] = useState(initialCount);
   const incrementCount = useCallback(() => {
     setCount((value) => value + increment);
@@ -21,4 +20,4 @@ export function Counter(): JSX.Element {
       Count: {count}
     </button>
   );
-}
+};

@@ -19,14 +19,13 @@ const subscribe = (onChange: () => void): (() => void) => {
 const getSnapshot = (): boolean => globalThis.matchMedia(reducedMotionQuery).matches;
 const getServerSnapshot = (): boolean => false;
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function PageViewTransitionBoundary({
+export const PageViewTransitionBoundary = ({
   children,
   config,
 }: Readonly<{
   children?: ReactNode;
   config: PageViewTransitionConfig;
-}>): ReactNode {
+}>): ReactNode => {
   const reducedMotion = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   if (config.enabled === false) {
     return children;
@@ -44,4 +43,4 @@ export function PageViewTransitionBoundary({
       {children}
     </ViewTransition>
   );
-}
+};

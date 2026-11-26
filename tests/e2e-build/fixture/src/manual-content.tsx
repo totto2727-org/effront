@@ -11,11 +11,10 @@ const sectionLink = (pathname: string): string => {
   return pathname.endsWith("getting-started") ? "#installation" : "#details";
 };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function ManualContent({
+export const ManualContent = ({
   children,
   pathname,
-}: Readonly<{ children: ReactNode; pathname: string }>): JSX.Element {
+}: Readonly<{ children: ReactNode; pathname: string }>): JSX.Element => {
   const current = pages.findIndex((page) => page.href === pathname);
   const previous = pages[current - adjacentPage];
   const next = pages[current + adjacentPage];
@@ -45,4 +44,4 @@ export function ManualContent({
       {section}
     </div>
   );
-}
+};

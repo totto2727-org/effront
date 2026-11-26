@@ -32,7 +32,7 @@ const aborted = ({
   replacement: responseSignals[replacementRequest]?.aborted,
 });
 
-const commitSuccessor = Effect.fn("effront.test.commitNativeSuccessor")(function* (
+const commitSuccessor = Effect.fnUntraced(function* (
   fixture: LiveRenderer,
   { preparation, render }: Readonly<{ preparation: Fiber.Fiber<unknown>; render: BrowserRender }>,
 ) {
@@ -55,9 +55,7 @@ it.effect(
     }).pipe(Effect.scoped),
 );
 
-const queueSuccessor = Effect.fn("effront.test.queueSuccessorDuringCommit")(function* (
-  fixture: LiveRenderer,
-) {
+const queueSuccessor = Effect.fnUntraced(function* (fixture: LiveRenderer) {
   const first = makeNavigationEvent();
   fixture.navigation.dispatch(first.event);
   const preparation = yield* runPrecommit(first.interception(), makePrecommitController()).pipe(
@@ -75,7 +73,7 @@ const queueSuccessor = Effect.fn("effront.test.queueSuccessorDuringCommit")(func
   return successor;
 });
 
-const publishQueuedSuccessor = Effect.fn("effront.test.publishQueuedSuccessor")(function* (
+const publishQueuedSuccessor = Effect.fnUntraced(function* (
   fixture: LiveRenderer,
   pending: ReturnType<typeof makeNavigationEvent>,
 ) {
@@ -102,9 +100,7 @@ it.effect(
     }).pipe(Effect.scoped),
 );
 
-const queueRefreshDiscard = Effect.fn("effront.test.queueRefreshDiscard")(function* (
-  fixture: LiveRenderer,
-) {
+const queueRefreshDiscard = Effect.fnUntraced(function* (fixture: LiveRenderer) {
   const next = yield* prepareRender(fixture, nextUrl);
   // A cancelled refresh queues restoration of the first page before the second commits.
   const refresh = fixture.renderer.refresh(initialRouteTree);
@@ -116,9 +112,7 @@ const queueRefreshDiscard = Effect.fn("effront.test.queueRefreshDiscard")(functi
   return { discardRender, discarded };
 });
 
-const retireRestoredPage = Effect.fn("effront.test.retireRestoredPage")(function* (
-  fixture: LiveRenderer,
-) {
+const retireRestoredPage = Effect.fnUntraced(function* (fixture: LiveRenderer) {
   fixture.reset();
   fixture.renderer.refresh(initialRouteTree);
   const replacement = yield* fixture.read();

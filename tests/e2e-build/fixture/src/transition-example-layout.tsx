@@ -12,19 +12,16 @@ const navigation = (
   </nav>
 );
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function TransitionExampleLayout({
+export const TransitionExampleLayout = ({
   children,
-}: Readonly<{ children: ReactNode }>): JSX.Element {
-  return (
-    <>
-      <aside aria-label="Persistent transition layout">
-        <h2>Page transitions</h2>
-        <p>This counter belongs to the layout and stays mounted while the page changes.</p>
-        <Counter />
-        {navigation}
-      </aside>
-      {children}
-    </>
-  );
-}
+}: Readonly<{ children: ReactNode }>): JSX.Element => (
+  <>
+    <aside aria-label="Persistent transition layout">
+      <h2>Page transitions</h2>
+      <p>This counter belongs to the layout and stays mounted while the page changes.</p>
+      <Counter />
+      {navigation}
+    </aside>
+    {children}
+  </>
+);

@@ -87,10 +87,7 @@ export const startConcurrentMutations = Effect.gen(function* () {
 
 type Running = Effect.Success<typeof startConcurrentMutations>;
 
-export const commitNewer = Effect.fn("effront.test.commitNewerServerFunction")(function* ({
-  fixture,
-  second,
-}: Running) {
+export const commitNewer = Effect.fnUntraced(function* ({ fixture, second }: Running) {
   yield* fixture.second.send(makeFlight("newer", "second result", Effect.void));
   const value = yield* observePromise(second);
   yield* fixture.direct.wait;
@@ -101,10 +98,7 @@ export const commitNewer = Effect.fn("effront.test.commitNewerServerFunction")(f
   };
 });
 
-export const finishOlder = Effect.fn("effront.test.finishOlderServerFunction")(function* ({
-  first,
-  fixture,
-}: Running) {
+export const finishOlder = Effect.fnUntraced(function* ({ first, fixture }: Running) {
   const released = vi.fn<() => void>();
   const response = makeFlight("older", "first result", Effect.sync(released));
   yield* fixture.first.send(response);

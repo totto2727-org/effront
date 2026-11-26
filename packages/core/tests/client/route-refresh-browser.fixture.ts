@@ -65,7 +65,7 @@ type BrowserFixture = Readonly<{
 const testHttpClient = HttpClient.make(() => Effect.die("Unexpected HTTP request."));
 const network = Layer.succeed(HttpClient.HttpClient, testHttpClient);
 
-export const openBrowserRefresh = Effect.fn("effront.test.installRouteRefresh")(function* ({
+export const openBrowserRefresh = Effect.fnUntraced(function* ({
   browserRenderer,
   navigation,
   routeLoader,

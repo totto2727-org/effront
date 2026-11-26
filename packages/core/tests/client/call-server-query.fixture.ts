@@ -13,9 +13,7 @@ const result = Data.taggedEnum<ServerFnResult>();
 const initialReleaseCount = 0;
 const releaseIncrement = 1;
 
-export const openQuery = Effect.fn("effront.test.openServerFunctionQuery")(function* (
-  value: unknown,
-) {
+export const openQuery = Effect.fnUntraced(function* (value: unknown) {
   const completed = yield* Deferred.make<boolean, FlightLoadError>();
   const released = yield* Deferred.make<boolean>();
   const started = yield* Deferred.make<QueryRequest>();

@@ -108,8 +108,7 @@ const renderCode = (lines: CodeLine[], foreground: CSSProperties["color"]): JSX.
 );
 
 // Server-rendered tokens stay text nodes, including HTML-looking source excerpts.
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function CodeBlock({ code, language = "text" }: CodeBlockProps): JSX.Element {
+export const CodeBlock = ({ code, language = "text" }: CodeBlockProps): JSX.Element => {
   if (!Object.hasOwn(languages, language)) {
     // oxlint-disable-next-line rules/require-tagged-error -- Invalid JavaScript callers receive the synchronous TypeError contract.
     throw new TypeError("CodeBlock received an unsupported language.");
@@ -130,4 +129,4 @@ export function CodeBlock({ code, language = "text" }: CodeBlockProps): JSX.Elem
       {renderCode(sourceLines(code, tokens), foreground)}
     </pre>
   );
-}
+};

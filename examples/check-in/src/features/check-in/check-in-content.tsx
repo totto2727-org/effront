@@ -18,8 +18,7 @@ const ticketCodeFrom = (formData: FormData): string => {
   return Predicate.isString(ticketCode) ? ticketCode : "";
 };
 
-// oxlint-disable-next-line eslint/func-style -- React's component definition rule requires a named declaration.
-export function CheckInContent(): JSX.Element {
+export const CheckInContent = (): JSX.Element => {
   const [preview, queryPreview] = useAtom(previewAtom);
   const [result, submit, pending] = useActionState<ActionState, FormData>(
     async (_previous, formData) => {
@@ -45,4 +44,4 @@ export function CheckInContent(): JSX.Element {
   }
 
   return <CheckInEvent event={preview.value} pending={pending} result={result} submit={submit} />;
-}
+};

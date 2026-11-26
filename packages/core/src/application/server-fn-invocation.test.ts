@@ -47,7 +47,7 @@ it.effect("remains lazy until the request handler executes it", () =>
     const invoked = yield* Ref.make(false);
     const EFFRONT = Application.effront();
     const serverFn = EFFRONT.ServerFn.make({
-      handler: Effect.fn("serverFn")(function* () {
+      handler: Effect.fnUntraced(function* () {
         yield* Ref.set(invoked, true);
       }),
       input: Schema.Struct({ id: Schema.String }),
