@@ -1,49 +1,52 @@
-// Vite replaces `import.meta.env.DEV` at compile time.
-import { Cause, Effect, Option } from "effect";
+import { Cause, Data, Effect, Exit, Option } from "effect";
 
-import { isServerFnStream } from "../application/server-fn";
-import type { ServerFnResult } from "../rsc/flight";
-import { ServerFnInputError, serverFnErrorDetail } from "../rsc/server-fn-error";
-import type { RequestOutcome } from "./request-outcome";
-import { serverFnStream } from "./server-fn-stream";
-import { nextErrorDigest } from "./error-digest";
+import { isServerFnStream } from "#core/application/server-fn.ts";
+import type { ServerFnResult } from "#core/rsc/flight.ts";
+import { ServerFnInputError, serverFnErrorDetail } from "#core/rsc/server-fn-error.ts";
+import type { ServerFnFailureModel } from "#core/rsc/server-fn-error.ts";
+import { nextErrorDigest } from "./error-digest.ts";
+import { responseOk } from "./request-outcome.ts";
+import type { RequestOutcome } from "./request-outcome.ts";
+import { serverFnStream } from "./server-fn-stream.ts";
+
+const result = Data.taggedEnum<ServerFnResult>();
+const { ServerFnInputError: inputFailure, ServerFnDefect: defectFailure } =
+  Data.taggedEnum<ServerFnFailureModel>();
+
+const successResponse = Effect.fnUntraced(function* <Requirements>(value: unknown) {
+  if (isServerFnStream<Requirements>(value)) {
+    return result.Success({ value: yield* serverFnStream(value) });
+  }
+  return result.Success({ value });
+});
+
+const failureResponse = Effect.fnUntraced(function* <Error>(cause: Cause.Cause<Error>) {
+  if (Cause.hasInterrupts(cause)) {
+    return yield* Effect.interrupt;
+  }
+
+  const error = Option.getOrUndefined(Cause.findErrorOption(cause));
+  if (error instanceof ServerFnInputError) {
+    yield* Effect.logWarning("Server Function rejected its arguments.", error.detail.message);
+    return result.Failure({ error: inputFailure({ detail: error.detail }) });
+  }
+
+  const digest = yield* nextErrorDigest;
+  yield* Effect.logError("Server Function failed.", cause).pipe(
+    Effect.annotateLogs("serverFnDigest", digest),
+  );
+  // oxlint-disable-next-line unicorn/no-null -- Production uses the Flight failure model's null detail to omit the defect.
+  const detail = import.meta.env.DEV ? serverFnErrorDetail(Cause.squash(cause)) : null;
+  return result.Failure({ error: defectFailure({ detail, digest }) });
+});
 
 export const serverFnResponse = Effect.fnUntraced(function* <Output, Error, Requirements>(
   operation: Effect.Effect<Output, Error, Requirements>,
 ) {
   const exit = yield* Effect.exit(operation);
-  if (exit._tag === "Success") {
-    if (isServerFnStream<Requirements>(exit.value)) {
-      const readable = yield* serverFnStream(exit.value);
-      return { _tag: "Success", value: readable } satisfies ServerFnResult;
-    }
-    return { _tag: "Success", value: exit.value } satisfies ServerFnResult;
-  }
-  if (Cause.hasInterrupts(exit.cause)) {
-    return yield* Effect.interrupt;
-  }
-
-  const error = Option.getOrUndefined(Cause.findErrorOption(exit.cause));
-  if (error instanceof ServerFnInputError) {
-    yield* Effect.logWarning("Server Function rejected its arguments.", error.detail.message);
-    return {
-      _tag: "Failure",
-      error: { _tag: "ServerFnInputError", detail: error.detail },
-    } satisfies ServerFnResult;
-  }
-
-  const digest = yield* nextErrorDigest;
-  yield* Effect.logError("Server Function failed.", exit.cause).pipe(
-    Effect.annotateLogs("serverFnDigest", digest),
-  );
-  return {
-    _tag: "Failure",
-    error: {
-      _tag: "ServerFnDefect",
-      detail: import.meta.env.DEV ? serverFnErrorDetail(Cause.squash(exit.cause)) : null,
-      digest,
-    },
-  } satisfies ServerFnResult;
+  return yield* Exit.isSuccess(exit)
+    ? successResponse<Requirements>(exit.value)
+    : failureResponse(exit.cause);
 });
 
 export const serverFnOutcome = Effect.fnUntraced(function* <Output, Error, Requirements>(
@@ -51,6 +54,6 @@ export const serverFnOutcome = Effect.fnUntraced(function* <Output, Error, Requi
 ) {
   return {
     serverFnResult: yield* serverFnResponse(operation),
-    status: 200,
+    status: responseOk,
   } satisfies Pick<RequestOutcome, "serverFnResult" | "status">;
 });

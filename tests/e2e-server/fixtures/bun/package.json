@@ -2,6 +2,9 @@
   "name": "effront-e2e-server-bun-fixture",
   "private": true,
   "type": "module",
+  "imports": {
+    "#fixture/effront.ts": "./src/effront.ts"
+  },
   "scripts": {
     "start": "bun dist/rsc/server.js"
   },

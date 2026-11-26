@@ -4,10 +4,11 @@ import mermaid from "comark/plugins/mermaid";
 import shiki from "comark/plugins/shiki";
 import { parseMarkdown as parseComark } from "comark";
 import type { MarkdownDocument, Node, ParserOptions } from "comark";
-import { Effect } from "effect";
+import { Effect, Predicate } from "effect";
 
 import type { MarkdownEntry } from "./collection.ts";
-import { type MarkdownError, MarkdownParseError } from "./error.ts";
+import { MarkdownParseError } from "./error.ts";
+import type { MarkdownError } from "./error.ts";
 
 const defaultPlugins = [
   footnotes(),
@@ -16,33 +17,42 @@ const defaultPlugins = [
   shiki(),
 ];
 
-/** Parses trusted Markdown with Comark, then maps file references in its AST. */
+const resolveNode = (entry: MarkdownEntry, node: Node): Effect.Effect<void, MarkdownError> =>
+  Effect.gen(function* () {
+    if (Predicate.isString(node) || Predicate.isNullish(node[0])) {
+      return;
+    }
+    const [tag, attributes, ...children] = node;
+    const { href, src } = attributes;
+    if (tag === "a" && Predicate.isString(href)) {
+      attributes["href"] = yield* entry.resolveLink(href);
+    }
+    if (tag === "img" && Predicate.isString(src)) {
+      attributes["src"] = yield* entry.resolveImage(src);
+    }
+    yield* Effect.forEach(children, (child) => resolveNode(entry, child), { discard: true });
+  });
+
+/**
+ * Parses trusted Markdown with Comark and resolves file references recursively.
+ * @param {MarkdownEntry} entry The source entry and its link and image resolvers.
+ * @param {ParserOptions} options The Comark parser options and additional plugins.
+ * @returns {Effect.Effect<MarkdownDocument, MarkdownError | MarkdownParseError>} The parsed document with resolved links and images.
+ */
 export const parseMarkdown = (
   entry: MarkdownEntry,
   options: ParserOptions = {},
 ): Effect.Effect<MarkdownDocument, MarkdownError | MarkdownParseError> =>
   Effect.gen(function* () {
     const document = yield* Effect.tryPromise({
-      try: () =>
+      catch: (cause) =>
+        new MarkdownParseError({ cause, message: `Failed to parse Markdown: ${entry.source}` }),
+      try: async () =>
         parseComark(entry.content, {
           ...options,
           plugins: [...defaultPlugins, ...(options.plugins ?? [])],
         }),
-      catch: (cause) =>
-        new MarkdownParseError({ message: `Failed to parse Markdown: ${entry.source}`, cause }),
     });
-    const visit = (node: Node): Effect.Effect<void, MarkdownError> =>
-      Effect.gen(function* () {
-        if (typeof node === "string" || node[0] === null) return;
-        const [tag, attributes, ...children] = node;
-        if (tag === "a" && typeof attributes["href"] === "string") {
-          attributes["href"] = yield* entry.resolveLink(attributes["href"]);
-        }
-        if (tag === "img" && typeof attributes["src"] === "string") {
-          attributes["src"] = yield* entry.resolveImage(attributes["src"]);
-        }
-        for (const child of children) yield* visit(child);
-      });
-    for (const node of document.nodes) yield* visit(node);
+    yield* Effect.forEach(document.nodes, (node) => resolveNode(entry, node), { discard: true });
     return document;
   });

@@ -1,60 +1,164 @@
 import { NodePath } from "@effect/platform-node-shared";
-import { Effect, Path, Schema } from "effect";
+import { Array, Effect, Path, Predicate, Schema, String } from "effect";
 
+import {
+  encodedPathname,
+  encodeReference,
+  isOutsideBase,
+  findEntry,
+  segments,
+  splitReference,
+} from "./collection-path.ts";
 import { MarkdownError } from "./error.ts";
 
-export interface MarkdownCollectionOptions {
+type CollectionOptions = Readonly<{
   /** Absolute public page prefix, for example `/manual`. */
-  readonly basePath: string;
+  basePath: string;
   /** Eager Vite `?raw` imports with keys relative to the glob `base`. */
-  readonly documents: Readonly<Record<string, string>>;
+  documents: Readonly<Record<string, string>>;
   /** Eager Vite `?url` imports using the same glob `base`. Vite owns asset output. */
-  readonly assets?: Readonly<Record<string, string>>;
-}
+  assets?: Readonly<Record<string, string>>;
+}>;
 
-export interface MarkdownEntry {
+// oxlint-disable-next-line typescript/no-empty-object-type, typescript/no-empty-interface -- Keep the published interface open to declaration merging.
+export interface MarkdownCollectionOptions extends CollectionOptions {}
+
+type EntryFields = Readonly<{
   /** Glob-base-relative source key, for example `./guides/start.md`. */
-  readonly source: string;
-  readonly content: string;
-  readonly url: string;
-  readonly pathname: string;
+  source: string;
+  content: string;
+  url: string;
+  pathname: string;
+}>;
+
+export interface MarkdownEntry extends EntryFields {
+  /* oxlint-disable typescript/method-signature-style -- Keep method parameter variance in the public entry interface. */
   resolveLink(href: string): Effect.Effect<string, MarkdownError>;
   resolveImage(source: string): Effect.Effect<string, MarkdownError>;
+  /* oxlint-enable typescript/method-signature-style */
 }
 
-export interface MarkdownCollection {
-  readonly entries: readonly MarkdownEntry[];
+type CollectionFields = Readonly<{ entries: Readonly<MarkdownEntry[]> }>;
+
+export interface MarkdownCollection extends CollectionFields {
+  /* oxlint-disable typescript/method-signature-style -- Preserve method parameter variance for public collection implementations. */
   get(pathname: string): MarkdownEntry | undefined;
   resolveLink(entry: MarkdownEntry, href: string): Effect.Effect<string, MarkdownError>;
   resolveImage(entry: MarkdownEntry, source: string): Effect.Effect<string, MarkdownError>;
+  /* oxlint-enable typescript/method-signature-style */
 }
 
-const decodeSegment = (segment: string): string => {
-  try {
-    return decodeURIComponent(segment);
-  } catch {
-    return segment;
-  }
-};
-const splitReference = (reference: string): readonly [string, string] => {
-  const index = reference.search(/[?#]/u);
-  return index < 0 ? [reference, ""] : [reference.slice(0, index), reference.slice(index)];
-};
-const segments = (path: string): string[] =>
-  path.split("/").filter((part) => part !== "" && part !== ".");
-const encodedPathname = (parts: readonly string[]): string =>
-  `/${parts.map(encodeURIComponent).join("/")}`;
 const markdownExtension = /\.md$/iu;
 const markdownExtensionLength = ".md".length;
+const slashLength = "/".length;
 const BasePath = Schema.String.check(Schema.isPattern(/^\/[^?#]*$/u));
 const MarkdownFilename = Schema.String.check(
-  Schema.isMinLength(markdownExtensionLength + 1),
+  Schema.isMinLength("a.md".length),
   Schema.isPattern(markdownExtension),
 );
 const isBasePath = Schema.is(BasePath);
 const isMarkdownFilename = Schema.is(MarkdownFilename);
 
-/** Creates a collection from Vite's already-loaded document and asset maps. */
+const importedSegments = (
+  key: string,
+  kind: "asset" | "document",
+): Effect.Effect<Array.NonEmptyArray<string>, MarkdownError> => {
+  const parts = segments(key);
+  if (!key.startsWith("./") || !Array.isArrayNonEmpty(parts) || parts.includes("..")) {
+    return Effect.fail(
+      new MarkdownError({
+        message: `${kind} glob key must be relative to the collection base: ${key}`,
+      }),
+    );
+  }
+  return Effect.succeed(parts);
+};
+
+const indexAssets = (
+  assets: Readonly<Record<string, string>>,
+): Effect.Effect<ReadonlyMap<string, string>, MarkdownError> =>
+  Effect.forEach(Object.entries(assets), ([key, url]) =>
+    importedSegments(key, "asset").pipe(
+      Effect.map((parts) => [encodedPathname(parts), url] as const),
+    ),
+  ).pipe(Effect.map((entries) => new Map(entries)));
+
+const isExternal = (reference: string): boolean =>
+  reference.startsWith("#") || reference.startsWith("/") || /^[a-z][a-z\d+.-]*:/iu.test(reference);
+
+type ResolveReference = (
+  entry: MarkdownEntry,
+  reference: string,
+  image: boolean,
+) => Effect.Effect<string, MarkdownError>;
+
+const referenceResolver = (
+  paths: Path.Path,
+  documents: ReadonlyMap<string, MarkdownEntry>,
+  assets: ReadonlyMap<string, string>,
+): ResolveReference => {
+  const resolveImport = (
+    source: string,
+    [path, suffix]: Readonly<[string, string]>,
+    image: boolean,
+  ): Effect.Effect<string, MarkdownError> =>
+    Effect.gen(function* () {
+      const directory = paths.dirname(encodedPathname(segments(source))).slice(slashLength);
+      const relative = paths.join(directory, encodeReference(path));
+      if (isOutsideBase(relative)) {
+        return yield* new MarkdownError({
+          message: `reference resolves outside the collection base: ${path}${suffix} from ${source}`,
+        });
+      }
+      const target = paths.resolve("/", relative);
+      const isDocument = !image && markdownExtension.test(paths.basename(target));
+      const url = isDocument ? documents.get(target)?.url : assets.get(target);
+      const kind = isDocument ? "Markdown document" : "local asset";
+      return Predicate.isNullish(url)
+        ? yield* new MarkdownError({
+            message: `reference does not name an imported ${kind}: ${path}${suffix} from ${source}`,
+          })
+        : `${url}${suffix}`;
+    });
+
+  return (entry, reference, image) =>
+    Effect.gen(function* () {
+      // URL policy belongs to Comark and the application. Only file-relative references need mapping.
+      if (isExternal(reference)) {
+        return reference;
+      }
+      const parts = splitReference(reference);
+      const [path, suffix] = parts;
+      if (String.isEmpty(path)) {
+        return `${entry.url}${suffix}`;
+      }
+      return yield* resolveImport(entry.source, parts, image);
+    });
+};
+
+const documentUrl = (
+  base: Readonly<string[]>,
+  parts: Array.NonEmptyArray<string>,
+  source: string,
+): Effect.Effect<string, MarkdownError> => {
+  const filename = Array.lastNonEmpty(parts);
+  if (!isMarkdownFilename(filename)) {
+    return Effect.fail(
+      new MarkdownError({
+        message: `document must have a filename ending in .md: ${source}`,
+      }),
+    );
+  }
+  const stem = String.takeLeft(filename, filename.length - markdownExtensionLength);
+  const directories = Array.initNonEmpty(parts);
+  return Effect.succeed(encodedPathname([...base, ...directories, stem]));
+};
+
+/**
+ * Creates a collection from Vite's already-loaded document and asset maps.
+ * @param {MarkdownCollectionOptions} options The public base path and Vite import maps.
+ * @returns {Effect.Effect<MarkdownCollection, MarkdownError>} The indexed documents and resolvers.
+ */
 export const createMarkdownCollection = (
   options: MarkdownCollectionOptions,
 ): Effect.Effect<MarkdownCollection, MarkdownError> =>
@@ -66,109 +170,42 @@ export const createMarkdownCollection = (
         message: "basePath must be an absolute pathname without query, fragment, or traversal",
       });
     }
+    const assets = yield* indexAssets(options.assets ?? {});
     const entriesByPathname = new Map<string, MarkdownEntry>();
     const entriesBySource = new Map<string, MarkdownEntry>();
-    const assetMap = new Map<string, string>();
+    const resolve = referenceResolver(pathService, entriesBySource, assets);
 
-    for (const [key, url] of Object.entries(options.assets ?? {})) {
-      const parts = segments(key);
-      if (!key.startsWith("./") || parts.length === 0 || parts.includes("..")) {
-        return yield* new MarkdownError({
-          message: `asset glob key must be relative to the collection base: ${key}`,
-        });
-      }
-      assetMap.set(encodedPathname(parts), url);
-    }
+    yield* Effect.forEach(
+      Object.entries(options.documents),
+      ([source, content]) =>
+        Effect.gen(function* () {
+          const parts = yield* importedSegments(source, "document");
+          const url = yield* documentUrl(base, parts, source);
+          if (entriesByPathname.has(url)) {
+            yield* new MarkdownError({
+              message: `documents map to the same public pathname ${url}: ${source}`,
+            });
+          }
+          const entry: MarkdownEntry = {
+            content,
+            pathname: url,
+            resolveImage: (reference) => resolve(entry, reference, true),
+            resolveLink: (reference) => resolve(entry, reference, false),
+            source,
+            url,
+          };
+          entriesBySource.set(encodedPathname(parts), entry);
+          entriesByPathname.set(url, entry);
+        }),
+      { discard: true },
+    );
 
-    const resolveLocal = (
-      entry: MarkdownEntry,
-      reference: string,
-      image: boolean,
-    ): Effect.Effect<string, MarkdownError> =>
-      Effect.gen(function* () {
-        // URL policies belong to Comark/the application. Only file-relative references need mapping.
-        if (
-          reference.startsWith("#") ||
-          reference.startsWith("/") ||
-          /^[a-z][a-z\d+.-]*:/iu.test(reference)
-        ) {
-          return reference;
-        }
-        const [path, suffix] = splitReference(reference);
-        if (path === "") return `${entry.url}${suffix}`;
-        // Encode each decoded URL segment before POSIX normalization so %2F stays
-        // a filename character rather than becoming another path separator.
-        const encodedReference = path
-          .split("/")
-          .map(decodeSegment)
-          .map(encodeURIComponent)
-          .join("/");
-        const directory = pathService.dirname(encodedPathname(segments(entry.source))).slice(1);
-        const relative = pathService.join(directory, encodedReference);
-        if (relative === ".." || relative.startsWith("../")) {
-          return yield* new MarkdownError({
-            message: `reference resolves outside the collection base: ${reference} from ${entry.source}`,
-          });
-        }
-        const target = pathService.resolve("/", relative);
-        const isDocument = !image && markdownExtension.test(pathService.basename(target));
-        const url = isDocument ? entriesBySource.get(target)?.url : assetMap.get(target);
-        if (url === undefined) {
-          return yield* new MarkdownError({
-            message: `reference does not name an imported ${isDocument ? "Markdown document" : "local asset"}: ${reference} from ${entry.source}`,
-          });
-        }
-        return `${url}${suffix}`;
-      });
-
-    for (const [key, content] of Object.entries(options.documents)) {
-      const parts = segments(key);
-      if (!key.startsWith("./") || parts.length === 0 || parts.includes("..")) {
-        return yield* new MarkdownError({
-          message: `document glob key must be relative to the collection base: ${key}`,
-        });
-      }
-      const relative = parts;
-      const filename = relative.at(-1)!;
-      if (!isMarkdownFilename(filename)) {
-        return yield* new MarkdownError({
-          message: `document must have a filename ending in .md: ${key}`,
-        });
-      }
-      const stem = filename.slice(0, -markdownExtensionLength);
-      const page = [...base, ...relative.slice(0, -1), stem];
-      const url = encodedPathname(page);
-      if (entriesByPathname.has(url)) {
-        return yield* new MarkdownError({
-          message: `documents map to the same public pathname ${url}: ${key}`,
-        });
-      }
-      const entry: MarkdownEntry = {
-        source: key,
-        content,
-        url,
-        pathname: url,
-        resolveLink: (href) => resolveLocal(entry, href, false),
-        resolveImage: (source) => resolveLocal(entry, source, true),
-      };
-      entriesBySource.set(encodedPathname(parts), entry);
-      entriesByPathname.set(url, entry);
-    }
     return {
-      entries: [...entriesByPathname.values()].sort((left, right) =>
+      entries: [...entriesByPathname.values()].toSorted((left, right) =>
         left.url.localeCompare(right.url),
       ),
-      get: (pathname) => {
-        const [path] = splitReference(pathname);
-        if (!path.startsWith("/")) return undefined;
-        const parts = path
-          .replace(/([^/])\/$/u, "$1")
-          .slice(1)
-          .split("/")
-          .map(decodeSegment);
-        return entriesByPathname.get(encodedPathname(parts));
-      },
-      resolveLink: (entry, href) => resolveLocal(entry, href, false),
-      resolveImage: (entry, source) => resolveLocal(entry, source, true),
+      get: (pathname) => findEntry(entriesByPathname, pathname),
+      resolveImage: (entry, source) => resolve(entry, source, true),
+      resolveLink: (entry, href) => resolve(entry, href, false),
     } satisfies MarkdownCollection;
   }).pipe(Effect.provide(NodePath.layerPosix));

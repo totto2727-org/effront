@@ -1,7 +1,14 @@
 import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-import { Feed } from "./feed";
-import { storiesAfter, storyCount } from "./feed-data";
+import { EFFRONT } from "./effront.ts";
+import { Feed } from "./feed.tsx";
+import { storiesAfter, storyCount } from "./feed-data.ts";
+
+const initialCursor = 0;
+const siteNavigation = (
+  <header>
+    <a href="/">Fieldnotes</a> <a href="/about">About</a>
+  </header>
+);
 
 const Layout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -12,9 +19,7 @@ const Layout = EFFRONT.Layout.make({
           <title>Fieldnotes</title>
         </head>
         <body>
-          <header>
-            <a href="/">Fieldnotes</a> <a href="/about">About</a>
-          </header>
+          {siteNavigation}
           <main>{children}</main>
         </body>
       </html>,
@@ -27,7 +32,7 @@ const Home = EFFRONT.Page.make({
       <>
         <h1>Fieldnotes</h1>
         <p>Showing the first six of {storyCount.toLocaleString("en-US")} fictional notes.</p>
-        <Feed seed={storiesAfter(0)} />
+        <Feed seed={storiesAfter(initialCursor)} />
       </>,
     ),
 });
@@ -43,6 +48,9 @@ const About = EFFRONT.Page.make({
     ),
 });
 
-export default EFFRONT.make({
+const application = EFFRONT.make({
   routes: EFFRONT.Routes.make({ layout: Layout }).page("/", Home).page("/about", About),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin loads its application from this entry’s default export.
+export default application;

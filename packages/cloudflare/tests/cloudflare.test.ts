@@ -1,17 +1,19 @@
+// oxlint-disable-next-line rules/no-node-imports -- Vite's configuration tests resolve a fixture on the current host.
 import { fileURLToPath } from "node:url";
-import { join } from "node:path";
+// oxlint-disable-next-line rules/no-node-imports -- Expected build outputs use the host filesystem's path separator.
+import path from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { resolveConfig } from "vite";
-import type { UserConfig } from "vite";
+import type { ResolvedConfig, UserConfig } from "vite";
 
-import { effrontCloudflare } from "../src/plugin";
+import { effrontCloudflare } from "@effront/cloudflare";
 import { effront } from "@effront/vite";
 
-const fixtureRoot = fileURLToPath(new URL("./fixtures/", import.meta.url));
-const configPath = fileURLToPath(new URL("./fixtures/wrangler.json", import.meta.url));
+const fixtureRoot = fileURLToPath(new URL("fixtures/", import.meta.url));
+const configPath = fileURLToPath(new URL("fixtures/wrangler.json", import.meta.url));
 
-const resolveViteConfig = (config: UserConfig) =>
+const resolveViteConfig = async (config: UserConfig): Promise<ResolvedConfig> =>
   resolveConfig(
     {
       root: fixtureRoot,
@@ -21,47 +23,46 @@ const resolveViteConfig = (config: UserConfig) =>
     "production",
   );
 
-const resolveCloudflareConfig = (config: UserConfig = {}) =>
+const resolveCloudflareConfig = async (config: UserConfig = {}): Promise<ResolvedConfig> =>
   resolveViteConfig({
     ...config,
     plugins: [effront(), effrontCloudflare({ configPath })],
   });
 
-const resolveCoreConfig = () => resolveViteConfig({ plugins: effront() });
-
-const resolveCloudflareOnlyConfig = () =>
-  resolveViteConfig({ plugins: effrontCloudflare({ configPath }) });
-
-describe("effrontCloudflare", () => {
-  it("resolves the invariant Cloudflare RSC environment with nested default SSR output", async () => {
+describe("cloudflare worker output", () => {
+  test("resolves the invariant Cloudflare RSC environment with nested default SSR output", async () => {
     const config = await resolveCloudflareConfig();
 
     expect(config.environments["rsc"]).toBeDefined();
-    expect(config.environments["ssr"]?.build.outDir).toBe(join(fixtureRoot, "dist/rsc/ssr"));
+    expect(config.environments["ssr"]?.build.outDir).toBe(path.join(fixtureRoot, "dist/rsc/ssr"));
   });
 
-  it("nests default SSR output under root and RSC output overrides", async () => {
+  test("nests default SSR output under root and RSC output overrides", async () => {
     const rootOverride = await resolveCloudflareConfig({ build: { outDir: "worker-output" } });
     expect(rootOverride.environments["ssr"]?.build.outDir).toBe(
-      join(fixtureRoot, "worker-output/rsc/ssr"),
+      path.join(fixtureRoot, "worker-output/rsc/ssr"),
     );
 
     const rscOverride = await resolveCloudflareConfig({
       build: { outDir: "worker-output" },
       environments: { rsc: { build: { outDir: "custom-rsc" } } },
     });
-    expect(rscOverride.environments["ssr"]?.build.outDir).toBe(join(fixtureRoot, "custom-rsc/ssr"));
+    expect(rscOverride.environments["ssr"]?.build.outDir).toBe(
+      path.join(fixtureRoot, "custom-rsc/ssr"),
+    );
   });
 
-  it("preserves an explicit SSR output override", async () => {
+  test("preserves an explicit SSR output override", async () => {
     const config = await resolveCloudflareConfig({
       environments: { ssr: { build: { outDir: "custom-ssr" } } },
     });
 
-    expect(config.environments["ssr"]?.build.outDir).toBe(join(fixtureRoot, "custom-ssr"));
+    expect(config.environments["ssr"]?.build.outDir).toBe(path.join(fixtureRoot, "custom-ssr"));
   });
+});
 
-  it("registers the portable core exactly once alongside Cloudflare", async () => {
+describe("cloudflare and portable core plugin composition", () => {
+  test("registers the portable core exactly once alongside Cloudflare", async () => {
     const config = await resolveCloudflareConfig();
     const names = config.plugins.map(({ name }) => name);
 
@@ -70,8 +71,8 @@ describe("effrontCloudflare", () => {
     expect(names.filter((name) => name === "effront:application-entry")).toHaveLength(1);
   });
 
-  it("keeps the core-only resolved Vite configuration free of Cloudflare plugins", async () => {
-    const config = await resolveCoreConfig();
+  test("keeps the core-only resolved Vite configuration free of Cloudflare plugins", async () => {
+    const config = await resolveViteConfig({ plugins: effront() });
     const names = config.plugins.map(({ name }) => name);
 
     expect(names).toContain("effront:application-entry");
@@ -79,8 +80,8 @@ describe("effrontCloudflare", () => {
     expect(names).not.toContain("effront:cloudflare-ssr-output");
   });
 
-  it("keeps the Cloudflare-only resolved Vite configuration free of portable core plugins", async () => {
-    const config = await resolveCloudflareOnlyConfig();
+  test("keeps the Cloudflare-only resolved Vite configuration free of portable core plugins", async () => {
+    const config = await resolveViteConfig({ plugins: effrontCloudflare({ configPath }) });
     const names = config.plugins.map(({ name }) => name);
 
     expect(names).toContain("vite-plugin-cloudflare");

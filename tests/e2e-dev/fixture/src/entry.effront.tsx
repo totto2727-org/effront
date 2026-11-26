@@ -1,9 +1,10 @@
 import { MarkdownDocument } from "@comark/react/components/MarkdownDocument";
-import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
+import { parseMarkdown } from "@effront/markdown";
+import type { MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { Application } from "@effront/core";
-import { manual } from "../content";
+import { manual } from "#fixture/content.ts";
 
 const EFFRONT = Application.effront();
 class CurrentEntry extends Context.Service<CurrentEntry, MarkdownEntry>()("e2e-dev/CurrentEntry") {}
@@ -11,10 +12,13 @@ const FindEntry = EFFRONT.Middleware.make<{ provides: CurrentEntry }>(
   Effect.fn(function* (httpEffect) {
     const request = yield* HttpServerRequest.HttpServerRequest;
     const collection = yield* Effect.result(manual);
-    if (Result.isFailure(collection))
+    if (Result.isFailure(collection)) {
       return HttpServerResponse.text("Invalid collection", { status: 500 });
+    }
     const entry = collection.success.get(request.url);
-    if (!entry) return HttpServerResponse.text("Not found", { status: 404 });
+    if (!entry) {
+      return HttpServerResponse.text("Not found", { status: 404 });
+    }
     return yield* httpEffect.pipe(Effect.provideService(CurrentEntry, entry));
   }),
 );
@@ -38,6 +42,9 @@ const Page = Manual.Page.make({
     return <MarkdownDocument value={document} />;
   }),
 });
-export default EFFRONT.make({
+const application = EFFRONT.make({
   routes: Manual.Routes.make({ layout: Layout }).page("/manual/*path", Page),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin loads this application through its default export.
+export default application;

@@ -1,23 +1,38 @@
 import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";
+import preset from "@totto2727/oxlint/preset";
+import applicationPreset from "@totto2727/oxlint/preset/application";
+import libraryPreset from "@totto2727/oxlint/preset/library";
 import { defineConfig } from "vite-plus";
 
 // Regenerate effective exclusions from reachable .gitignore files on every config load.
 const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));
 
+// oxlint-disable-next-line import/no-default-export -- VitePlus reads the root configuration through its default export.
 export default defineConfig({
+  fmt: { ignorePatterns },
+  lint: {
+    extends: [preset],
+    // Raw templates resolve their imports in generated applications.
+    ignorePatterns: [...ignorePatterns, "packages/create-effront/templates/**"],
+    options: { typeCheck: true },
+    overrides: [
+      {
+        files: ["{app,examples,tests}/**"],
+        rules: { "rules/effect-tracing": applicationPreset.rules["rules/effect-tracing"] },
+      },
+      {
+        files: ["packages/**"],
+        rules: { "rules/effect-tracing": libraryPreset.rules["rules/effect-tracing"] },
+      },
+    ],
+  },
+  resolve: { tsconfigPaths: true },
   run: {
     tasks: {
-      check: { command: "vp check", cache: false },
-      fix: { command: "vp check --fix", cache: false },
-      test: { command: "vp test run", cache: false },
+      check: { cache: false, command: "vp check" },
+      fix: { cache: false, command: "vp check --fix" },
+      test: { cache: false, command: "vp test run" },
     },
   },
-  fmt: { ignorePatterns },
   test: { include: ["{app,examples,packages,tests}/**/*.test.{ts,tsx}"] },
-  lint: {
-    plugins: ["eslint", "typescript", "unicorn", "oxc", "react"],
-    // Raw template sources are not a workspace project; their imports resolve in generated projects.
-    ignorePatterns: [...ignorePatterns, "packages/create-effront/templates/**"],
-    options: { typeAware: true, typeCheck: true },
-  },
 });

@@ -1,27 +1,31 @@
 "use client";
 
-import { type ComponentProps, lazy, Suspense, use } from "react";
+import type { MermaidProps } from "@comark/react/components/Mermaid";
+import { createElement, lazy, Suspense, use } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { browser } from "react-dom";
 
-type MermaidComponent = typeof import("@comark/react/components/Mermaid").Mermaid;
-type MermaidProps = ComponentProps<MermaidComponent>;
-
 const ComarkMermaid = import.meta.env.SSR
-  ? () => null
-  : lazy(() =>
-      import("@comark/react/components/Mermaid").then(({ Mermaid }) => ({ default: Mermaid })),
-    );
+  ? (): ReactNode => undefined
+  : lazy(async () => {
+      const { Mermaid: Diagram } = await import("@comark/react/components/Mermaid");
+      return { default: Diagram };
+    });
 
-function BrowserMermaid(props: MermaidProps) {
+const BrowserMermaid = (props: MermaidProps): ReactElement => {
   use(browser());
-  return <ComarkMermaid {...props} />;
-}
+  return createElement(ComarkMermaid, props);
+};
 
-/** Defers Comark's Mermaid component to the browser without loading it in an SSR graph. */
-export function Mermaid(props: MermaidProps) {
-  return (
-    <Suspense fallback={<div className="mermaid" />}>
-      <BrowserMermaid {...props} />
-    </Suspense>
-  );
-}
+const placeholder = <div className="mermaid" />;
+
+/**
+ * Defers Comark's Mermaid component until the browser is ready.
+ * @param {MermaidProps} props The original Comark Mermaid props.
+ * @returns {ReactElement} A diagram with a server-rendered loading placeholder.
+ */
+// oxlint-disable-next-line react/no-multi-comp -- Keep the browser-only component with the browser gate that renders beneath its Suspense boundary.
+export const Mermaid = (props: MermaidProps): ReactElement => {
+  const diagram = createElement(BrowserMermaid, props);
+  return <Suspense fallback={placeholder}>{diagram}</Suspense>;
+};

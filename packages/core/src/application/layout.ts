@@ -1,12 +1,13 @@
 import { Effect } from "effect";
 import type { ReactNode } from "react";
 
-import { attachEFFRONTMember, type EFFRONTIdentity, type EFFRONTMember } from "./effront-identity";
-import type { AnyMiddleware } from "./middleware";
+import { attachEFFRONTMember } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
+import type { AnyMiddleware } from "./middleware.ts";
 
-type LayoutProps = {
-  readonly children: Awaited<ReactNode>;
-};
+type LayoutProps = Readonly<{
+  children: Awaited<ReactNode>;
+}>;
 
 export interface LayoutComponent<ApplicationServices> extends EFFRONTMember<
   ApplicationServices,
@@ -15,24 +16,23 @@ export interface LayoutComponent<ApplicationServices> extends EFFRONTMember<
   (props: LayoutProps): Promise<Awaited<ReactNode>>;
 }
 
-type LayoutOptions<Error, AvailableServices> = {
-  readonly render: (
-    props: LayoutProps,
-  ) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
-};
+type LayoutOptions<Error, AvailableServices> = Readonly<{
+  render: (props: LayoutProps) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
+}>;
 
-export type LayoutFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <Error>(
+export type LayoutFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: <Error>(
     options: LayoutOptions<Error, AvailableServices>,
   ) => LayoutComponent<ApplicationServices>;
-};
+}>;
 
 export const makeLayoutFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): LayoutFactory<ApplicationServices, AvailableServices> => ({
   make: ({ render }) => {
-    const LayoutComponent = (props: LayoutProps) =>
+    // oxlint-disable-next-line typescript/promise-function-async -- The request runtime throws synchronously when the caller has no matching scope.
+    const LayoutComponent = (props: LayoutProps): Promise<Awaited<ReactNode>> =>
       identity.renderRuntime.run(
         "Layout",
         Effect.suspend(() => render(props)),

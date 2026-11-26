@@ -1,27 +1,19 @@
-import { Fragment, type CSSProperties } from "react";
+import { Function, Predicate } from "effect";
+import { Fragment } from "react";
+import type { CSSProperties, JSX } from "react";
 import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
-import bash from "shiki/langs/bash.mjs";
-import css from "shiki/langs/css.mjs";
-import diff from "shiki/langs/diff.mjs";
-import javascript from "shiki/langs/javascript.mjs";
-import json from "shiki/langs/json.mjs";
-import jsonc from "shiki/langs/jsonc.mjs";
-import jsx from "shiki/langs/jsx.mjs";
-import tsx from "shiki/langs/tsx.mjs";
-import typescript from "shiki/langs/typescript.mjs";
 import githubDark from "shiki/themes/github-dark.mjs";
-import type { TokenStyles } from "shiki/types";
+import type { ThemedToken, TokenStyles } from "shiki/types";
 
-// Imported by RSC content modules, never by the client shell. All registrations are
-// local static imports: no bundle loader, network request, or Oniguruma/WASM asset.
-// https://shiki.style/guide/bundles#fine-grained-bundle
-// https://shiki.style/guide/regex-engines#javascript-regexp-engine
-const highlighter = createHighlighterCoreSync({
+import { codeBlockGrammars } from "./code-block-grammars.ts";
+
+// RSC content modules own the highlighter and its JavaScript engine.
+const highlighterOptions = {
   engine: createJavaScriptRegexEngine(),
-  langs: [bash, css, diff, javascript, json, jsonc, jsx, tsx, typescript],
+  langs: codeBlockGrammars,
   themes: [githubDark],
-});
+};
 
 const languages = {
   bash: "bash",
@@ -42,36 +34,88 @@ const languages = {
 
 export type CodeLanguage = keyof typeof languages;
 
-export interface CodeBlockProps {
-  readonly code: string;
-  readonly language?: CodeLanguage;
-}
+export type CodeBlockProps = Readonly<{
+  code: string;
+  language?: CodeLanguage;
+}>;
 
-const theme = highlighter.getTheme("github-dark");
-const rootStyle: CSSProperties = { color: theme.fg, backgroundColor: theme.bg };
+const firstSourceOffset = 0;
+const noFontStyle = 0;
+const italicFontStyle = 1;
+const boldFontStyle = 2;
+const underlineFontStyle = 4;
 
-const tokenStyle = (token: TokenStyles): CSSProperties => {
-  // TextMate's fontStyle flags are italic=1, bold=2, underline=4.
-  const flags = token.fontStyle ?? 0;
+const hasFontStyle = (font: number, flag: number): boolean =>
+  // oxlint-disable-next-line eslint/no-bitwise -- TextMate supplies combined font styles as bit flags.
+  (font & flag) !== noFontStyle;
+
+const highlighting = Function.memoize((options: typeof highlighterOptions) => {
+  // oxlint-disable-next-line node/no-sync -- The shared server component also renders through React's synchronous static renderer.
+  const highlighter = createHighlighterCoreSync(options);
+  const theme = highlighter.getTheme("github-dark");
+  const rootStyle: CSSProperties = { backgroundColor: theme.bg, color: theme.fg };
+  return { foreground: theme.fg, highlighter, rootStyle };
+});
+
+const tokenStyle = (token: TokenStyles, foreground: CSSProperties["color"]): CSSProperties => {
+  const flags = token.fontStyle ?? noFontStyle;
   return {
-    color: token.color ?? theme.fg,
-    ...(token.bgColor === undefined ? {} : { backgroundColor: token.bgColor }),
-    ...(flags & 1 ? { fontStyle: "italic" } : {}),
-    ...(flags & 2 ? { fontWeight: "bold" } : {}),
-    ...(flags & 4 ? { textDecoration: "underline" } : {}),
+    color: token.color ?? foreground,
+    ...(Predicate.isNullish(token.bgColor) ? {} : { backgroundColor: token.bgColor }),
+    ...(hasFontStyle(flags, italicFontStyle) ? { fontStyle: "italic" } : {}),
+    ...(hasFontStyle(flags, boldFontStyle) ? { fontWeight: "bold" } : {}),
+    ...(hasFontStyle(flags, underlineFontStyle) ? { textDecoration: "underline" } : {}),
   };
 };
 
-/** Server-rendered tokens stay text nodes, including HTML-looking source excerpts. */
-export function CodeBlock({ code, language = "text" }: CodeBlockProps) {
+type CodeLine = Readonly<{ ending: string; offset: number; tokens: ThemedToken[] }>;
+
+const sourceLines = (code: string, highlighted: ThemedToken[][]): CodeLine[] => {
+  // Shiki drops line delimiters. Restore the original bytes after each rendered line.
+  const endings = [...code.matchAll(/\r?\n/gu)];
+  const offsets = [
+    firstSourceOffset,
+    ...endings.map((match) => {
+      const [ending] = match;
+      return match.index + ending.length;
+    }),
+  ];
+  return highlighted.map((tokens, index) => ({
+    ending: endings[index]?.[0] ?? "",
+    offset: offsets[index] ?? code.length,
+    tokens,
+  }));
+};
+
+const renderToken = (token: ThemedToken, foreground: CSSProperties["color"]): JSX.Element => (
+  <span key={token.offset} style={tokenStyle(token, foreground)}>
+    {token.content}
+  </span>
+);
+
+const renderCodeLine = (
+  { ending, offset, tokens }: CodeLine,
+  foreground: CSSProperties["color"],
+): JSX.Element => (
+  <Fragment key={offset}>
+    <span className="line">{tokens.map((token) => renderToken(token, foreground))}</span>
+    {ending}
+  </Fragment>
+);
+
+const renderCode = (lines: CodeLine[], foreground: CSSProperties["color"]): JSX.Element => (
+  <code>{lines.map((line) => renderCodeLine(line, foreground))}</code>
+);
+
+// Server-rendered tokens stay text nodes, including HTML-looking source excerpts.
+export const CodeBlock = ({ code, language = "text" }: CodeBlockProps): JSX.Element => {
   if (!Object.hasOwn(languages, language)) {
+    // oxlint-disable-next-line rules/require-tagged-error -- Invalid JavaScript callers receive the synchronous TypeError contract.
     throw new TypeError("CodeBlock received an unsupported language.");
   }
   const lang = languages[language];
-  const lines = highlighter.codeToTokensBase(code, { lang, theme: "github-dark" });
-  // Shiki omits line delimiters from tokens. Reinsert the original delimiters,
-  // not an unconditional trailing newline or trimmed/normalized source string.
-  const endings = code.match(/\r?\n/g) ?? [];
+  const { foreground, highlighter, rootStyle } = highlighting(highlighterOptions);
+  const tokens = highlighter.codeToTokensBase(code, { lang, theme: "github-dark" });
 
   return (
     <pre
@@ -79,22 +123,10 @@ export function CodeBlock({ code, language = "text" }: CodeBlockProps) {
       data-code-block=""
       data-language={lang}
       style={rootStyle}
+      // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Give keyboard users access to the native horizontally scrollable code.
       tabIndex={0}
     >
-      <code>
-        {lines.map((line, lineIndex) => (
-          <Fragment key={lineIndex}>
-            <span className="line">
-              {line.map((token, tokenIndex) => (
-                <span key={tokenIndex} style={tokenStyle(token)}>
-                  {token.content}
-                </span>
-              ))}
-            </span>
-            {endings[lineIndex] ?? ""}
-          </Fragment>
-        ))}
-      </code>
+      {renderCode(sourceLines(code, tokens), foreground)}
     </pre>
   );
-}
+};

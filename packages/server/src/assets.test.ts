@@ -1,425 +1,234 @@
-import { mkdir, mkdtemp, rm, truncate, writeFile } from "node:fs/promises";
-import { createServer, request as nodeRequest } from "node:http";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { live } from "@effect/vitest";
+import { Effect } from "effect";
+import { describe, expect } from "vitest";
 
-import { NodeHttpServer } from "@effect/platform-node";
-import { Context, Effect, Exit, FileSystem, PlatformError, Result, Stream } from "effect";
-import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/http";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { fileBody, immutableCache, requestAsset, standardAssetServer } from "./assets.fixture.ts";
 
-import { type AssetOptions, withAssets } from "./assets";
+const ok = 200;
+const partialContent = 206;
+const notModified = 304;
+const rangeNotSatisfiable = 416;
+const assetPath = "/assets/app-a1b2.js";
+const fileLength = String(fileBody.length);
 
-const temporaryRoot = fileURLToPath(new URL("../../../tmp/", import.meta.url));
-let root: string;
-let options: AssetOptions;
-
-beforeEach(async () => {
-  await mkdir(temporaryRoot, { recursive: true });
-  root = await mkdtemp(join(temporaryRoot, "server-assets-"));
-  await mkdir(join(root, "client"));
-  await mkdir(join(root, "public"));
-  await mkdir(join(root, "public", "docs"));
-  await mkdir(join(root, "public", "_effront"));
-  await writeFile(join(root, "client", "app-a1b2.js"), "0123456789");
-  await writeFile(join(root, "client", "empty.txt"), "");
-  await writeFile(join(root, "public", "robots.txt"), "public content");
-  await writeFile(join(root, "public", "icon.svg"), "<svg/>");
-  await writeFile(join(root, "public", "unknown.extension"), "unknown");
-  await writeFile(join(root, "public", "index.html"), "not an SPA");
-  await writeFile(join(root, "public", "docs", "index.html"), "not a directory index");
-  await writeFile(join(root, "public", "_effront", "protocol"), "not a protocol response");
-  await writeFile(join(root, "secret.txt"), "outside secret");
-  options = {
-    client: {
-      root: join(root, "client"),
-      prefix: "/assets",
-      cacheControl: "public, max-age=31536000, immutable",
-    },
-    public: { root: join(root, "public") },
-  };
-});
-
-afterEach(async () => {
-  await rm(root, { recursive: true, force: true });
-});
-
-const app = Effect.succeed(HttpServerResponse.text("application", { status: 202 }));
-
-const withServer = (
-  run: (origin: string, opened: string[]) => Promise<void>,
-  settings: {
-    readonly deniedStatPath?: string;
-    readonly onStreamExit?: (completed: boolean) => void;
-  } = {},
-) =>
-  Effect.runPromise(
-    Effect.scoped(
-      Effect.gen(function* () {
-        const fs = yield* FileSystem.FileSystem;
-        const opened: string[] = [];
-        const handler = yield* withAssets(app, options).pipe(
-          Effect.provideService(FileSystem.FileSystem, {
-            ...fs,
-            stream: (file, streamOptions) =>
-              Stream.unwrap(
-                Effect.sync(() => {
-                  opened.push(file);
-                  return fs
-                    .stream(file, streamOptions)
-                    .pipe(
-                      Stream.onExit((exit) =>
-                        Effect.sync(() => settings.onStreamExit?.(Exit.isSuccess(exit))),
-                      ),
-                    );
-                }),
-              ),
-            stat: (file) =>
-              file === settings.deniedStatPath
-                ? Effect.fail(
-                    PlatformError.systemError({
-                      _tag: "PermissionDenied",
-                      module: "FileSystem",
-                      method: "stat",
-                    }),
-                  )
-                : fs.stat(file),
-          }),
-        );
-        yield* HttpServer.serveEffect(handler);
-        const origin = yield* HttpServer.addressFormattedWith(Effect.succeed);
-        yield* Effect.promise(() => run(origin, opened));
-      }),
-    ).pipe(Effect.provide(NodeHttpServer.layer(createServer, { host: "127.0.0.1", port: 0 }))),
+describe("native static asset content", () => {
+  live("serves client bytes, JavaScript MIME type and immutable cache policy", () =>
+    Effect.gen(function* () {
+      const { origin } = yield* standardAssetServer;
+      const response = yield* requestAsset(`${origin}${assetPath}?version=1`);
+      expect(response.status).toBe(ok);
+      expect(response.headers).toMatchObject({
+        "cache-control": immutableCache,
+        "content-length": fileLength,
+        "content-type": "text/javascript; charset=utf-8",
+      });
+      expect(yield* response.text).toBe(fileBody);
+    }),
   );
 
-// Fetch normalizes dot segments, so traversal checks use the actual raw HTTP request target.
-const rawGet = (origin: string, path: string): Promise<{ status: number; body: string }> =>
-  new Promise((resolve, reject) => {
-    const request = nodeRequest(`${origin}/`, { path, agent: false }, (response) => {
-      let body = "";
-      response.setEncoding("utf8");
-      response.on("data", (chunk: string) => {
-        body += chunk;
+  live("uses revalidation and appropriate MIME types for public files", () =>
+    Effect.gen(function* () {
+      const { origin } = yield* standardAssetServer;
+      const publicFile = yield* requestAsset(`${origin}/icon.svg`);
+      expect(publicFile.headers).toMatchObject({
+        "cache-control": "public, max-age=0, must-revalidate",
+        "content-type": "image/svg+xml; charset=utf-8",
       });
-      response.on("end", () => resolve({ status: response.statusCode ?? 0, body }));
-      response.on("error", reject);
-    });
-    request.on("error", reject);
-    request.end();
-  });
+      expect(yield* publicFile.text).toBe("<svg/>");
+      const unknown = yield* requestAsset(`${origin}/unknown.extension`);
+      expect(unknown.headers["content-type"]).toBe("application/octet-stream");
+      expect(yield* unknown.text).toBe("unknown");
+    }),
+  );
 
-describe("native static assets", () => {
-  it("serves client/public bytes, MIME and distinct cache policies", () =>
-    withServer(async (origin) => {
-      const client = await fetch(`${origin}/assets/app-a1b2.js?version=1`);
-      expect(client.status).toBe(200);
-      expect(client.headers.get("content-type")).toBe("text/javascript; charset=utf-8");
-      expect(client.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
-      expect(client.headers.get("content-length")).toBe("10");
-      expect(await client.text()).toBe("0123456789");
-      const publicFile = await fetch(`${origin}/icon.svg`);
-      expect(publicFile.headers.get("content-type")).toBe("image/svg+xml; charset=utf-8");
-      expect(publicFile.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
-      expect(await publicFile.text()).toBe("<svg/>");
-      const unknown = await fetch(`${origin}/unknown.extension`);
-      expect(unknown.headers.get("content-type")).toBe("application/octet-stream");
-      expect(await unknown.text()).toBe("unknown");
-    }));
-
-  it("does not acquire streams for HEAD or conditional 304 responses", () =>
-    withServer(async (origin, opened) => {
-      const url = `${origin}/assets/app-a1b2.js`;
-      const head = await fetch(url, { method: "HEAD" });
-      expect(head.status).toBe(200);
-      expect(head.headers.get("content-length")).toBe("10");
-      expect(head.headers.get("content-range")).toBeNull();
-      expect(await head.text()).toBe("");
-      expect(opened).toHaveLength(0);
-      const etag = head.headers.get("etag") ?? "";
-      const modified = head.headers.get("last-modified") ?? "";
-      expect(etag).not.toBe("");
-      expect(modified).not.toBe("");
-      for (const headers of [
-        { "if-none-match": etag },
-        { "if-none-match": '"other", ' + etag },
-        { "if-none-match": "*" },
-        { "if-modified-since": modified },
-        { "if-none-match": etag, range: "bytes=1-3" },
-      ]) {
-        const response = await fetch(url, { headers });
-        expect(response.status).toBe(304);
-        expect(response.headers.get("etag")).toBe(etag);
-        expect(response.headers.get("cache-control")).toBe(head.headers.get("cache-control"));
-        expect(await response.text()).toBe("");
-      }
-      expect(opened).toHaveLength(0);
-      const response = await fetch(url, {
-        headers: { "if-none-match": '"different"', "if-modified-since": modified },
-      });
-      expect(response.status).toBe(200);
-      expect(response.headers.get("etag")).toBe(etag);
-      expect(await response.text()).toBe("0123456789");
+  live("serves empty files and rejects their byte ranges without opening a second stream", () =>
+    Effect.gen(function* () {
+      const { opened, origin } = yield* standardAssetServer;
+      const url = `${origin}/assets/empty.txt`;
+      const response = yield* requestAsset(url);
+      expect([response.status, yield* response.text]).toStrictEqual([ok, ""]);
+      const range = yield* requestAsset(url, { headers: { range: "bytes=0-" } });
+      expect([range.status, range.headers["content-range"], yield* range.text]).toStrictEqual([
+        rangeNotSatisfiable,
+        "bytes */0",
+        "",
+      ]);
       expect(opened).toHaveLength(1);
-    }));
+    }),
+  );
+});
 
-  it.each([
-    ["bytes=2-4", "234", "bytes 2-4/10"],
-    ["bytes=8-", "89", "bytes 8-9/10"],
-    ["bytes=-3", "789", "bytes 7-9/10"],
-    ["bytes=8-999", "89", "bytes 8-9/10"],
-    ["bytes=-999", "0123456789", "bytes 0-9/10"],
-  ])("serves a single range %s", (range, body, contentRange) =>
-    withServer(async (origin, opened) => {
-      const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
-      expect(response.status).toBe(206);
-      expect(response.headers.get("content-range")).toBe(contentRange);
-      expect(response.headers.get("content-length")).toBe(String(body.length));
-      expect(await response.text()).toBe(body);
+const headAsset = (url: string): ReturnType<typeof requestAsset> =>
+  requestAsset(url, { method: "HEAD" });
+
+describe("static conditional requests", () => {
+  live("answers HEAD without opening a file stream", () =>
+    Effect.gen(function* () {
+      const { opened, origin } = yield* standardAssetServer;
+      const url = `${origin}${assetPath}`;
+      const head = yield* headAsset(url);
+      expect([head.status, head.headers["content-length"], yield* head.text]).toStrictEqual([
+        ok,
+        fileLength,
+        "",
+      ]);
+      expect(head.headers).not.toHaveProperty("content-range");
+      expect(opened).toHaveLength(0);
+    }),
+  );
+
+  live.each([
+    { etagCondition: "match" },
+    { etagCondition: "list" },
+    { etagCondition: "any" },
+    { etagCondition: "range" },
+    { etagCondition: "modified" },
+  ] as const)(
+    "answers the $etagCondition validator without opening a stream",
+    ({ etagCondition }) =>
+      Effect.gen(function* () {
+        const { opened, origin } = yield* standardAssetServer;
+        const url = `${origin}${assetPath}`;
+        const head = yield* headAsset(url);
+        const etag = head.headers["etag"] ?? "";
+        const modified = head.headers["last-modified"] ?? "";
+        const headers = {
+          any: { "if-none-match": "*" },
+          list: { "if-none-match": `"other", ${etag}` },
+          match: { "if-none-match": etag },
+          modified: { "if-modified-since": modified },
+          range: { "if-none-match": etag, range: "bytes=1-3" },
+        }[etagCondition];
+        const response = yield* requestAsset(url, { headers });
+        expect([etag, modified]).not.toContain("");
+        expect([
+          response.status,
+          response.headers["etag"],
+          response.headers["cache-control"],
+          yield* response.text,
+          opened,
+        ]).toStrictEqual([notModified, etag, head.headers["cache-control"], "", []]);
+      }),
+  );
+});
+
+describe("static conditional request priority", () => {
+  live("gives a nonmatching If-None-Match precedence over the modification date", () =>
+    Effect.gen(function* () {
+      const { opened, origin } = yield* standardAssetServer;
+      const url = `${origin}${assetPath}`;
+      const head = yield* headAsset(url);
+      const response = yield* requestAsset(url, {
+        headers: {
+          "if-modified-since": head.headers["last-modified"] ?? "",
+          "if-none-match": '"different"',
+        },
+      });
+      expect([response.status, response.headers["etag"], yield* response.text]).toStrictEqual([
+        ok,
+        head.headers["etag"],
+        fileBody,
+      ]);
+      expect(opened).toHaveLength(1);
+    }),
+  );
+});
+
+describe("static byte range responses", () => {
+  live.each([
+    { body: "234", contentRange: "bytes 2-4/10", range: "bytes=2-4" },
+    { body: "89", contentRange: "bytes 8-9/10", range: "bytes=8-" },
+    { body: "789", contentRange: "bytes 7-9/10", range: "bytes=-3" },
+    { body: "89", contentRange: "bytes 8-9/10", range: "bytes=8-999" },
+    { body: fileBody, contentRange: "bytes 0-9/10", range: "bytes=-999" },
+    { body: "89", contentRange: "bytes 8-9/10", range: "bytes=8-999999999999999999999" },
+  ])("serves a single byte range $range", ({ body, contentRange, range }) =>
+    Effect.gen(function* () {
+      const { opened, origin } = yield* standardAssetServer;
+      const response = yield* requestAsset(`${origin}${assetPath}`, { headers: { range } });
+      expect(response.status).toBe(partialContent);
+      expect(response.headers).toMatchObject({
+        "content-length": String(body.length),
+        "content-range": contentRange,
+      });
+      expect(yield* response.text).toBe(body);
       expect(opened).toHaveLength(1);
     }),
   );
 
-  it.each(["bytes=10-", "bytes=9-2", "bytes=-0"])(
-    "rejects unsatisfiable %s without opening a body",
+  live.each(["bytes=10-", "bytes=9-2", "bytes=-0", "bytes=999999999999999999999-"])(
+    "rejects an unsatisfiable range %s without acquiring a stream",
     (range) =>
-      withServer(async (origin, opened) => {
-        const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
-        expect(response.status).toBe(416);
-        expect(response.headers.get("content-range")).toBe("bytes */10");
-        expect(response.headers.get("cache-control")).toBeNull();
-        expect(response.headers.get("etag")).toBeNull();
-        expect(await response.text()).toBe("");
+      Effect.gen(function* () {
+        const { opened, origin } = yield* standardAssetServer;
+        const response = yield* requestAsset(`${origin}${assetPath}`, { headers: { range } });
+        expect([
+          response.status,
+          response.headers["content-range"],
+          yield* response.text,
+        ]).toStrictEqual([rangeNotSatisfiable, "bytes */10", ""]);
+        expect(response.headers).not.toHaveProperty("cache-control");
+        expect(response.headers).not.toHaveProperty("etag");
         expect(opened).toHaveLength(0);
       }),
   );
+});
 
-  it.each(["bytes=0-1,4-5", "items=0-1", "bytes=wat", "bytes=-"])(
-    "ignores unsupported or malformed %s",
+describe("static range fallback behavior", () => {
+  live.each(["bytes=0-1,4-5", "items=0-1", "bytes=wat", "bytes=-"])(
+    "ignores an unsupported or malformed range %s",
     (range) =>
-      withServer(async (origin) => {
-        const response = await fetch(`${origin}/assets/app-a1b2.js`, { headers: { range } });
-        expect(response.status).toBe(200);
-        expect(await response.text()).toBe("0123456789");
+      Effect.gen(function* () {
+        const { origin } = yield* standardAssetServer;
+        const response = yield* requestAsset(`${origin}${assetPath}`, { headers: { range } });
+        expect([response.status, yield* response.text]).toStrictEqual([ok, fileBody]);
       }),
   );
 
-  it("handles arbitrarily large decimal byte positions without numeric precision loss", () =>
-    withServer(async (origin, opened) => {
-      const url = `${origin}/assets/app-a1b2.js`;
-      const beyondEnd = await fetch(url, { headers: { range: "bytes=999999999999999999999-" } });
-      expect(beyondEnd.status).toBe(416);
-      expect(beyondEnd.headers.get("content-range")).toBe("bytes */10");
-      expect(await beyondEnd.text()).toBe("");
-      expect(opened).toHaveLength(0);
-
-      const clampedEnd = await fetch(url, {
-        headers: { range: "bytes=8-999999999999999999999" },
-      });
-      expect(clampedEnd.status).toBe(206);
-      expect(clampedEnd.headers.get("content-range")).toBe("bytes 8-9/10");
-      expect(clampedEnd.headers.get("content-length")).toBe("2");
-      expect(await clampedEnd.text()).toBe("89");
-      expect(opened).toHaveLength(1);
-    }));
-
-  it("handles empty files and their unsatisfiable ranges", () =>
-    withServer(async (origin, opened) => {
-      const url = `${origin}/assets/empty.txt`;
-      const response = await fetch(url);
-      expect(response.status).toBe(200);
-      expect(await response.text()).toBe("");
-      const range = await fetch(url, { headers: { range: "bytes=0-" } });
-      expect(range.status).toBe(416);
-      expect(range.headers.get("content-range")).toBe("bytes */0");
-      expect(await range.text()).toBe("");
-      expect(opened).toHaveLength(1);
-    }));
-
-  it("ignores Range on HEAD and serves the full body for nonmatching If-Range", () =>
-    withServer(async (origin, opened) => {
-      const url = `${origin}/assets/app-a1b2.js`;
-      // RFC 9110 section 14.2 only defines Range for GET. Effect v4 ignores it on HEAD.
-      const head = await fetch(url, { method: "HEAD", headers: { range: "bytes=2-3" } });
-      expect(head.status).toBe(200);
-      expect(head.headers.get("content-length")).toBe("10");
-      expect(head.headers.get("content-range")).toBeNull();
-      expect(await head.text()).toBe("");
-      const invalidHead = await fetch(url, { method: "HEAD", headers: { range: "bytes=10-" } });
-      expect(invalidHead.status).toBe(200);
-      expect(invalidHead.headers.get("content-length")).toBe("10");
-      expect(invalidHead.headers.get("content-range")).toBeNull();
-      expect(await invalidHead.text()).toBe("");
-      expect(opened).toHaveLength(0);
-      // The default ETag is weak, and Effect requires a matching strong tag.
-      for (const ifRange of [
-        '"stale"',
-        head.headers.get("etag")!,
-        head.headers.get("last-modified")!,
-      ]) {
-        const response = await fetch(url, {
-          headers: { range: "bytes=1-2", "if-range": ifRange, "if-none-match": '"stale"' },
+  live.each(["bytes=2-3", "bytes=10-"])(
+    "ignores range %s on HEAD without opening a file",
+    (range) =>
+      Effect.gen(function* () {
+        const { opened, origin } = yield* standardAssetServer;
+        const response = yield* requestAsset(`${origin}${assetPath}`, {
+          headers: { range },
+          method: "HEAD",
         });
-        expect(response.status).toBe(200);
-        expect(response.headers.get("content-range")).toBeNull();
-        expect(response.headers.get("content-length")).toBe("10");
-        expect(await response.text()).toBe("0123456789");
-      }
-      expect(opened).toHaveLength(3);
-    }));
-
-  it("does not install SPA/directory fallback, steal protocol requests, or handle POST", () =>
-    withServer(async (origin) => {
-      for (const path of [
-        "/",
-        "/docs",
-        "/docs/",
-        "/missing",
-        "/assets-other/app-a1b2.js",
-        "/_effront/protocol",
-      ]) {
-        const response = await fetch(`${origin}${path}`);
-        expect(response.status).toBe(202);
-        expect(await response.text()).toBe("application");
-      }
-      for (const init of [
-        { method: "POST" },
-        { headers: { accept: "text/x-component" } },
-        { headers: { "x-effront-server-fn": "server-function" } },
-      ]) {
-        const response = await fetch(`${origin}/robots.txt`, init);
-        expect(response.status).toBe(202);
-        expect(await response.text()).toBe("application");
-      }
-      for (const path of ["/assets", "/assets/", "/assets/missing.js"]) {
-        const response = await fetch(`${origin}${path}`);
-        expect(response.status).toBe(404);
-        expect(await response.text()).toBe("");
-      }
-    }));
-
-  it("delegates raw/encoded traversal and invalid URL rejection to the standard server", () =>
-    withServer(async (origin, opened) => {
-      for (const path of [
-        "/assets/../secret.txt",
-        "/assets/%2e%2e/secret.txt",
-        "/assets/%2e%2e%2fsecret.txt",
-        "/assets/%00.txt",
-        "/assets/%zz",
-      ]) {
-        const response = await rawGet(origin, path);
-        expect(response.status, path).toBe(404);
-        expect(response.body, path).toBe("");
-      }
-      expect(opened).toHaveLength(0);
-    }));
-
-  it("delegates in-root dot-segment normalization to the standard server", () =>
-    withServer(async (origin) => {
-      for (const pathname of ["/assets/./app-a1b2.js", "/assets/sub/../app-a1b2.js"]) {
-        const response = await rawGet(origin, pathname);
-        expect(response.status).toBe(200);
-        expect(response.body).toBe("0123456789");
-      }
-    }));
-
-  it("preserves errors raised by the standard static handler rather than falling through", () =>
-    withServer(
-      async (origin, opened) => {
-        const response = await fetch(`${origin}/robots.txt`);
-        expect(response.status).toBe(500);
-        expect(await response.text()).toBe("");
+        expect([
+          response.status,
+          response.headers["content-length"],
+          yield* response.text,
+        ]).toStrictEqual([ok, fileLength, ""]);
+        expect(response.headers).not.toHaveProperty("content-range");
         expect(opened).toHaveLength(0);
-      },
-      { deniedStatPath: join(root, "public", "robots.txt") },
-    ));
+      }),
+  );
+});
 
-  it("rewrites nested prefixes and encoded filenames exactly once", async () => {
-    options = { ...options, client: { ...options.client, prefix: "/nested/assets/" } };
-    const filename = "literal%2e%2e?# 日本語.txt";
-    await writeFile(join(root, "client", filename), "encoded filename");
-    await withServer(async (origin) => {
-      const response = await fetch(
-        `${origin}/nested/assets/${encodeURIComponent(filename)}?version=1`,
+describe("static If-Range validators", () => {
+  live("serves the complete file for each nonmatching If-Range validator", () =>
+    Effect.gen(function* () {
+      const { opened, origin } = yield* standardAssetServer;
+      const url = `${origin}${assetPath}`;
+      const head = yield* headAsset(url);
+      const values = ['"stale"', head.headers["etag"] ?? "", head.headers["last-modified"] ?? ""];
+      expect(values).not.toContain("");
+      const replies = yield* Effect.forEach(values, (ifRange) =>
+        Effect.gen(function* () {
+          const response = yield* requestAsset(url, {
+            headers: { "if-none-match": '"stale"', "if-range": ifRange, range: "bytes=1-2" },
+          });
+          return [
+            response.status,
+            response.headers["content-range"],
+            response.headers["content-length"],
+            yield* response.text,
+          ];
+        }),
       );
-      expect(response.status).toBe(200);
-      expect(await response.text()).toBe("encoded filename");
-      const missing = await fetch(`${origin}/nested/assets/missing`);
-      expect(missing.status).toBe(404);
-      expect(await missing.text()).toBe("");
-    });
-  });
-
-  it("defers missing root handling to standard request-time lookup", async () => {
-    options = {
-      client: { ...options.client, root: join(root, "missing-client") },
-      public: { root: join(root, "missing-public") },
-    };
-    await withServer(async (origin, opened) => {
-      const client = await fetch(`${origin}/assets/missing.txt`);
-      expect(client.status).toBe(404);
-      expect(await client.text()).toBe("");
-      const publicFile = await fetch(`${origin}/missing.txt`);
-      expect(publicFile.status).toBe(202);
-      expect(await publicFile.text()).toBe("application");
-      expect(opened).toHaveLength(0);
-    });
-  });
-
-  it("finalizes the standard filesystem stream when the client cancels a download", async () => {
-    const file = join(root, "client", "large.bin");
-    await writeFile(file, "");
-    await truncate(file, 64 * 1024 * 1024);
-    const closed = Promise.withResolvers<boolean>();
-    await withServer(
-      async (origin, opened) => {
-        await new Promise<void>((resolve, reject) => {
-          const request = nodeRequest(
-            `${origin}/assets/large.bin`,
-            { agent: false },
-            (response) => {
-              response.once("data", () => response.destroy());
-              response.once("close", resolve);
-              response.once("error", reject);
-            },
-          );
-          request.once("error", reject);
-          request.end();
-        });
-        expect(await closed.promise).toBe(false);
-        expect(opened).toEqual([file]);
-      },
-      { onStreamExit: closed.resolve },
-    );
-  });
-
-  it("preserves external application services and typed failures without construction capture", async () => {
-    class External extends Context.Service<External, string>()(
-      "@effront/server/test/assets/External",
-    ) {}
-    const typedApp = Effect.flatMap(External, (value) =>
-      value === "fail"
-        ? Effect.fail("application-error" as const)
-        : Effect.succeed(HttpServerResponse.text(value)),
-    );
-    const handler = await Effect.runPromise(
-      withAssets(typedApp, options).pipe(Effect.provide(NodeHttpServer.layerHttpServices)),
-    );
-    const request = HttpServerRequest.fromWeb(new Request("http://localhost/missing"));
-    const response = await Effect.runPromise(
-      handler.pipe(
-        Effect.provideService(External, "request-service"),
-        Effect.provideService(HttpServerRequest.HttpServerRequest, request),
-      ),
-    );
-    expect(await HttpServerResponse.toWeb(response).text()).toBe("request-service");
-    const result = await Effect.runPromise(
-      handler.pipe(
-        Effect.provideService(External, "fail"),
-        Effect.provideService(HttpServerRequest.HttpServerRequest, request),
-        Effect.result,
-      ),
-    );
-    expect(Result.isFailure(result) && result.failure).toBe("application-error");
-  });
+      const expected = [ok, undefined, fileLength, fileBody];
+      expect(replies).toStrictEqual(values.map(() => expected));
+      expect(opened).toHaveLength(values.length);
+    }),
+  );
 });

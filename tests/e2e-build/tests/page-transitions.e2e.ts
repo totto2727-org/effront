@@ -1,218 +1,189 @@
+// oxlint-disable-next-line rules/no-node-imports -- Playwright writes native animation samples to its local artifact directory on Node.
 import { writeFile } from "node:fs/promises";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import type { Page, TestInfo } from "@playwright/test";
+import {
+  allowMotionPreferenceUpdate,
+  assertLayoutRetained,
+  finishObservation,
+  isPlaying,
+  observeAnimations,
+} from "./page-transition.browser.fixture";
+import type { AnimationSample, TransitionObservation } from "./page-transition.browser.fixture";
 
-type AnimationSample = {
-  name: string;
-  pseudoElement: string | null;
-  playState: AnimationPlayState;
-  progress: number | null;
-  keyframes: ComputedKeyframe[];
-  pageStyle: string | null;
+type AnimatedMode = "default" | "custom" | "typed";
+type ExampleMode = AnimatedMode | "disabled";
+type ExamplePage = "A" | "B";
+
+const minimumAnimations = 0;
+const evidenceIndent = 2;
+// oxlint-disable-next-line unicorn/no-null -- Null selects JSON.stringify's default replacer.
+const defaultJsonReplacer = null;
+
+const expectExampleHeading = async (
+  page: Page,
+  mode: ExampleMode,
+  destination: ExamplePage,
+): Promise<void> => {
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${mode} page ${destination}`);
 };
 
-declare global {
-  interface Window {
-    transitionEvidence: {
-      samples: AnimationSample[];
-      frames: number;
-      running: boolean;
-      layout: Element | null;
-    };
-  }
-}
-
-// Observe native browser animations on every frame. Do not replace startViewTransition or
-// infer an animation merely from a React callback, URL change, or generated CSS rule.
-const observeAnimations = (page: Page) =>
-  page.evaluate(() => {
-    window.transitionEvidence = {
-      samples: [],
-      frames: 0,
-      running: true,
-      layout: document.querySelector('[aria-label="Persistent transition layout"]'),
-    };
-    const evidence = window.transitionEvidence;
-    const observe = () => {
-      if (!evidence.running) return;
-      evidence.frames++;
-      for (const animation of document.getAnimations()) {
-        const effect = animation.effect;
-        if (!(effect instanceof KeyframeEffect)) continue;
-        const name = animation instanceof CSSAnimation ? animation.animationName : animation.id;
-        if (!effect.pseudoElement?.includes("view-transition") && !name.startsWith("demo-"))
-          continue;
-        evidence.samples.push({
-          name,
-          pseudoElement: effect.pseudoElement,
-          playState: animation.playState,
-          progress: effect.getComputedTiming().progress ?? null,
-          keyframes: effect.getKeyframes(),
-          pageStyle: document.querySelector(".transition-card")?.getAttribute("style") ?? null,
-        });
-      }
-      if (evidence.running) requestAnimationFrame(observe);
-    };
-    requestAnimationFrame(observe);
-  });
-
-const finishObservation = async (page: Page) => {
-  // Include frames after the DOM commit: React creates the pseudo-element animation tree
-  // after updating the page, so an immediate getAnimations() can give a false negative.
-  const frames = await page.evaluate(() => window.transitionEvidence.frames);
-  await page.waitForFunction((start) => window.transitionEvidence.frames >= start + 45, frames);
-  await page.waitForFunction(() =>
-    document.getAnimations().every((animation) => animation.playState !== "running"),
-  );
-  return page.evaluate(() => {
-    window.transitionEvidence.running = false;
-    return window.transitionEvidence.samples;
-  });
-};
-
-const visitExample = async (page: Page, mode: string) => {
+const visitExample = async (page: Page, mode: ExampleMode): Promise<TransitionObservation> => {
   await page.goto(`/transitions/${mode}-a`);
   await page.waitForLoadState("networkidle");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${mode} page A`);
+  await expectExampleHeading(page, mode, "A");
   await expect(page.locator(".transition-card")).toHaveCSS(
     "background-color",
     "rgb(219, 234, 254)",
   );
-  await page.getByRole("button", { name: "Count: 0", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
-  await observeAnimations(page);
+  await page.getByRole("button", { exact: true, name: "Count: 0" }).click();
+  await expect(page.getByRole("button", { exact: true, name: "Count: 1" })).toBeVisible();
+  return observeAnimations(page);
 };
 
-const assertLayoutRetained = async (page: Page) => {
-  await expect(page.getByRole("button", { name: "Count: 1", exact: true })).toBeVisible();
+const expectExampleAddress = async (page: Page, mode: ExampleMode): Promise<void> => {
+  await expect(page).toHaveURL(new RegExp(`/transitions/${mode}-b$`, "u"));
+};
+
+const clickNext = async (
+  page: Page,
+  mode: ExampleMode,
+  destination: ExamplePage,
+): Promise<void> => {
+  await page.getByRole("link", { name: "Next example page" }).click();
+  await expectExampleHeading(page, mode, destination);
+};
+
+const writeAnimationEvidence = async (
+  samples: AnimationSample[],
+  testInfo: TestInfo,
+): Promise<void> => {
+  const evidencePath = testInfo.outputPath("native-transition-animations.json");
+  await writeFile(evidencePath, JSON.stringify(samples, defaultJsonReplacer, evidenceIndent));
+  await testInfo.attach("native-transition-animations", {
+    contentType: "application/json",
+    path: evidencePath,
+  });
+};
+
+const expectForwardAnimations = (playing: AnimationSample[], mode: AnimatedMode): void => {
+  expect(playing.length).toBeGreaterThan(minimumAnimations);
+  expect(playing.some((sample) => sample.pseudoElement?.includes("effront-page") === true)).toBe(
+    true,
+  );
+  if (mode === "default") {
+    expect(playing.some((sample) => sample.name.startsWith("demo-slide"))).toBe(false);
+    expect(
+      playing.some((sample) => sample.keyframes.some((keyframe) => keyframe["opacity"] === "0")),
+    ).toBe(true);
+    return;
+  }
+  const animation = mode === "typed" ? "demo-lift" : "demo-slide";
+  expect(playing.some((sample) => sample.name === `${animation}-in`)).toBe(true);
+  expect(playing.some((sample) => sample.name === `${animation}-out`)).toBe(true);
   expect(
-    await page.evaluate(
-      () =>
-        window.transitionEvidence.layout ===
-        document.querySelector('[aria-label="Persistent transition layout"]'),
-    ),
+    playing.some((sample) => sample.keyframes.some((keyframe) => Boolean(keyframe["transform"]))),
   ).toBe(true);
 };
 
-const isPlaying = (sample: AnimationSample) =>
-  sample.playState === "running" &&
-  sample.progress !== null &&
-  sample.progress > 0 &&
-  sample.progress < 1;
+const expectBackwardAnimations = (samples: AnimationSample[], mode: AnimatedMode): void => {
+  if (mode === "typed") {
+    const backwardSamples = samples.filter((sample) => isPlaying(sample));
+    expect(backwardSamples.some((sample) => sample.name === "demo-slide-in")).toBe(true);
+    expect(backwardSamples.some((sample) => sample.name.startsWith("demo-lift"))).toBe(false);
+  }
+};
 
-for (const mode of ["default", "custom", "typed"] as const) {
+const verifyHistoryTraversal = async (page: Page, mode: AnimatedMode): Promise<void> => {
+  const observation = await observeAnimations(page);
+  await page.goBack();
+  await expectExampleHeading(page, mode, "A");
+  const samples = await finishObservation(page, observation);
+  expectBackwardAnimations(samples, mode);
+  await assertLayoutRetained(page, observation);
+  await page.goForward();
+  await expectExampleHeading(page, mode, "B");
+  await assertLayoutRetained(page, observation);
+};
+
+const animatedModes: AnimatedMode[] = ["default", "custom", "typed"];
+animatedModes.forEach((mode) => {
   test(`${mode} Page transition produces real animations and preserves the layout`, async ({
     page,
   }, testInfo) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
-    await visitExample(page, mode);
-    await page.getByRole("link", { name: "Next example page" }).click();
-    await expect(page).toHaveURL(new RegExp(`/transitions/${mode}-b$`));
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${mode} page B`);
-    const samples = await finishObservation(page);
-    const evidencePath = testInfo.outputPath("native-transition-animations.json");
-    await writeFile(evidencePath, JSON.stringify(samples, null, 2));
-    await testInfo.attach("native-transition-animations", {
-      path: evidencePath,
-      contentType: "application/json",
-    });
-    const playing = samples.filter(isPlaying);
-    expect(playing.length).toBeGreaterThan(0);
-    expect(playing.some((sample) => sample.pseudoElement?.includes("effront-page"))).toBe(true);
-    if (mode !== "default") {
-      const animation = mode === "typed" ? "demo-lift" : "demo-slide";
-      expect(playing.some((sample) => sample.name === `${animation}-in`)).toBe(true);
-      expect(playing.some((sample) => sample.name === `${animation}-out`)).toBe(true);
-      expect(
-        playing.some((sample) => sample.keyframes.some((keyframe) => keyframe["transform"])),
-      ).toBe(true);
-    } else {
-      expect(playing.some((sample) => sample.name.startsWith("demo-slide"))).toBe(false);
-      expect(
-        playing.some((sample) => sample.keyframes.some((keyframe) => keyframe["opacity"] === "0")),
-      ).toBe(true);
-    }
-    await assertLayoutRetained(page);
-    await observeAnimations(page);
-    await page.goBack();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${mode} page A`);
-    const backwardSamples = (await finishObservation(page)).filter(isPlaying);
-    if (mode === "typed") {
-      expect(backwardSamples.some((sample) => sample.name === "demo-slide-in")).toBe(true);
-      expect(backwardSamples.some((sample) => sample.name.startsWith("demo-lift"))).toBe(false);
-    }
-    await assertLayoutRetained(page);
-    await page.goForward();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${mode} page B`);
-    await assertLayoutRetained(page);
+    const observation = await visitExample(page, mode);
+    await clickNext(page, mode, "B");
+    await expectExampleAddress(page, mode);
+    const samples = await finishObservation(page, observation);
+    await writeAnimationEvidence(samples, testInfo);
+    expectForwardAnimations(
+      samples.filter((sample) => isPlaying(sample)),
+      mode,
+    );
+    await assertLayoutRetained(page, observation);
+    await verifyHistoryTraversal(page, mode);
   });
-}
+});
+
+const verifyNavigationWithoutAnimations = async (
+  page: Page,
+  observation: TransitionObservation,
+  mode: ExampleMode,
+): Promise<void> => {
+  await clickNext(page, mode, "B");
+  await expectExampleAddress(page, mode);
+  const samples = await finishObservation(page, observation);
+  expect(samples.filter((sample) => isPlaying(sample))).toEqual([]);
+  await assertLayoutRetained(page, observation);
+};
 
 test("Page opt-out navigates without page animations and retains layout state", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await visitExample(page, "disabled");
-  await page.getByRole("link", { name: "Next example page" }).click();
-  await expect(page).toHaveURL(/\/transitions\/disabled-b$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("disabled page B");
-  const samples = await finishObservation(page);
-  expect(samples.filter(isPlaying)).toEqual([]);
-  await assertLayoutRetained(page);
+  const observation = await visitExample(page, "disabled");
+  await verifyNavigationWithoutAnimations(page, observation, "disabled");
 });
 
-for (const mode of ["default", "custom"] as const) {
+const reducedMotionModes: AnimatedMode[] = ["default", "custom"];
+reducedMotionModes.forEach((mode) => {
   test(`reduced motion suppresses ${mode} page animations without breaking navigation`, async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await visitExample(page, mode);
+    const observation = await visitExample(page, mode);
     expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(
       true,
     );
-    await page.getByRole("link", { name: "Next example page" }).click();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${mode} page B`);
-    const samples = await finishObservation(page);
-    expect(samples.filter(isPlaying)).toEqual([]);
-    await assertLayoutRetained(page);
+    await verifyNavigationWithoutAnimations(page, observation, mode);
   });
-}
+});
+
+const changeMotionPreference = async (
+  page: Page,
+  reducedMotion: "no-preference" | "reduce",
+  retainedNote: string,
+): Promise<void> => {
+  const note = page.getByRole("textbox", { name: "Page note" });
+  await note.fill(retainedNote);
+  await page.emulateMedia({ reducedMotion });
+  await allowMotionPreferenceUpdate(page);
+  await expect(note).toHaveValue(retainedNote);
+  await expect(note).toBeFocused();
+};
 
 test("responds to reduced-motion preference changes after hydration", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await visitExample(page, "default");
-  const note = page.getByRole("textbox", { name: "Page note" });
-  await note.fill("Keep this page-local state");
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  // Allow the media-query subscription and its React update to commit before checking
-  // that changing accessibility preferences did not remount this page's client subtree.
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-      ),
-  );
-  await expect(note).toHaveValue("Keep this page-local state");
-  await expect(note).toBeFocused();
-  await page.getByRole("link", { name: "Next example page" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("default page B");
-  expect((await finishObservation(page)).filter(isPlaying)).toEqual([]);
-  await assertLayoutRetained(page);
-
-  await note.fill("Keep state when motion returns");
-  await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-      ),
-  );
-  await expect(note).toHaveValue("Keep state when motion returns");
-  await expect(note).toBeFocused();
-  await observeAnimations(page);
-  await page.getByRole("link", { name: "Next example page" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("default page A");
-  expect((await finishObservation(page)).filter(isPlaying).length).toBeGreaterThan(0);
-  await assertLayoutRetained(page);
+  const reducedMotion = await visitExample(page, "default");
+  await changeMotionPreference(page, "reduce", "Keep this page-local state");
+  await verifyNavigationWithoutAnimations(page, reducedMotion, "default");
+  await changeMotionPreference(page, "no-preference", "Keep state when motion returns");
+  const resumedMotion = await observeAnimations(page);
+  await clickNext(page, "default", "A");
+  const samples = await finishObservation(page, resumedMotion);
+  expect(samples.filter((sample) => isPlaying(sample)).length).toBeGreaterThan(minimumAnimations);
+  await assertLayoutRetained(page, resumedMotion);
 });
 
 test("navigates and retains layout state when native View Transitions are unavailable", async ({
@@ -220,22 +191,17 @@ test("navigates and retains layout state when native View Transitions are unavai
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  // Simulate only the missing capability. The navigation, React render, Flight request,
-  // and layout state below still run through the real application and browser.
+  // Remove the browser capability while preserving real Flight and React navigation.
   await page.addInitScript(() => {
     Object.defineProperty(document, "startViewTransition", {
-      value: undefined,
       configurable: true,
+      value: undefined,
     });
   });
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await visitExample(page, "default");
+  const observation = await visitExample(page, "default");
   expect(await page.evaluate(() => typeof document.startViewTransition)).toBe("undefined");
-  await page.getByRole("link", { name: "Next example page" }).click();
-  await expect(page).toHaveURL(/\/transitions\/default-b$/);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("default page B");
-  expect((await finishObservation(page)).filter(isPlaying)).toEqual([]);
-  await assertLayoutRetained(page);
+  await verifyNavigationWithoutAnimations(page, observation, "default");
   expect(errors).toEqual([]);
 });
 
@@ -244,6 +210,6 @@ test("loads the shared example stylesheet on direct About entry", async ({ page 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("About");
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(248, 250, 252)");
   await page.getByRole("link", { name: "Back home" }).click();
-  await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("button", { name: "Count: 0", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/u);
+  await expect(page.getByRole("button", { exact: true, name: "Count: 0" })).toBeVisible();
 });

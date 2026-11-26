@@ -2,6 +2,10 @@
   "name": "effront-e2e-server-node-fixture",
   "private": true,
   "type": "module",
+  "imports": {
+    "#fixture/effront.ts": "./src/effront.ts",
+    "#loading/*": "./src/*"
+  },
   "scripts": {
     "start": "node dist/rsc/server.js"
   },

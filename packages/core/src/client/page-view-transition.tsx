@@ -1,27 +1,31 @@
 "use client";
 
-import { useSyncExternalStore, ViewTransition, type ReactNode } from "react";
+import { useSyncExternalStore, ViewTransition } from "react";
+import type { ReactNode } from "react";
 
-import type { PageViewTransitionConfig } from "../application/page-view-transition";
+import type { PageViewTransitionConfig } from "#core/application/page-view-transition.ts";
 
+// oxlint-disable-next-line import/no-unassigned-import -- The client boundary must load its View Transition styles with the component.
 import "./page-view-transition.css";
 
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
-const subscribe = (onChange: () => void) => {
-  const query = window.matchMedia(reducedMotionQuery);
+const subscribe = (onChange: () => void): (() => void) => {
+  const query = globalThis.matchMedia(reducedMotionQuery);
   query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
+  return () => {
+    query.removeEventListener("change", onChange);
+  };
 };
-const getSnapshot = () => window.matchMedia(reducedMotionQuery).matches;
-const getServerSnapshot = () => false;
+const getSnapshot = (): boolean => globalThis.matchMedia(reducedMotionQuery).matches;
+const getServerSnapshot = (): boolean => false;
 
-export function PageViewTransitionBoundary({
+export const PageViewTransitionBoundary = ({
   children,
   config,
-}: {
-  readonly children?: ReactNode;
-  readonly config: PageViewTransitionConfig;
-}) {
+}: Readonly<{
+  children?: ReactNode;
+  config: PageViewTransitionConfig;
+}>): ReactNode => {
   const reducedMotion = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   if (config.enabled === false) {
     return children;
@@ -39,4 +43,4 @@ export function PageViewTransitionBoundary({
       {children}
     </ViewTransition>
   );
-}
+};

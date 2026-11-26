@@ -1,6 +1,8 @@
-import { Predicate, type Types } from "effect";
+import { Predicate } from "effect";
+import type { Types } from "effect";
 
-import { makeRenderRuntimeContext, type RenderRuntimeContext } from "./render-runtime";
+import { makeRenderRuntimeContext } from "./render-runtime.ts";
+import type { RenderRuntimeContext } from "./render-runtime.ts";
 
 declare const EFFRONTServicesTypeId: unique symbol;
 
@@ -19,28 +21,26 @@ export type EFFRONTMemberKind =
   | "Routes"
   | "ServerFn";
 
-export type EFFRONTIdentity<Services> = {
-  readonly [EFFRONTServicesTypeId]?: Types.Invariant<Services>;
-  readonly renderRuntime: RenderRuntimeContext;
-};
+export type EFFRONTIdentity<Services> = Readonly<{
+  [EFFRONTServicesTypeId]?: Types.Invariant<Services>;
+  renderRuntime: RenderRuntimeContext;
+}>;
 
-type EFFRONTMemberKindMarker<Kind extends EFFRONTMemberKind> = {
-  readonly [EFFRONTMemberKindTypeId]: Kind;
-};
+type EFFRONTMemberKindMarker<Kind extends EFFRONTMemberKind> = Readonly<{
+  [EFFRONTMemberKindTypeId]: Kind;
+}>;
 
 export type EFFRONTMember<
   Services,
   Kind extends EFFRONTMemberKind = EFFRONTMemberKind,
-> = EFFRONTMemberKindMarker<Kind> & {
-  readonly [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
-};
+> = EFFRONTMemberKindMarker<Kind> &
+  Readonly<{ [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services> }>;
 
 export type EFFRONTStatefulMember<Services, Kind extends EFFRONTMemberKind, State> = EFFRONTMember<
   Services,
   Kind
-> & {
-  readonly [EFFRONTStateTypeId]: State;
-};
+> &
+  Readonly<{ [EFFRONTStateTypeId]: State }>;
 
 export const makeEFFRONTIdentity = <Services>(): EFFRONTIdentity<Services> => ({
   renderRuntime: makeRenderRuntimeContext(),
@@ -60,8 +60,13 @@ export const attachEFFRONTMember = <
 export const isEFFRONTMember = <const Kind extends EFFRONTMemberKind>(
   value: unknown,
   kind: Kind,
+  // oxlint-disable-next-line rules/no-type-predicate -- The opaque runtime symbol also brands callable members with their exact kind.
 ): value is EFFRONTMemberKindMarker<Kind> =>
   Predicate.hasProperty(value, EFFRONTMemberKindTypeId) && value[EFFRONTMemberKindTypeId] === kind;
+
+export const authoringTypeError = (message: string): TypeError =>
+  // oxlint-disable-next-line rules/require-tagged-error -- Invalid synchronous calls to Effront authoring factories throw TypeError.
+  new TypeError(message);
 
 export const getEFFRONTIdentity = <Services>(
   member: EFFRONTMember<Services>,

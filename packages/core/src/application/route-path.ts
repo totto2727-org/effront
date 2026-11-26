@@ -1,7 +1,9 @@
+import { Array, Data, Predicate, Schema, String } from "effect";
+
 export type AbsolutePath = `/${string}`;
 
 // Compile-time and runtime route grammars are deliberately paired. Any grammar change must update
-// both ValidRoutePath/ValidRouteParamName and analyzeRoutePath, with one paired type/runtime test.
+// Update the type validators and analyzeRoutePath together, with paired type and runtime checks.
 type InvalidRouteCharacter = "?" | "#" | "%" | ";" | "\\";
 type InvalidParameterCharacter = InvalidRouteCharacter | "*" | "/" | ":" | "(" | ")" | "." | "-";
 
@@ -130,105 +132,127 @@ export type ReservedRoutePath<Path extends AbsolutePath> = Path extends `/${infe
   : never;
 
 const InvalidRoutePath = /[?#%;\\]/u;
-const DynamicSegment = /^[:*]([^:*().-]+)$/u;
+const DynamicSegment = /^[:*](?<name>[^:*().-]+)$/u;
+const rootPath = "/";
+const firstCharacter = 0;
+const afterLeadingSlash = 1;
+const lastSegment = -1;
+const catchAllSuffix = "/*";
+const absolutePath = Schema.TemplateLiteral([rootPath, Schema.String]);
 
-type RouteAnalysis = {
-  readonly catchAll: string | null;
-  readonly matcher: AbsolutePath;
-  readonly shapes: ReadonlyArray<string>;
-} & (
-  | {
-      readonly _tag: "ParameterFree";
-      readonly shape: string;
-    }
-  | {
-      readonly _tag: "Parameterized";
-      readonly parameterNames: readonly [string, ...Array<string>];
-      readonly shape: string;
-    }
-);
+export const isAbsolutePath = Schema.is(absolutePath);
 
-export const analyzeRoutePath = (path: string): RouteAnalysis => {
-  if (!path.startsWith("/") || InvalidRoutePath.test(path)) {
-    throw new TypeError(
+type RoutePattern = Readonly<{
+  catchAll: string | null;
+  matcher: AbsolutePath;
+  shape: string;
+  shapes: Readonly<string[]>;
+}>;
+
+type RouteAnalysis = Data.TaggedEnum<{
+  ParameterFree: RoutePattern;
+  Parameterized: RoutePattern & Readonly<{ parameterNames: Readonly<[string, ...string[]]> }>;
+}>;
+
+const routeAnalyses = Data.taggedEnum<RouteAnalysis>();
+
+const routePathError = (message: string): TypeError =>
+  // oxlint-disable-next-line rules/require-tagged-error -- The public route authoring API throws TypeError for invalid paths.
+  new TypeError(message);
+
+const splitRoute = (path: string): string[] => {
+  if (!path.startsWith(rootPath) || InvalidRoutePath.test(path)) {
+    throw routePathError(
       `Invalid route path "${path}". Route paths must start with "/" and cannot contain "?", "#", "%", ";", or "\\".`,
     );
   }
-
-  const segments = path === "/" ? [] : path.slice(1).split("/");
-  if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
-    throw new TypeError(
+  const segments = path === rootPath ? [] : path.slice(afterLeadingSlash).split(rootPath);
+  if (segments.some((segment) => String.isEmpty(segment) || segment === "." || segment === "..")) {
+    throw routePathError(
       `Invalid route path "${path}". Route paths cannot contain empty, ".", or ".." segments or end with "/".`,
     );
   }
-
-  const parameterNames = new Set<string>();
-  const shapeSegments: Array<string> = [];
-  let catchAll: string | null = null;
-  for (const segment of segments) {
-    if (!segment.includes(":") && !segment.includes("*")) {
-      shapeSegments.push(segment.toLowerCase());
-      continue;
-    }
-
-    const match = DynamicSegment.exec(segment);
-    if (segment.includes("*") && (match === null || segment !== segments.at(-1))) {
-      throw new TypeError(
-        `Invalid route path "${path}". Catch-all segments must use the terminal "*parameter" convention.`,
-      );
-    }
-    if (match === null) {
-      throw new TypeError(
-        `Invalid route path "${path}". Dynamic segments must use the ":parameter" convention.`,
-      );
-    }
-
-    const parameterName = match[1];
-    if (parameterName === undefined || parameterNames.has(parameterName)) {
-      throw new TypeError(
-        `Invalid route path "${path}". Dynamic parameter names must be unique within a route.`,
-      );
-    }
-
-    parameterNames.add(parameterName);
-    if (segment.startsWith("*")) {
-      catchAll = parameterName;
-      shapeSegments.push("*");
-    } else {
-      shapeSegments.push(":");
-    }
-  }
-
-  const shape = `/${shapeSegments.join("/")}`;
-  const matcher = catchAll === null ? path : `${path.slice(0, path.lastIndexOf("/") + 1)}*`;
-  if (!isAbsolutePath(matcher)) {
-    throw new TypeError(`Expected an absolute route matcher for "${path}".`);
-  }
-  const common = {
-    catchAll,
-    matcher,
-    shapes: Object.freeze(catchAll === null ? [shape] : [shape, shape.slice(0, -2) || "/"]),
-  };
-  const parameters = parameterNames.values();
-  const firstParameter = parameters.next();
-  return firstParameter.done
-    ? { ...common, _tag: "ParameterFree", shape }
-    : {
-        ...common,
-        _tag: "Parameterized",
-        parameterNames: Object.freeze([firstParameter.value, ...parameters]),
-        shape,
-      };
+  return segments;
 };
 
-export const validateUnreservedPath = (path: string) => {
-  const segments = path.slice(1).split("/");
-  const canMatch = (segment: string | undefined, expected: string) =>
-    segment?.startsWith(":") === true ||
-    segment?.startsWith("*") === true ||
-    segment?.toLowerCase() === expected;
-  if (canMatch(segments[0], "_effront")) {
-    throw new TypeError(
+const dynamicParameter = (path: string, segment: string, terminal: boolean): string => {
+  const match = DynamicSegment.exec(segment);
+  if (segment.includes("*") && (Predicate.isNullish(match) || !terminal)) {
+    throw routePathError(
+      `Invalid route path "${path}". Catch-all segments must use the terminal "*parameter" convention.`,
+    );
+  }
+  if (Predicate.isNullish(match)) {
+    throw routePathError(
+      `Invalid route path "${path}". Dynamic segments must use the ":parameter" convention.`,
+    );
+  }
+  const [, name] = match;
+  if (Predicate.isNullish(name)) {
+    throw routePathError(
+      `Invalid route path "${path}". Dynamic parameter names must be unique within a route.`,
+    );
+  }
+  return name;
+};
+
+const routeShape = (path: string, segments: string[], names: Set<string>): string =>
+  rootPath +
+  segments
+    .map((segment) => {
+      if (!segment.includes(":") && !segment.includes("*")) {
+        return segment.toLowerCase();
+      }
+      const name = dynamicParameter(path, segment, segment === segments.at(lastSegment));
+      if (names.has(name)) {
+        throw routePathError(
+          `Invalid route path "${path}". Dynamic parameter names must be unique within a route.`,
+        );
+      }
+      names.add(name);
+      return segment.startsWith("*") ? "*" : ":";
+    })
+    .join(rootPath);
+
+// oxlint-disable-next-line unicorn/no-null -- The route analysis contract uses null for an absent catch-all.
+const noCatchAll = null;
+
+const analyzePattern = (path: string, shape: string, catchAll: string | null): RoutePattern => {
+  const prefix = path.slice(firstCharacter, path.lastIndexOf(rootPath) + afterLeadingSlash);
+  const matcher = Predicate.isNullish(catchAll) ? path : `${prefix}*`;
+  if (!isAbsolutePath(matcher)) {
+    throw routePathError(`Expected an absolute route matcher for "${path}".`);
+  }
+  const shapes = Predicate.isNullish(catchAll)
+    ? [shape]
+    : [shape, shape.slice(firstCharacter, -catchAllSuffix.length) || rootPath];
+  return { catchAll, matcher, shape, shapes: Object.freeze(shapes) };
+};
+
+export const analyzeRoutePath = (path: string): RouteAnalysis => {
+  const segments = splitRoute(path);
+  const names = new Set<string>();
+  const shape = routeShape(path, segments, names);
+  const parameterNames = Array.fromIterable(names);
+  const catchAll =
+    segments.at(lastSegment)?.startsWith("*") === true
+      ? (parameterNames.at(lastSegment) ?? noCatchAll)
+      : noCatchAll;
+  const pattern = analyzePattern(path, shape, catchAll);
+  return Array.isReadonlyArrayNonEmpty(parameterNames)
+    ? routeAnalyses.Parameterized({ ...pattern, parameterNames: Object.freeze(parameterNames) })
+    : routeAnalyses.ParameterFree(pattern);
+};
+
+const canMatchSegment = (segment: string | undefined, expected: string): boolean =>
+  segment?.startsWith(":") === true ||
+  segment?.startsWith("*") === true ||
+  segment?.toLowerCase() === expected;
+
+export const validateUnreservedPath = (path: string): void => {
+  const [segment] = path.slice(afterLeadingSlash).split(rootPath);
+  if (canMatchSegment(segment, "_effront")) {
+    throw routePathError(
       `Route "${path}" uses the framework-reserved "${FrameworkNamespace}" namespace.`,
     );
   }
@@ -243,5 +267,3 @@ export const joinRoutePaths = (prefix: AbsolutePath, path: AbsolutePath): Absolu
   }
   return `${prefix}${path}`;
 };
-
-export const isAbsolutePath = (value: string): value is AbsolutePath => value.startsWith("/");

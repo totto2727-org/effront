@@ -1,19 +1,25 @@
-import { Cause, Effect, Option } from "effect";
+import { Cause, Effect, Option, Predicate } from "effect";
 import { HttpServerRequest } from "effect/http";
 import type { Scope } from "effect";
 import type { createTemporaryReferenceSet } from "@vitejs/plugin-rsc/rsc/server";
 
-import type { EFFRONTIdentity } from "../application/effront-identity";
-import type { AnyMiddleware } from "../application/middleware";
-import { ServerFnIdHeader, type ServerFnResult } from "../rsc/flight";
-import { serverFnResponse } from "./server-fn-outcome";
-import { decodeServerFnCall, ServerFnRequestError, validateOrigin } from "./server-fn-request";
+import type { EFFRONTIdentity } from "#core/application/effront-identity.ts";
+import type { AnyMiddleware } from "#core/application/middleware.ts";
+import { ServerFnIdHeader } from "#core/rsc/flight.ts";
+import type { ServerFnResult } from "#core/rsc/flight.ts";
+import { serverFnResponse } from "./server-fn-outcome.ts";
+import {
+  badRequest,
+  internalServerError,
+  ServerFnRequestError,
+} from "./server-fn-request-error.ts";
+import { decodeServerFnCall, validateOrigin } from "./server-fn-request.ts";
 
-export type PreparedServerFnQuery<Services> = {
-  readonly execute: Effect.Effect<ServerFnResult, never, Services | Scope.Scope>;
-  readonly middleware: ReadonlyArray<AnyMiddleware<Services>>;
-  readonly temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
-};
+export type PreparedServerFnQuery<Services> = Readonly<{
+  execute: Effect.Effect<ServerFnResult, never, Services | Scope.Scope>;
+  middleware: Readonly<AnyMiddleware<Services>[]>;
+  temporaryReferences: ReturnType<typeof createTemporaryReferenceSet>;
+}>;
 
 const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
   request: HttpServerRequest.HttpServerRequest,
@@ -21,11 +27,11 @@ const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
 ) {
   yield* validateOrigin(request);
   const actionId = request.headers[ServerFnIdHeader];
-  if (actionId === undefined) {
+  if (Predicate.isNullish(actionId)) {
     return yield* new ServerFnRequestError({
-      cause: new Error(`Missing the ${ServerFnIdHeader} header.`),
+      cause: new Cause.IllegalArgumentError(`Missing the ${ServerFnIdHeader} header.`),
       message: "A query request must identify its Server Function.",
-      status: 400,
+      status: badRequest,
     });
   }
 
@@ -40,7 +46,7 @@ const prepareServerFnQueryRaw = Effect.fnUntraced(function* <Services>(
     execute: serverFnResponse(operation.effect),
     middleware: operation.middleware,
     temporaryReferences,
-  } as PreparedServerFnQuery<Services>;
+  } satisfies PreparedServerFnQuery<Services>;
 });
 
 export const prepareServerFnQuery = <Services>(
@@ -49,7 +55,9 @@ export const prepareServerFnQuery = <Services>(
 ): Effect.Effect<PreparedServerFnQuery<Services>, ServerFnRequestError, Scope.Scope> =>
   prepareServerFnQueryRaw(request, identity).pipe(
     Effect.catchCause((cause) => {
-      if (Cause.hasInterrupts(cause)) return Effect.interrupt;
+      if (Cause.hasInterrupts(cause)) {
+        return Effect.interrupt;
+      }
       const failure = Option.getOrUndefined(Cause.findErrorOption(cause));
       return Effect.fail(
         failure instanceof ServerFnRequestError
@@ -57,7 +65,7 @@ export const prepareServerFnQuery = <Services>(
           : new ServerFnRequestError({
               cause: Cause.squash(cause),
               message: "Failed to prepare the Server Function query.",
-              status: 500,
+              status: internalServerError,
             }),
       );
     }),

@@ -1,9 +1,9 @@
 import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-import { GreetingAction } from "./features/greeting/client";
-import { Host, HostLive } from "./features/greeting/services";
-import { Counter } from "./components/counter";
-import { Shell } from "./components/shell";
+import { EFFRONT } from "./effront.ts";
+import { GreetingAction } from "./features/greeting/client.tsx";
+import { Host, HostLive } from "./features/greeting/services.ts";
+import { Counter } from "./components/counter.tsx";
+import { Shell } from "./components/shell.tsx";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -54,7 +54,10 @@ const AboutPage = EFFRONT.Page.make({
   }),
 });
 
-export default EFFRONT.make({
+const application = EFFRONT.make({
   layer: HostLive,
   routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage).page("/about", AboutPage),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin loads this application through its default export.
+export default application;

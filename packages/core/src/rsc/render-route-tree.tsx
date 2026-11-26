@@ -1,26 +1,75 @@
+import { Array, Predicate } from "effect";
 import { Suspense } from "react";
 
-import type { PageParams } from "../application/page";
-import type { CompiledDestination } from "../application/route-graph";
-import type { AbsolutePath } from "../application/route-path";
-import { RouteOutlet } from "../client/route-tree";
-import type { RouteTreeModel } from "./route-tree";
+import type { LayoutComponent } from "#core/application/layout.ts";
+import type { LoadingComponent } from "#core/application/loading.ts";
+import type { PageParams } from "#core/application/page.ts";
+import type { CompiledDestination, RouteScope } from "#core/application/route-graph.ts";
+import type { AbsolutePath } from "#core/application/route-path.ts";
+import { RouteOutlet } from "#core/client/route-outlet.tsx";
+import type { RouteTreeModel } from "./route-tree.ts";
 
-type RenderRouteTreeOptions<Services> = {
-  readonly destination: CompiledDestination<Services>;
-  readonly pathname: AbsolutePath;
-  readonly params: PageParams;
+type RenderRouteTreeOptions<Services> = Readonly<{
+  destination: CompiledDestination<Services>;
+  params: PageParams;
+  pathname: AbsolutePath;
+}>;
+
+// oxlint-disable-next-line unicorn/no-null -- The Flight route-tree model uses null for the leaf's absent child.
+const noChild = null;
+
+const wrapInLoading = <Services,>(
+  child: RouteTreeModel,
+  Loading: LoadingComponent<Services>,
+  id: string,
+): RouteTreeModel => ({
+  child,
+  content: (
+    <Suspense
+      // oxlint-disable-next-line react-perf/jsx-no-jsx-as-prop -- The server creates the fallback for this route boundary when it emits the tree.
+      fallback={<Loading />}
+    >
+      <RouteOutlet />
+    </Suspense>
+  ),
+  id,
+});
+
+const wrapInLayout = <Services,>(
+  child: RouteTreeModel,
+  Layout: LayoutComponent<Services>,
+  id: string,
+): RouteTreeModel => ({
+  child,
+  content: (
+    <Layout>
+      <RouteOutlet />
+    </Layout>
+  ),
+  id,
+});
+
+const wrapInRouteScope = <Services,>(
+  child: RouteTreeModel,
+  { id, layout, loading }: RouteScope<Services>,
+  pathname: AbsolutePath,
+): RouteTreeModel => {
+  const withLoading = Predicate.isNullish(loading)
+    ? child
+    : wrapInLoading(child, loading, `loading:${id}:${pathname}`);
+  return Predicate.isNullish(layout)
+    ? withLoading
+    : wrapInLayout(withLoading, layout, `layout:${id}`);
 };
 
 export const renderRouteTree = <Services,>({
   destination,
-  pathname,
   params,
+  pathname,
 }: RenderRouteTreeOptions<Services>): RouteTreeModel => {
-  const Page = destination.page.component;
-  const PageBoundary = destination.page.boundary;
-  let tree: RouteTreeModel = {
-    child: null,
+  const { boundary: PageBoundary, component: Page } = destination.page;
+  const page: RouteTreeModel = {
+    child: noChild,
     content: (
       <PageBoundary>
         <Page params={params} />
@@ -28,39 +77,7 @@ export const renderRouteTree = <Services,>({
     ),
     id: `page:${pathname}`,
   };
-
-  for (let index = destination.scopes.length - 1; index >= 0; index--) {
-    const scope = destination.scopes[index];
-    if (scope === undefined) {
-      continue;
-    }
-
-    if (scope.loading !== null) {
-      const Loading = scope.loading;
-      tree = {
-        child: tree,
-        content: (
-          <Suspense fallback={<Loading />}>
-            <RouteOutlet />
-          </Suspense>
-        ),
-        id: `loading:${scope.id}:${pathname}`,
-      };
-    }
-
-    if (scope.layout !== null) {
-      const Layout = scope.layout;
-      tree = {
-        child: tree,
-        content: (
-          <Layout>
-            <RouteOutlet />
-          </Layout>
-        ),
-        id: `layout:${scope.id}`,
-      };
-    }
-  }
-
-  return tree;
+  return Array.reduceRight(destination.scopes, page, (child, scope) =>
+    wrapInRouteScope(child, scope, pathname),
+  );
 };

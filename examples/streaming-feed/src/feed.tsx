@@ -1,98 +1,45 @@
 "use client";
 
-import { query, stream } from "@effront/core/query";
-import { Effect, Stream } from "effect";
-import { useEffect, useRef, useState } from "react";
-import type { Story } from "./feed-data";
-import { pageSize, storyCount } from "./feed-data";
-import { getNote, streamFeed } from "./server-functions";
+import { useEffect, useRef } from "react";
+import type { JSX } from "react";
+import { Predicate } from "effect";
+import type { Story } from "./feed-data.ts";
+import { pageSize, storyCount } from "./feed-data.ts";
+import { useFeedRequest } from "./feed-request.ts";
+import { StoryCard } from "./story-card.tsx";
 
-const readNote = query(getNote);
-const readPage = stream(streamFeed);
+// oxlint-disable-next-line unicorn/no-null -- React DOM refs start with null before a node mounts.
+const noElement = null;
 
-function StoryCard({ story }: { readonly story: Story }) {
-  const [expanded, setExpanded] = useState(false);
-  const [detail, setDetail] = useState<string | null>(null);
-  const [failure, setFailure] = useState(false);
-  const [attempt, setAttempt] = useState(0);
+const loadLabel = (pending: boolean, failed: boolean): string => {
+  if (pending) {
+    return "Loading more notes…";
+  }
+  return failed ? "Retry" : `Load ${pageSize} more notes`;
+};
 
+export const Feed = ({ seed }: Readonly<{ seed: Readonly<Story[]> }>): JSX.Element => {
+  const { ended, failed, loadMore, pending, stories } = useFeedRequest(seed);
+  const root = useRef<HTMLDivElement>(noElement);
   useEffect(() => {
-    if (!expanded || detail !== null) return;
-    const controller = new AbortController();
-    void Effect.runPromise(readNote({ id: story.id }), { signal: controller.signal })
-      .then((value) => setDetail(value ?? "No note is available."))
-      .catch(() => {
-        if (!controller.signal.aborted) setFailure(true);
-      });
-    return () => controller.abort();
-  }, [expanded, detail, story.id, attempt]);
-
-  return (
-    <li data-story-id={story.id}>
-      <h2>{story.title}</h2>
-      <p>{story.summary}</p>
-      <button
-        aria-expanded={expanded}
-        onClick={() => setExpanded((current) => !current)}
-        type="button"
-      >
-        {expanded ? "Close note" : "Read note"}
-      </button>
-      {expanded && (
-        <div aria-live="polite">
-          {failure ? (
-            <button
-              onClick={() => {
-                setFailure(false);
-                setAttempt((current) => current + 1);
-              }}
-              type="button"
-            >
-              Retry note
-            </button>
-          ) : (
-            (detail ?? "Loading note…")
-          )}
-        </div>
-      )}
-    </li>
-  );
-}
-
-export function Feed({ seed }: { readonly seed: ReadonlyArray<Story> }) {
-  const [stories, setStories] = useState(seed);
-  const [pending, setPending] = useState(false);
-  const [failure, setFailure] = useState(false);
-  const request = useRef<AbortController | null>(null);
-  const root = useRef<HTMLDivElement>(null);
-  const lastId = stories.at(-1)?.id ?? 0;
-  const ended = lastId >= storyCount;
-
-  useEffect(() => {
-    root.current?.setAttribute("data-hydrated", "true");
-    return () => request.current?.abort();
+    if (Predicate.isNotNullish(root.current)) {
+      root.current.dataset["hydrated"] = "true";
+    }
   }, []);
 
-  const loadMore = () => {
-    if (request.current || ended) return;
-    const controller = new AbortController();
-    request.current = controller;
-    setPending(true);
-    setFailure(false);
-    void Effect.runPromise(
-      Stream.runForEach(readPage({ after: lastId }), (story) =>
-        Effect.sync(() => setStories((current) => [...current, story])),
-      ),
-      { signal: controller.signal },
-    )
-      .catch(() => {
-        if (!controller.signal.aborted) setFailure(true);
-      })
-      .finally(() => {
-        if (request.current === controller) request.current = null;
-        setPending(false);
-      });
-  };
+  const load = (
+    <button disabled={pending} onClick={loadMore} type="button">
+      {loadLabel(pending, failed)}
+    </button>
+  );
+  const requestControls = ended ? (
+    noElement
+  ) : (
+    <div>
+      {failed && <p role="alert">The next notes could not be loaded.</p>}
+      {load}
+    </div>
+  );
 
   return (
     <div ref={root}>
@@ -104,14 +51,7 @@ export function Feed({ seed }: { readonly seed: ReadonlyArray<Story> }) {
           <StoryCard key={story.id} story={story} />
         ))}
       </ol>
-      {!ended && (
-        <div>
-          {failure && <p role="alert">The next notes could not be loaded.</p>}
-          <button disabled={pending} onClick={loadMore} type="button">
-            {pending ? "Loading more notes…" : failure ? "Retry" : `Load ${pageSize} more notes`}
-          </button>
-        </div>
-      )}
+      {requestControls}
     </div>
   );
-}
+};

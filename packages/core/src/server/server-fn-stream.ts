@@ -1,4 +1,5 @@
-import { Effect, FiberHandle, Scope, Stream } from "effect";
+import type { Scope } from "effect";
+import { Effect, FiberHandle, Stream } from "effect";
 
 /**
  * Exposes a Server Function's stream to Flight while its producer remains owned by the
@@ -9,8 +10,8 @@ export const serverFnStream = Effect.fnUntraced(function* <Value, Error, Service
   source: Stream.Stream<Value, Error, Services>,
 ): Effect.fn.Return<ReadableStream<Value>, never, Services | Scope.Scope> {
   const producer = yield* FiberHandle.make();
-  // Register before any application stream work starts. Closing the request scope
-  // interrupts and joins this fiber, including asynchronous producer finalizers.
+  // Register the producer before application stream work starts.
+  // The request scope interrupts and joins this fiber and its asynchronous finalizers.
   return yield* Stream.toReadableStreamEffect(
     Stream.onStart(
       source,

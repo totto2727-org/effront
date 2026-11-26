@@ -32,6 +32,7 @@
     "oxc-transform-react": "catalog:"
   },
   "devDependencies": {
+    "@effect/platform-node": "catalog:",
     "@effront/core": "workspace:*",
     "vitest": "catalog:"
   },

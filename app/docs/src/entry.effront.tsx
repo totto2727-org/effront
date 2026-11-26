@@ -1,145 +1,27 @@
-import { Context, Effect, Layer } from "effect";
 import { Application } from "@effront/core";
-import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
-import { DocsShell } from "./components/docs-shell";
-import { getPage, navigation, localizedNavigation } from "./content/pages";
-import { documentLocale, documentPath, localizedPath } from "./content/locale";
-import { architectureBaseline } from "./content/architecture-baseline";
-import { responseCache } from "./response-cache";
+import { Effect, Layer } from "effect";
 
-class RequestPath extends Context.Service<RequestPath, string>()("app/docs/RequestPath") {}
-const RequestPathLive = Layer.effect(
-  RequestPath,
-  Effect.map(
-    HttpServerRequest.HttpServerRequest,
-    (request) => new URL(request.url, "https://effront.local").pathname,
-  ),
-);
-// A global HTTP middleware handles retired URLs before route matching for both HTML and Flight.
-const RetiredArticleRedirects = HttpRouter.middleware(
-  (httpEffect) =>
-    Effect.gen(function* () {
-      const request = yield* HttpServerRequest.HttpServerRequest;
-      const url = new URL(request.url, "https://effront.local");
-      if (request.method === "GET" || request.method === "HEAD") {
-        const canonicalPath = documentPath(url.pathname);
-        const prefixed = /^\/(en|ja)(?:\/|$)/.test(url.pathname);
-        const destination = (path: string) =>
-          prefixed ? localizedPath(path, documentLocale(url.pathname)) : path;
-        if (canonicalPath === "/advanced") {
-          return HttpServerResponse.redirect(
-            `${destination("/advanced/server-function-execution-and-refresh")}${url.search}#execution`,
-            { status: 308 },
-          );
-        }
-        if (canonicalPath === "/advanced/production-startup") {
-          return HttpServerResponse.redirect(`${destination("/platforms")}${url.search}`, {
-            status: 308,
-          });
-        }
-        if (canonicalPath === "/platforms/node-bun") {
-          return HttpServerResponse.redirect(`${destination("/platforms")}${url.search}`, {
-            status: 308,
-          });
-        }
-        if (canonicalPath === "/guide/testing") {
-          return HttpServerResponse.redirect(
-            `${destination("/best-practices/testing")}${url.search}`,
-            {
-              status: 308,
-            },
-          );
-        }
-      }
-      return yield* httpEffect;
-    }),
-  { global: true },
-);
+import { getPage } from "./content/pages.ts";
+import { renderDocsLayout, renderDocsPage } from "./docs-page-view.tsx";
+import { RequestPath, RequestPathLive, RetiredArticleRedirects } from "./docs-request.ts";
+import { responseCache } from "./response-cache.ts";
+
 const EFFRONT = Application.effront<RequestPath>();
 const ResponseCache = EFFRONT.Middleware.make(responseCache);
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
-    Effect.map(RequestPath, (pathname) => {
-      // The shared layout keeps its client state while each request refreshes page metadata.
-      const page = getPage(pathname);
-      const locale = documentLocale(pathname);
-      const prefixed = /^\/(en|ja)(?:\/|$)/.test(pathname);
-      return (
-        <html lang={locale} className="dark">
-          <head>
-            <meta charSet="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-          </head>
-          <body>
-            <DocsShell
-              current={{
-                slug: page.slug,
-                title: page.title,
-                section: page.section,
-                group: page.group,
-              }}
-              navigation={prefixed ? localizedNavigation(locale) : navigation}
-              locale={locale}
-              headings={page.headings}
-            >
-              {children}
-            </DocsShell>
-          </body>
-        </html>
-      );
-    }),
+    Effect.map(RequestPath, (pathname) => renderDocsLayout(pathname, children)),
 });
 
-function documentPage(slug: string) {
+const documentPage = (slug: string): ReturnType<typeof EFFRONT.Page.make> => {
   const page = getPage(slug);
   return EFFRONT.Page.make({
-    render: () =>
-      Effect.map(page.content(), (content) => {
-        return (
-          <>
-            <title>{`${page.title} | Effront`}</title>
-            <meta name="description" content={page.description} />
-            <article
-              className="prose prose-neutral max-w-none dark:prose-invert"
-              data-doc-page={page.slug}
-            >
-              <header className="not-prose mb-10 border-b pb-8">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-emerald-700">
-                  {page.section}
-                </p>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{page.title}</h1>
-                <p className="mt-4 text-base leading-8 text-muted-foreground">{page.description}</p>
-              </header>
-              {(page.section === "アーキテクチャ" || page.section === "Architecture") && (
-                <aside
-                  className="not-prose mb-8 rounded-lg border p-4 text-sm leading-7 text-muted-foreground"
-                  data-architecture-baseline={architectureBaseline.commit}
-                >
-                  <p>
-                    {documentLocale(page.slug) === "en" ? "Source version: " : "解説対象: "}
-                    <code>@effront/core@{architectureBaseline.version}</code>
-                  </p>
-                  <p>
-                    {documentLocale(page.slug) === "en" ? "Baseline commit: " : "基準コミット: "}
-                    <code className="break-all">{architectureBaseline.commit}</code>
-                  </p>
-                  <p>
-                    {documentLocale(page.slug) === "en"
-                      ? `Reviewed on ${architectureBaseline.reviewedOn}. This chapter explains the implementation at this baseline.`
-                      : `確認日: ${architectureBaseline.reviewedOn}。この版の実装を基準に解説しています。`}
-                  </p>
-                </aside>
-              )}
-              {content}
-            </article>
-          </>
-        );
-      }),
+    render: () => Effect.map(page.content(), (content) => renderDocsPage(page, content)),
   });
-}
+};
 
 // Explicit routes preserve Effront's compile-time collision checks and its native 404 handling.
-export default EFFRONT.make({
+const application = EFFRONT.make({
   layer: Layer.mergeAll(RequestPathLive, RetiredArticleRedirects),
   routes: EFFRONT.withMiddleware(ResponseCache)
     .Routes.make({ layout: RootLayout })
@@ -378,3 +260,6 @@ export default EFFRONT.make({
       documentPage("/en/architecture/implementation/server-functions"),
     ),
 });
+
+// oxlint-disable-next-line import/no-default-export -- Effront loads the application through this entrypoint default.
+export default application;

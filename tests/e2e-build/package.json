@@ -2,6 +2,9 @@
   "name": "@effront/e2e-build",
   "private": true,
   "type": "module",
+  "imports": {
+    "#fixture/content.ts": "./fixture/content.ts"
+  },
   "scripts": {
     "test": "playwright test"
   },

@@ -1,6 +1,6 @@
 // Update deliberately when the architecture explanation is reviewed against new core code.
 export const architectureBaseline = {
-  version: "0.1.1",
-  commit: "8744ecb236cb4c815c3a0c208e02200f4eeeb3f8",
-  reviewedOn: "2026-09-16",
+  commit: "9339424747472709efc6b0311a8db36928126554",
+  reviewedOn: "2026-11-25",
+  version: "0.4.2",
 } as const;

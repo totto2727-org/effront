@@ -1,5 +1,5 @@
 import { Context } from "effect";
-import type { makeCheckInStore } from "./data";
+import type { makeCheckInStore } from "./data.ts";
 
 export class CheckInStore extends Context.Service<
   CheckInStore,

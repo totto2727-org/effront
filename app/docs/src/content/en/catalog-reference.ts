@@ -1,0 +1,152 @@
+import type { ArticleMetadata } from "#docs/content/article-metadata.ts";
+
+export const referenceArticles = [
+  {
+    description:
+      "Find public import paths, application factory APIs, and dependency compatibility requirements.",
+    headings: [
+      { id: "exports", title: "Public API map" },
+      { id: "index", title: "Application factory index" },
+      { id: "versions", title: "Dependency compatibility" },
+    ],
+    section: "API reference",
+    slug: "/api-reference",
+    source: "/api-reference",
+    title: "API reference",
+  },
+  {
+    description: "API reference for defining an Effront application and its services.",
+    headings: [
+      { id: "example", title: "Application definition example" },
+      { id: "identity", title: "Application.effront" },
+      { id: "make", title: "EFFRONT.make" },
+      { id: "middleware", title: "EFFRONT.withMiddleware" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/application",
+    source: "/api-reference/application",
+    title: "Application",
+  },
+  {
+    description: "API reference for rendering pages, components, layouts, and loading states.",
+    headings: [
+      { id: "render", title: "Rendering factories" },
+      { id: "loading", title: "Layout and Loading" },
+      { id: "params", title: "Page params" },
+      { id: "view-transition", title: "PageViewTransition" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/components",
+    source: "/api-reference/components",
+    title: "Component, Page, Layout, and Loading",
+  },
+  {
+    description: "API reference for route definitions and request middleware.",
+    headings: [
+      { id: "routes", title: "Routes" },
+      { id: "paths", title: "Route paths" },
+      { id: "middleware", title: "Middleware" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/routing",
+    source: "/api-reference/routing",
+    title: "Routes and Middleware",
+  },
+  {
+    description: "API reference for defining server-side functions callable from React.",
+    headings: [
+      { id: "make", title: "ServerFn.make" },
+      { id: "arguments", title: "Argument shapes" },
+      { id: "execution", title: "Execution constraints" },
+      { id: "request-protocol", title: "Request protocol" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/server-functions",
+    source: "/api-reference/server-functions",
+    title: "ServerFn",
+  },
+  {
+    description: "API reference for Fetch handlers and access to Workers request context.",
+    headings: [
+      { id: "fetch", title: "createFetchHandler" },
+      { id: "readers", title: "Core context readers" },
+      { id: "cloudflare", title: "Cloudflare context readers" },
+      { id: "context", title: "WorkersRequestContext" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/workers",
+    source: "/api-reference/workers",
+    title: "Fetch handlers and Workers context",
+  },
+  {
+    description: "Configuration reference for Effront’s Vite and Cloudflare Workers integrations.",
+    headings: [
+      { id: "effront", title: "effront" },
+      { id: "configuration", title: "EffrontViteOptions" },
+      { id: "cloudflare", title: "effrontCloudflare" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/vite",
+    source: "/api-reference/vite",
+    title: "Vite and Cloudflare plugins",
+  },
+  {
+    description: "API reference for connecting Effront applications to Effect HTTP servers.",
+    headings: [
+      { id: "fetch", title: "HTTP boundaries" },
+      { id: "handler", title: "toHttpEffect" },
+      { id: "capture", title: "makeHttpEffect" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/http",
+    source: "/api-reference/http",
+    title: "Effect HTTP handlers",
+  },
+  {
+    description: "API reference for running Effront applications on Node.js and Bun.",
+    headings: [
+      { id: "vite", title: "effrontServer" },
+      { id: "serve", title: "serve" },
+      { id: "assets", title: "withAssets" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/server",
+    source: "/api-reference/server",
+    title: "Node.js and Bun server APIs",
+  },
+  {
+    description: "API reference for Markdown collections and parsing.",
+    headings: [
+      { id: "collection", title: "createMarkdownCollection" },
+      { id: "parse", title: "parseMarkdown" },
+      { id: "rendering", title: "Markdown rendering" },
+      { id: "references", title: "Links, assets, and MarkdownError" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/markdown",
+    source: "/api-reference/markdown",
+    title: "Markdown API",
+  },
+  {
+    description: "API reference for connecting Effront applications to Alchemy Workers.",
+    headings: [
+      { id: "http", title: "HTTP handlers" },
+      { id: "vite", title: "effrontAlchemy" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/alchemy",
+    source: "/api-reference/alchemy",
+    title: "Alchemy API",
+  },
+  {
+    description: "Configuration reference for Effront’s Tailwind CSS integration.",
+    headings: [
+      { id: "plugin", title: "effrontTailwind" },
+      { id: "stylesheet", title: "stylesheet" },
+    ],
+    section: "API reference",
+    slug: "/api-reference/tailwind",
+    source: "/api-reference/tailwind",
+    title: "Tailwind API",
+  },
+] as const satisfies Readonly<ArticleMetadata[]>;

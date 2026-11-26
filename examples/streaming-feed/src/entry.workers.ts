@@ -4,15 +4,18 @@ import { Effect } from "effect";
 
 import type application from "./entry.effront";
 
-export default Cloudflare.Worker(
+const Worker = Cloudflare.Worker(
   "StreamingFeed",
   {
-    main: import.meta.url,
     compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-    vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+    main: import.meta.url,
+    vite: { viteEnvironments: { children: ["ssr"], entry: "rsc" } },
   },
   Effect.gen(function* () {
     const fetch = yield* makeApplicationHttpEffect<typeof application>();
     return { fetch: fetch.pipe(Effect.orDie) };
   }),
 );
+
+// oxlint-disable-next-line import/no-default-export -- Alchemy imports this Worker entry by its default export.
+export default Worker;

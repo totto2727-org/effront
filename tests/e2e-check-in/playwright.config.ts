@@ -1,20 +1,20 @@
 import { defineConfig } from "@playwright/test";
-import { fileURLToPath } from "node:url";
 
+// oxlint-disable-next-line import/no-default-export -- Playwright reads this configuration from the default export.
 export default defineConfig({
+  fullyParallel: false,
   testDir: ".",
   testMatch: "*.e2e.ts",
-  fullyParallel: false,
-  workers: 1,
-  use: { browserName: "chromium", baseURL: "http://127.0.0.1:4395" },
+  use: { baseURL: "http://127.0.0.1:4395", browserName: "chromium" },
   webServer: [
     {
-      cwd: fileURLToPath(new URL(".", import.meta.url)),
       command:
         "vp build --config vite.config.ts && vp preview --config vite.config.ts --host 127.0.0.1 --port 4395 --strictPort",
-      url: "http://127.0.0.1:4395",
+      cwd: import.meta.dirname,
       reuseExistingServer: false,
       timeout: 120_000,
+      url: "http://127.0.0.1:4395",
     },
   ],
+  workers: 1,
 });

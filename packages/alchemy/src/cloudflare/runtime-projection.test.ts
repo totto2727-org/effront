@@ -1,50 +1,135 @@
+// oxlint-disable-next-line rules/no-node-imports -- The real Vite build must mark the Node host's built-ins as external.
 import { builtinModules } from "node:module";
+// oxlint-disable-next-line rules/no-node-imports -- The fixture build uses a path derived from this test's module URL.
 import { fileURLToPath } from "node:url";
 
 import * as Cloudflare from "alchemy/Cloudflare";
+import { Data, Predicate } from "effect";
 import { build } from "vite";
-import { describe, expect, it } from "vite-plus/test";
+import type { Plugin } from "vite";
+import { assert, describe, expect, test } from "vite-plus/test";
 
-import { alchemyRuntimeProjection } from "./runtime-projection";
+import { alchemyRuntimeProjection } from "./runtime-projection.ts";
 
-const hooks = () => {
+class InvalidProjectionFixture extends Data.TaggedError("InvalidProjectionFixture")<{
+  message: string;
+}> {}
+
+interface ProjectionHooks {
+  applies: (name: string) => unknown;
+  load: (id: string) => unknown;
+  plugin: Plugin;
+  resolve: (id: string) => unknown;
+}
+
+const invokeHook = (hook: object, args: unknown[]): unknown => {
+  if (!Predicate.isFunction(hook)) {
+    throw new InvalidProjectionFixture({ message: "Expected a callable Vite hook." });
+  }
+  const result: unknown = Reflect.apply(hook, {}, args);
+  return result;
+};
+
+const hooks = (): ProjectionHooks => {
   const plugin = alchemyRuntimeProjection();
-  const resolveHook = plugin.resolveId!;
-  const loadHook = plugin.load!;
-  const resolve = typeof resolveHook === "function" ? resolveHook : resolveHook.handler;
-  const load = typeof loadHook === "function" ? loadHook : loadHook.handler;
+  const { applyToEnvironment, load, resolveId } = plugin;
+  assert.isDefined(applyToEnvironment);
+  assert.isDefined(load);
+  assert.isDefined(resolveId);
+  const loadHandler = "handler" in load ? load.handler : load;
+  const resolveHandler = "handler" in resolveId ? resolveId.handler : resolveId;
   return {
+    applies: (name) => invokeHook(applyToEnvironment, [{ name }]),
+    load: (id) => invokeHook(loadHandler, [id]),
     plugin,
-    resolve: (id: string) => Reflect.apply(resolve, {}, [id]) as string | undefined,
-    load: (id: string) => Reflect.apply(load, {}, [id]) as Promise<string> | undefined,
+    resolve: (id) => invokeHook(resolveHandler, [id]),
   };
 };
 
-const exportsOf = (code: string) => {
-  const clause = code.match(/export \{([^}]+)\};\s*$/)?.[1];
-  if (!clause) throw new TypeError("Expected an ES module export clause.");
-  return clause.split(",").map((entry) =>
-    entry
-      .trim()
-      .split(/\s+as\s+/)
-      .at(-1),
-  );
+const expectText = (value: unknown): string => {
+  if (Predicate.isString(value)) {
+    return value;
+  }
+  throw new InvalidProjectionFixture({ message: "Expected the Vite hook to return text." });
 };
 
-describe("subtractive Alchemy runtime compatibility", () => {
-  it("leaves deployment exports available to the real Node tooling", () => {
+const exportsOf = (code: string): string[] => {
+  const clause = /export \{(?<bindings>[^}]+)\};\s*$/u.exec(code)?.groups?.["bindings"] ?? "";
+  if (!clause) {
+    throw new InvalidProjectionFixture({ message: "Expected an ES module export clause." });
+  }
+  return clause.split(",").flatMap((entry) => {
+    const name =
+      entry
+        .trim()
+        .split(/\s+as\s+/u)
+        .at(-1) ?? "";
+    return name ? [name] : [];
+  });
+};
+
+const leakedCode = (code: string): string[] =>
+  ["downloadedBinPath", "import.meta.resolve", "createViteServer"].filter((part) =>
+    code.includes(part),
+  );
+
+const buildWorker = async (): Promise<{ code: string; names: string[] }> => {
+  const entry = "\0effront-test:alchemy-worker";
+  const result = await build({
+    build: {
+      minify: false,
+      rolldownOptions: {
+        external: (id) =>
+          id === "effect" ||
+          id.startsWith("effect/") ||
+          id.startsWith("node:") ||
+          id.startsWith("cloudflare:") ||
+          builtinModules.includes(id),
+        input: entry,
+      },
+      ssr: true,
+      write: false,
+    },
+    configFile: false,
+    define: { "globalThis.__ALCHEMY_RUNTIME__": "true" },
+    logLevel: "silent",
+    plugins: [
+      alchemyRuntimeProjection(),
+      {
+        load: (id) => (id === entry ? 'export * from "alchemy/Cloudflare/Workers";' : undefined),
+        name: "effront-test:alchemy-worker",
+        resolveId: (id) => (id === entry ? id : undefined),
+      },
+    ],
+    root: fileURLToPath(new URL("../../", import.meta.url)),
+    ssr: { noExternal: true },
+  });
+  if ("on" in result) {
+    throw new InvalidProjectionFixture({ message: "Unexpected test build watcher." });
+  }
+  const output = Array.isArray(result) ? result.flatMap((value) => value.output) : result.output;
+  const chunks = output.filter((value) => value.type === "chunk");
+  const entryChunk = chunks.find((value) => value.isEntry);
+  assert.isDefined(entryChunk);
+  return { code: chunks.map((value) => value.code).join("\n"), names: exportsOf(entryChunk.code) };
+};
+
+describe("deployment exports from Alchemy", () => {
+  test("leaves deployment exports available to the real Node tooling", () => {
     expect(Cloudflare.providers).toBeTypeOf("function");
     expect(Cloudflare.KV.NamespaceProvider).toBeTypeOf("function");
   });
+});
 
-  it("keeps non-KV capabilities and runtime providers while removing deployment code", async () => {
+describe("subtractive Alchemy runtime exports", () => {
+  test("keeps non-KV capabilities and runtime providers while removing deployment code", async () => {
     const { resolve, load } = hooks();
-    const id = resolve("alchemy/Cloudflare")!;
-    const first = load(id)!;
+    const id = expectText(await resolve("alchemy/Cloudflare"));
+    const first = load(id);
     expect(load(id)).toBe(first);
-    const code = await first;
+    const code = expectText(await first);
     const names = exportsOf(code);
-    expect(names).toEqual(
+    expect(names).toStrictEqual(
       expect.arrayContaining([
         "Worker",
         "KV",
@@ -59,17 +144,18 @@ describe("subtractive Alchemy runtime compatibility", () => {
         "makeWorkerBridge",
       ]),
     );
-    expect(names).not.toContain("providers");
-    expect(names).not.toContain("ContainerProvider");
-    expect(code).not.toContain("downloadedBinPath");
-    expect(code).not.toContain("import.meta.resolve");
-  }, 30000);
+    expect(["providers", "ContainerProvider"].filter((name) => names.includes(name))).toStrictEqual(
+      [],
+    );
+    expect(leakedCode(code)).toStrictEqual([]);
+  }, 30_000);
 
-  it("preserves R2 runtime and HTTP APIs without enumerating allowed capabilities", async () => {
+  test("preserves R2 runtime and HTTP APIs without enumerating allowed capabilities", async () => {
     const { resolve, load } = hooks();
-    const code = await load(resolve("alchemy/Cloudflare/R2")!)!;
+    const id = expectText(await resolve("alchemy/Cloudflare/R2"));
+    const code = expectText(await load(id));
     const names = exportsOf(code);
-    expect(names).toEqual(
+    expect(names).toStrictEqual(
       expect.arrayContaining([
         "Bucket",
         "ReadWriteBucket",
@@ -79,61 +165,28 @@ describe("subtractive Alchemy runtime compatibility", () => {
     );
     expect(names).not.toContain("BucketProvider");
     expect(names).not.toContain("ProviderLocal");
-  }, 30000);
+  }, 30_000);
+});
 
-  it("builds the native Worker graph without bundling deployment tooling", async () => {
-    const entry = "\0effront-test:alchemy-worker";
-    const result = await build({
-      root: fileURLToPath(new URL("../../", import.meta.url)),
-      configFile: false,
-      logLevel: "silent",
-      define: { "globalThis.__ALCHEMY_RUNTIME__": "true" },
-      ssr: { noExternal: true },
-      plugins: [
-        alchemyRuntimeProjection(),
-        {
-          name: "effront-test:alchemy-worker",
-          resolveId: (id) => (id === entry ? id : undefined),
-          load: (id) => (id === entry ? 'export * from "alchemy/Cloudflare/Workers";' : undefined),
-        },
-      ],
-      build: {
-        ssr: true,
-        write: false,
-        minify: false,
-        rolldownOptions: {
-          input: entry,
-          external: (id) =>
-            id === "effect" ||
-            id.startsWith("effect/") ||
-            id.startsWith("node:") ||
-            id.startsWith("cloudflare:") ||
-            builtinModules.includes(id),
-        },
-      },
-    });
-    if ("on" in result) throw new TypeError("Unexpected test build watcher.");
-    const output = Array.isArray(result) ? result.flatMap((value) => value.output) : result.output;
-    const chunks = output.filter((value) => value.type === "chunk");
-    const code = chunks.map((value) => value.code).join("\n");
-    expect(exportsOf(chunks.find((value) => value.isEntry)!.code)).toEqual(
+describe("native Worker module graph", () => {
+  test("builds the Worker without bundling deployment tooling", async () => {
+    const { code, names } = await buildWorker();
+    expect(names).toStrictEqual(
       expect.arrayContaining(["Worker", "makeWorkerBridge", "WorkerConfigProvider"]),
     );
-    expect(code).not.toContain("downloadedBinPath");
-    expect(code).not.toContain("import.meta.resolve");
-    expect(code).not.toContain("createViteServer");
-  }, 30000);
+    expect(leakedCode(code)).toStrictEqual([]);
+  }, 30_000);
 
-  it("runs only in server graphs in both serve and build without optimizer configuration", () => {
-    const { plugin, resolve, load } = hooks();
-    expect(plugin.apply).toBeUndefined();
-    expect(plugin.config).toBeUndefined();
-    expect(plugin.configEnvironment).toBeUndefined();
-    expect(Reflect.apply(plugin.applyToEnvironment!, {}, [{ name: "client" }])).toBe(false);
-    expect(Reflect.apply(plugin.applyToEnvironment!, {}, [{ name: "rsc" }])).toBe(true);
-    expect(Reflect.apply(plugin.applyToEnvironment!, {}, [{ name: "ssr" }])).toBe(true);
-    expect(resolve("other-package")).toBeUndefined();
+  test("runs in server graphs for both commands without modifying the optimizer", async () => {
+    const { applies, plugin, resolve, load } = hooks();
+    expect([plugin.apply, plugin.config, plugin.configEnvironment]).toStrictEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+    expect([applies("client"), applies("rsc"), applies("ssr")]).toStrictEqual([false, true, true]);
+    await expect(resolve("other-package")).resolves.toBeUndefined();
     expect(load("/application/worker.ts")).toBeUndefined();
-    expect(() => resolve("alchemy/Cloudflare/StateStore")).toThrow("deployment-only");
+    await expect(resolve("alchemy/Cloudflare/StateStore")).rejects.toThrow("deployment-only");
   });
 });

@@ -1,31 +1,13 @@
 import { Schema } from "effect";
 
-export const ServerFnErrorDetail = Schema.Struct({
-  message: Schema.String,
-  name: Schema.String,
-  stack: Schema.NullOr(Schema.String),
-});
-export type ServerFnErrorDetail = typeof ServerFnErrorDetail.Type;
+import { ServerFnDefect } from "./server-fn-defect.ts";
+import { ServerFnInputError } from "./server-fn-input-error.ts";
+import type { ServerFnTransportError } from "./server-fn-transport-error.ts";
 
-export const serverFnErrorDetail = (value: unknown): ServerFnErrorDetail =>
-  value instanceof Error
-    ? { message: value.message, name: value.name, stack: value.stack ?? null }
-    : { message: String(value), name: "Error", stack: null };
-
-export class ServerFnInputError extends Schema.TaggedError<ServerFnInputError>()(
-  "ServerFnInputError",
-  { detail: Schema.Struct({ message: Schema.String, name: Schema.String }) },
-) {}
-
-export class ServerFnDefect extends Schema.TaggedError<ServerFnDefect>()("ServerFnDefect", {
-  detail: Schema.NullOr(ServerFnErrorDetail),
-  digest: Schema.String,
-}) {}
-
-export class ServerFnTransportError extends Schema.TaggedError<ServerFnTransportError>()(
-  "ServerFnTransportError",
-  { detail: ServerFnErrorDetail },
-) {}
+export { ServerFnDefect } from "./server-fn-defect.ts";
+export { serverFnErrorDetail } from "./server-fn-error-detail.ts";
+export { ServerFnInputError } from "./server-fn-input-error.ts";
+export { ServerFnTransportError } from "./server-fn-transport-error.ts";
 
 export type ServerFnError = ServerFnInputError | ServerFnDefect | ServerFnTransportError;
 export const ServerFnFailure = Schema.Union([ServerFnInputError, ServerFnDefect]);

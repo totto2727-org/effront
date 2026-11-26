@@ -1,32 +1,36 @@
-import { CodeBlock, type CodeLanguage } from "../components/code-block";
+import type { ReactNode } from "react";
 
-export interface CoreSource {
-  readonly path: string;
-  readonly code: string;
-  readonly language: CodeLanguage;
-}
+import { CodeBlock } from "#docs/components/code-block.tsx";
+import type { CodeLanguage } from "#docs/components/code-block.tsx";
 
-export function SourceExcerpt({
+export type CoreSource = Readonly<{
+  code: string;
+  language: CodeLanguage;
+  path: string;
+}>;
+
+type ExcerptLocale = "en" | "ja";
+
+const renderCaption = (locale: ExcerptLocale, path: string): ReactNode =>
+  locale === "en" ? (
+    <figcaption>
+      Excerpt from <code>{path}</code>
+    </figcaption>
+  ) : (
+    <figcaption>
+      <code>{path}</code> の抜粋
+    </figcaption>
+  );
+
+export const SourceExcerpt = ({
   source,
   locale = "ja",
-}: {
-  readonly source: CoreSource;
-  readonly locale?: "en" | "ja";
-}) {
-  return (
-    <figure data-core-source={source.path}>
-      <figcaption>
-        {locale === "en" ? (
-          <>
-            Excerpt from <code>{source.path}</code>
-          </>
-        ) : (
-          <>
-            <code>{source.path}</code> の抜粋
-          </>
-        )}
-      </figcaption>
-      <CodeBlock code={source.code} language={source.language} />
-    </figure>
-  );
-}
+}: Readonly<{
+  source: CoreSource;
+  locale?: ExcerptLocale;
+}>): ReactNode => (
+  <figure data-core-source={source.path}>
+    {renderCaption(locale, source.path)}
+    <CodeBlock code={source.code} language={source.language} />
+  </figure>
+);

@@ -1,23 +1,22 @@
-import { Effect, Schema, type Types } from "effect";
-import { createElement, type ReactNode } from "react";
+import { Data, Effect, Schema } from "effect";
+import type { Types } from "effect";
+import { createElement } from "react";
+import type { ReactNode } from "react";
 
-import { PageViewTransitionBoundary } from "../client/page-view-transition";
-import {
-  PageViewTransition,
-  type PageViewTransitionConfig,
-  resolvePageViewTransition,
-} from "./page-view-transition";
+import { PageViewTransitionBoundary } from "#core/client/page-view-transition.tsx";
+import { PageViewTransition, resolvePageViewTransition } from "./page-view-transition.ts";
+import type { PageViewTransitionConfig } from "./page-view-transition.ts";
 
 import {
-  type EFFRONTIdentity,
+  authoringTypeError,
   EFFRONTIdentityTypeId,
   isEFFRONTMember,
   EFFRONTMemberKindTypeId,
-  type EFFRONTStatefulMember,
   EFFRONTStateTypeId,
-} from "./effront-identity";
-import type { AnyMiddleware } from "./middleware";
-import type { ValidRouteParamName } from "./route-path";
+} from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTStatefulMember } from "./effront-identity.ts";
+import type { AnyMiddleware } from "./middleware.ts";
+import type { ValidRouteParamName } from "./route-path.ts";
 
 declare const PageContractTypeId: unique symbol;
 
@@ -28,27 +27,30 @@ export type PageParamsSchema<Services> = Schema.ConstraintCodec<
   unknown
 >;
 
-type PageParamKeys<ParamsSchema> = ParamsSchema extends { readonly Encoded: infer Encoded }
-  ? Extract<keyof Encoded, string>
-  : never;
-type NonStringPageParamKeys<ParamsSchema> = ParamsSchema extends {
-  readonly Encoded: infer Encoded;
-}
-  ? Exclude<keyof Encoded, string>
-  : never;
+type PageParamKeys<ParamsSchema> =
+  ParamsSchema extends Readonly<{ Encoded: infer Encoded }>
+    ? Extract<keyof Encoded, string>
+    : never;
+type NonStringPageParamKeys<ParamsSchema> =
+  ParamsSchema extends Readonly<{
+    Encoded: infer Encoded;
+  }>
+    ? Exclude<keyof Encoded, string>
+    : never;
 type InvalidPageParamName<Name extends string> =
   Name extends ValidRouteParamName<Name> ? never : Name;
-type InvalidPageParamValueKeys<ParamsSchema> = ParamsSchema extends {
-  readonly Encoded: infer Encoded;
-}
-  ? {
-      [Key in Extract<keyof Encoded, string>]-?: unknown extends Encoded[Key]
-        ? never
-        : [Extract<Encoded[Key], string>] extends [never]
-          ? Key
-          : never;
-    }[Extract<keyof Encoded, string>]
-  : never;
+type InvalidPageParamValueKeys<ParamsSchema> =
+  ParamsSchema extends Readonly<{
+    Encoded: infer Encoded;
+  }>
+    ? {
+        [Key in Extract<keyof Encoded, string>]-?: unknown extends Encoded[Key]
+          ? never
+          : [Extract<Encoded[Key], string>] extends [never]
+            ? Key
+            : never;
+      }[Extract<keyof Encoded, string>]
+    : never;
 type InvalidPageParamsSchema<ParamsSchema> =
   | NonStringPageParamKeys<ParamsSchema>
   | InvalidPageParamName<PageParamKeys<ParamsSchema>>
@@ -64,21 +66,29 @@ type ValidPageParamsSchema<ParamsSchema> = [PageParamKeys<ParamsSchema>] extends
 export type PageConcern<
   out ParamNames extends string,
   out Mode extends "Parameterized" | "Static",
-> = {
-  readonly [PageContractTypeId]: {
-    readonly mode: Types.Covariant<Mode>;
-    readonly paramNames: Types.Covariant<ParamNames>;
-  };
-};
+> = Readonly<{
+  [PageContractTypeId]: Readonly<{
+    mode: Types.Covariant<Mode>;
+    paramNames: Types.Covariant<ParamNames>;
+  }>;
+}>;
 
 export type EncodedPageParams = Readonly<Record<string, string | undefined>>;
-export type PageParams =
-  | { readonly _tag: "Encoded"; readonly value: EncodedPageParams }
-  | { readonly _tag: "Decoded"; readonly value: Readonly<Record<string, unknown>> };
-export type PageRuntimeProps = {
-  readonly params: PageParams;
-};
+export type PageParams = Data.TaggedEnum<{
+  Decoded: Readonly<{ value: Readonly<Record<string, unknown>> }>;
+  Encoded: Readonly<{ value: EncodedPageParams }>;
+}>;
+
+export const pageParams = Data.taggedEnum<PageParams>();
+const isDecodedParams = pageParams.$is("Decoded");
+
+export type PageRuntimeProps = Readonly<{
+  params: PageParams;
+}>;
 export type PageComponent = (props: PageRuntimeProps) => Promise<Awaited<ReactNode>>;
+type DecodePageParams<Services> = (
+  input: EncodedPageParams,
+) => Effect.Effect<Readonly<Record<string, unknown>>, Schema.SchemaError, Services>;
 
 export type StaticPageDefinition<Services> = EFFRONTStatefulMember<
   Services,
@@ -95,45 +105,52 @@ export type AnyPageDefinition<Services> =
   | StaticPageDefinition<Services>
   | ParameterizedPageDefinition<Services>;
 
-export type PageImplementationState<Services = unknown> = {
-  readonly component: PageComponent;
-  readonly boundary: (props: { readonly children: ReactNode }) => Promise<ReactNode>;
-  readonly paramsSchema: PageParamsSchema<Services> | null;
-};
+export type PageImplementationState<Services = unknown> = Readonly<{
+  component: PageComponent;
+  boundary: (props: Readonly<{ children: ReactNode }>) => Promise<ReactNode>;
+  decodeParams: DecodePageParams<Services> | null;
+}>;
 
 class PageDefinitionImpl<
   Services,
   ParamNames extends string,
   Mode extends "Parameterized" | "Static",
-  ParamsSchema extends PageParamsSchema<unknown> | null,
+  ParamsServices,
 >
   implements
     EFFRONTStatefulMember<Services, "Page", PageImplementationState>,
     PageConcern<ParamNames, Mode>
 {
-  declare readonly [PageContractTypeId]: {
-    readonly mode: Types.Covariant<Mode>;
-    readonly paramNames: Types.Covariant<ParamNames>;
-  };
-  readonly [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
-  readonly [EFFRONTMemberKindTypeId] = "Page" as const;
-  get [EFFRONTStateTypeId](): PageImplementationState {
+  declare public [PageContractTypeId]: Readonly<{
+    mode: Types.Covariant<Mode>;
+    paramNames: Types.Covariant<ParamNames>;
+  }>;
+  public [EFFRONTIdentityTypeId]: EFFRONTIdentity<Services>;
+  public [EFFRONTMemberKindTypeId] = "Page" as const;
+  public get [EFFRONTStateTypeId](): PageImplementationState {
     return this;
   }
-  readonly component: PageComponent;
-  readonly boundary: (props: { readonly children: ReactNode }) => Promise<ReactNode>;
-  readonly paramsSchema: ParamsSchema;
+  public component: PageComponent;
+  public boundary: (props: Readonly<{ children: ReactNode }>) => Promise<ReactNode>;
+  public decodeParams: DecodePageParams<ParamsServices> | null;
 
-  constructor(
+  public constructor(
     identity: EFFRONTIdentity<Services>,
-    component: PageComponent,
-    paramsSchema: ParamsSchema,
-    middleware: ReadonlyArray<AnyMiddleware<Services>>,
-    viewTransition: false | PageViewTransitionConfig | undefined,
+    middleware: Readonly<AnyMiddleware<Services>[]>,
+    {
+      component,
+      decodeParams,
+      viewTransition,
+    }: Readonly<{
+      component: PageComponent;
+      decodeParams: DecodePageParams<ParamsServices> | null;
+      viewTransition: false | PageViewTransitionConfig | undefined;
+    }>,
   ) {
     this[EFFRONTIdentityTypeId] = identity;
     this.component = component;
-    this.paramsSchema = paramsSchema;
+    this.decodeParams = decodeParams;
+    // oxlint-disable-next-line typescript/promise-function-async -- The render runtime reports a missing scope synchronously.
     this.boundary = ({ children }) =>
       identity.renderRuntime.run(
         "Page",
@@ -159,26 +176,32 @@ export function getPageState<Services>(
 // As with scoped middleware, its provided services are erased from the application contract.
 export function getPageState(page: AnyPageDefinition<unknown>): PageImplementationState {
   if (!isEFFRONTMember(page, "Page")) {
-    throw new TypeError("Page must be created with EFFRONT.Page.make.");
+    throw authoringTypeError("Page must be created with EFFRONT.Page.make.");
   }
   return page[EFFRONTStateTypeId];
 }
 
-type StaticPageOptions<Error, Services> = {
-  readonly params?: never;
-  readonly viewTransition?: false | PageViewTransitionConfig | undefined;
-  readonly render: () => Effect.Effect<Awaited<ReactNode>, Error, Services>;
-};
-type ParameterizedPageOptions<ParamsSchema extends PageParamsSchema<Services>, Error, Services> = {
-  readonly params: ParamsSchema;
-  readonly viewTransition?: false | PageViewTransitionConfig | undefined;
-  readonly render: (props: {
-    readonly params: ParamsSchema["Type"];
-  }) => Effect.Effect<Awaited<ReactNode>, Error, Services>;
-};
+type StaticPageOptions<Error, Services> = Readonly<{
+  params?: never;
+  viewTransition?: false | PageViewTransitionConfig | undefined;
+  render: () => Effect.Effect<Awaited<ReactNode>, Error, Services>;
+}>;
+type ParameterizedPageOptions<
+  ParamsSchema extends PageParamsSchema<Services>,
+  Error,
+  Services,
+> = Readonly<{
+  params: ParamsSchema;
+  viewTransition?: false | PageViewTransitionConfig | undefined;
+  render: (
+    props: Readonly<{
+      params: ParamsSchema["Type"];
+    }>,
+  ) => Effect.Effect<Awaited<ReactNode>, Error, Services>;
+}>;
 
-export type PageFactory<ApplicationServices, AvailableServices> = {
-  readonly make: {
+export type PageFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: {
     <ParamsSchema extends PageParamsSchema<AvailableServices>, Error>(
       options: ParameterizedPageOptions<ParamsSchema, Error, AvailableServices> &
         ValidPageParamsSchema<ParamsSchema>,
@@ -187,11 +210,37 @@ export type PageFactory<ApplicationServices, AvailableServices> = {
       options: StaticPageOptions<Error, AvailableServices>,
     ): StaticPageDefinition<ApplicationServices>;
   };
+}>;
+
+const makeParameterizedPage = <ApplicationServices, AvailableServices, Error>(
+  identity: EFFRONTIdentity<ApplicationServices>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
+  {
+    params: paramsSchema,
+    render,
+    viewTransition,
+  }: ParameterizedPageOptions<PageParamsSchema<AvailableServices>, Error, AvailableServices>,
+): ParameterizedPageDefinition<ApplicationServices> => {
+  // oxlint-disable-next-line rules/require-top-level-decoder -- Compile the author-supplied schema once per Page definition.
+  const decodeParams = Schema.decodeEffect(paramsSchema);
+  // oxlint-disable-next-line typescript/promise-function-async -- Starting a page outside its render scope must throw synchronously.
+  const component: PageComponent = ({ params }) =>
+    identity.renderRuntime.run(
+      "Page",
+      (isDecodedParams(params) ? Effect.succeed(params.value) : decodeParams(params.value)).pipe(
+        Effect.flatMap((decodedParams) => Effect.suspend(() => render({ params: decodedParams }))),
+      ),
+      middleware,
+    );
+  return new PageDefinitionImpl(identity, middleware, { component, decodeParams, viewTransition });
 };
+
+// oxlint-disable-next-line unicorn/no-null -- The page definition uses null when it has no parameter decoder.
+const noDecoder = null;
 
 export const makePageFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): PageFactory<ApplicationServices, AvailableServices> => {
   function make<ParamsSchema extends PageParamsSchema<AvailableServices>, Error>(
     options: ParameterizedPageOptions<ParamsSchema, Error, AvailableServices> &
@@ -206,38 +255,17 @@ export const makePageFactory = <ApplicationServices, AvailableServices>(
       | ParameterizedPageOptions<PageParamsSchema<AvailableServices>, Error, AvailableServices>,
   ): AnyPageDefinition<ApplicationServices> {
     if ("params" in options) {
-      const { params: paramsSchema, render } = options;
-      const decodeParams = Schema.decodeUnknownEffect(paramsSchema);
-      const component: PageComponent = ({ params }) =>
-        identity.renderRuntime.run(
-          "Page",
-          (params._tag === "Decoded"
-            ? Effect.succeed(params.value)
-            : decodeParams(params.value)
-          ).pipe(
-            Effect.flatMap((decodedParams) =>
-              Effect.suspend(() => render({ params: decodedParams })),
-            ),
-          ),
-          middleware,
-        );
-      return new PageDefinitionImpl<
-        ApplicationServices,
-        PageParamKeys<typeof paramsSchema>,
-        "Parameterized",
-        typeof paramsSchema
-      >(identity, component, paramsSchema, middleware, options.viewTransition);
+      return makeParameterizedPage(identity, middleware, options);
     }
 
     const { render } = options;
+    // oxlint-disable-next-line typescript/promise-function-async -- Starting a page outside its render scope must throw synchronously.
     const component: PageComponent = () =>
       identity.renderRuntime.run("Page", Effect.suspend(render), middleware);
-    return new PageDefinitionImpl<ApplicationServices, never, "Static", null>(
+    return new PageDefinitionImpl<ApplicationServices, never, "Static", never>(
       identity,
-      component,
-      null,
       middleware,
-      options.viewTransition,
+      { component, decodeParams: noDecoder, viewTransition: options.viewTransition },
     );
   }
 

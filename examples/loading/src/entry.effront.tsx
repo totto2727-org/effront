@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import { EFFRONT } from "./effront";
-import { loadingRoutes } from "./features/loading/routes";
+import { EFFRONT } from "./effront.ts";
+import { loadingRoutes } from "./features/loading/routes.tsx";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
@@ -29,8 +29,11 @@ const Home = EFFRONT.Page.make({
     ),
 });
 
-export default EFFRONT.make({
+const application = EFFRONT.make({
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", Home)
     .mount("/loading", loadingRoutes),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin loads this application through its default export.
+export default application;

@@ -20,6 +20,9 @@ const HomePage = EFFRONT.Page.make({
   render: () => Effect.succeed(<h1>Hello, world</h1>),
 });
 
-export default EFFRONT.make({
+const application = EFFRONT.make({
   routes: EFFRONT.Routes.make({ layout: RootLayout }).page("/", HomePage),
 });
+
+// oxlint-disable-next-line import/no-default-export -- Effront loads its application from the default export.
+export default application;

@@ -1,8 +1,9 @@
 import { Effect } from "effect";
 import type { ReactNode } from "react";
 
-import { attachEFFRONTMember, type EFFRONTIdentity, type EFFRONTMember } from "./effront-identity";
-import type { AnyMiddleware } from "./middleware";
+import { attachEFFRONTMember } from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
+import type { AnyMiddleware } from "./middleware.ts";
 
 export interface EffectComponent<Props, ApplicationServices> extends EFFRONTMember<
   ApplicationServices,
@@ -11,19 +12,19 @@ export interface EffectComponent<Props, ApplicationServices> extends EFFRONTMemb
   (props: Props): Promise<Awaited<ReactNode>>;
 }
 
-type ComponentOptions<Props, Error, AvailableServices> = {
-  readonly render: (props: Props) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
-};
+type ComponentOptions<Props, Error, AvailableServices> = Readonly<{
+  render: (props: Props) => Effect.Effect<Awaited<ReactNode>, Error, AvailableServices>;
+}>;
 
-export type ComponentFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <Props, Error>(
+export type ComponentFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: <Props, Error>(
     options: ComponentOptions<Props, Error, AvailableServices>,
   ) => EffectComponent<Props, ApplicationServices>;
-};
+}>;
 
 export const makeComponentFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): ComponentFactory<ApplicationServices, AvailableServices> => {
   const make = <Props, Error>({
     render,
@@ -31,6 +32,7 @@ export const makeComponentFactory = <ApplicationServices, AvailableServices>(
     Props,
     ApplicationServices
   > => {
+    // oxlint-disable-next-line typescript/promise-function-async -- The request runtime throws synchronously when the caller has no matching scope.
     const EffectComponent = (props: Props): Promise<Awaited<ReactNode>> =>
       identity.renderRuntime.run(
         "Component",

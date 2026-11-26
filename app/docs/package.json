@@ -2,6 +2,10 @@
   "name": "@effront/docs",
   "private": true,
   "type": "module",
+  "imports": {
+    "#docs/*": "./src/*",
+    "#docs-vite-config": "./vite.config.ts"
+  },
   "scripts": {
     "dev": "alchemy dev",
     "test:browser": "playwright test --config tests/playwright.config.ts"
@@ -30,7 +34,6 @@
     "@effront/vite": "workspace:*",
     "@playwright/test": "catalog:",
     "@tailwindcss/typography": "catalog:",
-    "@totto2727/gitignore-patterns": "catalog:",
     "@tsconfig/strictest": "catalog:",
     "@types/negotiator": "catalog:",
     "@types/node": "catalog:",

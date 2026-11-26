@@ -4,8 +4,8 @@ export const manual = createMarkdownCollection({
   basePath: "/",
   documents: import.meta.glob<string>("./**/*.md", {
     base: "./content",
-    query: "?raw",
-    import: "default",
     eager: true,
+    import: "default",
+    query: "?raw",
   }),
 });

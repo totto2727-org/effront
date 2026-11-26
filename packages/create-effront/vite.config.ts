@@ -1,23 +1,24 @@
 import { defineConfig } from "vite-plus";
 
+// oxlint-disable-next-line import/no-default-export -- Vite+ loads this configuration through its default export.
 export default defineConfig({
   pack: {
-    tsconfig: "./tsconfig.build.json",
-    format: "esm",
-    platform: "node",
-    entry: { "*": ["src/**/*.ts", "!src/**/*.test.ts"] },
     dts: true,
+    entry: { "*": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/*.fixture.ts"] },
+    format: "esm",
+    outExtensions: () => ({ dts: ".d.ts", js: ".js" }),
+    platform: "node",
+    tsconfig: "./tsconfig.build.json",
     unbundle: true,
-    outExtensions: () => ({ js: ".js", dts: ".d.ts" }),
   },
   run: {
     tasks: {
       pack: {
-        command: "vp pack",
         cache: {
           input: [{ auto: true }, "!dist/**"],
           output: ["dist/**"],
         },
+        command: "vp pack",
       },
     },
   },

@@ -1,22 +1,41 @@
-import { Effect } from "effect";
-import { describe, expect, it, vi } from "vite-plus/test";
-import { documentLocale, documentPath, localizedPath, localizeDocumentLink } from "./locale";
-import { localizedMarkdownPages, markdownPages } from "./markdown";
+import { describe, expect, it, test } from "@effect/vitest";
+import { Array, Cause, Effect, Exit } from "effect";
+import { vi } from "vite-plus/test";
 
-// Keep the Japanese article available, but point its English metadata at a missing source.
-// A loader that silently falls back to the Japanese article must fail this test.
-vi.mock("./en/catalog", async (importOriginal) => {
-  const original = await importOriginal<typeof import("./en/catalog")>();
+import { documentLocale, documentPath, localizedPath, localizeDocumentLink } from "./locale.ts";
+import { localizedMarkdownPages, markdownPages } from "./markdown.tsx";
+import type { RenderableDocPage } from "./types.ts";
+
+// Keep the Japanese article available while its English metadata points to a missing source.
+vi.mock(import("./en/catalog.ts"), async (importOriginal) => {
+  const original = await importOriginal();
   return {
     ...original,
-    englishArticleCatalog: original.englishArticleCatalog.map((page) =>
+    englishArticleCatalog: Array.map(original.englishArticleCatalog, (page) =>
       page.slug === "/guide/routes" ? { ...page, source: "/missing-english-translation" } : page,
     ),
   };
 });
 
+const languagePaths = [
+  { en: "/en", ja: "/ja", path: "/" },
+  { en: "/en/guide/routes", ja: "/ja/guide/routes", path: "/guide/routes" },
+  {
+    en: "/en/architecture/implementation/request",
+    ja: "/ja/architecture/implementation/request",
+    path: "/architecture/implementation/request",
+  },
+];
+const supportedLocales = ["ja", "en"] as const;
+const languageSwitches = languagePaths.flatMap(({ en, ja, path }) => {
+  const destinations = { en, ja };
+  return supportedLocales.flatMap((locale) =>
+    [path, ja, en].map((source) => ({ expected: destinations[locale], locale, path, source })),
+  );
+});
+
 describe("documentation locale paths", () => {
-  it.each([
+  test.each([
     ["/", "ja", "/"],
     ["/guide/routes", "ja", "/guide/routes"],
     ["/ja", "ja", "/"],
@@ -33,21 +52,19 @@ describe("documentation locale paths", () => {
     expect(documentPath(pathname)).toBe(path);
   });
 
-  it.each(["/", "/guide/routes", "/architecture/implementation/request"])(
-    "%s switches languages without duplicating prefixes or losing the article path",
-    (path) => {
-      for (const locale of ["ja", "en"] as const) {
-        const expected = `/${locale}${path === "/" ? "" : path}`;
-        for (const source of [path, localizedPath(path, "ja"), localizedPath(path, "en")]) {
-          expect(localizedPath(source, locale)).toBe(expected);
-          expect(documentPath(localizedPath(source, locale))).toBe(path);
-          expect(documentLocale(localizedPath(source, locale))).toBe(locale);
-        }
-      }
+  test.each(languageSwitches)(
+    "switches $source to $locale without duplicating prefixes or losing the article path",
+    ({ expected, locale, path, source }) => {
+      const localized = localizedPath(source, locale);
+      expect(localized).toBe(expected);
+      expect(documentPath(localized)).toBe(path);
+      expect(documentLocale(localized)).toBe(locale);
     },
   );
+});
 
-  it.each(["ja", "en"] as const)(
+describe("locale-aware article links", () => {
+  test.each(supportedLocales)(
     "localizes root-relative article links in %s while preserving queries and anchors",
     (locale) => {
       expect(localizeDocumentLink("/", locale)).toBe(`/${locale}`);
@@ -59,7 +76,7 @@ describe("documentation locale paths", () => {
     },
   );
 
-  it.each([
+  test.each([
     undefined,
     "",
     "#params",
@@ -79,24 +96,44 @@ describe("documentation locale paths", () => {
     expect(localizeDocumentLink(href, "en")).toBe(href);
   });
 
-  it("does not mistake a locale-like article name for an existing prefix", () => {
+  test("does not mistake a locale-like article name for an existing prefix", () => {
     expect(localizeDocumentLink("/english", "en")).toBe("/en/english");
     expect(localizeDocumentLink("/japanese", "ja")).toBe("/ja/japanese");
   });
 });
 
+const findArticle = (
+  pages: Readonly<RenderableDocPage[]>,
+  slug: string,
+): Effect.Effect<RenderableDocPage, Cause.NoSuchElementError> =>
+  Effect.fromNullishOr(pages.find((page) => page.slug === slug));
+
 describe("missing English article", () => {
-  it("fails instead of serving available Japanese content", async () => {
-    const legacy = markdownPages.find((page) => page.slug === "/guide/routes");
-    const japanese = localizedMarkdownPages("ja").find((page) => page.slug === "/ja/guide/routes");
-    const english = localizedMarkdownPages("en").find((page) => page.slug === "/en/guide/routes");
-    expect(legacy).toBeDefined();
-    expect(japanese).toBeDefined();
-    expect(english).toBeDefined();
-    await expect(Effect.runPromise(legacy!.content())).resolves.toBeDefined();
-    await expect(Effect.runPromise(japanese!.content())).resolves.toBeDefined();
-    await expect(Effect.runPromise(english!.content())).rejects.toThrow(
-      "Documentation article is missing: en/missing-english-translation",
-    );
-  });
+  it.effect("renders the available Japanese article with and without the locale prefix", () =>
+    Effect.gen(function* () {
+      const legacy = yield* findArticle(markdownPages, "/guide/routes");
+      const japanese = yield* findArticle(localizedMarkdownPages("ja"), "/ja/guide/routes");
+      const legacyContent = yield* legacy.content();
+      const japaneseContent = yield* japanese.content();
+      expect(legacyContent).toBeDefined();
+      expect(japaneseContent).toBeDefined();
+    }),
+  );
+
+  it.effect("fails instead of serving available Japanese content", () =>
+    Effect.gen(function* () {
+      const english = yield* findArticle(localizedMarkdownPages("en"), "/en/guide/routes");
+      const exit = yield* Effect.exit(english.content());
+      expect(Exit.isFailure(exit)).toBe(true);
+      const error = Exit.match(exit, {
+        onFailure: Cause.squash,
+        onSuccess: () => "Expected the English article to fail.",
+      });
+      expect(error).toBeInstanceOf(TypeError);
+      expect(error).toHaveProperty(
+        "message",
+        "Documentation article is missing: en/missing-english-translation",
+      );
+    }),
+  );
 });

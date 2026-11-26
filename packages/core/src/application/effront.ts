@@ -1,31 +1,33 @@
-import type { ComponentFactory } from "./component";
-import { makeComponentFactory } from "./component";
-import { type EFFRONTMake, makeApplication } from "./definition";
+import { MutableRef } from "effect";
+
+import type { ComponentFactory } from "./component.ts";
+import { makeComponentFactory } from "./component.ts";
+import { makeApplication } from "./definition.tsx";
+import type { EFFRONTMake } from "./definition.tsx";
 import {
   attachEFFRONTMember,
-  type EFFRONTIdentity,
-  type EFFRONTMember,
+  authoringTypeError,
   getEFFRONTIdentity,
   makeEFFRONTIdentity,
-} from "./effront-identity";
-import type { LayoutFactory } from "./layout";
-import { makeLayoutFactory } from "./layout";
-import type { LoadingFactory } from "./loading";
-import { makeLoadingFactory } from "./loading";
-import {
-  type AnyMiddleware,
-  getMiddlewareState,
-  type MiddlewareFactory,
-  type MiddlewareProvidedServices,
-  type MiddlewareRequiredServices,
-  makeMiddlewareFactory,
-} from "./middleware";
-import type { PageFactory } from "./page";
-import { makePageFactory } from "./page";
-import type { RoutesFactory } from "./routes";
-import { makeRoutesFactory } from "./routes";
-import type { ServerFnFactory } from "./server-fn";
-import { makeServerFnFactory } from "./server-fn";
+} from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
+import type { LayoutFactory } from "./layout.ts";
+import { makeLayoutFactory } from "./layout.ts";
+import type { LoadingFactory } from "./loading.ts";
+import { makeLoadingFactory } from "./loading.ts";
+import { getMiddlewareState, makeMiddlewareFactory } from "./middleware.ts";
+import type {
+  AnyMiddleware,
+  MiddlewareFactory,
+  MiddlewareProvidedServices,
+  MiddlewareRequiredServices,
+} from "./middleware.ts";
+import type { PageFactory } from "./page.ts";
+import { makePageFactory } from "./page.ts";
+import type { RoutesFactory } from "./routes.ts";
+import { makeRoutesFactory } from "./routes.ts";
+import type { ServerFnFactory } from "./server-fn.ts";
+import { makeServerFnFactory } from "./server-fn.ts";
 
 type ApplicableMiddleware<AvailableServices, Value> = [
   Exclude<MiddlewareRequiredServices<Value>, AvailableServices>,
@@ -36,38 +38,44 @@ type ApplicableMiddleware<AvailableServices, Value> = [
 export type EFFRONT<ApplicationServices, AvailableServices = ApplicationServices> = EFFRONTMember<
   ApplicationServices,
   "EFFRONT"
-> & {
-  readonly Component: ComponentFactory<ApplicationServices, AvailableServices>;
-  readonly Layout: LayoutFactory<ApplicationServices, AvailableServices>;
-  readonly Loading: LoadingFactory<ApplicationServices>;
-  readonly Middleware: MiddlewareFactory<ApplicationServices, AvailableServices>;
-  readonly Page: PageFactory<ApplicationServices, AvailableServices>;
-  readonly Routes: RoutesFactory<ApplicationServices>;
-  readonly ServerFn: ServerFnFactory<ApplicationServices, AvailableServices>;
-  readonly make: EFFRONTMake<ApplicationServices>;
-  readonly withMiddleware: <Value extends AnyMiddleware<ApplicationServices>>(
-    middleware: Value & ApplicableMiddleware<AvailableServices, Value>,
-  ) => EFFRONT<ApplicationServices, AvailableServices | MiddlewareProvidedServices<Value>>;
-};
+> &
+  Readonly<{
+    Component: ComponentFactory<ApplicationServices, AvailableServices>;
+    Layout: LayoutFactory<ApplicationServices, AvailableServices>;
+    Loading: LoadingFactory<ApplicationServices>;
+    Middleware: MiddlewareFactory<ApplicationServices, AvailableServices>;
+    Page: PageFactory<ApplicationServices, AvailableServices>;
+    Routes: RoutesFactory<ApplicationServices>;
+    ServerFn: ServerFnFactory<ApplicationServices, AvailableServices>;
+    make: EFFRONTMake<ApplicationServices>;
+    withMiddleware: <Value extends AnyMiddleware<ApplicationServices>>(
+      middleware: Value & ApplicableMiddleware<AvailableServices, Value>,
+    ) => EFFRONT<ApplicationServices, AvailableServices | MiddlewareProvidedServices<Value>>;
+  }>;
+
+type AuthoringContext<Services> = Readonly<{
+  allocateRouteScopeId: () => number;
+  identity: EFFRONTIdentity<Services>;
+  make: EFFRONTMake<Services>;
+}>;
 
 const makeEFFRONT = <ApplicationServices, AvailableServices>(
-  identity: EFFRONTIdentity<ApplicationServices>,
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
-  allocateRouteScopeId: () => number,
-  make: EFFRONTMake<ApplicationServices>,
+  context: AuthoringContext<ApplicationServices>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
 ): EFFRONT<ApplicationServices, AvailableServices> => {
+  const { allocateRouteScopeId, identity, make } = context;
   const withMiddleware = <Value extends AnyMiddleware<ApplicationServices>>(
     value: Value & ApplicableMiddleware<AvailableServices, Value>,
   ): EFFRONT<ApplicationServices, AvailableServices | MiddlewareProvidedServices<Value>> => {
     getMiddlewareState(value);
     if (getEFFRONTIdentity(value) !== identity) {
-      throw new TypeError("Middleware was created by a different EFFRONT module.");
+      throw authoringTypeError("Middleware was created by a different EFFRONT module.");
     }
     if (middleware.includes(value)) {
-      throw new TypeError("Middleware cannot appear twice in the same scope.");
+      throw authoringTypeError("Middleware cannot appear twice in the same scope.");
     }
 
-    return makeEFFRONT(identity, Object.freeze([...middleware, value]), allocateRouteScopeId, make);
+    return makeEFFRONT(context, Object.freeze([...middleware, value]));
   };
 
   return Object.freeze(
@@ -92,17 +100,15 @@ const makeEFFRONT = <ApplicationServices, AvailableServices>(
   );
 };
 
+const firstRouteScopeId = 0;
+
 const effront = <Services = never>(): EFFRONT<Services> => {
   const identity = makeEFFRONTIdentity<Services>();
   const make: EFFRONTMake<Services> = (options) => makeApplication(identity, options);
-  let nextRouteScopeId = 0;
-  const allocateRouteScopeId = () => {
-    const scopeId = nextRouteScopeId;
-    nextRouteScopeId += 1;
-    return scopeId;
-  };
+  const nextRouteScopeId = MutableRef.make(firstRouteScopeId);
+  const allocateRouteScopeId = (): number => MutableRef.getAndIncrement(nextRouteScopeId);
 
-  return makeEFFRONT(identity, Object.freeze([]), allocateRouteScopeId, make);
+  return makeEFFRONT({ allocateRouteScopeId, identity, make }, Object.freeze([]));
 };
 
 export const Application = { effront } as const;

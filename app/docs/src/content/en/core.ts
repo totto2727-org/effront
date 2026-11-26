@@ -1,13 +1,13 @@
-import type { DocPage } from "../types";
-import { page as overview } from "./architecture/overview";
-import { page as application } from "./architecture/application";
-import { page as routing } from "./architecture/routing";
-import { page as request } from "./architecture/request";
-import { page as rendering } from "./architecture/rendering";
-import { page as navigation } from "./architecture/navigation";
-import { page as serverFunctions } from "./architecture/server-functions";
+import type { DocPage } from "#docs/content/types.ts";
+import { page as overview } from "./architecture/overview.tsx";
+import { page as application } from "./architecture/application.tsx";
+import { page as routing } from "./architecture/routing.tsx";
+import { page as request } from "./architecture/request.tsx";
+import { page as rendering } from "./architecture/rendering.tsx";
+import { page as navigation } from "./architecture/navigation.tsx";
+import { page as serverFunctions } from "./architecture/server-functions.tsx";
 
-export const englishCorePages: readonly DocPage[] = [
+export const englishCorePages: Readonly<DocPage[]> = [
   overview,
   application,
   routing,

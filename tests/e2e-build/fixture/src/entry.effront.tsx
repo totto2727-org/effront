@@ -1,31 +1,25 @@
-import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
-import { MarkdownDocument } from "@effront/markdown/document";
-import { Math } from "@effront/markdown/math";
-import { Mermaid } from "@effront/markdown/mermaid";
-import { Context, Effect, Result, Schema } from "effect";
-import { HttpServerRequest, HttpServerResponse } from "effect/http";
-import { manual } from "../content";
-import { ManualShell } from "./manual-shell";
-import { pages } from "./manual-pages";
-import { EFFRONT } from "./effront";
-import { getWorkersEnv, getWorkersRequestContext } from "./host";
-import { Counter } from "./counter";
-import { GreetingAction } from "./greeting-action";
-import { HostLive } from "./greeting-host";
-import { ExampleShell, PageNote, TransitionExampleLayout } from "./example-shell";
-import { MarkdownHeading } from "./markdown-heading";
+import { Effect } from "effect";
+import { EFFRONT } from "./effront.ts";
+import { ExampleShell } from "./example-shell.tsx";
+import { HostLive } from "./greeting-host.ts";
+import { getWorkersRequestContext } from "./host.ts";
+import { pages } from "./manual-pages.ts";
+import { manualRoutes } from "./manual-routes.fixture.tsx";
+import { RichComponentsPage, ServerOverridesPage } from "./rich-markdown.fixture.tsx";
+import { transitionRoutes } from "./transition-routes.fixture.tsx";
+import { AboutPage, HomePage } from "./worker-pages.fixture.tsx";
 
 const RootLayout = EFFRONT.Layout.make({
   render: ({ children }) =>
     Effect.gen(function* () {
       const { request } = yield* getWorkersRequestContext();
-      const path = new URL(request.url).pathname.replace(/\/$/, "");
-      const page = pages.find((page) => page.href === path);
+      const path = new URL(request.url).pathname.replace(/\/$/u, "");
+      const matched = pages.find((page) => page.href === path);
       return (
         <html lang="en">
           <head>
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>{page ? `${page.title} | Effront` : "Effront Workers"}</title>
+            <title>{matched ? `${matched.title} | Effront` : "Effront Workers"}</title>
           </head>
           <body>
             <ExampleShell>{children}</ExampleShell>
@@ -35,164 +29,7 @@ const RootLayout = EFFRONT.Layout.make({
     }),
 });
 
-const HomePage = EFFRONT.Page.make({
-  render: Effect.fn("HomePage.render")(function* () {
-    const env = yield* getWorkersEnv();
-    return (
-      <>
-        <h1>{env.APP_LABEL}</h1>
-        <p data-testid="secret-status">
-          {env.SERVER_TOKEN ? "Server secret configured" : "No server secret"}
-        </p>
-        <p>React Server Components on Workers, powered by Effect.</p>
-        <Counter />
-        <GreetingAction />
-      </>
-    );
-  }),
-});
-
-const AboutPage = EFFRONT.Page.make({
-  render: Effect.fn("AboutPage.render")(function* () {
-    const context = yield* getWorkersRequestContext();
-    context.executionContext.waitUntil(Promise.resolve());
-    const env = yield* getWorkersEnv();
-    return (
-      <>
-        <h1>About</h1>
-        <p data-testid="label">{env.APP_LABEL}</p>
-        <a href="/">Back home</a>
-      </>
-    );
-  }),
-});
-
-const TransitionLayout = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.succeed(<TransitionExampleLayout>{children}</TransitionExampleLayout>),
-});
-
-const transitionPage = (mode: "default" | "custom" | "typed" | "disabled", step: "a" | "b") =>
-  EFFRONT.Page.make({
-    ...(mode === "custom"
-      ? { viewTransition: { default: "demo-slide" } }
-      : mode === "typed"
-        ? { viewTransition: { default: { default: "demo-slide", "demo-navigation": "demo-lift" } } }
-        : mode === "disabled"
-          ? { viewTransition: false as const }
-          : {}),
-    render: () =>
-      Effect.succeed(
-        <section className={`transition-card transition-card-${step}`}>
-          <h1>{`${mode} page ${step.toUpperCase()}`}</h1>
-          <p>
-            {mode === "default"
-              ? "Effront animates this page with its built-in transition, without configuration."
-              : mode === "custom"
-                ? "This page selects a custom transition class and supplies its animation in CSS."
-                : mode === "typed"
-                  ? "The next link selects a lift animation. Browser history uses the fallback slide animation."
-                  : "This page opts out of the built-in page transition."}
-          </p>
-          <PageNote />
-          <a
-            href={`/transitions/${mode}-${step === "a" ? "b" : "a"}`}
-            data-effront-transition-types={mode === "typed" ? "demo-navigation" : undefined}
-          >
-            Next example page
-          </a>
-        </section>,
-      ),
-  });
-
-const transitionRoutes = EFFRONT.Routes.make({ layout: TransitionLayout })
-  .page("/default-a", transitionPage("default", "a"))
-  .page("/default-b", transitionPage("default", "b"))
-  .page("/custom-a", transitionPage("custom", "a"))
-  .page("/custom-b", transitionPage("custom", "b"))
-  .page("/typed-a", transitionPage("typed", "a"))
-  .page("/typed-b", transitionPage("typed", "b"))
-  .page("/disabled-a", transitionPage("disabled", "a"))
-  .page("/disabled-b", transitionPage("disabled", "b"));
-
-class CurrentEntry extends Context.Service<CurrentEntry, MarkdownEntry>()("e2e/CurrentEntry") {}
-const FindEntry = EFFRONT.Middleware.make<{ provides: CurrentEntry }>(
-  Effect.fn(function* (httpEffect) {
-    const request = yield* HttpServerRequest.HttpServerRequest;
-    const collection = yield* Effect.result(manual);
-    if (Result.isFailure(collection)) {
-      return HttpServerResponse.text("Unable to load Markdown collection", { status: 500 });
-    }
-    const entry = collection.success.get(request.url);
-    if (!entry) return HttpServerResponse.text("Not found", { status: 404 });
-    return yield* httpEffect.pipe(Effect.provideService(CurrentEntry, entry));
-  }),
-);
-const Manual = EFFRONT.withMiddleware(FindEntry);
-const ManualLayout = EFFRONT.Layout.make({
-  render: ({ children }) =>
-    Effect.gen(function* () {
-      const { request } = yield* getWorkersRequestContext();
-      const pathname = new URL(request.url, "http://localhost").pathname.replace(/\/$/, "");
-      return <ManualShell pathname={pathname}>{children}</ManualShell>;
-    }),
-});
-const ManualPage = Manual.Page.make({
-  params: Schema.Struct({ path: Schema.String }),
-  render: Effect.fn(function* () {
-    const entry = yield* CurrentEntry;
-    const document = yield* parseMarkdown(entry);
-    return (
-      <article className="comark" data-markdown-page={entry.url} data-doc-page={entry.url}>
-        <MarkdownDocument value={document} components={{ h1: MarkdownHeading }} />
-      </article>
-    );
-  }),
-});
-
-const ServerMath = ({ content }: { readonly content: string }) => (
-  <span data-testid="server-math">Server math: {content}</span>
-);
-
-const ServerMermaid = ({ content }: { readonly content: string }) => (
-  <pre data-testid="server-mermaid">Server diagram: {content}</pre>
-);
-
-const ServerOverridesPage = EFFRONT.Page.make({
-  render: Effect.fn(function* () {
-    const collection = yield* manual;
-    const entry = collection.get("/manual");
-    if (!entry) throw new TypeError("The server-only Markdown fixture requires /manual content");
-    const document = yield* parseMarkdown(entry);
-    return (
-      <article data-testid="server-only-markdown">
-        <MarkdownDocument
-          value={document}
-          components={{ Math: ServerMath, Mermaid: ServerMermaid }}
-        />
-      </article>
-    );
-  }),
-});
-
-const RichComponentsPage = EFFRONT.Page.make({
-  render: () =>
-    Effect.succeed(
-      <article data-testid="public-rich-components">
-        <Math content="x^2" className="inline" />
-        <Mermaid
-          content={"flowchart LR\n Public --> API"}
-          className="custom-mermaid"
-          width="320px"
-          height="180px"
-          theme={{ bg: "#ffffff", fg: "#123456" }}
-          themeDark={{ bg: "#112233", fg: "#abcdef" }}
-        />
-      </article>,
-    ),
-});
-
-export default EFFRONT.make({
+const application = EFFRONT.make({
   layer: HostLive,
   routes: EFFRONT.Routes.make({ layout: RootLayout })
     .page("/", HomePage)
@@ -200,5 +37,8 @@ export default EFFRONT.make({
     .page("/manual-server-only", ServerOverridesPage)
     .page("/rich-components", RichComponentsPage)
     .mount("/transitions", transitionRoutes)
-    .mount("/manual", Manual.Routes.make({ layout: ManualLayout }).page("/*path", ManualPage)),
+    .mount("/manual", manualRoutes),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin reads the fixture's application from its default export.
+export default application;

@@ -1,21 +1,22 @@
-import type { ComponentProps } from "react";
-import { MarkdownDocument } from "@effront/markdown/document";
 import { createMarkdownCollection, parseMarkdown } from "@effront/markdown";
-import { Effect } from "effect";
-import { articleCatalog } from "./catalog";
-import { englishArticleCatalog } from "./en/catalog";
-import { localizedPath, localizeDocumentLink, type DocLocale } from "./locale";
-import type { RenderableDocPage } from "./types";
-import { markdownAlertComponents } from "../components/markdown-alert";
+import { Array, Effect, Predicate } from "effect";
 
-// Vite owns loading. No runtime filesystem access or client-side parser is needed.
+import { articleCatalog } from "./catalog.ts";
+import { englishArticleCatalog } from "./en/catalog.ts";
+import { localizedPath } from "./locale.ts";
+import type { DocLocale } from "./locale.ts";
+import { defaultComponents, localizedComponents, renderDocument } from "./markdown-render.tsx";
+import type { MarkdownComponents } from "./markdown-render.tsx";
+import type { RenderableDocPage } from "./types.ts";
+
+// Vite owns loading. The renderer consumes bundled Markdown source.
 const articles = createMarkdownCollection({
   basePath: "/",
   documents: import.meta.glob<string>("./**/*.md", {
     base: "./articles",
-    query: "?raw",
-    import: "default",
     eager: true,
+    import: "default",
+    query: "?raw",
   }),
 });
 
@@ -23,66 +24,63 @@ const englishArticles = createMarkdownCollection({
   basePath: "/en",
   documents: import.meta.glob<string>("./**/*.md", {
     base: "./en/articles",
-    query: "?raw",
-    import: "default",
     eager: true,
+    import: "default",
+    query: "?raw",
   }),
 });
 
-// Preserve keyboard access to scrollable code while using Comark's standard tokens.
-function MarkdownPre({
-  children,
-  className,
-  language,
-}: ComponentProps<"pre"> & { language?: string }) {
-  return (
-    <pre className={className} data-code-block="" data-language={language ?? "text"} tabIndex={0}>
-      {children}
-    </pre>
-  );
-}
+type ArticleContent = Readonly<{
+  collection: typeof articles;
+  components: MarkdownComponents;
+  missingLabel: string;
+  source: string;
+}>;
 
-export const markdownPages: readonly RenderableDocPage[] = articleCatalog.map(
+const renderArticle =
+  ({
+    collection,
+    components,
+    missingLabel,
+    source,
+  }: ArticleContent): RenderableDocPage["content"] =>
+  () =>
+    Effect.gen(function* () {
+      const documents = yield* collection;
+      const entry = documents.get(source);
+      if (Predicate.isNullish(entry)) {
+        // oxlint-disable-next-line rules/require-tagged-error -- A broken static article registration retains the native TypeError reported as a defect.
+        throw new TypeError(`Documentation article is missing: ${missingLabel}`);
+      }
+      const document = yield* parseMarkdown(entry);
+      return renderDocument(document, components);
+    });
+
+export const markdownPages: Readonly<RenderableDocPage[]> = articleCatalog.map(
   ({ source, ...page }) => ({
     ...page,
-    content: () =>
-      Effect.gen(function* () {
-        const collection = yield* articles;
-        const entry = collection.get(source);
-        if (!entry) throw new TypeError(`Documentation article is missing: ${source}`);
-        const document = yield* parseMarkdown(entry);
-        return (
-          <MarkdownDocument
-            value={document}
-            className="docs-markdown"
-            components={{ ...markdownAlertComponents, ProsePre: MarkdownPre }}
-          />
-        );
-      }),
+    content: renderArticle({
+      collection: articles,
+      components: defaultComponents,
+      missingLabel: source,
+      source,
+    }),
   }),
 );
 
-export function localizedMarkdownPages(locale: DocLocale): readonly RenderableDocPage[] {
+export const localizedMarkdownPages = (locale: DocLocale): Readonly<RenderableDocPage[]> => {
   const catalog = locale === "en" ? englishArticleCatalog : articleCatalog;
-  function ArticleLink({ href, ...props }: ComponentProps<"a">) {
-    return <a {...props} href={localizeDocumentLink(href, locale)} />;
-  }
-  return catalog.map(({ source, ...page }) => ({
-    ...page,
-    slug: localizedPath(page.slug, locale),
-    content: () =>
-      Effect.gen(function* () {
-        const collection = yield* locale === "en" ? englishArticles : articles;
-        const entry = collection.get(`${locale === "en" ? "/en" : ""}${source}`);
-        if (!entry) throw new TypeError(`Documentation article is missing: ${locale}${source}`);
-        const document = yield* parseMarkdown(entry);
-        return (
-          <MarkdownDocument
-            value={document}
-            className="docs-markdown"
-            components={{ ...markdownAlertComponents, ProsePre: MarkdownPre, ProseA: ArticleLink }}
-          />
-        );
-      }),
+  const collection = locale === "en" ? englishArticles : articles;
+  const basePath = locale === "en" ? "/en" : "";
+  const components = localizedComponents(locale);
+  return Array.map(catalog, ({ source, slug, ...metadata }) => ({
+    ...metadata,
+    content: renderArticle({
+      collection,
+      components,
+      missingLabel: `${locale}${source}`,
+      source: `${basePath}${source}`,
+    }),
+    slug: localizedPath(slug, locale),
   }));
-}
+};

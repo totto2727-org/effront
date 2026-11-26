@@ -4,11 +4,14 @@ import { Effect } from "effect";
 
 import Markdown from "./src/entry.workers";
 
-export default Stack(
+const stack = Stack(
   "effront-markdown-example",
-  { state: localState(), providers: Cloudflare.providers() },
+  { providers: Cloudflare.providers(), state: localState() },
   Effect.gen(function* () {
     const site = yield* Markdown;
     return { url: site.url };
   }),
 );
+
+// oxlint-disable-next-line import/no-default-export -- The Alchemy CLI loads the stack from this entry’s default export.
+export default stack;

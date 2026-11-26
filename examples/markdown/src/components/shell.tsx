@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useCallback, useState } from "react";
+import type { JSX, ReactNode } from "react";
 
-export function Shell({ children }: { readonly children: ReactNode }) {
-  const [count, setCount] = useState(0);
+const initialCount = 0;
+const increment = 1;
+
+export const Shell = ({ children }: Readonly<{ children: ReactNode }>): JSX.Element => {
+  const [count, setCount] = useState(initialCount);
+  const incrementCount = useCallback(() => {
+    setCount((value) => value + increment);
+  }, []);
   return (
     <>
       <header className="flex flex-wrap items-center gap-8 border-b border-slate-700 px-8 py-4">
@@ -13,7 +20,7 @@ export function Shell({ children }: { readonly children: ReactNode }) {
         <button
           className="rounded border border-slate-600 bg-slate-800 px-4 py-2"
           type="button"
-          onClick={() => setCount((value) => value + 1)}
+          onClick={incrementCount}
         >
           Count: {count}
         </button>
@@ -21,4 +28,4 @@ export function Shell({ children }: { readonly children: ReactNode }) {
       <main className="mx-auto max-w-[54rem] p-8 leading-[1.8]">{children}</main>
     </>
   );
-}
+};

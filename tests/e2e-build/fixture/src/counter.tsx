@@ -1,8 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import type { JSX } from "react";
+import { useCallback, useState } from "react";
 
-export function Counter() {
-  const [count, setCount] = useState(0);
-  return <button onClick={() => setCount((value) => value + 1)}>Count: {count}</button>;
-}
+const initialCount = 0;
+const increment = 1;
+
+export const Counter = (): JSX.Element => {
+  const [count, setCount] = useState(initialCount);
+  const incrementCount = useCallback(() => {
+    setCount((value) => value + increment);
+  }, []);
+  return (
+    <button onClick={incrementCount} type="button">
+      Count: {count}
+    </button>
+  );
+};

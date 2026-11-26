@@ -1,33 +1,20 @@
-import { BrowserHttpClient } from "@effect/platform-browser";
-import { Effect, Layer } from "effect";
+import { Predicate, Effect, Layer } from "effect";
 
-import { navigationMode } from "./browser-capabilities";
-import { BrowserEffectRunner } from "./browser-effect-runner";
-import { BrowserRenderStatus } from "./browser-render-status";
-import { BrowserRenderer } from "./browser-renderer";
-import { showBrowserFailure } from "./browser-screen";
-import { installCallServer } from "./call-server";
-import { installClientRouter } from "./client-router";
-import { FlightClient } from "./flight-client";
-import { InitialFlightStream } from "./initial-flight-stream";
-import { NavigationApi } from "./navigation-api";
-import { ReactDOMRenderer } from "./react-dom-renderer";
-import { RouteLoader } from "./route-loader";
-import { installRouteRefresh, RouteRefresher } from "./route-refresh";
-
-const BrowserServicesLayer = Layer.mergeAll(
-  BrowserEffectRunner.layer,
-  BrowserRenderer.layer,
-  BrowserRenderStatus.layer,
-  FlightClient.layer,
-  NavigationApi.layer,
-).pipe(Layer.provide(InitialFlightStream.layer));
+import { navigationMode } from "./browser-capabilities.ts";
+import { BrowserEffectRunner } from "./browser-effect-runner.ts";
+import { withBrowserServices } from "./browser-layer.ts";
+import { showBrowserFailure } from "./mount-browser-failure.ts";
+import { installCallServer } from "./call-server.ts";
+import { installClientRouter } from "./client-router.ts";
+import { ReactDOMRenderer } from "./react-dom-renderer.ts";
+import { RouteLoader } from "./route-loader.ts";
+import { installRouteRefresh, RouteRefresher } from "./route-refresh.ts";
 
 const BrowserLayer = Layer.mergeAll(
   ReactDOMRenderer.layer,
   RouteLoader.layer,
   RouteRefresher.layer,
-).pipe(Layer.provideMerge(BrowserServicesLayer), Layer.provide(BrowserHttpClient.layerFetch));
+).pipe(withBrowserServices);
 
 const renderBrowserFailure = Effect.sync(showBrowserFailure);
 
@@ -46,25 +33,32 @@ const activateBrowser = Effect.gen(function* () {
 });
 
 const installViteHmr = Effect.gen(function* () {
+  // oxlint-disable-next-line eslint/prefer-destructuring -- Vite detects the literal import.meta.hot access when injecting its HMR context.
   const hot = (
-    import.meta as ImportMeta & {
-      readonly hot?: {
-        on: (event: string, listener: () => void) => void;
-        off: (event: string, listener: () => void) => void;
-      };
-    }
+    import.meta as ImportMeta &
+      Readonly<{
+        hot?: {
+          on: (event: string, listener: () => void) => void;
+          off: (event: string, listener: () => void) => void;
+        };
+      }>
   ).hot;
-  if (hot === undefined) {
+  if (Predicate.isNullish(hot)) {
     return;
   }
 
   const run = yield* BrowserEffectRunner;
   const routeRefresher = yield* RouteRefresher;
-  const refresh = () => {
-    void run(routeRefresher.refreshCurrentRoute("hmr-refresh"));
+  const refresh = (): void => {
+    // oxlint-disable-next-line typescript/no-floating-promises -- Vite delivers updates synchronously. The browser scope owns this refresh.
+    run(routeRefresher.refreshCurrentRoute("hmr-refresh"));
   };
   hot.on("rsc:update", refresh);
-  yield* Effect.addFinalizer(() => Effect.sync(() => hot.off("rsc:update", refresh)));
+  yield* Effect.addFinalizer(() =>
+    Effect.sync(() => {
+      hot.off("rsc:update", refresh);
+    }),
+  );
 });
 
 export const browserMain = Effect.scoped(

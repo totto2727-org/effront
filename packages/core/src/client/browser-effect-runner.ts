@@ -1,5 +1,6 @@
-import { Context, FiberSet, Layer, Scope } from "effect";
-import { HttpClient } from "effect/http";
+import type { Scope } from "effect";
+import { Context, FiberSet, Layer } from "effect";
+import type { HttpClient } from "effect/http";
 
 export class BrowserEffectRunner extends Context.Service<BrowserEffectRunner>()(
   "effront/client/BrowserEffectRunner",
@@ -7,5 +8,6 @@ export class BrowserEffectRunner extends Context.Service<BrowserEffectRunner>()(
     make: FiberSet.makeRuntimePromise<HttpClient.HttpClient | Scope.Scope>(),
   },
 ) {
-  static readonly layer = Layer.effect(this, this.make);
+  // oxlint-disable-next-line rules/no-readonly -- The browser runtime layer has a fixed service reference.
+  public static readonly layer = Layer.effect(this, this.make);
 }

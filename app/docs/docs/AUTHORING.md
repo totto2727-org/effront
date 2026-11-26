@@ -193,7 +193,7 @@ Vercel and AWS adapters remain deferred.
 ## Architecture source baseline
 
 Keep implementation excerpts in JSX with their exact-string and historical-baseline contract.
-The source of truth is `src/content/architecture-baseline.ts`: core version `0.1.1`, commit `8744ecb236cb4c815c3a0c208e02200f4eeeb3f8`, reviewed `2026-09-16`.
+The source of truth is `src/content/architecture-baseline.ts`: core version `0.4.2`, commit `5ac98236604f8d72d3e30682973a193045cd8629`, reviewed `2026-11-25`.
 This identifies the source selections, not the latest documentation commit or current npm release.
 
 `core.test.tsx` compares every selection with both the current source and the historical Git object, including the baseline package version.

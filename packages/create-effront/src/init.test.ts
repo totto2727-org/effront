@@ -1,347 +1,240 @@
-import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
-import { afterEach, expect, it, vi } from "vitest";
 import { NodeServices } from "@effect/platform-node";
-import { Effect } from "effect";
-import { Command } from "effect/cli";
-import packageJson from "../package.json" with { type: "json" };
-import vitePlusPackage from "vite-plus/package.json" with { type: "json" };
-import workspace from "../../../package.json" with { type: "json" };
-import { command } from "./cli.js";
-import { createProject, platforms, projectName } from "./init.js";
+import { live } from "@effect/vitest";
+import { Array, Effect, Schema } from "effect";
+import { describe, expect } from "vitest";
 
-const directories: string[] = [];
-const runCommand = Command.runWith(command, { version: packageJson.version });
-const runFile = promisify(execFile);
+import {
+  decodeJson,
+  expectPnpmConfiguration,
+  generateProject,
+  readProjectManifest,
+  sourceWorkspace,
+  starterWorkspace,
+} from "./init-project.fixture.ts";
+import { platforms } from "./init.ts";
+import type { Platform } from "./init.ts";
 
-async function temporaryDirectory(): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), "create-effront-test-"));
-  directories.push(directory);
-  return directory;
-}
+const decodeOwner = Schema.decodeEffect(
+  Schema.fromJsonString(Schema.Struct({ version: Schema.String })),
+);
+const decodeWorkspace = Schema.decodeEffect(
+  Schema.fromJsonString(Schema.Struct({ packageManager: Schema.String })),
+);
+const metadata = Effect.gen(function* () {
+  const { fs, owner, path, workspace } = yield* sourceWorkspace;
+  const ownerManifest = yield* fs.readFileString(path.join(owner, "package.json"));
+  const workspaceManifest = yield* fs.readFileString(path.join(workspace, "package.json"));
+  const { version } = yield* decodeOwner(ownerManifest);
+  const { packageManager } = yield* decodeWorkspace(workspaceManifest);
+  return { packageManager, version };
+});
 
-afterEach(async () => {
-  await Promise.all(
-    directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })),
+const generate = Effect.fnUntraced(function* (platform: Platform, name: string = platform) {
+  const source = yield* starterWorkspace("create-effront-test-");
+  const directory = source.path.join(source.directory, name);
+  yield* generateProject(directory, platform);
+  return { ...source, directory };
+});
+
+const scripts = {
+  "alchemy-cloudflare": { dev: "alchemy dev" },
+  bun: { start: "bun dist/rsc/server.js" },
+  cloudflare: { deploy: "wrangler deploy" },
+  node: { start: "node dist/rsc/server.js" },
+} satisfies Record<Platform, object>;
+
+const allowedVersions = (
+  manifest: Effect.Success<ReturnType<typeof readProjectManifest>>,
+  releasedVersion: string,
+): boolean => {
+  const dependencies = Object.entries({ ...manifest.dependencies, ...manifest.devDependencies });
+  return Array.every(dependencies, ([name, version]) => {
+    if (name.startsWith("@effront/")) {
+      return version === `^${releasedVersion}`;
+    }
+    if (name === "effect" || name.startsWith("@effect/")) {
+      return version === "^4.0.2";
+    }
+    return version.startsWith("^");
+  });
+};
+
+describe("shared starter application", () => {
+  live.each(platforms)("creates a %s manifest with the shared package policy", (platform) =>
+    Effect.gen(function* () {
+      const { directory, fs } = yield* generate(platform, "My App");
+      const { packageManager, version } = yield* metadata;
+      const manifest = yield* readProjectManifest(directory);
+      expect(manifest).toMatchObject({
+        devDependencies: {
+          "@totto2727/gitignore-patterns": "^0.1.0",
+          "@totto2727/oxlint": "^0.2.0",
+          "vite-plus": "^1.1.0",
+        },
+        name: "my-app",
+        packageManager,
+        scripts: scripts[platform],
+      });
+      expect(manifest.scripts).toStrictEqual(scripts[platform]);
+      expect(allowedVersions(manifest, version)).toBe(true);
+      expect(JSON.stringify(manifest)).not.toMatch(
+        /workspace:|catalog:|"overrides"|"trustedDependencies"/u,
+      );
+      expect(yield* fs.readDirectory(directory)).not.toContain("bunfig.toml");
+      yield* expectPnpmConfiguration(directory, platform);
+    }).pipe(Effect.provide(NodeServices.layer)),
+  );
+
+  live.each(platforms)("reuses the shared application and lint wiring on %s", (platform) =>
+    Effect.gen(function* () {
+      const { directory, fs, path, workspace } = yield* generate(platform);
+      const projectSource = yield* fs.readFileString(path.join(directory, "src/entry.effront.tsx"));
+      const examples = yield* Effect.forEach(platforms, (example) =>
+        fs.readFileString(path.join(workspace, "examples", example, "src/entry.effront.tsx")),
+      );
+      expect(examples).toStrictEqual(platforms.map(() => projectSource));
+      expect(yield* fs.readDirectory(path.join(directory, "src"))).toContain("entry.effront.tsx");
+      expect(yield* fs.readFileString(path.join(directory, ".gitignore"))).toContain(
+        "node_modules/",
+      );
+      const config = yield* fs.readFileString(path.join(directory, "vite.config.ts"));
+      const required = [
+        'import { generateIgnorePatterns } from "@totto2727/gitignore-patterns"',
+        'await generateIgnorePatterns(new URL(".", import.meta.url))',
+        "fmt: { ignorePatterns }",
+        "lint: createLintConfig(ignorePatterns)",
+      ];
+      expect(required.filter((item) => !config.includes(item))).toStrictEqual([]);
+    }).pipe(Effect.provide(NodeServices.layer)),
   );
 });
 
-const toolchainOverrides = `overrides:\n  "vite@*": npm:@voidzero-dev/vite-plus-core@${vitePlusPackage.version}\n  "vitest@*": ${vitePlusPackage.dependencies.vitest}`;
+const hostEntries = {
+  "alchemy-cloudflare": [],
+  bun: ["src/entry.rsc.ts", "src/entry.server.ts"],
+  cloudflare: ["src/entry.workers.ts"],
+  node: ["src/entry.rsc.ts", "src/entry.server.ts"],
+} satisfies Record<Platform, string[]>;
 
-async function expectPnpmConfiguration(directory: string, platform?: string): Promise<void> {
-  const configuration = await readFile(join(directory, "pnpm-workspace.yaml"), "utf8");
-  expect(configuration.replaceAll("'", '"')).toContain(toolchainOverrides);
-  expect(configuration).not.toMatch(/^minimumReleaseAge/m);
-  expect(configuration.split("allowBuilds:\n")[1]).toBe(
-    `${platform ? "" : "  bun: true\n"}  esbuild: true\n${!platform || platform.includes("cloudflare") ? "  workerd: true\n" : ""}`,
+const workspaceConfig = (source: string): string =>
+  source
+    .replace('import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";\n', "")
+    .replace('import { createLintConfig } from "./lint.config.ts";\n', "")
+    .replace(
+      '\nconst ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));\n',
+      "",
+    )
+    .replace("  fmt: { ignorePatterns },\n  lint: createLintConfig(ignorePatterns),\n", "");
+
+describe("generated host parity", () => {
+  live.each(platforms)(
+    "keeps generated %s host entries aligned with the runnable example",
+    (platform) =>
+      Effect.gen(function* () {
+        const { directory, fs, path, workspace } = yield* generate(platform);
+        const example = path.join(workspace, "examples", platform);
+        const configName = "vite.config.ts";
+        const generatedConfig = yield* fs.readFileString(path.join(directory, configName));
+        const exampleConfig = yield* fs.readFileString(path.join(example, configName));
+        expect(workspaceConfig(generatedConfig)).toBe(exampleConfig);
+        const files = hostEntries[platform];
+        const generated = yield* Effect.forEach(files, (file) =>
+          fs.readFileString(path.join(directory, file)),
+        );
+        const reference = yield* Effect.forEach(files, (file) =>
+          fs.readFileString(path.join(example, file)),
+        );
+        expect(generated).toStrictEqual(reference);
+      }).pipe(Effect.provide(NodeServices.layer)),
   );
-}
-
-it("keeps required Vite+ overrides and lifecycle policy aligned with its installed toolchain", async () => {
-  await expectPnpmConfiguration(fileURLToPath(new URL("../../../", import.meta.url)));
 });
 
-it("ships pnpm toolchain metadata through the published CLI for every platform", async () => {
-  const root = fileURLToPath(new URL("../../../", import.meta.url));
-  await mkdir(join(root, "tmp"), { recursive: true });
-  const directory = await mkdtemp(join(root, "tmp", "create-effront-publication-"));
-  directories.push(directory);
-  const archive = join(directory, "create-effront.tgz");
-  await runFile("vp", ["pm", "pack", "--out", archive], {
-    cwd: fileURLToPath(new URL("../", import.meta.url)),
-  });
-  await runFile("tar", ["-xf", archive, "-C", directory]);
-  // Reuse the installed declared dependencies without another registry installation.
-  await symlink(
-    fileURLToPath(new URL("../node_modules", import.meta.url)),
-    join(directory, "package", "node_modules"),
-    "dir",
+describe("standalone Worker starter", () => {
+  live("uses Wrangler without Alchemy or a native server", () =>
+    Effect.gen(function* () {
+      const { directory, fs, path } = yield* generate("cloudflare");
+      const manifest = yield* readProjectManifest(directory);
+      const { version } = yield* metadata;
+      expect(manifest).toMatchObject({
+        dependencies: { "@effront/cloudflare": `^${version}` },
+        devDependencies: { wrangler: "^4.148.0" },
+        scripts: { deploy: "wrangler deploy" },
+      });
+      const forbidden = ["@effront/alchemy", "alchemy", "@effront/server"];
+      const dependencies = Object.keys(manifest.dependencies ?? {});
+      expect(forbidden.filter((name) => dependencies.includes(name))).toStrictEqual([]);
+      expect(yield* fs.readDirectory(directory)).not.toContain("alchemy.run.ts");
+      expect(yield* fs.readDirectory(path.join(directory, "src"))).not.toContain("entry.server.ts");
+    }).pipe(Effect.provide(NodeServices.layer)),
   );
-  const published = JSON.parse(await readFile(join(directory, "package", "package.json"), "utf8"));
-  for (const platform of platforms) {
-    const project = join(directory, "generated", platform);
-    await runFile(process.execPath, [
-      join(directory, "package", published.bin["create-effront"]),
-      project,
-      "--platform",
-      platform,
-    ]);
-    expect(await readdir(project)).not.toContain("bunfig.toml");
-    const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
-    expect(manifest.packageManager).toBe(workspace.packageManager);
-    expect(manifest).not.toHaveProperty("overrides");
-    expect(manifest).not.toHaveProperty("trustedDependencies");
-    await expectPnpmConfiguration(project, platform);
-    if (platform === "alchemy-cloudflare") {
-      const worker = await readFile(join(project, "src/entry.workers.ts"), "utf8");
-      expect(worker).toContain('from "@effront/alchemy/cloudflare/application"');
-      expect(worker).toContain('import type application from "./entry.effront"');
-      expect(worker).toContain("makeApplicationHttpEffect<typeof application>()");
-      expect(worker).not.toContain("import(");
-    }
-  }
-});
 
-for (const platform of platforms) {
-  it(`creates a ${platform} project with the shared application`, async () => {
-    const directory = join(await temporaryDirectory(), "My App");
-    await createProject(directory, platform);
-    const manifest = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
-    const application = await readFile(join(directory, "src/entry.effront.tsx"), "utf8");
-    const examples = ["node", "bun", "cloudflare", "alchemy-cloudflare"];
-
-    expect(manifest.name).toBe("my-app");
-    expect(manifest.packageManager).toBe(workspace.packageManager);
-    expect(manifest).not.toHaveProperty("overrides");
-    expect(manifest).not.toHaveProperty("trustedDependencies");
-    await expectPnpmConfiguration(directory, platform);
-    expect(await readdir(directory)).not.toContain("bunfig.toml");
-    if (platform === "alchemy-cloudflare") {
-      expect(manifest.scripts).toEqual({ dev: "alchemy dev" });
-    } else {
-      expect(manifest.scripts).not.toHaveProperty("dev");
-      expect(manifest.scripts).not.toHaveProperty("build");
-    }
-    expect(JSON.stringify(manifest)).not.toMatch(/workspace:|catalog:/);
-    expect(manifest.devDependencies).toHaveProperty("vite-plus", "^1.1.0");
-    expect(manifest.devDependencies).toHaveProperty("@totto2727/gitignore-patterns", "^0.1.0");
-    const config = await readFile(join(directory, "vite.config.ts"), "utf8");
-    expect(config).toContain(
-      'import { generateIgnorePatterns } from "@totto2727/gitignore-patterns"',
-    );
-    expect(config).toContain('await generateIgnorePatterns(new URL(".", import.meta.url))');
-    expect(config).toContain("fmt: { ignorePatterns }");
-    expect(config).toContain("lint: { ignorePatterns }");
-    if (platform === "node" || platform === "bun") {
-      expect(manifest.scripts.start).toBe(`${platform} dist/rsc/server.js`);
-    }
-    for (const dependencies of [manifest.dependencies, manifest.devDependencies]) {
-      for (const [name, version] of Object.entries(dependencies ?? {})) {
-        expect(version).toMatch(/^\^/);
-        if (name.startsWith("@effront/")) {
-          expect(version).toBe(`^${packageJson.version}`);
-        }
-        if (name === "effect" || name.startsWith("@effect/")) {
-          expect(version).toBe("^4.0.2");
-        }
-      }
-    }
-    for (const example of examples) {
-      const source = await readFile(
-        new URL(`../../../examples/${example}/src/entry.effront.tsx`, import.meta.url),
-        "utf8",
+  live("configures native Worker rendering without generated bindings", () =>
+    Effect.gen(function* () {
+      const { directory, fs, path } = yield* generate("cloudflare");
+      const worker = yield* fs.readFileString(path.join(directory, "src/entry.workers.ts"));
+      const config = yield* fs.readFileString(path.join(directory, "vite.config.ts"));
+      const wrangler = yield* fs
+        .readFileString(path.join(directory, "wrangler.json"))
+        .pipe(Effect.flatMap(decodeJson));
+      expect(worker).toContain("createFetchHandler(application)");
+      expect(config).toContain("effrontCloudflare()");
+      expect(config).not.toContain("server:");
+      expect(wrangler).toMatchObject({ main: "src/entry.workers.ts", name: "cloudflare" });
+      const separateBindings = Object.keys(wrangler).filter(
+        (name) => name === "vars" || name === "assets",
       );
-      expect(application).toBe(source);
-    }
-    expect(await readdir(join(directory, "src"))).toContain("entry.effront.tsx");
-    expect(await readFile(join(directory, ".gitignore"), "utf8")).toContain("node_modules/");
-  });
-}
-
-for (const platform of platforms) {
-  it(`keeps generated ${platform} host entries aligned with the runnable example`, async () => {
-    const directory = join(await temporaryDirectory(), platform);
-    await createProject(directory, platform);
-    const hostFiles = [
-      "vite.config.ts",
-      ...(platform === "node" || platform === "bun"
-        ? ["src/entry.rsc.ts", "src/entry.server.ts"]
-        : platform === "cloudflare"
-          ? ["src/entry.workers.ts"]
-          : []),
-    ];
-    for (const file of hostFiles) {
-      let generated = await readFile(join(directory, file), "utf8");
-      if (file === "vite.config.ts") {
-        // Only standalone check wiring differs from the runnable workspace host configuration.
-        generated = generated
-          .replace('import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";\n', "")
-          .replace(
-            '\nconst ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));\n',
-            "",
-          )
-          .replace("  fmt: { ignorePatterns },\n  lint: { ignorePatterns },\n", "");
-      }
-      expect(generated).toBe(
-        await readFile(new URL(`../../../examples/${platform}/${file}`, import.meta.url), "utf8"),
-      );
-    }
-  });
-}
-
-it("creates a standalone Cloudflare Worker without Alchemy or bindings", async () => {
-  const directory = join(await temporaryDirectory(), "cloudflare");
-  await createProject(directory, "cloudflare");
-  const manifest = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
-  const worker = await readFile(join(directory, "src/entry.workers.ts"), "utf8");
-  const config = await readFile(join(directory, "vite.config.ts"), "utf8");
-  const wrangler = JSON.parse(await readFile(join(directory, "wrangler.json"), "utf8"));
-  expect(manifest.dependencies).toHaveProperty("@effront/cloudflare", `^${packageJson.version}`);
-  expect(manifest.dependencies).not.toHaveProperty("@effront/alchemy");
-  expect(manifest.dependencies).not.toHaveProperty("alchemy");
-  expect(manifest.dependencies).not.toHaveProperty("@effront/server");
-  expect(manifest.devDependencies).toHaveProperty("wrangler", "^4.148.0");
-  expect(manifest.scripts).toEqual({ deploy: "wrangler deploy" });
-  expect(worker).toContain("createFetchHandler(application)");
-  expect(config).toContain("effrontCloudflare()");
-  expect(config).not.toContain("server:");
-  expect(wrangler).toMatchObject({ name: "cloudflare", main: "src/entry.workers.ts" });
-  expect(wrangler).not.toHaveProperty("vars");
-  expect(wrangler).not.toHaveProperty("assets");
-  expect(await readdir(directory)).not.toContain("alchemy.run.ts");
-  expect(await readdir(join(directory, "src"))).not.toContain("entry.server.ts");
-});
-
-it("keeps standalone Cloudflare hosting out of the Alchemy project", async () => {
-  const directory = join(await temporaryDirectory(), "alchemy-cloudflare");
-  await createProject(directory, "alchemy-cloudflare");
-  const manifest = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
-  const worker = await readFile(join(directory, "src/entry.workers.ts"), "utf8");
-  const config = await readFile(join(directory, "vite.config.ts"), "utf8");
-  const runner = await readFile(join(directory, "alchemy.run.ts"), "utf8");
-  expect(manifest.dependencies).toHaveProperty("@effront/alchemy", `^${packageJson.version}`);
-  expect(manifest.dependencies).not.toHaveProperty("@effront/cloudflare");
-  expect(manifest.dependencies).not.toHaveProperty("@effront/server");
-  expect(worker).toContain("makeApplicationHttpEffect");
-  expect(config).toContain("effrontAlchemy()");
-  expect(config).not.toContain("server:");
-  expect(runner).toContain('"alchemy-cloudflare"');
-  expect(worker).not.toContain("dev: { port:");
-  expect(await readdir(directory)).not.toContain("wrangler.json");
-  expect(await readdir(join(directory, "src"))).not.toContain("entry.server.ts");
-});
-
-for (const platform of ["node", "bun"] as const) {
-  it(`uses Vite defaults and optional host environment settings for ${platform}`, async () => {
-    const directory = join(await temporaryDirectory(), platform);
-    await createProject(directory, platform);
-    const config = await readFile(join(directory, "vite.config.ts"), "utf8");
-    const server = await readFile(join(directory, "src/entry.server.ts"), "utf8");
-    expect(config).not.toContain("server:");
-    expect(server).toContain('process.env["PORT"]');
-    expect(server).toContain('process.env["HOST"]');
-    expect(server).toContain("...(port ? { port: Number(port) } : {})");
-    expect(server).toContain("...(hostname ? { hostname } : {})");
-    expect(server).not.toContain("port: undefined");
-    expect(server).not.toMatch(/1340|1343|127\.0\.0\.1/);
-  });
-}
-
-for (const platform of platforms) {
-  it(`accepts the ${platform} flag forwarded by vp create`, async () => {
-    const directory = join(await temporaryDirectory(), `forwarded-${platform}`);
-    const output = vi.spyOn(console, "log").mockImplementation(() => {});
-    try {
-      await Effect.runPromise(
-        runCommand([directory, "--platform", platform]).pipe(Effect.provide(NodeServices.layer)),
-      );
-      expect(JSON.parse(await readFile(join(directory, "package.json"), "utf8"))).toHaveProperty(
-        "name",
-        `forwarded-${platform}`,
-      );
-    } finally {
-      output.mockRestore();
-    }
-  });
-}
-
-it("describes supported platforms in framework-generated help", async () => {
-  const output = vi.spyOn(console, "log").mockImplementation(() => {});
-  try {
-    await Effect.runPromise(runCommand(["--help"]).pipe(Effect.provide(NodeServices.layer)));
-    expect(output).toHaveBeenCalledWith(expect.stringContaining("--platform"));
-    expect(output).toHaveBeenCalledWith(expect.stringContaining("alchemy-cloudflare"));
-  } finally {
-    output.mockRestore();
-  }
-});
-
-it("creates a project from forwarded VitePlus arguments and recommends vp commands", async () => {
-  const directory = join(await temporaryDirectory(), "my-app");
-  const output = vi.spyOn(console, "log").mockImplementation(() => {});
-  try {
-    await Effect.runPromise(
-      runCommand([directory, "--platform", "cloudflare"]).pipe(Effect.provide(NodeServices.layer)),
-    );
-    expect(output).toHaveBeenCalledWith(
-      expect.stringContaining(`Next: cd ${directory} && vp install && vp dev`),
-    );
-    expect(JSON.parse(await readFile(join(directory, "wrangler.json"), "utf8"))).toHaveProperty(
-      "name",
-      "my-app",
-    );
-  } finally {
-    output.mockRestore();
-  }
-});
-
-it("refuses to overwrite an existing project", async () => {
-  const directory = await temporaryDirectory();
-  await writeFile(join(directory, "keep.txt"), "preserve me");
-  await expect(createProject(directory, "node")).rejects.toThrow("not empty");
-  expect(await readFile(join(directory, "keep.txt"), "utf8")).toBe("preserve me");
-  expect(await readdir(directory)).toEqual(["keep.txt"]);
-});
-
-it("validates the normalized project name before touching the target", async () => {
-  const directory = await temporaryDirectory();
-  expect(projectName(join(directory, "My 🧪 App"))).toBe("my-app");
-  await expect(createProject(join(directory, "🧪"), "node")).rejects.toThrow(
-    "Project directory must contain letters or numbers.",
+      expect(separateBindings).toStrictEqual([]);
+    }).pipe(Effect.provide(NodeServices.layer)),
   );
-  expect(await readdir(directory)).toEqual([]);
 });
 
-it("rejects invalid platform and unexpected options without creating a project", async () => {
-  const directory = join(await temporaryDirectory(), "invalid");
-  await expect(
-    Effect.runPromise(
-      runCommand([directory, "--platform", "workers"]).pipe(Effect.provide(NodeServices.layer)),
-    ),
-  ).rejects.toThrow();
-  await expect(
-    Effect.runPromise(
-      runCommand([directory, "--unknown"]).pipe(Effect.provide(NodeServices.layer)),
-    ),
-  ).rejects.toThrow();
-  await expect(
-    Effect.runPromise(
-      runCommand([directory, "--platform="]).pipe(Effect.provide(NodeServices.layer)),
-    ),
-  ).rejects.toThrow();
-  await expect(
-    Effect.runPromise(
-      runCommand([directory, "extra", "--platform", "node"]).pipe(
-        Effect.provide(NodeServices.layer),
-      ),
-    ),
-  ).rejects.toThrow();
-  await expect(readdir(directory)).rejects.toThrow();
+describe("starter for an Alchemy Worker", () => {
+  live("uses Alchemy without Wrangler or a native server", () =>
+    Effect.gen(function* () {
+      const { directory, fs, path } = yield* generate("alchemy-cloudflare");
+      const manifest = yield* readProjectManifest(directory);
+      const { version } = yield* metadata;
+      expect(manifest.dependencies).toHaveProperty("@effront/alchemy", `^${version}`);
+      expect(manifest.dependencies).not.toHaveProperty("@effront/cloudflare");
+      expect(manifest.dependencies).not.toHaveProperty("@effront/server");
+      expect(yield* fs.readDirectory(directory)).not.toContain("wrangler.json");
+      expect(yield* fs.readDirectory(path.join(directory, "src"))).not.toContain("entry.server.ts");
+    }).pipe(Effect.provide(NodeServices.layer)),
+  );
+
+  live("renders the Worker through the Effront Alchemy runtime", () =>
+    Effect.gen(function* () {
+      const { directory, fs, path } = yield* generate("alchemy-cloudflare");
+      const worker = yield* fs.readFileString(path.join(directory, "src/entry.workers.ts"));
+      const config = yield* fs.readFileString(path.join(directory, "vite.config.ts"));
+      const runner = yield* fs.readFileString(path.join(directory, "alchemy.run.ts"));
+      expect(worker).toContain("makeApplicationHttpEffect");
+      expect(config).toContain("effrontAlchemy()");
+      expect(config).not.toContain("server:");
+      expect(runner).toContain('"alchemy-cloudflare"');
+      expect(worker).not.toContain("dev: { port:");
+    }).pipe(Effect.provide(NodeServices.layer)),
+  );
 });
 
-it("rejects missing options without a terminal", async () => {
-  await expect(
-    Effect.runPromise(runCommand([]).pipe(Effect.provide(NodeServices.layer))),
-  ).rejects.toThrow("Specify a directory and --platform in non-interactive mode.");
-});
-
-it("recommends Alchemy orchestration rather than a direct Vite dev command", async () => {
-  const directory = join(await temporaryDirectory(), "alchemy-app");
-  const output = vi.spyOn(console, "log").mockImplementation(() => {});
-  try {
-    await Effect.runPromise(
-      runCommand([directory, "--platform", "alchemy-cloudflare"]).pipe(
-        Effect.provide(NodeServices.layer),
-      ),
-    );
-    expect(output).toHaveBeenCalledWith(
-      expect.stringContaining(`Next: cd ${directory} && vp install && vp run dev`),
-    );
-  } finally {
-    output.mockRestore();
-  }
+describe("native development servers", () => {
+  live.each(["node", "bun"] as const)(
+    "uses Vite defaults and optional host environment settings for %s",
+    (platform) =>
+      Effect.gen(function* () {
+        const { directory, fs, path } = yield* generate(platform);
+        const config = yield* fs.readFileString(path.join(directory, "vite.config.ts"));
+        const server = yield* fs.readFileString(path.join(directory, "src/entry.server.ts"));
+        expect(config).not.toContain("server:");
+        const environmentOverrides = [
+          'PORT: port = ""',
+          'HOST: hostname = ""',
+          "...(String.isNonEmpty(port) ? { port: Number(port) } : {})",
+          "...(String.isNonEmpty(hostname) ? { hostname } : {})",
+        ];
+        expect(environmentOverrides.filter((item) => !server.includes(item))).toStrictEqual([]);
+        expect(server).not.toContain("port: undefined");
+        expect(server).not.toMatch(/1340|1343|127\.0\.0\.1/u);
+      }).pipe(Effect.provide(NodeServices.layer)),
+  );
 });

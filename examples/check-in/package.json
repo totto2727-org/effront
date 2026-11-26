@@ -2,6 +2,9 @@
   "name": "effront-check-in-example",
   "private": true,
   "type": "module",
+  "imports": {
+    "#check-in/effront.ts": "./src/effront.ts"
+  },
   "scripts": {
     "dev": "alchemy dev"
   },

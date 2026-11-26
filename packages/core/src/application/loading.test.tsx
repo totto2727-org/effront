@@ -1,14 +1,15 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, expect, test } from "@effect/vitest";
+import type { JSX } from "react";
 
-import { Application } from "./effront";
+import { Application } from "./effront.ts";
 
 const EFFRONT = Application.effront();
+const render = (): JSX.Element => <p>Loading...</p>;
 
-describe("EFFRONT.Loading.make", () => {
-  it("runs the synchronous fallback renderer", () => {
-    const render = () => <p>Loading...</p>;
+describe("eFFRONT.Loading.make", () => {
+  test("runs the synchronous fallback renderer", () => {
     const RootLoading = EFFRONT.Loading.make({ render });
 
-    expect(RootLoading()).toEqual(<p>Loading...</p>);
+    expect(RootLoading()).toStrictEqual(<p>Loading...</p>);
   });
 });

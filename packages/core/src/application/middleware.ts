@@ -1,24 +1,27 @@
-import { type Effect, type Types } from "effect";
-import { HttpRouter, type HttpServerResponse } from "effect/http";
+import { Array } from "effect";
+import type { Effect, Types } from "effect";
+import { HttpRouter } from "effect/http";
+import type { HttpServerResponse } from "effect/http";
 
 import {
-  type EFFRONTIdentity,
+  authoringTypeError,
   EFFRONTIdentityTypeId,
   isEFFRONTMember,
   EFFRONTMemberKindTypeId,
-  type EFFRONTStatefulMember,
   EFFRONTStateTypeId,
-} from "./effront-identity";
+} from "./effront-identity.ts";
+import type { EFFRONTIdentity, EFFRONTMember } from "./effront-identity.ts";
 
-type MiddlewareConfig = {
-  readonly provides?: unknown;
-};
+type MiddlewareConfig = Readonly<{
+  provides?: unknown;
+}>;
 
-type MiddlewareProvides<Config extends MiddlewareConfig> = Config extends {
-  readonly provides: infer Provides;
-}
-  ? Provides
-  : never;
+type MiddlewareProvides<Config extends MiddlewareConfig> =
+  Config extends Readonly<{
+    provides: infer Provides;
+  }>
+    ? Provides
+    : never;
 
 type MiddlewareHandler<AvailableServices, Provides> = <Error, RemainingServices>(
   httpEffect: Effect.Effect<
@@ -36,45 +39,49 @@ export interface Middleware<
   ApplicationServices,
   out RequiredServices,
   out ProvidedServices,
-> extends EFFRONTStatefulMember<
-  ApplicationServices,
-  "Middleware",
-  MiddlewareImplementationState<RequiredServices, ProvidedServices>
-> {}
+> extends EFFRONTMember<ApplicationServices, "Middleware"> {
+  // oxlint-disable-next-line rules/no-readonly -- Consumers can inspect the immutable middleware state through this shared runtime symbol.
+  readonly [EFFRONTStateTypeId]: MiddlewareImplementationState<RequiredServices, ProvidedServices>;
+}
 
 export type AnyMiddleware<ApplicationServices> = Middleware<ApplicationServices, unknown, unknown>;
 
-type HttpMiddleware<RequiredServices, ProvidedServices> = HttpRouter.Middleware<{
-  readonly error: never;
-  readonly handles: never;
-  readonly layerError: never;
-  readonly layerRequires: never;
-  readonly provides: ProvidedServices;
-  readonly requires: Exclude<RequiredServices, HttpRouter.Provided>;
-}>;
+type HttpMiddleware<RequiredServices, ProvidedServices> = HttpRouter.Middleware<
+  Readonly<{
+    error: never;
+    handles: never;
+    layerError: never;
+    layerRequires: never;
+    provides: ProvidedServices;
+    requires: Exclude<RequiredServices, HttpRouter.Provided>;
+  }>
+>;
 
-export type MiddlewareImplementationState<RequiredServices, ProvidedServices> = {
+export type MiddlewareImplementationState<RequiredServices, ProvidedServices> = Readonly<{
   // Page GET/HEAD composes the native descriptor so Effect HTTP retains routing semantics such as
   // HEAD fallback. Server Function POST keeps the handler because its scope is known only after
   // React decodes the invoked reference.
-  readonly handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
-  readonly httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
-};
+  handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
+  httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
+}>;
 
 class MiddlewareImpl<ApplicationServices, RequiredServices, ProvidedServices>
   implements
     Middleware<ApplicationServices, RequiredServices, ProvidedServices>,
     MiddlewareImplementationState<RequiredServices, ProvidedServices>
 {
-  readonly [EFFRONTIdentityTypeId]: EFFRONTIdentity<ApplicationServices>;
-  readonly [EFFRONTMemberKindTypeId] = "Middleware" as const;
-  get [EFFRONTStateTypeId](): MiddlewareImplementationState<RequiredServices, ProvidedServices> {
+  public [EFFRONTIdentityTypeId]: EFFRONTIdentity<ApplicationServices>;
+  public [EFFRONTMemberKindTypeId] = "Middleware" as const;
+  public get [EFFRONTStateTypeId](): MiddlewareImplementationState<
+    RequiredServices,
+    ProvidedServices
+  > {
     return this;
   }
-  readonly handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
-  readonly httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
+  public handler: MiddlewareHandler<RequiredServices, ProvidedServices>;
+  public httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>;
 
-  constructor(
+  public constructor(
     identity: EFFRONTIdentity<ApplicationServices>,
     handler: MiddlewareHandler<RequiredServices, ProvidedServices>,
     httpMiddleware: HttpMiddleware<RequiredServices, ProvidedServices>,
@@ -90,7 +97,7 @@ export const getMiddlewareState = <ApplicationServices, RequiredServices, Provid
   middleware: Middleware<ApplicationServices, RequiredServices, ProvidedServices>,
 ): MiddlewareImplementationState<RequiredServices, ProvidedServices> => {
   if (!isEFFRONTMember(middleware, "Middleware")) {
-    throw new TypeError("Middleware must be created with EFFRONT.Middleware.make.");
+    throw authoringTypeError("Middleware must be created with EFFRONT.Middleware.make.");
   }
   return middleware[EFFRONTStateTypeId];
 };
@@ -101,44 +108,52 @@ export const getScopedMiddlewareHandler = <ApplicationServices>(
   getMiddlewareState(middleware).handler;
 
 export const applyMiddleware = <ApplicationServices, Error, RemainingServices>(
-  middleware: ReadonlyArray<AnyMiddleware<ApplicationServices>>,
+  middleware: Readonly<AnyMiddleware<ApplicationServices>[]>,
   httpEffect: Effect.Effect<
     HttpServerResponse.HttpServerResponse,
     Error,
     ApplicationServices | HttpRouter.Provided | RemainingServices
   >,
-) =>
-  middleware.reduceRight(
-    (current, value) => getScopedMiddlewareHandler(value)(current),
-    httpEffect,
+): Effect.Effect<
+  HttpServerResponse.HttpServerResponse,
+  Error,
+  ApplicationServices | HttpRouter.Provided | RemainingServices
+> =>
+  Array.reduceRight(middleware, httpEffect, (current, value) =>
+    getScopedMiddlewareHandler(value)(current),
   );
 
 export function getScopedHttpMiddleware<ApplicationServices>(
   middleware: AnyMiddleware<ApplicationServices>,
 ): HttpMiddleware<never, never>;
-// AnyMiddleware erases each link's service contract after withMiddleware has validated the ordered
-// chain. Callers must compose that complete chain inside the application and request context; the
-// returned native descriptor retains the real runtime provisioning behavior.
-export function getScopedHttpMiddleware(middleware: AnyMiddleware<unknown>) {
+// Application construction validates the ordered chain before its static requirements are erased.
+// The native chain still provisions real services at runtime.
+export function getScopedHttpMiddleware(
+  middleware: AnyMiddleware<unknown>,
+): HttpMiddleware<unknown, unknown> {
   return getMiddlewareState(middleware).httpMiddleware;
 }
 
-export type MiddlewareFactory<ApplicationServices, AvailableServices> = {
-  readonly make: <Config extends MiddlewareConfig = {}>(
+export type MiddlewareFactory<ApplicationServices, AvailableServices> = Readonly<{
+  make: <Config extends MiddlewareConfig = MiddlewareConfig>(
     handler: MiddlewareHandler<AvailableServices, MiddlewareProvides<Config>>,
   ) => Middleware<ApplicationServices, AvailableServices, MiddlewareProvides<Config>>;
-};
+}>;
 
 export const makeMiddlewareFactory = <ApplicationServices, AvailableServices>(
   identity: EFFRONTIdentity<ApplicationServices>,
 ): MiddlewareFactory<ApplicationServices, AvailableServices> => ({
-  make: <Config extends MiddlewareConfig = {}>(
+  make: <Config extends MiddlewareConfig = MiddlewareConfig>(
     handler: MiddlewareHandler<AvailableServices, MiddlewareProvides<Config>>,
   ): Middleware<ApplicationServices, AvailableServices, MiddlewareProvides<Config>> => {
     type Provides = MiddlewareProvides<Config>;
     const httpHandler = (
       httpEffect: Effect.Effect<HttpServerResponse.HttpServerResponse, Types.unhandled, Provides>,
-    ) => handler<Types.unhandled, never>(httpEffect);
+    ): Effect.Effect<
+      HttpServerResponse.HttpServerResponse,
+      Types.unhandled,
+      HttpRouter.Provided | AvailableServices
+    > => handler<Types.unhandled, never>(httpEffect);
     return new MiddlewareImpl(
       identity,
       handler,

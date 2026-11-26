@@ -1,8 +1,10 @@
-import { Clock, Effect } from "effect";
+import { Clock, Effect, MutableRef } from "effect";
 
-let sequence = 0;
+const initialSequence = 0;
+const sequence = MutableRef.make(initialSequence);
+const digestRadix = 36;
 
 export const nextErrorDigest = Effect.map(Clock.currentTimeMillis, (now) => {
-  sequence += 1;
-  return `${now.toString(36)}-${sequence.toString(36)}`;
+  const next = MutableRef.incrementAndGet(sequence);
+  return `${now.toString(digestRadix)}-${next.toString(digestRadix)}`;
 });

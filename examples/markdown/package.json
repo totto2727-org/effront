@@ -2,6 +2,9 @@
   "name": "effront-markdown-example",
   "private": true,
   "type": "module",
+  "imports": {
+    "#example/content.ts": "./content.ts"
+  },
   "scripts": {
     "dev": "alchemy dev"
   },
@@ -20,7 +23,6 @@
     "@effront/tailwind": "workspace:*",
     "@effront/vite": "workspace:*",
     "@tailwindcss/typography": "catalog:",
-    "@totto2727/gitignore-patterns": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-rsc": "catalog:",

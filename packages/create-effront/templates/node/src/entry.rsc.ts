@@ -1,5 +1,8 @@
 import { toHttpEffect } from "@effront/core/http";
-import application from "./entry.effront";
+import { Predicate } from "effect";
+import application from "./entry.effront.tsx";
 
 export const handler = toHttpEffect(application);
-if (import.meta.hot) import.meta.hot.accept();
+if (Predicate.isNotNullish(import.meta.hot)) {
+  import.meta.hot.accept();
+}

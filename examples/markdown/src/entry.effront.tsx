@@ -1,10 +1,11 @@
 import { MarkdownDocument } from "@effront/markdown/document";
-import { parseMarkdown, type MarkdownEntry } from "@effront/markdown";
+import { parseMarkdown } from "@effront/markdown";
+import type { MarkdownEntry } from "@effront/markdown";
 import { Context, Effect, Result, Schema } from "effect";
 import { HttpServerRequest, HttpServerResponse } from "effect/http";
 import { Application } from "@effront/core";
-import { manual } from "../content";
-import { Shell } from "./components/shell";
+import { manual } from "#example/content.ts";
+import { Shell } from "./components/shell.tsx";
 
 const EFFRONT = Application.effront();
 const RootLayout = EFFRONT.Layout.make({
@@ -59,6 +60,9 @@ const ManualPage = Manual.Page.make({
     }),
 });
 
-export default EFFRONT.make({
+const application = EFFRONT.make({
   routes: Manual.Routes.make({ layout: RootLayout }).page("/manual/*path", ManualPage),
 });
+
+// oxlint-disable-next-line import/no-default-export -- The Effront Vite plugin loads this application through its default export.
+export default application;
