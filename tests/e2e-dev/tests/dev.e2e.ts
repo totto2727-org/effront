@@ -29,7 +29,8 @@ const recordErrors = (page: Page): string[] => {
 type AddedPage = Readonly<{ file: string; url: string }>;
 
 const makeAddedPage = (): AddedPage => {
-  const stem = `acceptance-added-${crypto.randomUUID()}%20literal`;
+  const run = `${process.pid}-${Math.trunc(performance.timeOrigin)}`;
+  const stem = `acceptance-added-${run}%20literal`;
   return {
     file: path.join(contentDirectory, "manual/guide", `${stem}.md`),
     url: `/manual/guide/${encodeURIComponent(stem)}`,
