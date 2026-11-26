@@ -8,6 +8,7 @@
   "devDependencies": {
     "@comark/react": "catalog:",
     "@effect/platform-browser": "catalog:",
+    "@effect/platform-node-shared": "catalog:",
     "@effront/cloudflare": "workspace:*",
     "@effront/core": "workspace:*",
     "@effront/markdown": "workspace:*",

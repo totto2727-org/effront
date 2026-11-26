@@ -33,7 +33,14 @@ jobs:
           if [[ "$GITHUB_REF" == refs/heads/main ]]; then
             stage=production
           else
-            stage="preview-$(node -p 'require("node:crypto").createHash("sha256").update(process.env.GITHUB_REF).digest("hex").slice(0, 12)')"
+            stage="preview-$(node --input-type=module -e '
+              import * as NodeCrypto from "@effect/platform-node-shared/NodeCrypto";
+              import * as Effect from "effect/Effect";
+
+              const ref = new TextEncoder().encode(process.env.GITHUB_REF);
+              const digest = Effect.runSync(NodeCrypto.make.digest("SHA-256", ref));
+              console.log(Buffer.from(digest).toString("hex").slice(0, 12));
+            ')"
           fi
           echo "name=$stage" >> "$GITHUB_OUTPUT"
       - name: Deploy documentation
