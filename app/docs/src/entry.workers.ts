@@ -1,3 +1,4 @@
+import { effrontWorkerOptions } from "@effront/alchemy/cloudflare";
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
@@ -12,8 +13,8 @@ export const docsWorker = (deployment: Pick<Cloudflare.WorkerProps, "domain" | "
       main: import.meta.url,
       cache: { enabled: true },
       dev: { port: 1339 },
-      compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-      vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+      compatibility: { date: "2026-09-01" },
+      ...effrontWorkerOptions("docs"),
       ...deployment,
     },
     Effect.gen(function* () {
@@ -24,4 +25,4 @@ export const docsWorker = (deployment: Pick<Cloudflare.WorkerProps, "domain" | "
     }),
   );
 
-export default docsWorker();
+export const docs = docsWorker();

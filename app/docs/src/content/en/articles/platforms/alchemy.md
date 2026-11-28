@@ -16,13 +16,15 @@ vp install
 
 The one-page example already contains the host configuration:
 
-| File                    | Role                                                            |
-| ----------------------- | --------------------------------------------------------------- |
-| `src/entry.effront.tsx` | Defines the document layout, one page, and its `/` route.       |
-| `src/entry.workers.ts`  | Declares the Worker and constructs its configured HTTP handler. |
-| `alchemy.run.ts`        | Defines the Stack and outputs the Worker's URL.                 |
-| `vite.config.ts`        | Registers `effront()` and `effrontAlchemy()`.                   |
-| `package.json`          | Defines `dev` as `alchemy dev`.                                 |
+| File                    | Role                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | Defines the document layout, one page, and its `/` route.                             |
+| `src/entry.workers.ts`  | Exports the named Worker and constructs its configured HTTP handler.                  |
+| `alchemy.run.ts`        | Defines the Stack and outputs the Worker's URL.                                       |
+| `vite.config.ts`        | Registers `effront()` and sets the Workers module with `effrontAlchemy({ workers })`. |
+| `package.json`          | Defines `dev` as `alchemy dev`.                                                       |
+
+Use the same setup for [multiple Workers](../api-reference/alchemy.md#multiple-workers). Export each Worker by name from the Workers module and include all of them in the Stack.
 
 ## Start development {#stack}
 

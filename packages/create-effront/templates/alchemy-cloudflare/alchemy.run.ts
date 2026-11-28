@@ -1,13 +1,13 @@
 import { localState, Stack } from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
-import Worker from "./src/entry.workers";
+import { app } from "./src/entry.workers";
 
 export default Stack(
   "__PROJECT_NAME__",
   { state: localState(), providers: Cloudflare.providers() },
   Effect.gen(function* () {
-    const site = yield* Worker;
+    const site = yield* app;
     return { url: site.url };
   }),
 );

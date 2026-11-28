@@ -58,11 +58,32 @@ const rawAssetUpdates = (): Plugin => {
   };
 };
 
+export type EffrontApplicationEntry = {
+  /** Name selected by the host, such as an Alchemy Worker export. */
+  readonly name: string;
+  /** Application module relative to the Vite root. */
+  readonly entry: string;
+};
+
 export type EffrontViteOptions = {
   /** RSC environment entry exporting the runtime's `{ fetch }` handler; defaults to `src/entry.workers.ts`. */
   readonly rsc?: string;
-  /** Application definition export available as `@effront/core/application-entry`; defaults to `src/entry.effront.tsx`. */
-  readonly application?: string;
+  /** The application entries available to the host. Omit to use `src/entry.effront.tsx`. */
+  readonly applications?: readonly [EffrontApplicationEntry, ...EffrontApplicationEntry[]];
+};
+
+/** Vite configuration shared with host adapters before the Effront application alias is resolved. */
+export type EffrontViteConfig = UserConfig & { effrontWorker?: string };
+
+const applicationEntry = (applications: EffrontViteOptions["applications"], worker?: string) => {
+  if (applications === undefined) return "./src/entry.effront.tsx";
+  if (worker === undefined) {
+    if (applications.length === 1) return applications[0].entry;
+    throw new TypeError("Multiple Effront applications require a host to select a Worker.");
+  }
+  const entry = applications.find(({ name }) => name === worker)?.entry;
+  if (!entry) throw new TypeError(`Effront has no application entry for Worker '${worker}'.`);
+  return entry;
 };
 
 /**
@@ -73,7 +94,10 @@ export type EffrontViteOptions = {
  */
 export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   const rscEntry = options.rsc ?? "./src/entry.workers.ts";
-  const application = options.application ?? "./src/entry.effront.tsx";
+  const { applications } = options;
+  if (applications && new Set(applications.map(({ name }) => name)).size !== applications.length) {
+    throw new TypeError("Effront application names must be unique.");
+  }
   let resolvedRscEntry: string;
   const schemaJit: Plugin = {
     name: "effront:schema-jit",
@@ -89,10 +113,13 @@ export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   };
   const applicationAlias: Plugin = {
     name: "effront:application-entry",
-    config: (config): UserConfig => ({
+    config: (config: EffrontViteConfig): UserConfig => ({
       resolve: {
         alias: {
-          "@effront/core/application-entry": resolve(config.root ?? process.cwd(), application),
+          "@effront/core/application-entry": resolve(
+            config.root ?? process.cwd(),
+            applicationEntry(applications, config.effrontWorker),
+          ),
         },
       },
     }),

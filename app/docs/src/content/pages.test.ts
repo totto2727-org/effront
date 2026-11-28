@@ -468,7 +468,10 @@ describe("documentation catalog", () => {
       const alchemy = await render(`/${locale}/api-reference/alchemy`);
       expect(alchemy).toContain('data-alert="warning"');
       const alchemyText = await text(`/${locale}/api-reference/alchemy`);
-      expect(alchemyText).toContain("plugins: [effront(), effrontAlchemy()]");
+      expect(alchemyText).toContain(
+        "plugins: [effront(), effrontAlchemy({ workers: &quot;./src/entry.workers.ts&quot; })]",
+      );
+      expect(alchemyText).toContain("applications: [");
     },
   );
 

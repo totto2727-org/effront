@@ -1,9 +1,13 @@
 import { fileURLToPath } from "node:url";
 import * as Text from "@alchemy.run/cloudflare-runtime/core/bindings/Text";
 import cloudflare from "@alchemy.run/cloudflare-runtime/vite";
+import { effrontWorkerOptions } from "@effront/alchemy/cloudflare";
 import { effrontAlchemy } from "@effront/alchemy/cloudflare/vite";
 import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
+import { alchemyViteDefines } from "../alchemy-vite-config";
+
+const { env, vite } = effrontWorkerOptions("streaming_feed");
 
 const explicitLoader = process.env["EFFRONT_TEST_EXPLICIT_LOADER"] === "1";
 
@@ -18,17 +22,25 @@ export default defineConfig({
       import.meta.url,
     ),
   ),
+  define: alchemyViteDefines(env),
   plugins: [
-    effront(explicitLoader ? { application: "./src/unused-configured-application.tsx" } : {}),
-    effrontAlchemy(
+    effront(
       explicitLoader
-        ? { worker: fileURLToPath(new URL("./entry.explicit-loader.ts", import.meta.url)) }
+        ? {
+            applications: [
+              { name: "streaming_feed", entry: "./src/unused-configured-application.tsx" },
+            ],
+          }
         : {},
     ),
+    effrontAlchemy({
+      workers: explicitLoader
+        ? fileURLToPath(new URL("./entry.explicit-loader.ts", import.meta.url))
+        : "./src/entry.workers.ts",
+    }),
     cloudflare({
       compatibilityDate: "2026-09-01",
-      compatibilityFlags: ["nodejs_compat"],
-      viteEnvironments: { entry: "rsc", children: ["ssr"] },
+      ...vite,
       worker: {
         name: "effront-streaming-feed-example",
         bindings: [

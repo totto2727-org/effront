@@ -36,7 +36,7 @@ export type ApplicationLoader<
 
 **設定済みアプリケーション**
 
-`effront()` と `effrontAlchemy()` を使う場合は、アプリケーションを型としてインポートします。
+Effront と Alchemy の Vite プラグインを使う場合は、アプリケーションを型としてインポートします。
 構築時に必要なサービスを提供してから、構築用 Effect を `Cloudflare.Worker` に渡してください。
 
 ```typescript
@@ -50,8 +50,7 @@ const construct = Effect.gen(function* () {
 });
 ```
 
-型インポートは、`effront({ application })` で指定したアプリケーションを参照してください。
-既定のエントリーは `./src/entry.effront.tsx` です。
+型インポートは、`effront({ applications })` でこの Worker に指定したエントリーを参照してください。`applications` を省略した場合は `./src/entry.effront.tsx` です。
 TypeScript は型インポートと Vite 設定の一致までは検証しません。
 アプリケーションのモジュールは isolate 初期化時に評価される可能性があるため、モジュール直下では宣言的な定義に留めてください。
 アプリケーション Layer はリクエストごとに取得します。
@@ -108,7 +107,7 @@ Worker と Stack の宣言は [Alchemy のセットアップ](../platforms/alche
 
 ## effrontAlchemy {#vite}
 
-`@effront/alchemy/cloudflare/vite` の `effrontAlchemy(options?: EffrontAlchemyOptions): PluginOption[]` は、`effront()` より後に登録する必要があります。
+`@effront/alchemy/cloudflare/vite` の `effrontAlchemy(options: EffrontAlchemyOptions): PluginOption[]` は、`effront()` より後に登録する必要があります。
 正しい順序は次のとおりです。
 
 ```typescript
@@ -117,26 +116,49 @@ import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [effront(), effrontAlchemy()],
+  plugins: [effront(), effrontAlchemy({ workers: "./src/entry.workers.ts" })],
 });
 ```
 
 > [!WARNING]
 > プラグインの順序を逆にすると `TypeError` になります。
 
-| オプション | 型       | 既定値                   | 契約                                                                                                  |
-| ---------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `worker`   | `string` | `./src/entry.workers.ts` | Alchemy Worker を default export するモジュール。Vite root を基準に指定する。空文字列は `TypeError`。 |
+`workers` には、Vite root を基準としたモジュールのパスを指定します。Worker が 1 つでも、そのモジュールから名前付きでエクスポートします。
+各 Worker の宣言に、`@effront/alchemy/cloudflare` の `effrontWorkerOptions(name)` をスプレッドします。この関数は `rsc` と `ssr` の環境指定と、Alchemy が Vite に渡す `VITE_EFFRONT_WORKER` バインディングを返します。
+`name` は Workers モジュールのエクスポート名と一致させます。英小文字で始め、英小文字・数字・アンダースコアのみを使用します。`default` は使えません。
+ほかのバインディングがある場合は、`effrontWorkerOptions(name).env` を上書きせずにマージしてください。
+アプリケーションのエントリーは `effront({ applications })` で別に設定します。
 
-このアダプターに `application` オプションはなく、`effront()` の登録も行いません。
-アプリケーションエントリーの変更は `effront({ application })` と Worker の型インポート、または明示的なソースのインポートに反映します。
-Worker エントリーは `effront({ rsc })` ではなく `effrontAlchemy({ worker })` で選びます。
-ブリッジには Alchemy が注入する `ALCHEMY_STACK_NAME` と `ALCHEMY_STAGE` のバインディングが必要です。欠損または空の値は `TypeError` になり、`alchemy dev` から起動する必要があります。
-SSR 出力は既定で RSC Worker 成果物の子ディレクトリに配置されます。明示した出力先は保持されますが、Worker 成果物と一緒にパッケージ化してください。
+ブリッジには Alchemy が注入する `ALCHEMY_STACK_NAME` と `ALCHEMY_STAGE` のバインディングも必要です。指定がない場合や空の値は `TypeError` になります。
 
-Worker 宣言には `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }` が必要です。
+Worker ごとに Vite キャッシュと出力を分離します。出力先は `dist/<name>/client` と `dist/<name>/rsc` で、SSR は `rsc/ssr` に配置します。
+`dist` は `build.outDir` で変更できます。環境ごとの出力先は指定しないでください。
 `vite.main`、別のランタイムプラグイン、Wrangler 設定は追加しないでください。
 開発と本番ビルドのどちらでも、RSC と SSR のサーバーコードからは、インフラの provider factory を含む Node 専用のデプロイ・ローカルホスト用 export を使用できません。
 デプロイ時の export には影響しません。
 Alchemy は、Vite 単体ではなく `alchemy dev` を通じてホストプラグインとバインディングを提供します。
 Alchemy `2.0.0-beta.81` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。
+
+### 複数の Worker {#multiple-workers}
+
+1 つの Workers モジュールと 1 つの Vite 設定を Stack で共有します。
+
+```typescript
+export default defineConfig({
+  plugins: [
+    effront({
+      applications: [
+        { name: "storefront", entry: "./src/storefront.tsx" },
+        { name: "backoffice", entry: "./src/backoffice.tsx" },
+      ],
+    }),
+    effrontAlchemy({ workers: "./src/entry.workers.ts" }),
+  ],
+});
+```
+
+各 Worker の名前付きエクスポートを、対応する `applications` 要素の `name` に指定します。`entry` は Vite root を基準としたアプリケーションモジュールのパスです。
+すべての Worker で `./src/entry.effront.tsx` を使う場合は、`applications` を省略します。
+
+Stack に両方のリソースを含めると、Alchemy は両方の Worker を起動します。
+Workers モジュールと Stack の全体は [複数 Worker のサンプル](https://github.com/totto2727-org/effront/tree/main/examples/multi-worker) を参照してください。

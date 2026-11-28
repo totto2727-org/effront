@@ -3,5 +3,5 @@ import { effront } from "@effront/vite";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  plugins: [effront(), effrontAlchemy()],
+  plugins: [effront(), effrontAlchemy({ workers: "./src/entry.workers.ts" })],
 });

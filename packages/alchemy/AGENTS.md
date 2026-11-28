@@ -50,12 +50,13 @@ This does not prove remote permissions or deployment.
 
 ### Runtime compilation boundary
 
-- Consumers register `effront()` and `effrontAlchemy()` separately. Keep `application` exclusively in `effront({ application })` and Alchemy options limited to `worker`.
-- Register `effront()` before `effrontAlchemy()` and set the native bridge before the host captures its input. Do not import or invoke `@effront/vite` from the adapter implementation.
+- Consumers register `effront()` and `effrontAlchemy({ workers })` separately. The Workers module exports each Worker by name, even for a single Worker. Application entries belong in `effront({ applications })` as a nonempty array.
+- Register `effront` before `effrontAlchemy` and set the native bridge before the host captures its input. Use only the portable Vite configuration type from `@effront/vite`. Do not import or invoke the plugin at runtime.
+- Use Alchemy's per-Worker Vite config to select one named Worker and application before environment resolution. Keep canonical environment names and isolate cache and output paths per Worker.
 - Keep Alchemy and Cloudflare runtime at `2.0.0-beta.81` with the coherent stable Effect v4 family (`^4.0.1`). This range allows v4 minor and patch updates but excludes prereleases and v5. Beta.77 depends on `@distilled.cloud/core@1.0.0-rc.9`, which calls removed `Config.string`. Beta.79 uses rc.12 and passed the local Alchemy Worker browser suite.
 - Capability selection belongs to consumers. The temporary server-runtime compiler subtracts deployment-only exports in both development and production RSC/SSR graphs, never enumerates allowed features, leaves `optimizeDeps` unchanged, and has no version-number gate. Retain its removal TODO and do not claim untested remote product behavior.
 - Preserve React/Effect deduplication. The pinned development host limitation is documented in `docs/INTEGRATION.md`. Do not infer correct development behavior from a successful production build.
-- Keep default SSR output inside the RSC artifact while preserving explicit output directories. The host must package explicitly relocated modules together.
+- Isolate Worker outputs by name and keep SSR inside its RSC artifact. Allow only the common `build.outDir` override.
 
 ## Task-specific documentation
 

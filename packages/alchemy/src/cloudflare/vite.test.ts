@@ -5,14 +5,18 @@ import { effront } from "@effront/vite";
 import { normalizePath, resolveConfig } from "vite";
 import { describe, expect, it } from "vite-plus/test";
 
+import { alchemyViteDefines } from "../../../../tests/alchemy-vite-config";
+import { effrontWorkerOptions } from "./deployment";
 import { effrontAlchemy } from "./vite";
 
 const root = fileURLToPath(new URL("../../../../examples/basic/", import.meta.url));
+const define = alchemyViteDefines(effrontWorkerOptions("app").env);
+const alchemy = (workers = "./src/entry.workers.ts") => effrontAlchemy({ workers });
 
 describe("Alchemy Vite graph composition", () => {
   it("statically imports the configured application only in the RSC runtime environment", async () => {
     const config = await resolveConfig(
-      { configFile: false, root, plugins: [effront(), effrontAlchemy()] },
+      { configFile: false, root, define, plugins: [effront(), alchemy()] },
       "build",
     );
     const plugin = config.plugins.find(
@@ -39,7 +43,8 @@ describe("Alchemy Vite graph composition", () => {
       {
         configFile: false,
         root,
-        plugins: [effront(), effrontAlchemy()],
+        define,
+        plugins: [effront(), alchemy()],
       },
       "build",
     );
@@ -50,7 +55,7 @@ describe("Alchemy Vite graph composition", () => {
     expect(config.environments["rsc"]?.build.rollupOptions.input).toEqual({
       index: "virtual:effront/alchemy/cloudflare/entry",
     });
-    expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "dist/rsc/ssr"));
+    expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "dist/app/rsc/ssr"));
     expect(config.environments["rsc"]?.resolve.conditions).toContain("react-server");
     expect(config.environments["ssr"]?.resolve.conditions).not.toContain("react-server");
     expect(config.environments["client"]?.resolve.conditions).not.toContain("react-server");
@@ -67,7 +72,9 @@ describe("Alchemy Vite graph composition", () => {
     const source = Reflect.apply(loadEntry, {}, [id]) as string;
     expect(source).toContain('import { env, WorkerEntrypoint } from "cloudflare:workers"');
     expect(source).toContain('"alchemy/Cloudflare/Workers"');
-    expect(source).toContain(JSON.stringify(normalizePath(resolve(root, "src/entry.workers.ts"))));
+    expect(source).toContain(
+      `import { app as entrypoint } from ${JSON.stringify(normalizePath(resolve(root, "src/entry.workers.ts")))}`,
+    );
     expect(source).toContain("name: env.ALCHEMY_STACK_NAME");
     expect(source).toContain("stage: env.ALCHEMY_STAGE");
     expect(source).not.toContain("configuredStack");
@@ -80,11 +87,12 @@ describe("Alchemy Vite graph composition", () => {
       {
         configFile: false,
         root,
+        define,
         environments: {
           rsc: { optimizeDeps: { noDiscovery: true, include: ["consumer-dependency"] } },
           ssr: { optimizeDeps: { exclude: ["consumer-exclusion"] } },
         },
-        plugins: [effront(), effrontAlchemy()],
+        plugins: [effront(), alchemy()],
       },
       "serve",
     );
@@ -123,9 +131,10 @@ describe("Alchemy Vite graph composition", () => {
       {
         configFile: false,
         root,
+        define,
         plugins: [
-          effront({ application: "./client/application.ts" }),
-          effrontAlchemy({ worker: "./src/worker.ts" }),
+          effront({ applications: [{ name: "app", entry: "./client/application.ts" }] }),
+          alchemy("./src/workers.ts"),
         ],
       },
       "build",
@@ -140,13 +149,13 @@ describe("Alchemy Vite graph composition", () => {
     const hook = bridge.load!;
     const load = typeof hook === "function" ? hook : hook.handler;
     expect(Reflect.apply(load, {}, ["\0virtual:effront/alchemy/cloudflare/entry"])).toContain(
-      JSON.stringify(normalizePath(resolve(root, "src/worker.ts"))),
+      JSON.stringify(normalizePath(resolve(root, "src/workers.ts"))),
     );
   });
 
   it("does not register the portable React or RSC integrations by itself", async () => {
     const config = await resolveConfig(
-      { configFile: false, root, plugins: effrontAlchemy() },
+      { configFile: false, root, define, plugins: alchemy() },
       "build",
     );
     expect(config.plugins.map((plugin) => plugin.name)).not.toContain("effront:application-entry");
@@ -160,17 +169,18 @@ describe("Alchemy Vite graph composition", () => {
     "validates native bridge configuration in %s order",
     async (order) => {
       const portable = effront({ rsc: "./src/custom-fetch.ts" });
-      const adapter = effrontAlchemy();
+      const adapter = alchemy();
       const configuration = resolveConfig(
         {
           configFile: false,
           root,
+          define,
           plugins: order === "portable-first" ? [portable, adapter] : [adapter, portable],
         },
         "build",
       );
       if (order === "adapter-first") {
-        await expect(configuration).rejects.toThrow("Register effront() before effrontAlchemy()");
+        await expect(configuration).rejects.toThrow("Register effront before effrontAlchemy");
         return;
       }
       const config = await configuration;
@@ -181,37 +191,97 @@ describe("Alchemy Vite graph composition", () => {
         config.plugins.filter((plugin) => plugin.name === "effront:application-entry"),
       ).toHaveLength(1);
       expect(config.environments["rsc"]?.resolve.conditions).toContain("react-server");
-      expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "dist/rsc/ssr"));
+      expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "dist/app/rsc/ssr"));
     },
   );
 
-  it("rejects an empty explicit worker entry", () => {
-    expect(() => effrontAlchemy({ worker: "" })).toThrow(TypeError);
+  it("rejects an empty Workers module path", () => {
+    expect(() => effrontAlchemy({ workers: "" })).toThrow(TypeError);
   });
 
-  it("nests SSR below an explicitly configured RSC output", async () => {
-    const config = await resolveConfig(
-      {
-        configFile: false,
-        root,
-        environments: { rsc: { build: { outDir: "custom/worker" } } },
-        plugins: [effront(), effrontAlchemy({ worker: "./src/worker.ts" })],
-      },
-      "build",
-    );
-    expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "custom/worker/ssr"));
+  it.each(["client", "rsc", "ssr"])("rejects a shared %s output directory", async (environment) => {
+    await expect(
+      resolveConfig(
+        {
+          configFile: false,
+          root,
+          define,
+          environments: { [environment]: { build: { outDir: "custom/shared" } } },
+          plugins: [effront(), alchemy()],
+        },
+        "build",
+      ),
+    ).rejects.toThrow("Set build.outDir instead");
   });
 
-  it("preserves an explicitly configured SSR output directory", async () => {
-    const config = await resolveConfig(
-      {
-        configFile: false,
-        root,
-        environments: { ssr: { build: { outDir: "custom/server-renderer" } } },
-        plugins: [effront(), effrontAlchemy({ worker: "./src/worker.ts" })],
-      },
-      "build",
-    );
-    expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "custom/server-renderer"));
+  it.each(["storefront", "backoffice"])(
+    "isolates the selected %s Worker graphs and cache",
+    async (name) => {
+      const config = await resolveConfig(
+        {
+          configFile: false,
+          root,
+          define: alchemyViteDefines(effrontWorkerOptions(name).env),
+          build: { outDir: "output" },
+          cacheDir: "custom-cache",
+          plugins: [
+            effront({
+              applications: [
+                { name: "storefront", entry: "shop.tsx" },
+                { name: "backoffice", entry: "office.tsx" },
+              ],
+            }),
+            effrontAlchemy({ workers: "src/workers.ts" }),
+          ],
+        },
+        "build",
+      );
+      expect(config.resolve.alias).toContainEqual({
+        find: "@effront/core/application-entry",
+        replacement: resolve(root, name === "storefront" ? "shop.tsx" : "office.tsx"),
+      });
+      expect(config.environments["rsc"]?.build.outDir).toBe(resolve(root, `output/${name}/rsc`));
+      expect(config.environments["ssr"]?.build.outDir).toBe(
+        resolve(root, `output/${name}/rsc/ssr`),
+      );
+      expect(config.environments["client"]?.build.outDir).toBe(
+        resolve(root, `output/${name}/client`),
+      );
+      expect(config.cacheDir).toBe(resolve(root, `custom-cache/effront/${name}`));
+    },
+  );
+
+  it("requires an explicit Worker selection for the Workers module", async () => {
+    await expect(
+      resolveConfig(
+        {
+          configFile: false,
+          root,
+          plugins: [effront(), effrontAlchemy({ workers: "src/workers.ts" })],
+        },
+        "serve",
+      ),
+    ).rejects.toThrow("requires effrontWorkerOptions(name) on each Worker");
+  });
+
+  it("refuses to use an unrelated application for an unmapped Worker", async () => {
+    await expect(
+      resolveConfig(
+        {
+          configFile: false,
+          root,
+          define: alchemyViteDefines(effrontWorkerOptions("backoffice").env),
+          plugins: [
+            effront({ applications: [{ name: "storefront", entry: "shop.tsx" }] }),
+            effrontAlchemy({ workers: "src/workers.ts" }),
+          ],
+        },
+        "serve",
+      ),
+    ).rejects.toThrow("no application entry for Worker 'backoffice'");
+  });
+
+  it("rejects invalid named Worker selectors before compiling them", () => {
+    expect(() => effrontWorkerOptions("../backoffice")).toThrow("must be lowercase named exports");
   });
 });
