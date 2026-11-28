@@ -124,15 +124,17 @@ export default defineConfig({
 > [!WARNING]
 > プラグインの順序を逆にすると `TypeError` になります。
 
-| オプション | 型       | 既定値                   | 契約                                                                                                  |
-| ---------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `worker`   | `string` | `./src/entry.workers.ts` | Alchemy Worker を default export するモジュール。Vite root を基準に指定する。空文字列は `TypeError`。 |
+| オプション | 型       | 既定値                   | 契約                                                                                                                        |
+| ---------- | -------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `worker`   | `string` | `./src/entry.workers.ts` | Alchemy Worker を default export するモジュール。Vite root を基準に指定する。空文字列は `TypeError`。                       |
+| `workers`  | `string` | なし                     | 複数の Alchemy Worker Layer を名前付きでエクスポートするモジュール。Vite root を基準に指定し、`worker` の代わりに使います。 |
 
 このアダプターに `application` オプションはなく、`effront()` の登録も行いません。
 アプリケーションエントリーの変更は `effront({ application })` と Worker の型インポート、または明示的なソースのインポートに反映します。
 Worker エントリーは `effront({ rsc })` ではなく `effrontAlchemy({ worker })` で選びます。
 ブリッジには Alchemy が注入する `ALCHEMY_STACK_NAME` と `ALCHEMY_STAGE` のバインディングが必要です。欠損または空の値は `TypeError` になり、`alchemy dev` から起動する必要があります。
-SSR 出力は既定で RSC Worker 成果物の子ディレクトリに配置されます。明示した出力先は保持されますが、Worker 成果物と一緒にパッケージ化してください。
+SSR 出力は既定で RSC Worker 成果物の子ディレクトリに配置されます。
+単一 Worker モードでは明示した出力先は保持されますが、Worker 成果物と一緒にパッケージ化してください。
 
 Worker 宣言には `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }` が必要です。
 `vite.main`、別のランタイムプラグイン、Wrangler 設定は追加しないでください。
@@ -140,3 +142,35 @@ Worker 宣言には `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"]
 デプロイ時の export には影響しません。
 Alchemy は、Vite 単体ではなく `alchemy dev` を通じてホストプラグインとバインディングを提供します。
 Alchemy `2.0.0-beta.81` は [ローカル起動](../platforms/alchemy.md#stack) でも設定済み Cloudflare profile を必要とします。
+
+### 複数の Worker {#multiple-workers}
+
+1 つの Workers モジュールと 1 つの Vite 設定を Stack で共有します。
+
+```typescript
+export default defineConfig({
+  plugins: [
+    effront({
+      application: {
+        storefront: "./src/storefront.tsx",
+        backoffice: "./src/backoffice.tsx",
+      },
+    }),
+    effrontAlchemy({ workers: "./src/entry.workers.ts" }),
+  ],
+});
+```
+
+各 `Worker.make` やインライン宣言のオプションには `@effront/alchemy/cloudflare` の `effrontWorkerOptions(name)` を使います。
+この関数は Vite 環境の指定と、Alchemy が Vite に渡す `VITE_EFFRONT_WORKER` バインディングを返します。
+`name` は Worker Layer のエクスポート名と `application` のキーに合わせます。
+名前は英小文字で始め、英小文字・数字・アンダースコアのみを使います。
+`default` は使えません。
+ほかのバインディングがある場合は `effrontWorkerOptions(name).env` を上書きせずにマージしてください。
+`makeApplicationHttpEffect<Definition>()` を使う場合、アプリケーションは型としてのみインポートします。
+すべての Worker で同じアプリケーションを使う場合は、マップの代わりに 1 つのパスを指定できます。
+
+Stack に両方のリソースを含めると、Alchemy は両方の Worker を起動します。
+Worker ごとに Vite キャッシュと出力を分離します。出力先は `dist/<name>/client` と `dist/<name>/rsc` で、SSR は `rsc/ssr` に配置します。
+`dist` は `build.outDir` で変更できます。このモードでは環境ごとの出力先を指定しないでください。
+Workers モジュールと Stack の全体は [複数 Worker のサンプル](https://github.com/totto2727-org/effront/tree/main/examples/multi-worker) を参照してください。

@@ -123,9 +123,10 @@ export default defineConfig({
 > [!WARNING]
 > The reverse plugin order throws `TypeError`.
 
-| Option   | Type     | Default                  | Contract                                                                                                 |
-| -------- | -------- | ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `worker` | `string` | `./src/entry.workers.ts` | Module default-exporting the Alchemy Worker, relative to the Vite root. Empty string throws `TypeError`. |
+| Option    | Type     | Default                  | Contract                                                                                                          |
+| --------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `worker`  | `string` | `./src/entry.workers.ts` | Module default-exporting the Alchemy Worker, relative to the Vite root. Empty string throws `TypeError`.          |
+| `workers` | `string` | None                     | Module with named exports for multiple Alchemy Worker Layers, relative to the Vite root. Use instead of `worker`. |
 
 The adapter has no `application` option and does not register `effront()`.
 Application entry changes belong in `effront({ application })` and the Worker's type-only application import, or its explicit source import.
@@ -136,7 +137,7 @@ Missing or empty bindings throw `TypeError`.
 Start the application through `alchemy dev` to supply those bindings.
 
 SSR output defaults to a child of the RSC Worker artifact.
-The adapter preserves explicit output directories, but you must package them with that artifact.
+In single-Worker mode, the adapter preserves explicit output directories, but you must package them with that artifact.
 
 The Worker declaration requires `vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } }`.
 Do not set `vite.main` or add a second runtime plugin or Wrangler configuration.
@@ -144,3 +145,36 @@ Node-only deployment and local-host exports, including infrastructure provider f
 Deployment-time exports are unaffected.
 Alchemy supplies the host plugin and bindings through `alchemy dev`, not Vite alone.
 Alchemy `2.0.0-beta.81` requires a configured Cloudflare profile even for [local startup](../platforms/alchemy.md#stack).
+
+### Multiple Workers {#multiple-workers}
+
+Use one Workers module and one Vite configuration for the stack:
+
+```typescript
+export default defineConfig({
+  plugins: [
+    effront({
+      application: {
+        storefront: "./src/storefront.tsx",
+        backoffice: "./src/backoffice.tsx",
+      },
+    }),
+    effrontAlchemy({ workers: "./src/entry.workers.ts" }),
+  ],
+});
+```
+
+Use `effrontWorkerOptions(name)` from `@effront/alchemy/cloudflare` in the props for each `Worker.make` or inline Worker declaration.
+It returns the Vite environment selection and a `VITE_EFFRONT_WORKER` binding for Alchemy to forward.
+Use the same name for the Worker's exported Layer and its `application` map key.
+Names start with a lowercase letter and contain only lowercase letters, digits, and underscores.
+Do not use `default`.
+If the Worker has other environment bindings, merge them with `effrontWorkerOptions(name).env` instead of replacing it.
+Keep application imports type-only when using `makeApplicationHttpEffect<Definition>()`.
+Use one application path instead of a map to share an application across all the Workers.
+
+Alchemy starts both Workers when the stack includes both resources.
+Each Worker has a separate Vite cache and separate outputs at `dist/<name>/client` and `dist/<name>/rsc`, with SSR under `rsc/ssr`.
+Set `build.outDir` to change `dist` for all Workers.
+Do not set output directories on the individual environments in this mode.
+See the [multi-Worker example](https://github.com/totto2727-org/effront/tree/main/examples/multi-worker) for a complete Workers module and stack.

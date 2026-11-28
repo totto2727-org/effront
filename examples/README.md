@@ -30,6 +30,7 @@ For framework features and host-specific integrations, use the larger examples i
 - [`basic/`](basic/) demonstrates an Alchemy-managed Worker with request-local KV-backed services.
 - [`loading/`](loading/) demonstrates Loading and Suspense boundaries, navigation, transitions, and browser-side Query on an Alchemy-managed Worker. Its [experiment guide](loading/docs/LOADING.md) walks through the scenarios.
 - [`markdown/`](markdown/) demonstrates Markdown routing and assets on an Alchemy-managed Worker.
+- [`multi-worker/`](multi-worker/) serves two Effront applications from one Alchemy stack and one Workers module. Run `vp run dev` in the example directory and use the two URLs that Alchemy prints.
 - [`check-in/`](check-in/) demonstrates a query atom and organizer-scoped, idempotent check-in on an Alchemy-managed Worker. It simulates authentication and persistence.
 - [`streaming-feed/`](streaming-feed/) demonstrates incremental Server Function streaming, independent note queries, retry, and cancellation on an Alchemy-managed Worker.
 

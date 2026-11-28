@@ -20,13 +20,14 @@ export default defineConfig({
 
 ## EffrontViteOptions {#configuration}
 
-| オプション    | 型       | 既定値                    | 契約                                                                             |
-| ------------- | -------- | ------------------------- | -------------------------------------------------------------------------------- |
-| `application` | `string` | `./src/entry.effront.tsx` | アプリケーション定義を default export するモジュール。Vite root を基準に解決する |
-| `rsc`         | `string` | `./src/entry.workers.ts`  | 既定の Workers 連携で `{ fetch }` を公開するリクエストエントリー                 |
+| オプション    | 型                                                 | 既定値                    | 契約                                                                                             |
+| ------------- | -------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `application` | `string` または `Readonly<Record<string, string>>` | `./src/entry.effront.tsx` | Vite root を基準としたアプリケーションモジュール、または Worker 名をキーとするモジュールのマップ |
+| `rsc`         | `string`                                           | `./src/entry.workers.ts`  | 既定の Workers 連携で `{ fetch }` を公開するリクエストエントリー                                 |
 
 ブラウザーの起動コードは Effront が提供します。
 `application` が選ぶのは、ブラウザーエントリーではなくアプリケーション定義です。
+マップは [Alchemy の複数 Worker 連携](./alchemy.md#multiple-workers) など、Worker を選択するホストで使います。
 `@effront/core/application-entry` は Vite のエイリアスでそのモジュールに解決され、独立した公開パッケージサブパスではありません。
 `effrontServer` や `effrontAlchemy` などのホストアダプターは、それぞれのリクエストエントリーを設定します。
 Effect Schema JIT は、ブラウザー・SSR のエントリー、Node/Bun のホスト、`effront({ rsc })` が選ぶ RSC エントリーで個別に登録します。

@@ -441,6 +441,7 @@ export const articleCatalog = [
     headings: [
       { id: "http", title: "HTTP ハンドラー" },
       { id: "vite", title: "effrontAlchemy" },
+      { id: "multiple-workers", title: "複数の Worker" },
     ],
     source: "/api-reference/alchemy",
   },

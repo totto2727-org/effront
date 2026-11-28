@@ -32,5 +32,17 @@ export default defineConfig({
       timeout: 120_000,
       reuseExistingServer: false,
     },
+    ...(
+      [
+        ["storefront", 4396],
+        ["backoffice", 4397],
+      ] as const
+    ).map(([name, port]) => ({
+      command: `vp build --config multi-worker.vite.config.ts --mode ${name} && vp preview --config multi-worker.vite.config.ts --mode ${name} --host 127.0.0.1 --port ${port} --strictPort`,
+      cwd: fileURLToPath(new URL(".", import.meta.url)),
+      url: `http://127.0.0.1:${port}`,
+      timeout: 120_000,
+      reuseExistingServer: false,
+    })),
   ],
 });

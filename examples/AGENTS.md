@@ -6,6 +6,7 @@
 - `basic/`: feature-rich native Alchemy Worker with construction-provided KV capability and request-local services.
 - `loading/`: native Alchemy Worker demonstrating Loading, Suspense, and browser-side Query without KV.
 - `markdown/`: feature-rich native Alchemy consumer of file-relative Markdown routing and assets.
+- `multi-worker/`: two Effront applications with one native Alchemy Workers module and Stack.
 - `check-in/` and `streaming-feed/`: Alchemy-managed Worker showcases of query atoms and incremental Server Function streams. Their auth-free local Worker Playwright harnesses are under `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/`.
 - The feature-rich native Node/Bun applications are test-owned fixtures under `../tests/e2e-server/fixtures/`, not public examples.
 
@@ -25,6 +26,7 @@ Example development commands do not build workspace packages.
 - `vp exec wrangler dev --config dist/rsc/wrangler.json --local` in `cloudflare/` serves the built artifact independently of Vite after `vp build`.
 - `vp run dev` in `alchemy-cloudflare/` starts the minimal Alchemy-managed Worker without a fixed development port.
 - `vp run dev` in `basic/`, `loading/`, or `markdown/` invokes `alchemy dev` without fixing an example-specific development port.
+- `vp run dev` in `multi-worker/` starts both local Workers and reports their URLs.
 - `vp run dev` in `check-in/` or `streaming-feed/` starts the Alchemy-managed feature showcases without fixed development ports. Their independent real-host checks run from `../tests/e2e-check-in/` and `../tests/e2e-streaming-feed/` with `vp run test`.
 - `vp dev`, `vp build`, and `vp run start` in `../tests/e2e-server/fixtures/node/` or `../tests/e2e-server/fixtures/bun/` exercise the feature-rich native regression applications. `PORT` and `HOST` configure production listening.
 - `vp run test` in `../tests/e2e-alchemy/` checks the committed Alchemy consumer through a test-owned, auth-free host. Official CLI acceptance is separate.
@@ -36,7 +38,7 @@ Example development commands do not build workspace packages.
 - Export the application definition directly from `src/entry.effront.tsx`. Do not restore a re-export-only `entry.client.ts`.
 - Native Alchemy construction uses `makeApplicationHttpEffect<typeof application>()` from `@effront/alchemy/cloudflare/application` with a type-only import of the configured application, or an explicit deferred loader from `@effront/alchemy/cloudflare`. Static application value imports in the shared Worker entry would evaluate RSC code during infrastructure planning. The adapter instead generates static application imports only in the configured helper's RSC graph. Keep the type import aligned with `effront({ application })` and module-level application definitions declarative.
 - Alchemy CLI owns its Vite host. Do not add a manual runtime plugin, injection-environment guard, application stage fallback, or explicit stage flag to ordinary scripts.
-- Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront`. Configure the native `worker` only on `effrontAlchemy`. Keep the existing Tailwind integration separate.
+- Native Alchemy consumers register `effront()` plus `effrontAlchemy()`. Configure `application` only on `effront`. Configure the native `worker` or `workers` module only on `effrontAlchemy`. Keep the existing Tailwind integration separate.
 - Node/Bun use `entry.rsc.ts` for the native handler and `entry.server.ts` for production listening. Never start the production server during Vite development.
 - Standalone Workers examples use a Fetch entry, `effront()` plus `effrontCloudflare()`, and Wrangler configuration. Keep their dependency graphs free of Alchemy. Alchemy-managed examples instead use `effrontAlchemy()` and an Alchemy Worker definition.
 - Starter application code is exactly the same on Node, Bun, standalone Cloudflare, and Alchemy Cloudflare. Do not put platform branding, service wiring, feature demos, or deployment configuration in their `entry.effront.tsx` files.

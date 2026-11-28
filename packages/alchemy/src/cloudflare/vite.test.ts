@@ -5,6 +5,7 @@ import { effront } from "@effront/vite";
 import { normalizePath, resolveConfig } from "vite";
 import { describe, expect, it } from "vite-plus/test";
 
+import { effrontWorkerOptions } from "./deployment";
 import { effrontAlchemy } from "./vite";
 
 const root = fileURLToPath(new URL("../../../../examples/basic/", import.meta.url));
@@ -213,5 +214,76 @@ describe("Alchemy Vite graph composition", () => {
       "build",
     );
     expect(config.environments["ssr"]?.build.outDir).toBe(resolve(root, "custom/server-renderer"));
+  });
+
+  it.each(["storefront", "backoffice"])(
+    "isolates the selected %s Worker graphs and cache",
+    async (name) => {
+      const config = await resolveConfig(
+        {
+          configFile: false,
+          root,
+          define: Object.fromEntries(
+            Object.entries(effrontWorkerOptions(name).env).map(([key, value]) => [
+              `import.meta.env.${key}`,
+              JSON.stringify(value),
+            ]),
+          ),
+          build: { outDir: "output" },
+          cacheDir: "custom-cache",
+          plugins: [
+            effront({ application: { storefront: "shop.tsx", backoffice: "office.tsx" } }),
+            effrontAlchemy({ workers: "src/workers.ts" }),
+          ],
+        },
+        "build",
+      );
+      expect(config.resolve.alias).toContainEqual({
+        find: "@effront/core/application-entry",
+        replacement: resolve(root, name === "storefront" ? "shop.tsx" : "office.tsx"),
+      });
+      expect(config.environments["rsc"]?.build.outDir).toBe(resolve(root, `output/${name}/rsc`));
+      expect(config.environments["ssr"]?.build.outDir).toBe(
+        resolve(root, `output/${name}/rsc/ssr`),
+      );
+      expect(config.environments["client"]?.build.outDir).toBe(
+        resolve(root, `output/${name}/client`),
+      );
+      expect(config.cacheDir).toBe(resolve(root, `custom-cache/effront/${name}`));
+    },
+  );
+
+  it("requires an explicit Worker selection for the Workers module", async () => {
+    await expect(
+      resolveConfig(
+        {
+          configFile: false,
+          root,
+          plugins: [effront(), effrontAlchemy({ workers: "src/workers.ts" })],
+        },
+        "serve",
+      ),
+    ).rejects.toThrow("requires effrontWorkerOptions(name) on each Worker");
+  });
+
+  it("refuses to use an unrelated application for an unmapped Worker", async () => {
+    await expect(
+      resolveConfig(
+        {
+          configFile: false,
+          root,
+          define: { "import.meta.env.VITE_EFFRONT_WORKER": '"backoffice"' },
+          plugins: [
+            effront({ application: { storefront: "shop.tsx" } }),
+            effrontAlchemy({ workers: "src/workers.ts" }),
+          ],
+        },
+        "serve",
+      ),
+    ).rejects.toThrow("no application entry for Worker 'backoffice'");
+  });
+
+  it("rejects invalid named Worker selectors before compiling them", () => {
+    expect(() => effrontWorkerOptions("../backoffice")).toThrow("must be lowercase named exports");
   });
 });

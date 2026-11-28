@@ -20,13 +20,14 @@ For the introductory create-and-run workflow, refer to [Getting started](/en/gui
 
 ## EffrontViteOptions {#configuration}
 
-| Option        | Type     | Default                   | Contract                                                                              |
-| ------------- | -------- | ------------------------- | ------------------------------------------------------------------------------------- |
-| `application` | `string` | `./src/entry.effront.tsx` | Module default-exporting the application definition, resolved relative to Vite's root |
-| `rsc`         | `string` | `./src/entry.workers.ts`  | Request entry exporting `{ fetch }` for the default Workers integration               |
+| Option        | Type                                           | Default                   | Contract                                                                                      |
+| ------------- | ---------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------- |
+| `application` | `string` or `Readonly<Record<string, string>>` | `./src/entry.effront.tsx` | Application module relative to Vite's root, or a map from Worker names to application modules |
+| `rsc`         | `string`                                       | `./src/entry.workers.ts`  | Request entry exporting `{ fetch }` for the default Workers integration                       |
 
 Effront supplies browser startup code.
 `application` selects the application definition, not a browser entry.
+Use a map only with a host that selects a Worker, such as the [Alchemy Workers module integration](./alchemy.md#multiple-workers).
 `@effront/core/application-entry` resolves to that module through a Vite alias, not a standalone public package subpath.
 Host adapters such as `effrontServer` and `effrontAlchemy` configure their own request entries.
 

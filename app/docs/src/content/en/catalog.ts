@@ -444,6 +444,7 @@ export const englishArticleCatalog = [
     headings: [
       { id: "http", title: "HTTP handlers" },
       { id: "vite", title: "effrontAlchemy" },
+      { id: "multiple-workers", title: "Multiple Workers" },
     ],
     source: "/api-reference/alchemy",
   },

@@ -61,8 +61,23 @@ const rawAssetUpdates = (): Plugin => {
 export type EffrontViteOptions = {
   /** RSC environment entry exporting the runtime's `{ fetch }` handler; defaults to `src/entry.workers.ts`. */
   readonly rsc?: string;
-  /** Application definition export available as `@effront/core/application-entry`; defaults to `src/entry.effront.tsx`. */
-  readonly application?: string;
+  /** Application module, or modules keyed by the Worker selected by the host. Defaults to `src/entry.effront.tsx`. */
+  readonly application?: string | Readonly<Record<string, string>>;
+};
+
+/** Vite configuration shared with host adapters before the Effront application alias is resolved. */
+export type EffrontViteConfig = UserConfig & { effrontWorker?: string };
+
+const applicationEntry = (
+  application: NonNullable<EffrontViteOptions["application"]>,
+  worker?: string,
+) => {
+  if (typeof application === "string") return application;
+  if (worker === undefined)
+    throw new TypeError("Effront application maps require a host to select an Effront Worker.");
+  const entry = Object.hasOwn(application, worker) ? application[worker] : undefined;
+  if (!entry) throw new TypeError(`Effront has no application entry for Worker '${worker}'.`);
+  return entry;
 };
 
 /**
@@ -89,10 +104,13 @@ export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   };
   const applicationAlias: Plugin = {
     name: "effront:application-entry",
-    config: (config): UserConfig => ({
+    config: (config: EffrontViteConfig): UserConfig => ({
       resolve: {
         alias: {
-          "@effront/core/application-entry": resolve(config.root ?? process.cwd(), application),
+          "@effront/core/application-entry": resolve(
+            config.root ?? process.cwd(),
+            applicationEntry(application, config.effrontWorker),
+          ),
         },
       },
     }),

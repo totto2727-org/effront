@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import { type ApplicationAdapter, makeApplicationAdapter } from "./adapter";
 
 export type { ApplicationLoader } from "./adapter";
+export { effrontWorkerOptions } from "./worker-options";
 
 const unavailable: typeof toHttpEffect = () =>
   Effect.die(
