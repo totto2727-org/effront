@@ -55,13 +55,6 @@ export const page: DocPage = {
         Effect still acquires the Layer.
       </p>
       <p>
-        Before acquisition, a supplied Content-Length must convert to a safe nonnegative integer no
-        greater than 10 MiB. Otherwise, the entry returns 413. This checks the header, not the
-        measured body size when the header is absent.{" "}
-        <a href="/en/architecture/implementation/server-functions">Server Function decoding</a>{" "}
-        separately limits bytes read.
-      </p>
-      <p>
         <code>createFetchHandler</code> in <code>workers.ts</code> uses{" "}
         <code>HttpEffect.toWebHandler</code> with this Effect. Each call adds a fresh{" "}
         <code>WorkersRequestContext</code> without changing request acquisition.

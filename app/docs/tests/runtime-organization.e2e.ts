@@ -76,9 +76,19 @@ for (const locale of ["en", "ja"] as const) {
     await expect(page.locator("article pre code")).toHaveCount(4);
     await page.goto(`/${locale}/api-reference/server-functions#request-protocol`);
     await expect(page.locator("article h2#request-protocol")).toBeInViewport();
-    for (const status of ["400", "403", "413", "500"]) {
-      await expect(page.locator("article")).toContainText(status);
-    }
+    const statuses = await page
+      .locator("article table")
+      .last()
+      .locator("tbody tr td:last-child")
+      .allTextContents();
+    expect([...new Set(statuses.map((status) => status.trim()))].toSorted()).toEqual([
+      "400",
+      "403",
+      "500",
+    ]);
+    await page.locator(`article a[href="/${locale}/api-reference/http#handler"]`).click();
+    await expect(page).toHaveURL(`/${locale}/api-reference/http#handler`);
+    await expect(page.locator("article h2#handler")).toBeInViewport();
     await guides.locator(`:scope > li > a[href="${execution}"]`).click();
     await expect(page).toHaveURL(execution);
     await expect(page.locator("article")).not.toContainText("10 MiB");

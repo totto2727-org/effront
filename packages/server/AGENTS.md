@@ -25,7 +25,7 @@ Run `vp pack` in this package after changing public declarations.
 - Resolve the RSC entry on each dev request so Vite owns invalidation. Close the runtime on server shutdown and middleware-mode plugin disposal.
 - Keep React server conditions inside the RSC graph, never process-wide.
 - Delegate path decoding, normalization and filesystem lookup to `HttpStaticServer` without custom validation or canonicalization. Use `index: undefined` and `spa: false`, strip the client prefix from the request URL, and fall through only on `RouteNotFound`. Keep the standard lazy-stream `HttpPlatform.layer` so HEAD/304 and discarded conditional bodies do not acquire file streams. Application requests preserve their external Effect service requirements.
-- Bun disables the default short idle timeout to preserve long-lived RSC streams. Keep the 10 MiB host limit consistent with core's request policy.
+- Bun disables the default short idle timeout to preserve long-lived RSC streams. Do not impose Effront-specific request size limits. Middleware and native host configuration own communication-size policy.
 
 ## Package-specific rules
 
