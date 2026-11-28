@@ -1,7 +1,11 @@
 import { fileURLToPath } from "node:url";
 import cloudflare from "@alchemy.run/cloudflare-runtime/vite";
+import { effrontWorkerOptions } from "@effront/alchemy/cloudflare";
 import * as Text from "@alchemy.run/cloudflare-runtime/core/bindings/Text";
 import { defineConfig } from "vite-plus";
+import { alchemyViteDefines } from "../../../tests/alchemy-vite-config";
+
+const { env, vite } = effrontWorkerOptions("docs");
 import application from "../vite.config";
 
 // Same local-host pattern as tests/e2e-alchemy. The actual site entry and plugins
@@ -9,12 +13,12 @@ import application from "../vite.config";
 export default defineConfig({
   ...application,
   root: fileURLToPath(new URL("../", import.meta.url)),
+  define: alchemyViteDefines(env),
   plugins: [
     application.plugins,
     cloudflare({
       compatibilityDate: "2026-09-01",
-      compatibilityFlags: ["nodejs_compat"],
-      viteEnvironments: { entry: "rsc", children: ["ssr"] },
+      ...vite,
       worker: {
         name: "effront-docs-acceptance",
         bindings: [

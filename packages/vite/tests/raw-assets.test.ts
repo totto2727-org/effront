@@ -30,7 +30,10 @@ describe("raw asset development updates", () => {
       configFile: false,
       root: exampleRoot,
       cacheDir: join(root, "cache"),
-      plugins: effront({ rsc: join(root, "entry.ts"), application: join(root, "entry.ts") }),
+      plugins: effront({
+        rsc: join(root, "entry.ts"),
+        applications: [{ name: "fixture", entry: join(root, "entry.ts") }],
+      }),
       server: { host: "127.0.0.1", port: 0, preTransformRequests: false },
       optimizeDeps: { noDiscovery: true, include: [] },
     }));

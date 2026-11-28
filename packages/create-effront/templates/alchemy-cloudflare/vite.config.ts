@@ -8,5 +8,5 @@ const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url
 export default defineConfig({
   fmt: { ignorePatterns },
   lint: { ignorePatterns },
-  plugins: [effront(), effrontAlchemy()],
+  plugins: [effront(), effrontAlchemy({ workers: "./src/entry.workers.ts" })],
 });

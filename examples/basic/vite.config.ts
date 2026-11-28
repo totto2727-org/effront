@@ -7,7 +7,7 @@ import { generateIgnorePatterns } from "@totto2727/gitignore-patterns";
 const ignorePatterns = await generateIgnorePatterns(new URL(".", import.meta.url));
 
 export default defineConfig({
-  plugins: [effrontTailwind(), effront(), effrontAlchemy()],
+  plugins: [effrontTailwind(), effront(), effrontAlchemy({ workers: "./src/entry.workers.ts" })],
   // Explicit so the example keeps its lint setup when used outside this workspace.
   lint: {
     ignorePatterns,

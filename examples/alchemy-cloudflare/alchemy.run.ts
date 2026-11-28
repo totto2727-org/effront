@@ -1,7 +1,7 @@
 import { localState, Stack } from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
-import local, { Worker, workerLayer } from "./src/entry.workers";
+import { app as local, Worker, workerLayer } from "./src/entry.workers";
 
 const preview = Cloudflare.Worker.ref("effront-alchemy-cloudflare-app", {
   stage: "production",

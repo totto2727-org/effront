@@ -20,13 +20,13 @@ export default defineConfig({
 
 ## EffrontViteOptions {#configuration}
 
-| オプション    | 型                                                 | 既定値                    | 契約                                                                                             |
-| ------------- | -------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------ |
-| `application` | `string` または `Readonly<Record<string, string>>` | `./src/entry.effront.tsx` | Vite root を基準としたアプリケーションモジュール、または Worker 名をキーとするモジュールのマップ |
-| `rsc`         | `string`                                           | `./src/entry.workers.ts`  | 既定の Workers 連携で `{ fetch }` を公開するリクエストエントリー                                 |
+| オプション     | 型                                               | 既定値                                 | 契約                                                                   |
+| -------------- | ------------------------------------------------ | -------------------------------------- | ---------------------------------------------------------------------- |
+| `applications` | `{ name: string; entry: string }` の空でない配列 | 全 Worker で `./src/entry.effront.tsx` | 各 `entry` は Vite root を基準としたアプリケーションモジュールのパス。 |
+| `rsc`          | `string`                                         | `./src/entry.workers.ts`               | 既定の Workers 連携で `{ fetch }` を公開するリクエストエントリー       |
 
 ブラウザーの起動コードは Effront が提供します。
-`application` が選ぶのは、ブラウザーエントリーではなくアプリケーション定義です。
+`applications` が選ぶのは、ブラウザーエントリーではなくアプリケーション定義です。単独ホストではエントリーを 1 件だけ指定できます。ホストが Worker を名前で選ぶ場合、その名前は配列の要素と一致する必要があります。
 マップは [Alchemy の複数 Worker 連携](./alchemy.md#multiple-workers) など、Worker を選択するホストで使います。
 `@effront/core/application-entry` は Vite のエイリアスでそのモジュールに解決され、独立した公開パッケージサブパスではありません。
 `effrontServer` や `effrontAlchemy` などのホストアダプターは、それぞれのリクエストエントリーを設定します。

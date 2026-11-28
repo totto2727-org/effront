@@ -4,6 +4,7 @@ import cloudflare from "@alchemy.run/cloudflare-runtime/vite";
 import { effrontWorkerOptions } from "@effront/alchemy/cloudflare";
 import { defineConfig } from "vite-plus";
 import application from "../../examples/multi-worker/vite.config";
+import { alchemyViteDefines } from "../alchemy-vite-config";
 
 // Reproduce the per-Worker Vite options Alchemy injects without requiring a profile.
 export default defineConfig(({ mode }) => {
@@ -11,9 +12,7 @@ export default defineConfig(({ mode }) => {
   return {
     ...application,
     root: fileURLToPath(new URL("../../examples/multi-worker/", import.meta.url)),
-    define: Object.fromEntries(
-      Object.entries(env).map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)]),
-    ),
+    define: alchemyViteDefines(env),
     plugins: [
       application.plugins,
       cloudflare({

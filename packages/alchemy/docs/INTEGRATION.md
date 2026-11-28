@@ -61,7 +61,8 @@ KV is eventually consistent. The fixed greeting demonstrates binding use, not a 
 The Alchemy adapter does not register it implicitly.
 The adapter uses Alchemy's official `makeWorkerBridge`, rather than passing a Promise-based Fetch function to the Worker.
 Registering `effront()` first lets the adapter replace the portable RSC input before the Cloudflare host captures its Worker entry.
-A separate pre-order hook colocates the default SSR output before the portable compiler supplies its generic default, while preserving explicit output directories.
+The Workers module exports each Worker by name. Use `effrontWorkerOptions(name)` in its declaration so Alchemy forwards the name to Vite.
+A pre-order hook isolates the cache and outputs by Worker name and places SSR inside the RSC artifact. Set the base output path with `build.outDir`.
 
 Alchemy supplies the host configuration, so these applications do not maintain a separate Wrangler file.
 Vite remains responsible for React compilation, not infrastructure.
@@ -70,7 +71,7 @@ Standalone Workers fixtures retain Wrangler configuration to test the non-Alchem
 Alchemy CLI injects the Cloudflare runtime host and the bindings registered during native construction.
 Applications do not import the runtime plugin or inspect `ALCHEMY_CLOUDFLARE_VITE_INJECTED`.
 The independent browser test owns its local runtime plugin and KV simulator. That setup is not part of the application configuration.
-Independent E2E hosts supply the injected stack and stage explicitly instead of duplicating application stack configuration.
+Independent E2E hosts supply the injected stack and stage explicitly and forward the Worker name from `effrontWorkerOptions(name)`.
 
 ## Local orchestration
 

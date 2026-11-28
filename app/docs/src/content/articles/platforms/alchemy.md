@@ -16,13 +16,15 @@ vp install
 
 一画面のサンプルにはホストの設定が揃っています。
 
-| ファイル                | 役割                                                                      |
-| ----------------------- | ------------------------------------------------------------------------- |
-| `src/entry.effront.tsx` | HTML レイアウト、一つのページ、`/` ルートを定義します。                   |
-| `src/entry.workers.ts`  | Worker を宣言し、設定済みアプリケーションの HTTP ハンドラーを構築します。 |
-| `alchemy.run.ts`        | Stack を定義し、Worker の URL を出力します。                              |
-| `vite.config.ts`        | `effront()` と `effrontAlchemy()` を登録します。                          |
-| `package.json`          | `dev` を `alchemy dev` として定義します。                                 |
+| ファイル                | 役割                                                                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| `src/entry.effront.tsx` | HTML レイアウト、一つのページ、`/` ルートを定義します。                                      |
+| `src/entry.workers.ts`  | 名前付きで Worker をエクスポートし、設定済みアプリケーションの HTTP ハンドラーを構築します。 |
+| `alchemy.run.ts`        | Stack を定義し、Worker の URL を出力します。                                                 |
+| `vite.config.ts`        | `effront()` を登録し、`effrontAlchemy({ workers })` で Workers モジュールを指定します。      |
+| `package.json`          | `dev` を `alchemy dev` として定義します。                                                    |
+
+[複数の Worker](../api-reference/alchemy.md#multiple-workers) も同じ方法で設定できます。Workers モジュールから各 Worker を名前付きでエクスポートし、すべてを Stack に含めます。
 
 ## 開発サーバーを起動する {#stack}
 

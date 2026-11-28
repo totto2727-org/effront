@@ -24,7 +24,10 @@ describe("Effront entry conventions", () => {
       {
         configFile: false,
         root,
-        plugins: effront({ rsc: "./custom/host.ts", application: "./custom/app.tsx" }),
+        plugins: effront({
+          rsc: "./custom/host.ts",
+          applications: [{ name: "app", entry: "./custom/app.tsx" }],
+        }),
       },
       "build",
     );
@@ -36,6 +39,35 @@ describe("Effront entry conventions", () => {
       find: "@effront/core/application-entry",
       replacement: resolve(root, "custom/app.tsx"),
     });
+  });
+
+  it("rejects duplicate names rather than silently selecting an entry", () => {
+    expect(() =>
+      effront({
+        applications: [
+          { name: "app", entry: "first.tsx" },
+          { name: "app", entry: "second.tsx" },
+        ],
+      }),
+    ).toThrow("application names must be unique");
+  });
+
+  it("requires the host to select a Worker when several applications are configured", async () => {
+    await expect(
+      resolveConfig(
+        {
+          configFile: false,
+          root,
+          plugins: effront({
+            applications: [
+              { name: "first", entry: "first.tsx" },
+              { name: "second", entry: "second.tsx" },
+            ],
+          }),
+        },
+        "build",
+      ),
+    ).rejects.toThrow("require a host to select a Worker");
   });
 
   it("registers Schema JIT before the RSC host entry without rewriting SSR or other modules", async () => {

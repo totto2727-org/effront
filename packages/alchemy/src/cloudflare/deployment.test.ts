@@ -124,7 +124,7 @@ describe("Alchemy native application effects", () => {
         ),
       ),
     ).rejects.toThrow(
-      "Configured application loading requires effront() followed by effrontAlchemy()",
+      "Configured application loading requires the effront plugin followed by the effrontAlchemy plugin",
     );
   });
 

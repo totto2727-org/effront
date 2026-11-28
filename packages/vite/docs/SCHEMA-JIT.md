@@ -6,7 +6,7 @@ Importing the enable module in one Vite graph does not initialize the others, an
 ## Registration points
 
 - **RSC:** `@effront/vite` prepends the side-effect import to the host entry selected by `effront({ rsc })`, defaulting to `src/entry.workers.ts`. The transform runs only for that file in the RSC environment because the application owns its host entry.
-- **Alchemy RSC:** The adapter's virtual Worker bridge imports it directly before the selected Workers module. This works for both the default and named Worker entries.
+- **Alchemy RSC:** The adapter's virtual Worker bridge imports it directly before the selected Workers module. This registers the compiler before the selected named Worker evaluates.
 - **SSR:** The framework-owned `@effront/core/internal/ssr-entry` (`packages/core/src/server/ssr.tsx`) imports it directly.
 - **Browser:** The framework-owned `@effront/core/internal/client-entry` (`packages/core/src/client/entry.ts`) imports it directly.
 - **Native Node/Bun host:** `@effront/server/node` and `@effront/server/bun` import it directly so hosting does not depend on Vite's transform.

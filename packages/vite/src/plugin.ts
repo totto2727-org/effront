@@ -58,24 +58,30 @@ const rawAssetUpdates = (): Plugin => {
   };
 };
 
+export type EffrontApplicationEntry = {
+  /** Name selected by the host, such as an Alchemy Worker export. */
+  readonly name: string;
+  /** Application module relative to the Vite root. */
+  readonly entry: string;
+};
+
 export type EffrontViteOptions = {
   /** RSC environment entry exporting the runtime's `{ fetch }` handler; defaults to `src/entry.workers.ts`. */
   readonly rsc?: string;
-  /** Application module, or modules keyed by the Worker selected by the host. Defaults to `src/entry.effront.tsx`. */
-  readonly application?: string | Readonly<Record<string, string>>;
+  /** The application entries available to the host. Omit to use `src/entry.effront.tsx`. */
+  readonly applications?: readonly [EffrontApplicationEntry, ...EffrontApplicationEntry[]];
 };
 
 /** Vite configuration shared with host adapters before the Effront application alias is resolved. */
 export type EffrontViteConfig = UserConfig & { effrontWorker?: string };
 
-const applicationEntry = (
-  application: NonNullable<EffrontViteOptions["application"]>,
-  worker?: string,
-) => {
-  if (typeof application === "string") return application;
-  if (worker === undefined)
-    throw new TypeError("Effront application maps require a host to select an Effront Worker.");
-  const entry = Object.hasOwn(application, worker) ? application[worker] : undefined;
+const applicationEntry = (applications: EffrontViteOptions["applications"], worker?: string) => {
+  if (applications === undefined) return "./src/entry.effront.tsx";
+  if (worker === undefined) {
+    if (applications.length === 1) return applications[0].entry;
+    throw new TypeError("Multiple Effront applications require a host to select a Worker.");
+  }
+  const entry = applications.find(({ name }) => name === worker)?.entry;
   if (!entry) throw new TypeError(`Effront has no application entry for Worker '${worker}'.`);
   return entry;
 };
@@ -88,7 +94,10 @@ const applicationEntry = (
  */
 export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
   const rscEntry = options.rsc ?? "./src/entry.workers.ts";
-  const application = options.application ?? "./src/entry.effront.tsx";
+  const { applications } = options;
+  if (applications && new Set(applications.map(({ name }) => name)).size !== applications.length) {
+    throw new TypeError("Effront application names must be unique.");
+  }
   let resolvedRscEntry: string;
   const schemaJit: Plugin = {
     name: "effront:schema-jit",
@@ -109,7 +118,7 @@ export const effront = (options: EffrontViteOptions = {}): PluginOption[] => {
         alias: {
           "@effront/core/application-entry": resolve(
             config.root ?? process.cwd(),
-            applicationEntry(application, config.effrontWorker),
+            applicationEntry(applications, config.effrontWorker),
           ),
         },
       },

@@ -207,7 +207,10 @@ it("keeps standalone Cloudflare hosting out of the Alchemy project", async () =>
   expect(manifest.dependencies).not.toHaveProperty("@effront/cloudflare");
   expect(manifest.dependencies).not.toHaveProperty("@effront/server");
   expect(worker).toContain("makeApplicationHttpEffect");
-  expect(config).toContain("effrontAlchemy()");
+  expect(worker).toContain('...effrontWorkerOptions("app")');
+  expect(worker).toContain("export const app = Cloudflare.Worker(");
+  expect(config).toContain('effrontAlchemy({ workers: "./src/entry.workers.ts" })');
+  expect(runner).toContain('import { app } from "./src/entry.workers"');
   expect(config).not.toContain("server:");
   expect(runner).toContain('"alchemy-cloudflare"');
   expect(worker).not.toContain("dev: { port:");

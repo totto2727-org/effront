@@ -5,7 +5,10 @@ import { defineConfig } from "vite-plus";
 export default defineConfig({
   plugins: [
     effront({
-      application: { storefront: "./src/storefront.tsx", backoffice: "./src/backoffice.tsx" },
+      applications: [
+        { name: "storefront", entry: "./src/storefront.tsx" },
+        { name: "backoffice", entry: "./src/backoffice.tsx" },
+      ],
     }),
     effrontAlchemy({ workers: "./src/entry.workers.ts" }),
   ],

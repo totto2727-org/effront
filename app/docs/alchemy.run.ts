@@ -1,7 +1,7 @@
 import { Stack } from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
-import local, { Docs, docsWorker } from "./src/entry.workers";
+import { docs as local, Docs, docsWorker } from "./src/entry.workers";
 
 const production = docsWorker({
   domain: { name: "effront.totto2727.dev", zoneName: "totto2727.dev" },

@@ -9,7 +9,7 @@ export { effrontWorkerOptions } from "./worker-options";
 const unavailable: typeof toHttpEffect = () =>
   Effect.die(
     new TypeError(
-      "Effront Alchemy request handling requires the react-server runtime. Use effront() followed by effrontAlchemy().",
+      "Effront Alchemy request handling requires the react-server runtime. Use the effront plugin followed by the effrontAlchemy plugin.",
     ),
   );
 

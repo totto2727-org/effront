@@ -1,3 +1,4 @@
+import { effrontWorkerOptions } from "@effront/alchemy/cloudflare";
 import { makeApplicationHttpEffect } from "@effront/alchemy/cloudflare/application";
 import * as Cloudflare from "alchemy/Cloudflare";
 import { Effect } from "effect";
@@ -5,12 +6,12 @@ import type application from "./entry.effront";
 import { CacheClient } from "./features/greeting/services";
 export const Cache = Cloudflare.KV.Namespace("Cache");
 
-export default class App extends Cloudflare.Worker<App>()(
+class App extends Cloudflare.Worker<App>()(
   "App",
   {
     main: import.meta.url,
-    compatibility: { date: "2026-09-01", flags: ["nodejs_compat"] },
-    vite: { viteEnvironments: { entry: "rsc", children: ["ssr"] } },
+    compatibility: { date: "2026-09-01" },
+    ...effrontWorkerOptions("app"),
   },
   Effect.gen(function* () {
     const cache = yield* Cloudflare.KV.ReadWriteNamespace(Cache);
@@ -20,3 +21,5 @@ export default class App extends Cloudflare.Worker<App>()(
     return { fetch: fetch.pipe(Effect.orDie) };
   }).pipe(Effect.provide(Cloudflare.KV.ReadWriteNamespaceBinding)),
 ) {}
+
+export { App as app };
