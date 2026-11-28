@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {},
   "devDependencies": {
+    "@effect/platform-node-shared": "catalog:",
     "@effect/vitest": "catalog:",
     "@totto2727/gitignore-patterns": "catalog:",
     "@types/node": "catalog:",

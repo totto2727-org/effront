@@ -1,8 +1,9 @@
-import { randomUUID } from "node:crypto";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import * as NodeCrypto from "@effect/platform-node-shared/NodeCrypto";
 import { expect, test } from "@playwright/test";
+import * as Effect from "effect/Effect";
 
 test("updates edited Markdown and discovers added and removed source pages in development", async ({
   page,
@@ -17,7 +18,7 @@ test("updates edited Markdown and discovers added and removed source pages in de
   });
   const appRoot = fileURLToPath(new URL("../fixture/", import.meta.url));
   const manualFile = join(appRoot, "content/manual.md");
-  const stem = `acceptance-added-${randomUUID()}%20literal`;
+  const stem = `acceptance-added-${Effect.runSync(NodeCrypto.make.randomUUIDv4)}%20literal`;
   const encodedStem = encodeURIComponent(stem);
   const addedFile = join(appRoot, "content/manual/guide", `${stem}.md`);
   const addedPath = `/manual/guide/${encodedStem}`;
