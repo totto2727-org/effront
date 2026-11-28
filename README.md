@@ -26,6 +26,8 @@ For other configurations, refer to [Platforms](app/docs/src/content/en/articles/
 
 ## Usage
 
+For agent-assisted development or Hono migrations, use the [Effront skill](skills/effront/SKILL.md).
+
 | To…                                                              | Use…                                                        |
 | ---------------------------------------------------------------- | ----------------------------------------------------------- |
 | Render routes with typed services and server-driven interactions | [Core](packages/core/README.md#usage)                       |
